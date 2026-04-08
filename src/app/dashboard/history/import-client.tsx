@@ -89,8 +89,8 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
       if (!res.ok) throw new Error(data.error);
 
       let msg = `${data.totalRecords}건의 매수 기록, ${data.totalItems}개 종목 데이터가 반영되었습니다.`;
-      if (data.skipped?.length > 0) {
-        msg += ` (미등록 종목 건너뜀: ${data.skipped.join(", ")})`;
+      if (data.autoAdded?.length > 0) {
+        msg += ` (새 종목 자동 추가: ${data.autoAdded.join(", ")})`;
       }
       setResult(msg);
       setTimeout(() => {
@@ -180,10 +180,10 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
               {parsedRows.length}건 파싱됨 (매수 {buyRows.length}건)
             </p>
 
-            {/* 미등록 종목 경고 */}
+            {/* 미등록 종목 안내 */}
             {buyRows.some((r) => !holdingMap.has(r.code)) && (
-              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
-                일부 종목이 설정에 등록되지 않아 건너뜁니다:{" "}
+              <div className="rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 text-xs text-indigo-600 dark:text-indigo-400">
+                미등록 종목이 자동으로 추가됩니다:{" "}
                 {buyRows
                   .filter((r) => !holdingMap.has(r.code))
                   .map((r) => `${r.name}(${r.code})`)

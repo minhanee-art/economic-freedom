@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     let totalRecords = 0;
     let totalItems = 0;
-    const skipped: string[] = [];
+    const autoAdded: string[] = [];
 
     for (const [date, rows] of dateGroups) {
       const totalSpent = rows.reduce((s, r) => s + r.amount, 0);
@@ -68,10 +68,27 @@ export async function POST(request: Request) {
       totalRecords++;
 
       for (const row of rows) {
-        const holding = holdingMap.get(row.code);
+        let holding = holdingMap.get(row.code);
         if (!holding) {
-          skipped.push(`${row.name}(${row.code})`);
-          continue;
+          // 미등록 종목 자동 추가
+          const { data: newHolding, error: addErr } = await supabase
+            .from("holdings")
+            .insert({
+              user_id: user.id,
+              code: row.code,
+              name: row.name,
+              category: "주식",
+              sub_category: "기타",
+              current_price: row.price || 0,
+              target_pct: 0,
+            })
+            .select("id, code, shares")
+            .single();
+
+          if (addErr) throw addErr;
+          holding = newHolding;
+          holdingMap.set(row.code, holding);
+          autoAdded.push(`${row.name}(${row.code})`);
         }
 
         // purchase_items
@@ -125,7 +142,7 @@ export async function POST(request: Request) {
       success: true,
       totalRecords,
       totalItems,
-      skipped: [...new Set(skipped)],
+      autoAdded: [...new Set(autoAdded)],
     });
   } catch (err) {
     return NextResponse.json(

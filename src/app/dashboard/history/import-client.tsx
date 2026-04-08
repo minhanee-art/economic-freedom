@@ -2,7 +2,6 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { formatFullKRW } from "@/lib/utils";
 import type { Holding } from "@/types";
 
@@ -45,7 +44,10 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
     reader.onload = (ev) => {
       try {
         const text = ev.target?.result as string;
-        const rows = parseCSV(text);
+        // HTML(xls) 파일인지 CSV인지 판별
+        const rows = text.trimStart().startsWith("<")
+          ? parseHTMLTable(text)
+          : parseCSV(text);
         if (rows.length === 0) {
           setError("매수 내역을 찾을 수 없습니다. 파일 형식을 확인해주세요.");
           return;
@@ -55,7 +57,10 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
         setError(`파일 파싱 실패: ${(err as Error).message}`);
       }
     };
-    reader.readAsText(file, "EUC-KR"); // 한국 증권사 CSV는 대부분 EUC-KR
+    // xls(HTML) 또는 CSV 판별
+    const isXLS =
+      file.name.endsWith(".xls") || file.name.endsWith(".xlsx");
+    reader.readAsText(file, isXLS ? "UTF-8" : "EUC-KR");
   };
 
   const buyRows = parsedRows.filter((r) => r.type === "매수");
@@ -65,105 +70,29 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
     setIsImporting(true);
 
     try {
-      const supabase = createClient();
+      const items = buyRows.map((row) => ({
+        date: row.date,
+        code: row.code,
+        name: row.name,
+        qty: row.quantity,
+        price: row.price,
+        amount: row.amount,
+      }));
 
-      // 날짜별로 그룹핑
-      const dateGroups = new Map<string, ParsedRow[]>();
-      buyRows.forEach((row) => {
-        const group = dateGroups.get(row.date) ?? [];
-        group.push(row);
-        dateGroups.set(row.date, group);
+      const res = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
       });
 
-      let totalRecords = 0;
-      let totalItems = 0;
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      for (const [date, rows] of dateGroups) {
-        const totalSpent = rows.reduce((s, r) => s + r.amount, 0);
-
-        // purchase_records 생성
-        const { data: record, error: recErr } = await supabase
-          .from("purchase_records")
-          .insert({
-            user_id: userId,
-            date,
-            total_spent: totalSpent,
-            total_value_after: 0, // 과거 데이터라 정확한 값 없음
-          })
-          .select("id")
-          .single();
-
-        if (recErr) throw recErr;
-        totalRecords++;
-
-        // purchase_items 생성
-        const items = rows.map((row) => {
-          const holding = holdingMap.get(row.code);
-          return {
-            record_id: record.id,
-            holding_id: holding?.id ?? null,
-            code: row.code,
-            name: row.name,
-            quantity: row.quantity,
-            price_at_purchase: row.price,
-            cost: row.amount,
-          };
-        });
-
-        // holding_id가 null인 항목은 제외 (등록되지 않은 종목)
-        const validItems = items.filter((i) => i.holding_id !== null);
-        if (validItems.length > 0) {
-          const { error: itemErr } = await supabase
-            .from("purchase_items")
-            .insert(validItems);
-          if (itemErr) throw itemErr;
-        }
-        totalItems += validItems.length;
-
-        // holdings shares 업데이트 + cost_basis upsert
-        for (const row of rows) {
-          const holding = holdingMap.get(row.code);
-          if (!holding) continue;
-
-          // shares 업데이트
-          await supabase
-            .from("holdings")
-            .update({ shares: holding.shares + row.quantity })
-            .eq("id", holding.id);
-
-          // 로컬 맵도 업데이트 (같은 날 여러 건 대응)
-          holding.shares += row.quantity;
-
-          // cost_basis upsert
-          const { data: existing } = await supabase
-            .from("cost_basis")
-            .select("*")
-            .eq("user_id", userId)
-            .eq("holding_id", holding.id)
-            .single();
-
-          if (existing) {
-            await supabase
-              .from("cost_basis")
-              .update({
-                total_cost: existing.total_cost + row.amount,
-                total_shares: existing.total_shares + row.quantity,
-              })
-              .eq("id", existing.id);
-          } else {
-            await supabase.from("cost_basis").insert({
-              user_id: userId,
-              holding_id: holding.id,
-              total_cost: row.amount,
-              total_shares: row.quantity,
-            });
-          }
-        }
+      let msg = `${data.totalRecords}건의 매수 기록, ${data.totalItems}개 종목 데이터가 반영되었습니다.`;
+      if (data.skipped?.length > 0) {
+        msg += ` (미등록 종목 건너뜀: ${data.skipped.join(", ")})`;
       }
-
-      setResult(
-        `${totalRecords}건의 매수 기록, ${totalItems}개 종목 데이터가 반영되었습니다.`
-      );
+      setResult(msg);
       setTimeout(() => {
         router.refresh();
         onClose();
@@ -415,4 +344,124 @@ function normalizeType(raw: string): string {
 
 function parseNum(raw: string): number {
   return parseInt(raw.replace(/[^0-9.-]/g, "")) || 0;
+}
+
+/** 미래에셋 xls (HTML 테이블) 파싱 */
+function parseHTMLTable(html: string): ParsedRow[] {
+  // DOM Parser로 테이블 셀 추출
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  const tables = doc.querySelectorAll("table");
+
+  // 거래내역 테이블 찾기 (id="detailTable" 또는 가장 큰 테이블)
+  let targetTable: Element | null =
+    doc.getElementById("detailTable");
+  if (!targetTable) {
+    let maxRows = 0;
+    tables.forEach((t) => {
+      const rowCount = t.querySelectorAll("tr").length;
+      if (rowCount > maxRows) {
+        maxRows = rowCount;
+        targetTable = t;
+      }
+    });
+  }
+  if (!targetTable) return [];
+
+  const trs = targetTable.querySelectorAll("tr");
+  const rawRows: string[][] = [];
+  trs.forEach((tr) => {
+    const cells: string[] = [];
+    tr.querySelectorAll("td, th").forEach((td) => {
+      cells.push((td.textContent ?? "").trim());
+    });
+    if (cells.length > 0) rawRows.push(cells);
+  });
+
+  // 미래에셋 형식: 2행이 1거래 (헤더 2행 + 데이터 2행씩)
+  // 행1: 거래일자, 거래종류, 거래수량, 거래금액, 예수금잔고, 수수료, 미수총잔고
+  // 행2: 종목명, 단가, 입출금액, 유가잔고, 제세금합, 미수발생/변제금
+
+  // 헤더 행 찾기
+  let dataStart = 0;
+  for (let i = 0; i < rawRows.length; i++) {
+    if (rawRows[i].some((c) => c.includes("거래일자"))) {
+      dataStart = i + 2; // 헤더 2행 건너뛰기
+      break;
+    }
+  }
+
+  // 종목명 → 종목코드 매핑 (미래에셋 xls는 종목코드가 없음)
+  const NAME_CODE_MAP: Record<string, string> = {
+    "TIGER200": "102110",
+    "TIGER골드선물": "319640",
+    "TIGER나스닥100": "133690",
+    "TIGER미국채10년선물": "305080",
+    "TIGERMSCI": "182480",
+    "TIGER미국MSCI리츠": "182480",
+    "KODEXMSCI": "251350",
+    "KODEXWTI": "261220",
+    "KINDEX": "354350",
+    "ARIRANG": "195980",
+    "ACE코스피": "305050",
+    "ACE코스닥": "354500",
+    "PLUS고배당": "161510",
+    "TIGER미국배당": "458730",
+    "KODEX인도": "453810",
+    "TIGER필라델피아": "497570",
+    "ACE싱가포르": "316300",
+    "KODEX코스피100": "237350",
+    "ACE테슬라": "457480",
+    "KODEX은선물": "144600",
+    "KODEX단기채권": "153130",
+    "TIGER반도체": "396500",
+    "KODEX200": "069500",
+    "KODEX레버리지": "122630",
+    "KODEX인버스": "114800",
+  };
+
+  function matchCode(name: string): string {
+    const n = name.replace(/\s/g, "");
+    for (const [key, code] of Object.entries(NAME_CODE_MAP)) {
+      if (n.includes(key)) return code;
+    }
+    return "";
+  }
+
+  const rows: ParsedRow[] = [];
+
+  for (let i = dataStart; i < rawRows.length - 1; i += 2) {
+    const r1 = rawRows[i];
+    const r2 = rawRows[i + 1];
+    if (!r1 || r1.length < 4) continue;
+
+    const dateRaw = r1[0];
+    const tradeType = r1[1] ?? "";
+    const quantity = parseNum(r1[2]);
+    const amount = parseNum(r1[3]);
+    const fee = parseNum(r1[5] ?? "0");
+
+    const name = r2?.[0] ?? "";
+    const price = parseNum(r2?.[1] ?? "0");
+
+    const date = normalizeDate(dateRaw);
+    if (!date || quantity <= 0) continue;
+
+    const type = normalizeType(tradeType);
+    const code = matchCode(name);
+
+    rows.push({
+      date,
+      code,
+      name: name.length > 30 ? name.slice(0, 30) + "…" : name,
+      type,
+      quantity,
+      price,
+      amount,
+      fee,
+      tax: 0,
+    });
+  }
+
+  return rows;
 }

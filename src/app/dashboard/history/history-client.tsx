@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
-import { getCategoryColor } from "@/lib/colors";
-import type { PurchaseRecord, PurchaseItem } from "@/types";
+import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
+import { ImportClient } from "./import-client";
 
 interface RecordWithItems extends PurchaseRecord {
   purchase_items: PurchaseItem[];
@@ -14,13 +14,15 @@ interface Props {
   initialRecords: RecordWithItems[];
   totalCount: number;
   userId: string;
+  holdings: Holding[];
 }
 
 const PAGE_SIZE = 20;
 
-export function HistoryClient({ initialRecords, totalCount, userId }: Props) {
+export function HistoryClient({ initialRecords, totalCount, userId, holdings }: Props) {
   const [records, setRecords] = useState(initialRecords);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const hasMore = records.length < totalCount;
 
   // 누적 통계
@@ -73,6 +75,23 @@ export function HistoryClient({ initialRecords, totalCount, userId }: Props) {
           </div>
         </div>
       </div>
+
+      {/* 가져오기 버튼 */}
+      <button
+        onClick={() => setShowImport(true)}
+        className="w-full h-10 rounded-xl border border-indigo-200 dark:border-indigo-800 text-sm font-medium text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+      >
+        증권사 거래내역 가져오기 (CSV)
+      </button>
+
+      {/* 가져오기 모달 */}
+      {showImport && (
+        <ImportClient
+          holdings={holdings}
+          userId={userId}
+          onClose={() => setShowImport(false)}
+        />
+      )}
 
       {/* 기록 리스트 */}
       {records.length === 0 ? (

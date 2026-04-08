@@ -8,18 +8,25 @@ export default async function HistoryPage() {
 
   const supabase = await createClient();
 
-  const { data, count } = await supabase
-    .from("purchase_records")
-    .select("*, purchase_items(*)", { count: "exact" })
-    .eq("user_id", userId)
-    .order("date", { ascending: false })
-    .range(0, 19);
+  const [recordsRes, holdingsRes] = await Promise.all([
+    supabase
+      .from("purchase_records")
+      .select("*, purchase_items(*)", { count: "exact" })
+      .eq("user_id", userId)
+      .order("date", { ascending: false })
+      .range(0, 19),
+    supabase
+      .from("holdings")
+      .select("*")
+      .eq("user_id", userId),
+  ]);
 
   return (
     <HistoryClient
-      initialRecords={data ?? []}
-      totalCount={count ?? 0}
+      initialRecords={recordsRes.data ?? []}
+      totalCount={recordsRes.count ?? 0}
       userId={userId}
+      holdings={holdingsRes.data ?? []}
     />
   );
 }

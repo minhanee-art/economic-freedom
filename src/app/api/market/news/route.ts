@@ -7,72 +7,95 @@ interface NewsItem {
   date: string;
 }
 
-/** ETF 관련 뉴스 조회 */
+/** ETF 관련 뉴스 조회 (Google News RSS) */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") || "ETF";
 
   try {
-    const news = await fetchNews(query);
+    const news = await fetchGoogleNews(query);
     return NextResponse.json({ news });
   } catch {
     return NextResponse.json({ news: [], error: "조회 실패" }, { status: 500 });
   }
 }
 
-async function fetchNews(query: string): Promise<NewsItem[]> {
-  // 네이버 금융 뉴스 RSS 파싱
-  const url = `https://search.naver.com/search.naver?where=news&query=${encodeURIComponent(query + " ETF")}&sort=1&sm=tab_smr`;
+async function fetchGoogleNews(query: string): Promise<NewsItem[]> {
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(
+    query + " ETF"
+  )}&hl=ko&gl=KR&ceid=KR:ko`;
+
   const res = await fetch(url, {
     headers: {
-      "User-Agent":
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)",
+      "User-Agent": "Mozilla/5.0 (compatible; PensionManager/1.0)",
     },
     signal: AbortSignal.timeout(8000),
   });
 
-  if (!res.ok) throw new Error("뉴스 조회 실패");
+  if (!res.ok) throw new Error("Google News RSS 실패");
 
-  const html = await res.text();
+  const xml = await res.text();
   const news: NewsItem[] = [];
 
-  // 뉴스 제목+링크 파싱
-  const pattern =
-    /class="news_tit"[^>]*href="([^"]*)"[^>]*title="([^"]*)"/g;
-  let match;
-  while ((match = pattern.exec(html)) !== null && news.length < 8) {
-    news.push({
-      title: decodeHTMLEntities(match[2]),
-      link: match[1],
-      source: "",
-      date: "",
-    });
-  }
+  // RSS XML 파싱 (간단한 정규식)
+  const itemPattern = /<item>([\s\S]*?)<\/item>/g;
+  let itemMatch;
 
-  // 소스/날짜 파싱
-  const sourcePattern = /class="info_press"[^>]*>([^<]*)</g;
-  let si = 0;
-  while ((match = sourcePattern.exec(html)) !== null && si < news.length) {
-    news[si].source = match[1].trim();
-    si++;
-  }
+  while (
+    (itemMatch = itemPattern.exec(xml)) !== null &&
+    news.length < 8
+  ) {
+    const block = itemMatch[1];
 
-  const datePattern = /class="info"[^>]*>(\d+[^<]*)<\/span>/g;
-  let di = 0;
-  while ((match = datePattern.exec(html)) !== null && di < news.length) {
-    news[di].date = match[1].trim();
-    di++;
+    const title = extractTag(block, "title");
+    const link = extractTag(block, "link");
+    const pubDate = extractTag(block, "pubDate");
+    const source = extractTag(block, "source");
+
+    if (title && link) {
+      news.push({
+        title: cleanHTML(title),
+        link,
+        source: source || "",
+        date: pubDate ? formatDate(pubDate) : "",
+      });
+    }
   }
 
   return news;
 }
 
-function decodeHTMLEntities(text: string): string {
+function extractTag(xml: string, tag: string): string {
+  const match = xml.match(
+    new RegExp(`<${tag}[^>]*><!\\[CDATA\\[([\\s\\S]*?)\\]\\]><\\/${tag}>`)
+  );
+  if (match) return match[1].trim();
+
+  const match2 = xml.match(
+    new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`)
+  );
+  return match2 ? match2[1].trim() : "";
+}
+
+function cleanHTML(text: string): string {
   return text
+    .replace(/<[^>]*>/g, "")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/<[^>]*>/g, "");
+    .replace(/&#39;/g, "'");
+}
+
+function formatDate(pubDate: string): string {
+  try {
+    const d = new Date(pubDate);
+    const month = d.getMonth() + 1;
+    const day = d.getDate();
+    const hours = d.getHours();
+    const mins = String(d.getMinutes()).padStart(2, "0");
+    return `${month}/${day} ${hours}:${mins}`;
+  } catch {
+    return pubDate;
+  }
 }

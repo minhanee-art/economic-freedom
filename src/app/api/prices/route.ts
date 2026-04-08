@@ -70,8 +70,8 @@ async function fetchSinglePrice(code: string): Promise<number | null> {
 
     if (res.ok) {
       const data = await res.json();
-      const price = data?.datas?.[0]?.closePrice;
-      if (price) return Number(price);
+      const raw = data?.datas?.[0]?.closePriceRaw ?? data?.datas?.[0]?.closePrice;
+      if (raw) return Number(String(raw).replace(/,/g, ""));
     }
   } catch {
     // 방법 1 실패 → 방법 2로

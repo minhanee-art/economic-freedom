@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis } from "@/types";
 import { calculateBuyPlan, type BuyPlanItem } from "@/lib/buy-algorithm";
@@ -23,16 +23,70 @@ export function BuyClient({
   defaultBudget,
   userId,
 }: Props) {
+  const [holdings, setHoldings] = useState(initialHoldings);
   const [budget, setBudget] = useState(defaultBudget);
   const [inputValue, setInputValue] = useState(defaultBudget.toLocaleString());
   const [showConfirm, setShowConfirm] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [priceStatus, setPriceStatus] = useState("");
   const router = useRouter();
 
+  // 페이지 진입 시 자동 시세 조회
+  const refreshPrices = useCallback(async () => {
+    setPriceStatus("시세 조회 중...");
+    try {
+      const codes = holdings.map((h) => h.code);
+      const res = await fetch("/api/prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ codes }),
+      });
+      if (!res.ok) throw new Error("API 호출 실패");
+
+      const { prices, errors } = (await res.json()) as {
+        prices: Record<string, number>;
+        errors: string[];
+      };
+
+      const updatedCodes = Object.keys(prices);
+      if (updatedCodes.length === 0) {
+        setPriceStatus("시세 조회 실패");
+        return;
+      }
+
+      // DB 업데이트
+      const supabase = createClient();
+      const updatePromises = holdings
+        .filter((h) => prices[h.code] && prices[h.code] !== h.current_price)
+        .map((h) =>
+          supabase
+            .from("holdings")
+            .update({ current_price: prices[h.code] })
+            .eq("id", h.id)
+        );
+      await Promise.all(updatePromises);
+
+      // 로컬 state 반영
+      const updated = holdings.map((h) =>
+        prices[h.code] ? { ...h, current_price: prices[h.code] } : h
+      );
+      setHoldings(updated);
+      setPriceStatus(`${updatedCodes.length}개 종목 시세 반영 완료`);
+    } catch {
+      setPriceStatus("시세 조회 실패");
+    }
+    setTimeout(() => setPriceStatus(""), 3000);
+  }, [holdings]);
+
+  useEffect(() => {
+    refreshPrices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const plan = useMemo(
-    () => calculateBuyPlan(initialHoldings, initialCostBases, budget),
-    [initialHoldings, initialCostBases, budget]
+    () => calculateBuyPlan(holdings, initialCostBases, budget),
+    [holdings, initialCostBases, budget]
   );
 
   const buyItems = plan.items.filter((item) => item.quantity > 0);
@@ -57,7 +111,7 @@ export function BuyClient({
       const supabase = createClient();
 
       // 1. purchase_records 생성
-      const totalValueAfter = initialHoldings.reduce((s, h) => {
+      const totalValueAfter = holdings.reduce((s, h) => {
         const planItem = plan.items.find((p) => p.holding.id === h.id);
         const addedQty = planItem?.quantity ?? 0;
         return s + h.current_price * (h.shares + addedQty);
@@ -159,6 +213,19 @@ export function BuyClient({
       {successMessage && (
         <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400 font-medium">
           {successMessage}
+        </div>
+      )}
+
+      {/* 시세 상태 */}
+      {priceStatus && (
+        <div className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
+          priceStatus.includes("실패")
+            ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+            : priceStatus.includes("중")
+              ? "bg-zinc-100 text-zinc-500 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+              : "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+        }`}>
+          {priceStatus}
         </div>
       )}
 

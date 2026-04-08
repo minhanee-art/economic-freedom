@@ -174,9 +174,30 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
           .eq("user_id", userId);
         if (error) throw error;
         flash("배당 기록 전체 삭제됨");
+      } else if (dangerModal === "reset") {
+        // 기존 종목 전체 삭제
+        await supabase.from("holdings").delete().eq("user_id", userId);
+        // 기본 종목 재생성
+        const { DEFAULT_HOLDINGS } = await import("@/lib/constants");
+        const defaults = DEFAULT_HOLDINGS.map((h) => ({
+          user_id: userId,
+          code: h.code,
+          name: h.name,
+          category: h.category,
+          sub_category: h.sub_category,
+          current_price: h.current_price,
+          target_pct: h.target_pct,
+        }));
+        const { error: insertErr } = await supabase
+          .from("holdings")
+          .insert(defaults);
+        if (insertErr) throw insertErr;
+        // cost_basis도 초기화
+        await supabase.from("cost_basis").delete().eq("user_id", userId);
+        flash("종목 초기화 완료");
+        router.refresh();
       } else if (dangerModal === "account") {
         await supabase.auth.signOut();
-        // 계정 삭제는 Supabase 대시보드에서 처리 필요
         router.push("/");
       }
     } catch (err) {
@@ -388,6 +409,11 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
         </h3>
         <div className="space-y-2">
           <DangerButton
+            label="종목 초기화 (기본 15종목)"
+            desc="모든 종목을 삭제하고 기본 15개 종목으로 복원합니다"
+            onClick={() => setDangerModal("reset")}
+          />
+          <DangerButton
             label="매수 기록 전체 삭제"
             desc="모든 매수 기록과 보유수량이 초기화됩니다"
             onClick={() => setDangerModal("purchases")}
@@ -411,6 +437,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
           <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-zinc-900 p-6 space-y-4">
             <h3 className="text-lg font-bold text-red-600">정말 삭제하시겠습니까?</h3>
             <p className="text-sm text-zinc-500">
+              {dangerModal === "reset" &&
+                "현재 종목을 모두 삭제하고 기본 15개 종목으로 복원합니다. 매수 기록과 원가 데이터도 초기화됩니다."}
               {dangerModal === "purchases" &&
                 "모든 매수 기록, 보유수량, 원가 데이터가 초기화됩니다. 이 작업은 되돌릴 수 없습니다."}
               {dangerModal === "dividends" &&

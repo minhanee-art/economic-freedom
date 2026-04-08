@@ -9,6 +9,8 @@ const navItems = [
   { href: "/dashboard", label: "대시보드", icon: "home" },
   { href: "/dashboard/buy", label: "매수", icon: "cart" },
   { href: "/dashboard/pnl", label: "손익", icon: "chart" },
+  { href: "/dashboard/market", label: "시장", icon: "trend" },
+  { href: "/dashboard/compare", label: "비교", icon: "compare" },
   { href: "/dashboard/dividend", label: "배당", icon: "coin" },
   { href: "/dashboard/history", label: "기록", icon: "clock" },
   { href: "/dashboard/settings", label: "설정", icon: "gear" },
@@ -38,6 +40,16 @@ const icons: Record<string, React.ReactNode> = {
   clock: (
     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  trend: (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+    </svg>
+  ),
+  compare: (
+    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
     </svg>
   ),
   gear: (

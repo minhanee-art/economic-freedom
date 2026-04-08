@@ -116,30 +116,6 @@ export function AuthForm({ mode }: AuthFormProps) {
           </p>
         </div>
 
-        {/* 소셜 로그인 */}
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => handleSocialLogin("kakao")}
-            className="w-full h-11 rounded-lg bg-[#FEE500] text-[#191919] text-sm font-medium flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#191919">
-              <path d="M12 3C6.48 3 2 6.36 2 10.5c0 2.68 1.76 5.03 4.4 6.36l-.92 3.38c-.08.3.26.54.52.36l4.02-2.65c.63.09 1.29.14 1.98.14 5.52 0 10-3.36 10-7.5S17.52 3 12 3z"/>
-            </svg>
-            카카오로 계속하기
-          </button>
-        </div>
-
-        {/* 구분선 */}
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-zinc-200 dark:border-zinc-700" />
-          </div>
-          <div className="relative flex justify-center text-xs">
-            <span className="bg-background px-3 text-zinc-400">또는</span>
-          </div>
-        </div>
-
         {/* 이메일 폼 */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">

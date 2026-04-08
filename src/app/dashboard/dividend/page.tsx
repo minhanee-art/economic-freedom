@@ -1,25 +1,24 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/supabase/auth";
 import { DividendClient } from "./dividend-client";
 
 export default async function DividendPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getUserId();
+  if (!userId) return null;
 
-  if (!user) return null;
+  const supabase = await createClient();
 
   const [holdingsRes, dividendsRes] = await Promise.all([
     supabase
       .from("holdings")
       .select("id, code, name, category")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .gt("shares", 0)
       .order("name"),
     supabase
       .from("dividends")
       .select("*, holdings(name, code)")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .order("date", { ascending: false }),
   ]);
 
@@ -27,7 +26,7 @@ export default async function DividendPage() {
     <DividendClient
       holdings={holdingsRes.data ?? []}
       initialDividends={dividendsRes.data ?? []}
-      userId={user.id}
+      userId={userId}
     />
   );
 }

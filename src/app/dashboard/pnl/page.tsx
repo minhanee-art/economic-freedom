@@ -1,29 +1,27 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUserId } from "@/lib/supabase/auth";
 import { PnLClient } from "./pnl-client";
-import type { Holding, CostBasis, PurchaseRecord } from "@/types";
 
 export default async function PnLPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await getUserId();
+  if (!userId) return null;
 
-  if (!user) return null;
+  const supabase = await createClient();
 
   const [holdingsRes, costBasisRes, recordsRes, dividendsRes] =
     await Promise.all([
       supabase
         .from("holdings")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("target_pct", { ascending: false }),
-      supabase.from("cost_basis").select("*").eq("user_id", user.id),
+      supabase.from("cost_basis").select("*").eq("user_id", userId),
       supabase
         .from("purchase_records")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("date", { ascending: true }),
-      supabase.from("dividends").select("amount").eq("user_id", user.id),
+      supabase.from("dividends").select("amount").eq("user_id", userId),
     ]);
 
   const totalDividend = (dividendsRes.data ?? []).reduce(

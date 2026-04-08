@@ -1,0 +1,306 @@
+"use client";
+
+import type { Holding, CostBasis, PurchaseRecord } from "@/types";
+import { formatKRW, formatFullKRW, formatPercent, cn } from "@/lib/utils";
+import { getCategoryColor, CATEGORY_COLORS } from "@/lib/colors";
+import { PnLAreaChart } from "@/components/charts/pnl-area-chart";
+
+interface HoldingPnL {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  shares: number;
+  currentPrice: number;
+  avgPrice: number;
+  totalCost: number;
+  currentValue: number;
+  profitLoss: number;
+  profitLossPct: number;
+}
+
+interface Props {
+  holdings: Holding[];
+  costBases: CostBasis[];
+  purchaseRecords: PurchaseRecord[];
+  totalDividend: number;
+}
+
+function computePnL(holdings: Holding[], costBases: CostBasis[]): HoldingPnL[] {
+  const cbMap = new Map(costBases.map((cb) => [cb.holding_id, cb]));
+
+  return holdings
+    .filter((h) => h.shares > 0)
+    .map((h) => {
+      const cb = cbMap.get(h.id);
+      const totalCost = cb?.total_cost ?? 0;
+      const totalShares = cb?.total_shares ?? 0;
+      const avgPrice = totalShares > 0 ? Math.round(totalCost / totalShares) : 0;
+      const currentValue = h.current_price * h.shares;
+      const profitLoss = currentValue - totalCost;
+      const profitLossPct = totalCost > 0 ? (profitLoss / totalCost) * 100 : 0;
+
+      return {
+        id: h.id,
+        code: h.code,
+        name: h.name,
+        category: h.category,
+        shares: h.shares,
+        currentPrice: h.current_price,
+        avgPrice,
+        totalCost,
+        currentValue,
+        profitLoss,
+        profitLossPct,
+      };
+    })
+    .sort((a, b) => b.profitLoss - a.profitLoss);
+}
+
+export function PnLClient({
+  holdings,
+  costBases,
+  purchaseRecords,
+  totalDividend,
+}: Props) {
+  const pnlList = computePnL(holdings, costBases);
+
+  const totalCost = pnlList.reduce((s, h) => s + h.totalCost, 0);
+  const totalValue = pnlList.reduce((s, h) => s + h.currentValue, 0);
+  const totalPnL = totalValue - totalCost;
+  const totalPnLPct = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
+
+  // 자산군별 손익 요약
+  const categoryMap = new Map<
+    string,
+    { cost: number; value: number; pnl: number }
+  >();
+  pnlList.forEach((h) => {
+    const prev = categoryMap.get(h.category) ?? {
+      cost: 0,
+      value: 0,
+      pnl: 0,
+    };
+    categoryMap.set(h.category, {
+      cost: prev.cost + h.totalCost,
+      value: prev.value + h.currentValue,
+      pnl: prev.pnl + h.profitLoss,
+    });
+  });
+
+  // 추이 차트 데이터
+  const chartData = buildChartData(purchaseRecords, holdings, costBases);
+
+  const isEmpty = pnlList.length === 0;
+
+  return (
+    <div className="space-y-5">
+      {/* 총 수익 현황 */}
+      <div
+        className="rounded-xl px-5 py-5 text-white"
+        style={{
+          background: "linear-gradient(135deg, #1a1f36 0%, #2d3250 100%)",
+        }}
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-zinc-400 mb-0.5">총 투입금액</p>
+            <p className="text-lg font-bold">{formatKRW(totalCost)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400 mb-0.5">현재 평가금액</p>
+            <p className="text-lg font-bold">{formatKRW(totalValue)}</p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400 mb-0.5">평가손익</p>
+            <p
+              className={cn(
+                "text-lg font-bold",
+                totalPnL >= 0 ? "text-emerald-400" : "text-red-400"
+              )}
+            >
+              {formatKRW(totalPnL)}
+            </p>
+            <p
+              className={cn(
+                "text-xs",
+                totalPnL >= 0 ? "text-emerald-400/70" : "text-red-400/70"
+              )}
+            >
+              {formatPercent(totalPnLPct)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-zinc-400 mb-0.5">누적 배당</p>
+            <p className="text-lg font-bold">{formatKRW(totalDividend)}</p>
+          </div>
+        </div>
+      </div>
+
+      {isEmpty ? (
+        <p className="text-sm text-zinc-400 py-8 text-center">
+          보유 종목이 없습니다. 매수 후 손익이 표시됩니다.
+        </p>
+      ) : (
+        <>
+          {/* 추이 차트 */}
+          {chartData.length >= 2 && (
+            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+              <h3 className="text-sm font-semibold mb-3">
+                투입 vs 평가 추이
+              </h3>
+              <PnLAreaChart data={chartData} />
+            </div>
+          )}
+
+          {/* 자산군별 손익 요약 */}
+          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+            <h3 className="text-sm font-semibold mb-3">자산군별 손익</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {Array.from(categoryMap.entries()).map(([cat, data]) => {
+                const pct =
+                  data.cost > 0 ? (data.pnl / data.cost) * 100 : 0;
+                return (
+                  <div
+                    key={cat}
+                    className="flex items-start gap-2 rounded-lg bg-zinc-50 dark:bg-zinc-800 px-3 py-2.5"
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-sm mt-1 shrink-0"
+                      style={{
+                        background: getCategoryColor(cat),
+                      }}
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs text-zinc-500">{cat}</p>
+                      <p
+                        className={cn(
+                          "text-sm font-semibold",
+                          data.pnl >= 0
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-red-600 dark:text-red-400"
+                        )}
+                      >
+                        {formatKRW(data.pnl)}{" "}
+                        <span className="text-xs font-normal">
+                          ({formatPercent(pct)})
+                        </span>
+                      </p>
+                      <p className="text-[11px] text-zinc-400">
+                        {formatKRW(data.cost)} → {formatKRW(data.value)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 종목별 손익 리스트 */}
+          <div>
+            <h3 className="text-sm font-semibold mb-3">
+              종목별 손익 ({pnlList.length})
+            </h3>
+            <div className="space-y-2">
+              {pnlList.map((h) => (
+                <div
+                  key={h.id}
+                  className="flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden"
+                >
+                  <div
+                    className="w-1.5 shrink-0"
+                    style={{
+                      background:
+                        h.profitLoss >= 0 ? "#22C55E" : "#EF4444",
+                    }}
+                  />
+                  <div className="flex-1 px-4 py-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold">{h.name}</p>
+                        <p className="text-xs text-zinc-400">
+                          {h.code} · {h.shares}주
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p
+                          className={cn(
+                            "text-sm font-bold",
+                            h.profitLoss >= 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-red-600 dark:text-red-400"
+                          )}
+                        >
+                          {formatKRW(h.profitLoss)}
+                        </p>
+                        <p
+                          className={cn(
+                            "text-xs",
+                            h.profitLoss >= 0
+                              ? "text-emerald-500"
+                              : "text-red-500"
+                          )}
+                        >
+                          {formatPercent(h.profitLossPct)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-1.5 flex gap-3 text-xs text-zinc-400">
+                      <span>
+                        평균단가 ₩{h.avgPrice.toLocaleString()}
+                      </span>
+                      <span>→</span>
+                      <span>
+                        현재가 ₩{h.currentPrice.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 매수 기록 기반 추이 데이터 생성 */
+function buildChartData(
+  records: PurchaseRecord[],
+  holdings: Holding[],
+  costBases: CostBasis[]
+) {
+  if (records.length === 0) return [];
+
+  let cumulativeCost = 0;
+  const data = records.map((r) => {
+    cumulativeCost += r.total_spent;
+    return {
+      date: r.date,
+      invested: cumulativeCost,
+      value: r.total_value_after,
+    };
+  });
+
+  // 현재 시점 추가
+  const currentValue = holdings.reduce(
+    (s, h) => s + h.current_price * h.shares,
+    0
+  );
+  const totalInvested = costBases.reduce((s, cb) => s + cb.total_cost, 0);
+
+  if (totalInvested > 0) {
+    const today = new Date().toISOString().split("T")[0];
+    const lastDate = data[data.length - 1]?.date;
+    if (lastDate !== today) {
+      data.push({
+        date: today,
+        invested: totalInvested,
+        value: currentValue,
+      });
+    }
+  }
+
+  return data;
+}

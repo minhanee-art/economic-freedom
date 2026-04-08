@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+
+const SAVED_EMAIL_KEY = "pension-manager-saved-email";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -25,12 +27,22 @@ function getErrorMessage(error: string): string {
 export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberEmail, setRememberEmail] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const isLogin = mode === "login";
+
+  // 저장된 이메일 불러오기
+  useEffect(() => {
+    const saved = localStorage.getItem(SAVED_EMAIL_KEY);
+    if (saved) {
+      setEmail(saved);
+      setRememberEmail(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +60,12 @@ export function AuthForm({ mode }: AuthFormProps) {
         setError(getErrorMessage(error.message));
         setLoading(false);
         return;
+      }
+      // 아이디 저장
+      if (rememberEmail) {
+        localStorage.setItem(SAVED_EMAIL_KEY, email);
+      } else {
+        localStorage.removeItem(SAVED_EMAIL_KEY);
       }
       router.push("/dashboard");
     } else {
@@ -148,6 +166,18 @@ export function AuthForm({ mode }: AuthFormProps) {
               className="w-full h-11 rounded-lg border border-zinc-200 bg-white px-3 text-sm placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-zinc-700 dark:bg-zinc-900"
             />
           </div>
+
+          {isLogin && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberEmail}
+                onChange={(e) => setRememberEmail(e.target.checked)}
+                className="w-4 h-4 rounded border-zinc-300 text-indigo-500 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-zinc-500">아이디 저장</span>
+            </label>
+          )}
 
           {error && (
             <div className="rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2.5 text-sm text-red-600 dark:text-red-400">

@@ -10,7 +10,6 @@ interface VolumeETF {
   volume: number;
 }
 
-/** ETF 거래량 상위 종목 조회 */
 export async function GET() {
   try {
     const etfs = await fetchTopVolumeETFs();
@@ -24,7 +23,6 @@ export async function GET() {
 }
 
 async function fetchTopVolumeETFs(): Promise<VolumeETF[]> {
-  // 네이버 금융 ETF 전체 목록 (파라미터 없이 호출해야 동작)
   const res = await fetch(
     "https://finance.naver.com/api/sise/etfItemList.nhn",
     {
@@ -38,17 +36,19 @@ async function fetchTopVolumeETFs(): Promise<VolumeETF[]> {
 
   if (!res.ok) throw new Error("네이버 API 응답 실패");
 
-  const data = await res.json();
+  // EUC-KR 인코딩 처리
+  const buffer = await res.arrayBuffer();
+  const decoder = new TextDecoder("euc-kr");
+  const text = decoder.decode(buffer);
+  const data = JSON.parse(text);
+
   const items: Record<string, unknown>[] =
     data?.result?.etfItemList ?? [];
 
   if (items.length === 0) throw new Error("ETF 데이터 없음");
 
-  // 거래량순 정렬 후 상위 10개
   const sorted = items
-    .sort(
-      (a, b) => Number(b.quant ?? 0) - Number(a.quant ?? 0)
-    )
+    .sort((a, b) => Number(b.quant ?? 0) - Number(a.quant ?? 0))
     .slice(0, 10);
 
   return sorted.map((item, i) => ({

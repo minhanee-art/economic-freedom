@@ -49,7 +49,7 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
           ? parseHTMLTable(text)
           : parseCSV(text);
         if (rows.length === 0) {
-          setError("매수 내역을 찾을 수 없습니다. 파일 형식을 확인해주세요.");
+          setError("거래 내역을 찾을 수 없습니다. 파일 형식을 확인해주세요.");
           return;
         }
         setParsedRows(rows);
@@ -64,16 +64,20 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
   };
 
   const buyRows = parsedRows.filter((r) => r.type === "매수");
+  const sellRows = parsedRows.filter((r) => r.type === "매도");
+  const dividendRows = parsedRows.filter((r) => r.type === "배당");
+  const actionableRows = parsedRows.filter((r) => ["매수", "매도", "배당"].includes(r.type));
 
   const handleImport = async () => {
-    if (buyRows.length === 0) return;
+    if (actionableRows.length === 0) return;
     setIsImporting(true);
 
     try {
-      const items = buyRows.map((row) => ({
+      const items = actionableRows.map((row) => ({
         date: row.date,
         code: row.code,
         name: row.name,
+        type: row.type,
         qty: row.quantity,
         price: row.price,
         amount: row.amount,
@@ -88,7 +92,11 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      let msg = `${data.totalRecords}건의 매수 기록, ${data.totalItems}개 종목 데이터가 반영되었습니다.`;
+      const parts: string[] = [];
+      if (data.buyCount > 0) parts.push(`매수 ${data.buyCount}건`);
+      if (data.sellCount > 0) parts.push(`매도 ${data.sellCount}건`);
+      if (data.dividendCount > 0) parts.push(`배당 ${data.dividendCount}건`);
+      let msg = `${parts.join(", ")} 반영 완료.`;
       if (data.autoAdded?.length > 0) {
         msg += ` (새 종목 자동 추가: ${data.autoAdded.join(", ")})`;
       }
@@ -177,14 +185,17 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
         {parsedRows.length > 0 && (
           <div className="space-y-3">
             <p className="text-sm font-medium">
-              {parsedRows.length}건 파싱됨 (매수 {buyRows.length}건)
+              {parsedRows.length}건 파싱됨
+              {buyRows.length > 0 && ` · 매수 ${buyRows.length}`}
+              {sellRows.length > 0 && ` · 매도 ${sellRows.length}`}
+              {dividendRows.length > 0 && ` · 배당 ${dividendRows.length}`}
             </p>
 
             {/* 미등록 종목 안내 */}
-            {buyRows.some((r) => !holdingMap.has(r.code)) && (
+            {actionableRows.some((r) => !holdingMap.has(r.code)) && (
               <div className="rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 text-xs text-indigo-600 dark:text-indigo-400">
                 미등록 종목이 자동으로 추가됩니다:{" "}
-                {buyRows
+                {actionableRows
                   .filter((r) => !holdingMap.has(r.code))
                   .map((r) => `${r.name}(${r.code})`)
                   .filter((v, i, a) => a.indexOf(v) === i)
@@ -208,7 +219,7 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
                     <tr
                       key={i}
                       className={
-                        row.type !== "매수" ? "opacity-40" : ""
+                        !["매수", "매도", "배당"].includes(row.type) ? "opacity-40" : ""
                       }
                     >
                       <td className="px-2 py-1.5">{row.date}</td>
@@ -228,12 +239,12 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
 
             <button
               onClick={handleImport}
-              disabled={isImporting || buyRows.length === 0}
+              disabled={isImporting || actionableRows.length === 0}
               className="w-full h-11 rounded-xl bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
             >
               {isImporting
                 ? "가져오는 중..."
-                : `매수 ${buyRows.length}건 가져오기`}
+                : `${actionableRows.length}건 가져오기`}
             </button>
           </div>
         )}
@@ -339,6 +350,7 @@ function normalizeDate(raw: string): string {
 function normalizeType(raw: string): string {
   if (/매수|buy|B/i.test(raw)) return "매수";
   if (/매도|sell|S/i.test(raw)) return "매도";
+  if (/배당|분배금|이자|dividend|dist/i.test(raw)) return "배당";
   return raw;
 }
 

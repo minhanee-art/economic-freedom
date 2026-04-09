@@ -28,6 +28,7 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
   const [error, setError] = useState("");
   const [isImporting, setIsImporting] = useState(false);
   const [result, setResult] = useState("");
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
@@ -86,7 +87,7 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
       const res = await fetch("/api/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, skipDuplicates }),
       });
 
       const data = await res.json();
@@ -96,7 +97,10 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
       if (data.buyCount > 0) parts.push(`매수 ${data.buyCount}건`);
       if (data.sellCount > 0) parts.push(`매도 ${data.sellCount}건`);
       if (data.dividendCount > 0) parts.push(`배당 ${data.dividendCount}건`);
-      let msg = `${parts.join(", ")} 반영 완료.`;
+      let msg = parts.length > 0 ? `${parts.join(", ")} 반영 완료.` : "반영된 건수가 없습니다.";
+      if (data.dupSkipped > 0) {
+        msg += ` (중복 ${data.dupSkipped}건 건너뜀)`;
+      }
       if (data.autoAdded?.length > 0) {
         msg += ` (새 종목 자동 추가: ${data.autoAdded.join(", ")})`;
       }
@@ -153,7 +157,7 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
         </div>
 
         {/* 파일 선택 */}
-        <div>
+        <div className="space-y-2">
           <input
             ref={fileRef}
             type="file"
@@ -167,6 +171,19 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
           >
             CSV 파일 선택
           </button>
+
+          {/* 중복 필터 토글 */}
+          <label className="flex items-center gap-2 px-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={skipDuplicates}
+              onChange={(e) => setSkipDuplicates(e.target.checked)}
+              className="w-4 h-4 rounded accent-indigo-500"
+            />
+            <span className="text-xs text-zinc-500">
+              기존 기록과 중복되는 항목 자동 건너뛰기
+            </span>
+          </label>
         </div>
 
         {error && (

@@ -11,10 +11,13 @@ interface ImportItem {
   amount: number;
 }
 
-/** 거래내역 일괄 등록 API (매수/매도/배당) */
+/** 거래내역 일괄 등록 API (매수/매도/배당 + 중복 필터) */
 export async function POST(request: Request) {
   try {
-    const { items } = (await request.json()) as { items: ImportItem[] };
+    const { items, skipDuplicates = true } = (await request.json()) as {
+      items: ImportItem[];
+      skipDuplicates?: boolean;
+    };
     if (!items?.length) {
       return NextResponse.json({ error: "데이터 없음" }, { status: 400 });
     }
@@ -38,6 +41,34 @@ export async function POST(request: Request) {
       (holdings ?? []).map((h) => [h.code, h])
     );
 
+    // ── 중복 체크를 위한 기존 데이터 로드 ──
+    let existingBuyKeys = new Set<string>();
+    let existingDividendKeys = new Set<string>();
+
+    if (skipDuplicates) {
+      // 기존 매수 기록: date+code+quantity+price 조합
+      const { data: existingItems } = await supabase
+        .from("purchase_items")
+        .select("code, quantity, price_at_purchase, purchase_records!inner(date, user_id)")
+        .eq("purchase_records.user_id", user.id);
+
+      (existingItems ?? []).forEach((item: any) => {
+        const key = `${item.purchase_records.date}|${item.code}|${item.quantity}|${item.price_at_purchase}`;
+        existingBuyKeys.add(key);
+      });
+
+      // 기존 배당 기록: date+holding_id+amount 조합
+      const { data: existingDividends } = await supabase
+        .from("dividends")
+        .select("holding_id, amount, date, holdings!inner(code)")
+        .eq("user_id", user.id);
+
+      (existingDividends ?? []).forEach((d: any) => {
+        const key = `${d.date}|${d.holdings.code}|${d.amount}`;
+        existingDividendKeys.add(key);
+      });
+    }
+
     // 타입별 분류
     const buyItems = items.filter((i) => !i.type || i.type === "매수");
     const sellItems = items.filter((i) => i.type === "매도");
@@ -47,6 +78,7 @@ export async function POST(request: Request) {
     let sellCount = 0;
     let dividendCount = 0;
     let totalRecords = 0;
+    let dupSkipped = 0;
     const autoAdded: string[] = [];
 
     // ── Helper: 종목 조회 또는 자동 생성 ──
@@ -77,8 +109,20 @@ export async function POST(request: Request) {
 
     // ── 매수 처리 ──
     if (buyItems.length > 0) {
+      // 중복 필터
+      const filteredBuys = skipDuplicates
+        ? buyItems.filter((row) => {
+            const key = `${row.date}|${row.code}|${row.qty}|${row.price}`;
+            if (existingBuyKeys.has(key)) {
+              dupSkipped++;
+              return false;
+            }
+            return true;
+          })
+        : buyItems;
+
       const dateGroups = new Map<string, ImportItem[]>();
-      buyItems.forEach((item) => {
+      filteredBuys.forEach((item) => {
         const group = dateGroups.get(item.date) ?? [];
         group.push(item);
         dateGroups.set(item.date, group);
@@ -150,18 +194,24 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── 매도 처리 (보유수량 감소 + 원가 차감) ──
+    // ── 매도 처리 ──
     for (const row of sellItems) {
+      if (skipDuplicates) {
+        const key = `${row.date}|${row.code}|${row.qty}|${row.price}`;
+        if (existingBuyKeys.has(key)) {
+          dupSkipped++;
+          continue;
+        }
+      }
+
       const holding = await getOrCreateHolding(row);
 
-      // shares 감소
       const newShares = Math.max(0, holding.shares - row.qty);
       await supabase
         .from("holdings")
         .update({ shares: newShares })
         .eq("id", holding.id);
 
-      // cost_basis 비례 차감 (평균단가 방식)
       const { data: cb } = await supabase
         .from("cost_basis")
         .select("*")
@@ -185,9 +235,17 @@ export async function POST(request: Request) {
       sellCount++;
     }
 
-    // ── 배당 처리 (dividends 테이블 저장) ──
+    // ── 배당 처리 ──
     for (const row of dividendItems) {
       const holding = await getOrCreateHolding(row);
+
+      if (skipDuplicates) {
+        const key = `${row.date}|${holding.code}|${row.amount}`;
+        if (existingDividendKeys.has(key)) {
+          dupSkipped++;
+          continue;
+        }
+      }
 
       await supabase.from("dividends").insert({
         user_id: user.id,
@@ -206,6 +264,7 @@ export async function POST(request: Request) {
       buyCount,
       sellCount,
       dividendCount,
+      dupSkipped,
       autoAdded: [...new Set(autoAdded)],
     });
   } catch (err) {

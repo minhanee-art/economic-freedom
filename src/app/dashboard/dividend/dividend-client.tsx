@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { formatFullKRW, formatKRW, cn } from "@/lib/utils";
 import { DividendBarChart } from "@/components/charts/dividend-bar-chart";
 
@@ -36,7 +34,6 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [memo, setMemo] = useState("");
   const [isAdding, setIsAdding] = useState(false);
-  const router = useRouter();
 
   // 요약 계산
   const totalAmount = dividends.reduce((s, d) => s + d.amount, 0);
@@ -65,20 +62,18 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
     setIsAdding(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("dividends")
-        .insert({
-          user_id: userId,
-          holding_id: holdingId,
+      const res = await fetch("/api/dividends", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          holdingId,
           amount: parseInt(amount.replace(/[^0-9]/g, "")),
           date,
           memo: memo || null,
-        })
-        .select("*, holdings(name, code)")
-        .single();
-
-      if (error) throw error;
+        }),
+      });
+      if (!res.ok) throw new Error("추가 실패");
+      const data = await res.json();
 
       setDividends([data, ...dividends]);
       setHoldingId("");
@@ -95,9 +90,12 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
     if (!confirm("이 배당 기록을 삭제하시겠습니까?")) return;
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("dividends").delete().eq("id", id);
-      if (error) throw error;
+      const res = await fetch("/api/dividends", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("삭제 실패");
       setDividends(dividends.filter((d) => d.id !== id));
     } catch (err) {
       alert(`삭제 실패: ${(err as Error).message}`);

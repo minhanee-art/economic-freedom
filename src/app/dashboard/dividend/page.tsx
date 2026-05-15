@@ -1,31 +1,23 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 배당 관리 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { sql } from "@/lib/db";
 import { DividendClient } from "./dividend-client";
 
 export default async function DividendPage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
-
-  const [holdingsRes, dividendsRes] = await Promise.all([
-    supabase
-      .from("holdings")
-      .select("id, code, name, category")
-      .eq("user_id", userId)
-      .gt("shares", 0)
-      .order("name"),
-    supabase
-      .from("dividends")
-      .select("*, holdings(name, code)")
-      .eq("user_id", userId)
-      .order("date", { ascending: false }),
+  const [holdingsWithShares, dividends] = await Promise.all([
+    sql`SELECT id, code, name, category FROM holdings WHERE user_id = ${userId} AND shares > 0 ORDER BY name`,
+    sql`SELECT d.*, h.name AS holding_name, h.code AS holding_code FROM dividends d LEFT JOIN holdings h ON h.id = d.holding_id WHERE d.user_id = ${userId} ORDER BY d.date DESC`,
   ]);
 
   return (
     <DividendClient
-      holdings={holdingsRes.data ?? []}
-      initialDividends={dividendsRes.data ?? []}
+      holdings={holdingsWithShares as any[]}
+      initialDividends={dividends as any[]}
       userId={userId}
     />
   );

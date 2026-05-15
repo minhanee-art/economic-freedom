@@ -6,7 +6,6 @@ import type { Holding, CostBasis } from "@/types";
 import { calculateBuyPlan, type BuyPlanItem } from "@/lib/buy-algorithm";
 import { formatKRW, formatFullKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
-import { createClient } from "@/lib/supabase/client";
 
 interface Props {
   initialHoldings: Holding[];
@@ -56,14 +55,14 @@ export function BuyClient({
       }
 
       // DB 업데이트
-      const supabase = createClient();
       const updatePromises = holdings
         .filter((h) => prices[h.code] && prices[h.code] !== h.current_price)
         .map((h) =>
-          supabase
-            .from("holdings")
-            .update({ current_price: prices[h.code] })
-            .eq("id", h.id)
+          fetch("/api/holdings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: h.id, current_price: prices[h.code] }),
+          })
         );
       await Promise.all(updatePromises);
 
@@ -108,85 +107,22 @@ export function BuyClient({
     setIsExecuting(true);
 
     try {
-      const supabase = createClient();
-
-      // 1. purchase_records 생성
-      const totalValueAfter = holdings.reduce((s, h) => {
-        const planItem = plan.items.find((p) => p.holding.id === h.id);
-        const addedQty = planItem?.quantity ?? 0;
-        return s + h.current_price * (h.shares + addedQty);
-      }, 0);
-
-      const { data: record, error: recordError } = await supabase
-        .from("purchase_records")
-        .insert({
-          user_id: userId,
-          date: new Date().toISOString().split("T")[0],
-          total_spent: plan.totalCost,
-          total_value_after: totalValueAfter,
-        })
-        .select("id")
-        .single();
-
-      if (recordError) throw recordError;
-
-      // 2. purchase_items 생성
+      const date = new Date().toISOString().split("T")[0];
       const items = buyItems.map((item) => ({
-        record_id: record.id,
-        holding_id: item.holding.id,
+        holdingId: item.holding.id,
         code: item.holding.code,
         name: item.holding.name,
         quantity: item.quantity,
-        price_at_purchase: item.holding.current_price,
+        price: item.holding.current_price,
         cost: item.cost,
       }));
 
-      const { error: itemsError } = await supabase
-        .from("purchase_items")
-        .insert(items);
-
-      if (itemsError) throw itemsError;
-
-      // 3. holdings shares 업데이트 + cost_basis upsert (병렬)
-      const updatePromises = buyItems.map(async (item) => {
-        // holdings shares 업데이트
-        const { error: holdingError } = await supabase
-          .from("holdings")
-          .update({ shares: item.holding.shares + item.quantity })
-          .eq("id", item.holding.id);
-
-        if (holdingError) throw holdingError;
-
-        // cost_basis upsert
-        const existingCb = initialCostBases.find(
-          (cb) => cb.holding_id === item.holding.id
-        );
-
-        if (existingCb) {
-          const { error: cbError } = await supabase
-            .from("cost_basis")
-            .update({
-              total_cost: existingCb.total_cost + item.cost,
-              total_shares: existingCb.total_shares + item.quantity,
-            })
-            .eq("id", existingCb.id);
-
-          if (cbError) throw cbError;
-        } else {
-          const { error: cbError } = await supabase
-            .from("cost_basis")
-            .insert({
-              user_id: userId,
-              holding_id: item.holding.id,
-              total_cost: item.cost,
-              total_shares: item.quantity,
-            });
-
-          if (cbError) throw cbError;
-        }
+      const res = await fetch("/api/purchases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, items, totalSpent: plan.totalCost }),
       });
-
-      await Promise.all(updatePromises);
+      if (!res.ok) throw new Error("매수 실행 실패");
 
       setSuccessMessage(
         `${buyItems.length}개 종목, 총 ${formatFullKRW(plan.totalCost)} 매수 완료!`

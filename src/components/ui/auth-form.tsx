@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 
 const SAVED_EMAIL_KEY = "pension-manager-saved-email";
 
@@ -49,19 +48,21 @@ export function AuthForm({ mode }: AuthFormProps) {
     setError("");
     setLoading(true);
 
-    const supabase = createClient();
+    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/signup";
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      setError(data.error ?? "오류가 발생했습니다.");
+      setLoading(false);
+      return;
+    }
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError(getErrorMessage(error.message));
-        setLoading(false);
-        return;
-      }
-      // 아이디 저장
       if (rememberEmail) {
         localStorage.setItem(SAVED_EMAIL_KEY, email);
       } else {
@@ -69,28 +70,9 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
       router.push("/dashboard");
     } else {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) {
-        setError(getErrorMessage(error.message));
-        setLoading(false);
-        return;
-      }
       setSuccess(true);
       setLoading(false);
     }
-  };
-
-  const handleSocialLogin = async (provider: "kakao" | "google") => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
   };
 
   if (success) {
@@ -99,20 +81,13 @@ export function AuthForm({ mode }: AuthFormProps) {
         <div className="w-full max-w-sm text-center space-y-4">
           <div className="mx-auto w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center">
             <svg className="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold">이메일을 확인해주세요</h2>
-          <p className="text-sm text-zinc-500">
-            <span className="font-medium text-foreground">{email}</span>
-            <br />
-            으로 인증 링크를 보냈습니다.
-          </p>
-          <Link
-            href="/login"
-            className="inline-block text-sm font-medium text-indigo-500 hover:text-indigo-600"
-          >
-            로그인으로 돌아가기
+          <h2 className="text-xl font-bold">가입 완료</h2>
+          <p className="text-sm text-zinc-500">계정이 생성되었습니다. 로그인해주세요.</p>
+          <Link href="/login" className="inline-block text-sm font-medium text-indigo-500 hover:text-indigo-600">
+            로그인으로 이동
           </Link>
         </div>
       </div>

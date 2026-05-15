@@ -1,28 +1,26 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 매수 계획 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getHoldings, getCostBases, getProfile } from "@/lib/queries";
 import { BuyClient } from "./buy-client";
+import type { Holding, CostBasis } from "@/types";
 
 export default async function BuyPlanPage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
-
-  const [holdingsRes, costBasisRes, profileRes] = await Promise.all([
-    supabase
-      .from("holdings")
-      .select("*")
-      .eq("user_id", userId)
-      .order("target_pct", { ascending: false }),
-    supabase.from("cost_basis").select("*").eq("user_id", userId),
-    supabase.from("profiles").select("monthly_budget").eq("id", userId).single(),
+  const [holdings, costBases, profile] = await Promise.all([
+    getHoldings(userId),
+    getCostBases(userId),
+    getProfile(userId),
   ]);
 
   return (
     <BuyClient
-      initialHoldings={holdingsRes.data ?? []}
-      initialCostBases={costBasisRes.data ?? []}
-      defaultBudget={profileRes.data?.monthly_budget ?? 300000}
+      initialHoldings={holdings as unknown as Holding[]}
+      initialCostBases={costBases as unknown as CostBasis[]}
+      defaultBudget={(profile as any)?.monthly_budget ?? 300000}
       userId={userId}
     />
   );

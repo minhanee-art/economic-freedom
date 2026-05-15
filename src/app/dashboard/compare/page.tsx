@@ -1,17 +1,16 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 포트폴리오 비교 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getHoldings } from "@/lib/queries";
 import { CompareClient } from "./compare-client";
+import type { Holding } from "@/types";
 
 export default async function ComparePage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("holdings")
-    .select("*")
-    .eq("user_id", userId)
-    .order("target_pct", { ascending: false });
+  const holdings = await getHoldings(userId);
 
-  return <CompareClient holdings={data ?? []} />;
+  return <CompareClient holdings={holdings as unknown as Holding[]} />;
 }

@@ -1,26 +1,24 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 설정 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getProfile, getHoldings } from "@/lib/queries";
 import { SettingsClient } from "./settings-client";
+import type { Holding } from "@/types";
 
 export default async function SettingsPage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
-
-  const [profileRes, holdingsRes] = await Promise.all([
-    supabase.from("profiles").select("*").eq("id", userId).single(),
-    supabase
-      .from("holdings")
-      .select("*")
-      .eq("user_id", userId)
-      .order("target_pct", { ascending: false }),
+  const [profile, holdings] = await Promise.all([
+    getProfile(userId),
+    getHoldings(userId),
   ]);
 
   return (
     <SettingsClient
-      profile={profileRes.data}
-      holdings={holdingsRes.data ?? []}
+      profile={profile as any}
+      holdings={holdings as unknown as Holding[]}
       userId={userId}
     />
   );

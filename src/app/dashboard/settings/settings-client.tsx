@@ -2,7 +2,6 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { formatFullKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
@@ -42,20 +41,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
 
   // 프로필 저장
   const saveProfile = async () => {
-    const supabase = createClient();
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        display_name: displayName || null,
-        monthly_budget: monthlyBudget,
-      })
-      .eq("id", userId);
-
-    if (error) {
-      alert(`저장 실패: ${error.message}`);
-    } else {
-      flash("프로필 저장됨");
-    }
+    const res = await fetch("/api/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ monthlyBudget }),
+    });
+    if (!res.ok) { alert("저장 실패"); } else { flash("프로필 저장됨"); }
   };
 
   // 종목 필드 debounce 저장
@@ -76,13 +67,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
       debounceTimers.current.set(
         key,
         setTimeout(async () => {
-          const supabase = createClient();
-          const { error } = await supabase
-            .from("holdings")
-            .update({ [field]: value })
-            .eq("id", id);
-
-          if (!error) flash("자동 저장됨");
+          await fetch("/api/holdings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id, [field]: value }),
+          });
+          flash("자동 저장됨");
           debounceTimers.current.delete(key);
         }, 500)
       );
@@ -96,23 +86,18 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
     setIsAdding(true);
 
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from("holdings")
-        .insert({
-          user_id: userId,
-          code: newCode,
-          name: newName,
-          category: newCategory,
+      const res = await fetch("/api/holdings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: newCode, name: newName, category: newCategory,
           sub_category: newSubCategory,
           current_price: parseInt(newPrice.replace(/[^0-9]/g, "")) || 0,
           target_pct: 0,
-        })
-        .select("*")
-        .single();
-
-      if (error) throw error;
-
+        }),
+      });
+      if (!res.ok) throw new Error("추가 실패");
+      const data = await res.json();
       setHoldings([...holdings, data]);
       setNewCode("");
       setNewName("");
@@ -133,11 +118,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
     if (!h || h.shares > 0) return;
     if (!confirm(`"${h.name}"을(를) 삭제하시겠습니까?`)) return;
 
-    const supabase = createClient();
-    const { error } = await supabase.from("holdings").delete().eq("id", id);
-    if (error) {
-      alert(`삭제 실패: ${error.message}`);
-    } else {
+    const res = await fetch("/api/holdings", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (!res.ok) { alert("삭제 실패"); } else {
       setHoldings(holdings.filter((h) => h.id !== id));
       flash("종목 삭제됨");
     }
@@ -149,55 +135,19 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
     setIsDeleting(true);
 
     try {
-      const supabase = createClient();
-
       if (dangerModal === "purchases") {
-        // purchase_items는 cascade로 삭제됨
-        const { error } = await supabase
-          .from("purchase_records")
-          .delete()
-          .eq("user_id", userId);
-        if (error) throw error;
-        // cost_basis도 초기화
-        await supabase.from("cost_basis").delete().eq("user_id", userId);
-        // holdings shares 초기화
-        await supabase
-          .from("holdings")
-          .update({ shares: 0 })
-          .eq("user_id", userId);
+        await fetch("/api/danger/purchases", { method: "DELETE" });
         flash("매수 기록 전체 삭제됨");
         router.refresh();
       } else if (dangerModal === "dividends") {
-        const { error } = await supabase
-          .from("dividends")
-          .delete()
-          .eq("user_id", userId);
-        if (error) throw error;
+        await fetch("/api/danger/dividends", { method: "DELETE" });
         flash("배당 기록 전체 삭제됨");
       } else if (dangerModal === "reset") {
-        // 기존 종목 전체 삭제
-        await supabase.from("holdings").delete().eq("user_id", userId);
-        // 기본 종목 재생성
-        const { DEFAULT_HOLDINGS } = await import("@/lib/constants");
-        const defaults = DEFAULT_HOLDINGS.map((h) => ({
-          user_id: userId,
-          code: h.code,
-          name: h.name,
-          category: h.category,
-          sub_category: h.sub_category,
-          current_price: h.current_price,
-          target_pct: h.target_pct,
-        }));
-        const { error: insertErr } = await supabase
-          .from("holdings")
-          .insert(defaults);
-        if (insertErr) throw insertErr;
-        // cost_basis도 초기화
-        await supabase.from("cost_basis").delete().eq("user_id", userId);
+        await fetch("/api/settings", { method: "DELETE" });
         flash("종목 초기화 완료");
         router.refresh();
       } else if (dangerModal === "account") {
-        await supabase.auth.signOut();
+        await fetch("/api/auth/logout", { method: "POST" });
         router.push("/");
       }
     } catch (err) {
@@ -214,8 +164,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
   };
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
+    await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
 

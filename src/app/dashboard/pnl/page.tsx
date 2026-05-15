@@ -1,39 +1,33 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 손익 분석 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getHoldings, getCostBases, getDividends } from "@/lib/queries";
+import { sql } from "@/lib/db";
 import { PnLClient } from "./pnl-client";
+import type { Holding, CostBasis } from "@/types";
 
 export default async function PnLPage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
+  const [holdings, costBases, purchaseRecords, dividends] = await Promise.all([
+    getHoldings(userId),
+    getCostBases(userId),
+    sql`SELECT * FROM purchase_records WHERE user_id = ${userId} ORDER BY date ASC`,
+    getDividends(userId),
+  ]);
 
-  const [holdingsRes, costBasisRes, recordsRes, dividendsRes] =
-    await Promise.all([
-      supabase
-        .from("holdings")
-        .select("*")
-        .eq("user_id", userId)
-        .order("target_pct", { ascending: false }),
-      supabase.from("cost_basis").select("*").eq("user_id", userId),
-      supabase
-        .from("purchase_records")
-        .select("*")
-        .eq("user_id", userId)
-        .order("date", { ascending: true }),
-      supabase.from("dividends").select("amount").eq("user_id", userId),
-    ]);
-
-  const totalDividend = (dividendsRes.data ?? []).reduce(
-    (sum: number, d: { amount: number }) => sum + d.amount,
+  const totalDividend = (dividends as any[]).reduce(
+    (s: number, d: any) => s + Number(d.amount),
     0
   );
 
   return (
     <PnLClient
-      holdings={holdingsRes.data ?? []}
-      costBases={costBasisRes.data ?? []}
-      purchaseRecords={recordsRes.data ?? []}
+      holdings={holdings as unknown as Holding[]}
+      costBases={costBases as unknown as CostBasis[]}
+      purchaseRecords={purchaseRecords as any[]}
       totalDividend={totalDividend}
     />
   );

@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis, HoldingWithPnL } from "@/types";
 import { usePortfolioStore } from "@/stores/portfolio-store";
-import { createClient } from "@/lib/supabase/client";
 import { SummaryHeader } from "@/components/portfolio/summary-header";
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
 import { HoldingCard } from "@/components/portfolio/holding-card";
@@ -107,28 +106,19 @@ export function DashboardClient({
       }
 
       // DB 일괄 업데이트
-      const supabase = createClient();
       const updatePromises = holdings
         .filter((h) => prices[h.code] && prices[h.code] !== h.current_price)
         .map((h) =>
-          supabase
-            .from("holdings")
-            .update({ current_price: prices[h.code] })
-            .eq("id", h.id)
+          fetch("/api/holdings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: h.id, current_price: prices[h.code] }),
+          })
         );
-
       await Promise.all(updatePromises);
 
       // last_price_update 저장
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from("profiles")
-          .update({ last_price_update: new Date().toISOString() })
-          .eq("id", user.id);
-      }
+      await fetch("/api/settings/price-update", { method: "POST" });
 
       // 로컬 state 갱신
       const updatedHoldings = holdings.map((h) =>

@@ -1,32 +1,27 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 매수 이력 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getPurchaseRecords, getPurchaseRecordsCount, getHoldings } from "@/lib/queries";
 import { HistoryClient } from "./history-client";
+import type { Holding } from "@/types";
 
 export default async function HistoryPage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
-
-  const [recordsRes, holdingsRes] = await Promise.all([
-    supabase
-      .from("purchase_records")
-      .select("*, purchase_items(*)", { count: "exact" })
-      .eq("user_id", userId)
-      .order("date", { ascending: false })
-      .range(0, 19),
-    supabase
-      .from("holdings")
-      .select("*")
-      .eq("user_id", userId),
+  const [initialRecords, totalCount, holdings] = await Promise.all([
+    getPurchaseRecords(userId, 20, 0),
+    getPurchaseRecordsCount(userId),
+    getHoldings(userId),
   ]);
 
   return (
     <HistoryClient
-      initialRecords={recordsRes.data ?? []}
-      totalCount={recordsRes.count ?? 0}
+      initialRecords={initialRecords as any[]}
+      totalCount={totalCount as number}
       userId={userId}
-      holdings={holdingsRes.data ?? []}
+      holdings={holdings as unknown as Holding[]}
     />
   );
 }

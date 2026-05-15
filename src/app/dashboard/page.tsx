@@ -1,42 +1,34 @@
-import { createClient } from "@/lib/supabase/server";
-import { getUserId } from "@/lib/supabase/auth";
+// 대시보드 서버 컴포넌트
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { getHoldings, getCostBases, getProfile, getDividends } from "@/lib/queries";
 import { DashboardClient } from "./dashboard-client";
-import type { Holding, CostBasis, Profile } from "@/types";
+import type { Holding, CostBasis } from "@/types";
 
 export default async function DashboardPage() {
-  const userId = await getUserId();
-  if (!userId) return null;
+  const session = await getSession();
+  if (!session) redirect("/login");
+  const userId = session.userId;
 
-  const supabase = await createClient();
+  const [holdings, costBases, profile, dividends] = await Promise.all([
+    getHoldings(userId),
+    getCostBases(userId),
+    getProfile(userId),
+    getDividends(userId),
+  ]);
 
-  const [holdingsRes, costBasisRes, profileRes, dividendsRes] =
-    await Promise.all([
-      supabase
-        .from("holdings")
-        .select("*")
-        .eq("user_id", userId)
-        .order("target_pct", { ascending: false }),
-      supabase.from("cost_basis").select("*").eq("user_id", userId),
-      supabase.from("profiles").select("*").eq("id", userId).single(),
-      supabase.from("dividends").select("amount").eq("user_id", userId),
-    ]);
-
-  const holdings: Holding[] = holdingsRes.data ?? [];
-  const costBases: CostBasis[] = costBasisRes.data ?? [];
-  const profile: Profile | null = profileRes.data;
-  const totalDividend =
-    (dividendsRes.data ?? []).reduce(
-      (sum: number, d: { amount: number }) => sum + d.amount,
-      0
-    );
+  const totalDividend = (dividends as any[]).reduce(
+    (s: number, d: any) => s + Number(d.amount),
+    0
+  );
 
   return (
     <DashboardClient
-      initialHoldings={holdings}
-      initialCostBases={costBases}
-      monthlyBudget={profile?.monthly_budget ?? 300000}
+      initialHoldings={holdings as unknown as Holding[]}
+      initialCostBases={costBases as unknown as CostBasis[]}
+      monthlyBudget={(profile as any)?.monthly_budget ?? 300000}
       totalDividend={totalDividend}
-      lastPriceUpdate={profile?.last_price_update ?? null}
+      lastPriceUpdate={(profile as any)?.last_price_update ?? null}
     />
   );
 }

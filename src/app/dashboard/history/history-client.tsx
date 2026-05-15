@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
 import { ImportClient } from "./import-client";
@@ -34,18 +33,10 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   const loadMore = async () => {
     setIsLoadingMore(true);
     try {
-      const supabase = createClient();
-      const from = records.length;
-      const { data } = await supabase
-        .from("purchase_records")
-        .select("*, purchase_items(*)")
-        .eq("user_id", userId)
-        .order("date", { ascending: false })
-        .range(from, from + PAGE_SIZE - 1);
-
-      if (data) {
-        setRecords([...records, ...data]);
-      }
+      const offset = records.length;
+      const res = await fetch(`/api/purchases?offset=${offset}&limit=${PAGE_SIZE}`);
+      const { records: more } = await res.json();
+      if (more) setRecords([...records, ...more]);
     } finally {
       setIsLoadingMore(false);
     }

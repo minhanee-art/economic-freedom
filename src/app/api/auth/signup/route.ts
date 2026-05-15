@@ -34,8 +34,8 @@ export async function POST(request: Request) {
 
   // 기본 프로필 생성
   await sql`
-    INSERT INTO profiles (id, monthly_budget)
-    VALUES (${user.id}, 300000)
+    INSERT INTO profiles (id, email, monthly_budget)
+    VALUES (${user.id}, ${email}, 300000)
     ON CONFLICT DO NOTHING
   `;
 

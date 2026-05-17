@@ -34,34 +34,40 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
 
   const holdingMap = new Map(holdings.map((h) => [h.code, h]));
 
-  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     setError("");
     setParsedRows([]);
 
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      try {
-        const text = ev.target?.result as string;
-        // HTML(xls) 파일인지 CSV인지 판별
-        const rows = text.trimStart().startsWith("<")
-          ? parseHTMLTable(text)
-          : parseCSV(text);
-        if (rows.length === 0) {
-          setError("거래 내역을 찾을 수 없습니다. 파일 형식을 확인해주세요.");
-          return;
-        }
-        setParsedRows(rows);
-      } catch (err) {
-        setError(`파일 파싱 실패: ${(err as Error).message}`);
+    try {
+      let rows: ParsedRow[];
+
+      if (file.name.toLowerCase().endsWith(".xlsx")) {
+        const buffer = await file.arrayBuffer();
+        rows = await parseXLSX(buffer);
+      } else {
+        rows = await new Promise<ParsedRow[]>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            try {
+              const text = ev.target?.result as string;
+              resolve(text.trimStart().startsWith("<") ? parseHTMLTable(text) : parseCSV(text));
+            } catch (err) { reject(err); }
+          };
+          reader.onerror = () => reject(new Error("파일 읽기 실패"));
+          reader.readAsText(file, file.name.endsWith(".xls") ? "UTF-8" : "EUC-KR");
+        });
       }
-    };
-    // xls(HTML) 또는 CSV 판별
-    const isXLS =
-      file.name.endsWith(".xls") || file.name.endsWith(".xlsx");
-    reader.readAsText(file, isXLS ? "UTF-8" : "EUC-KR");
+
+      if (rows.length === 0) {
+        setError("거래 내역을 찾을 수 없습니다. 파일 형식을 확인해주세요.");
+        return;
+      }
+      setParsedRows(rows);
+    } catch (err) {
+      setError(`파일 파싱 실패: ${(err as Error).message}`);
+    }
   };
 
   const buyRows = parsedRows.filter((r) => r.type === "매수");
@@ -169,7 +175,7 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
             onClick={() => fileRef.current?.click()}
             className="w-full h-11 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-500 hover:border-indigo-500 hover:text-indigo-500 transition-colors"
           >
-            CSV 파일 선택
+            파일 선택 (CSV / XLSX)
           </button>
 
           {/* 중복 필터 토글 */}
@@ -268,6 +274,91 @@ export function ImportClient({ holdings, userId, onClose }: Props) {
       </div>
     </div>
   );
+}
+
+// 종목명 키워드 → 종목코드 매핑 (HTML xls, XLSX 공용)
+const NAME_CODE_MAP: Record<string, string> = {
+  "TIGER200": "102110",
+  "TIGER골드선물": "319640",
+  "TIGER나스닥100": "133690",
+  "TIGER미국채10년선물": "305080",
+  "TIGERMSCI": "182480",
+  "TIGER미국MSCI리츠": "182480",
+  "TIGER미국배당": "458730",
+  "TIGER필라델피아": "497570",
+  "필라델피아AI반도체": "497570",
+  "KODEXMSCI": "251350",
+  "KODEXWTI": "261220",
+  "KODEX인도": "453810",
+  "KODEX코스피100": "237350",
+  "KODEX은선물": "144600",
+  "KODEX단기채권": "153130",
+  "KODEX200": "069500",
+  "KODEX레버리지": "122630",
+  "KODEX인버스": "114800",
+  "ACE코스피": "305050",
+  "ACE코스닥": "354500",
+  "ACE싱가포르": "316300",
+  "ACE테슬라": "457480",
+  "PLUS고배당": "161510",
+  "KINDEX": "354350",
+  "ARIRANG": "195980",
+};
+
+function matchFundCode(name: string): string {
+  const n = name.replace(/\s/g, "");
+  for (const [key, code] of Object.entries(NAME_CODE_MAP)) {
+    if (n.includes(key)) return code;
+  }
+  return "";
+}
+
+/** XLSX 파싱 — 미래에셋 거래내역 xlsx 형식 지원 */
+async function parseXLSX(buffer: ArrayBuffer): Promise<ParsedRow[]> {
+  const XLSX = await import("xlsx");
+  const wb = XLSX.read(new Uint8Array(buffer), { type: "array" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const raw = XLSX.utils.sheet_to_json<(string | number | null)[]>(ws, { header: 1, defval: null });
+
+  // 헤더 행 찾기 (거래일자 포함)
+  const headerIdx = raw.findIndex((r) =>
+    r.some((c) => typeof c === "string" && c.includes("거래일자"))
+  );
+  if (headerIdx === -1) throw new Error("헤더를 찾을 수 없습니다. 미래에셋 거래내역 XLSX인지 확인해 주세요.");
+
+  const rows: ParsedRow[] = [];
+  for (let i = headerIdx + 1; i < raw.length; i++) {
+    const r = raw[i];
+    if (!r || r.every((c) => c === null)) continue;
+
+    const dateStr = String(r[0] ?? "");
+    const tradeType = String(r[1] ?? "");
+    const fundName = String(r[2] ?? "");
+    const qty = Math.round(Number(r[3] ?? 0));
+    const amount = Math.round(Number(r[4] ?? 0));
+    const fee = Math.round(Number(r[6] ?? 0));
+
+    const date = normalizeDate(dateStr);
+    if (!date) continue;
+
+    // 거래 종류 변환 — 관심 없는 종류는 null 반환
+    let type: string | null = null;
+    if (tradeType.includes("매수")) type = "매수";
+    else if (tradeType.includes("매도")) type = "매도";
+    else if (tradeType.includes("분배금") || tradeType.includes("배당")) type = "배당";
+    if (!type) continue;
+
+    if (type !== "배당" && qty <= 0) continue;
+    if (amount <= 0) continue;
+
+    const price = qty > 0 ? Math.round(amount / qty) : 0;
+    const code = matchFundCode(fundName);
+    const shortName = fundName.length > 30 ? fundName.slice(0, 30) + "…" : fundName;
+
+    rows.push({ date, code, name: shortName, type, quantity: qty, price, amount, fee, tax: 0 });
+  }
+
+  return rows;
 }
 
 /** CSV 파싱 — 미래에셋 및 일반 CSV 형식 지원 */
@@ -420,42 +511,6 @@ function parseHTMLTable(html: string): ParsedRow[] {
     }
   }
 
-  // 종목명 → 종목코드 매핑 (미래에셋 xls는 종목코드가 없음)
-  const NAME_CODE_MAP: Record<string, string> = {
-    "TIGER200": "102110",
-    "TIGER골드선물": "319640",
-    "TIGER나스닥100": "133690",
-    "TIGER미국채10년선물": "305080",
-    "TIGERMSCI": "182480",
-    "TIGER미국MSCI리츠": "182480",
-    "KODEXMSCI": "251350",
-    "KODEXWTI": "261220",
-    "KINDEX": "354350",
-    "ARIRANG": "195980",
-    "ACE코스피": "305050",
-    "ACE코스닥": "354500",
-    "PLUS고배당": "161510",
-    "TIGER미국배당": "458730",
-    "KODEX인도": "453810",
-    "TIGER필라델피아": "497570",
-    "ACE싱가포르": "316300",
-    "KODEX코스피100": "237350",
-    "ACE테슬라": "457480",
-    "KODEX은선물": "144600",
-    "KODEX단기채권": "153130",
-    "TIGER반도체": "396500",
-    "KODEX200": "069500",
-    "KODEX레버리지": "122630",
-    "KODEX인버스": "114800",
-  };
-
-  function matchCode(name: string): string {
-    const n = name.replace(/\s/g, "");
-    for (const [key, code] of Object.entries(NAME_CODE_MAP)) {
-      if (n.includes(key)) return code;
-    }
-    return "";
-  }
 
   const rows: ParsedRow[] = [];
 
@@ -477,7 +532,7 @@ function parseHTMLTable(html: string): ParsedRow[] {
     if (!date || quantity <= 0) continue;
 
     const type = normalizeType(tradeType);
-    const code = matchCode(name);
+    const code = matchFundCode(name);
 
     rows.push({
       date,

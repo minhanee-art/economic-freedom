@@ -14,7 +14,7 @@ export default async function PnLPage() {
   const [holdings, costBases, purchaseRecords, dividends] = await Promise.all([
     getHoldings(userId),
     getCostBases(userId),
-    sql`SELECT * FROM purchase_records WHERE user_id = ${userId} ORDER BY date ASC`,
+    sql`SELECT id, user_id, total_spent, total_value_after, date::text, created_at::text FROM purchase_records WHERE user_id = ${userId} ORDER BY date ASC`,
     getDividends(userId),
   ]);
 

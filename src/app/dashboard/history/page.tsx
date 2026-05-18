@@ -10,18 +10,29 @@ export default async function HistoryPage() {
   if (!session) redirect("/login");
   const userId = session.userId;
 
-  const [initialRecords, totalCount, holdings] = await Promise.all([
-    getPurchaseRecords(userId, 20, 0),
-    getPurchaseRecordsCount(userId),
-    getHoldings(userId),
-  ]);
+  let initialRecords: any[] = [];
+  let totalCount = 0;
+  let holdings: Holding[] = [];
+
+  try {
+    const [r, c, h] = await Promise.all([
+      getPurchaseRecords(userId, 20, 0),
+      getPurchaseRecordsCount(userId),
+      getHoldings(userId),
+    ]);
+    initialRecords = r as any[];
+    totalCount = c as number;
+    holdings = h as unknown as Holding[];
+  } catch (err) {
+    console.error("[history/page] DB error:", err);
+  }
 
   return (
     <HistoryClient
-      initialRecords={initialRecords as any[]}
-      totalCount={totalCount as number}
+      initialRecords={initialRecords}
+      totalCount={totalCount}
       userId={userId}
-      holdings={holdings as unknown as Holding[]}
+      holdings={holdings}
     />
   );
 }

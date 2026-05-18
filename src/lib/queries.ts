@@ -4,7 +4,8 @@ import { sql } from "@/lib/db";
 export async function getHoldings(userId: string) {
   return sql`
     SELECT id, user_id, code, name, category, sub_category,
-           current_price, shares, target_pct, expense_ratio,
+           current_price, shares,
+           target_pct::float, expense_ratio::float,
            created_at::text, updated_at::text
     FROM holdings WHERE user_id = ${userId} ORDER BY target_pct DESC
   `;

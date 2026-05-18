@@ -55,6 +55,9 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
               variant="amber"
             />
           )}
+          {h.expense_ratio > 0 && (
+            <Badge label={`총보수 ${h.expense_ratio}%`} variant="default" />
+          )}
         </div>
       </div>
     </div>

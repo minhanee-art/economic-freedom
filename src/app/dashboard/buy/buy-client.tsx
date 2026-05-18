@@ -1,4 +1,4 @@
-// 매수 계획 클라이언트 — 알고리즘 자동 계산 + 종목별 수량 수동 조절
+// 매수 계획 클라이언트 — 알고리즘 자동 계산 + 종목별 수량 수동 조절 + 수수료 포함 계산
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -30,11 +30,17 @@ export function BuyClient({
   const [isExecuting, setIsExecuting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [priceStatus, setPriceStatus] = useState("");
-  // 종목별 수량 수동 오버라이드 (holdingId → 수량)
   const [quantityOverrides, setQuantityOverrides] = useState<Record<string, number>>({});
+  // 증권사 수수료율 (%) — localStorage 유지
+  const [feeRatePct, setFeeRatePct] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("pension_fee_rate_pct");
+      return saved !== null ? Number(saved) : 0.014;
+    }
+    return 0.014;
+  });
   const router = useRouter();
 
-  // 예산 변경 시 오버라이드 초기화
   useEffect(() => {
     setQuantityOverrides({});
   }, [budget]);
@@ -93,7 +99,6 @@ export function BuyClient({
     [holdings, initialCostBases, budget]
   );
 
-  // 오버라이드 적용 후 실효 항목 목록
   const effectiveItems = useMemo(() => {
     return plan.items.map((item) => {
       const qty = quantityOverrides[item.holding.id] ?? item.quantity;
@@ -101,16 +106,19 @@ export function BuyClient({
     });
   }, [plan.items, quantityOverrides]);
 
-  const effectiveTotalCost = effectiveItems.reduce((s, i) => s + i.cost, 0);
-  const effectiveRemaining = budget - effectiveTotalCost;
-  const buyItems = effectiveItems.filter((item) => item.quantity > 0);
-
-  // 알고리즘 추천 수량 맵 (복원 버튼용)
   const algorithmQtyMap = useMemo(() => {
     const m: Record<string, number> = {};
     plan.items.forEach((i) => { m[i.holding.id] = i.quantity; });
     return m;
   }, [plan.items]);
+
+  // 수수료 계산
+  const feeRate = feeRatePct / 100;
+  const effectiveTotalCost = effectiveItems.reduce((s, i) => s + i.cost, 0);
+  const feeAmount = Math.round(effectiveTotalCost * feeRate);
+  const totalWithFee = effectiveTotalCost + feeAmount;
+  const effectiveRemaining = budget - totalWithFee;
+  const buyItems = effectiveItems.filter((item) => item.quantity > 0);
 
   function handleQuantityChange(holdingId: string, qty: number) {
     setQuantityOverrides((prev) => ({ ...prev, [holdingId]: Math.max(0, qty) }));
@@ -121,6 +129,12 @@ export function BuyClient({
     const num = parseInt(cleaned) || 0;
     setInputValue(num > 0 ? num.toLocaleString() : "");
     setBudget(num);
+  };
+
+  const handleFeeRateChange = (value: string) => {
+    const num = Math.max(0, Math.min(5, Number(value) || 0));
+    setFeeRatePct(num);
+    localStorage.setItem("pension_fee_rate_pct", String(num));
   };
 
   const handleQuickAmount = (amount: number) => {
@@ -134,24 +148,25 @@ export function BuyClient({
 
     try {
       const date = new Date().toISOString().split("T")[0];
+      // 수수료를 각 종목 cost에 비례 배분
       const items = buyItems.map((item) => ({
         holdingId: item.holding.id,
         code: item.holding.code,
         name: item.holding.name,
         quantity: item.quantity,
         price: item.holding.current_price,
-        cost: item.cost,
+        cost: Math.round(item.cost * (1 + feeRate)), // 수수료 포함 단가 기반 원가
       }));
 
       const res = await fetch("/api/purchases", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, items, totalSpent: effectiveTotalCost }),
+        body: JSON.stringify({ date, items, totalSpent: totalWithFee }),
       });
       if (!res.ok) throw new Error("매수 실행 실패");
 
       setSuccessMessage(
-        `${buyItems.length}개 종목, 총 ${formatFullKRW(effectiveTotalCost)} 매수 완료!`
+        `${buyItems.length}개 종목, 총 ${formatFullKRW(totalWithFee)} 매수 완료! (수수료 ${formatFullKRW(feeAmount)} 포함)`
       );
       setShowConfirm(false);
 
@@ -188,7 +203,7 @@ export function BuyClient({
         </div>
       )}
 
-      {/* 금액 입력 */}
+      {/* 투자금액 + 수수료 설정 */}
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
         <h2 className="text-lg font-bold">이번 달 투자금액</h2>
         <div className="relative">
@@ -217,6 +232,24 @@ export function BuyClient({
             </button>
           ))}
         </div>
+
+        {/* 수수료율 설정 */}
+        <div className="flex items-center gap-2 pt-1 border-t border-zinc-100 dark:border-zinc-800">
+          <span className="text-xs text-zinc-500 shrink-0">증권사 수수료</span>
+          <input
+            type="number"
+            value={feeRatePct}
+            onChange={(e) => handleFeeRateChange(e.target.value)}
+            step="0.001"
+            min="0"
+            max="5"
+            className="w-20 text-right text-sm px-2 py-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <span className="text-xs text-zinc-500">%</span>
+          <span className="text-xs text-zinc-400 ml-1">
+            (0.014% = IRP 일반 / 0% = 수수료 무료 증권사)
+          </span>
+        </div>
       </div>
 
       {/* 매수 계획 카드 리스트 */}
@@ -241,12 +274,22 @@ export function BuyClient({
       {/* 하단 요약 + 확정 버튼 */}
       {buyItems.length > 0 && (
         <div
-          className="rounded-xl px-5 py-4 text-white space-y-4"
+          className="rounded-xl px-5 py-4 text-white space-y-2"
           style={{ background: "linear-gradient(135deg, #1a1f36 0%, #2d3250 100%)" }}
         >
           <div className="flex justify-between text-sm">
-            <span className="text-zinc-400">총 매수금액</span>
-            <span className="font-bold text-lg">{formatFullKRW(effectiveTotalCost)}</span>
+            <span className="text-zinc-400">순 매수금액</span>
+            <span>{formatFullKRW(effectiveTotalCost)}</span>
+          </div>
+          {feeRatePct > 0 && (
+            <div className="flex justify-between text-sm">
+              <span className="text-zinc-400">수수료 ({feeRatePct}%)</span>
+              <span className="text-zinc-300">{formatFullKRW(feeAmount)}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm border-t border-white/10 pt-2">
+            <span className="text-zinc-200 font-medium">총 지출 (수수료 포함)</span>
+            <span className="font-bold text-lg">{formatFullKRW(totalWithFee)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-zinc-400">잔여금액</span>
@@ -256,7 +299,7 @@ export function BuyClient({
           </div>
           <button
             onClick={() => setShowConfirm(true)}
-            className="w-full h-12 rounded-xl font-semibold text-white transition-opacity hover:opacity-90"
+            className="w-full h-12 rounded-xl font-semibold text-white transition-opacity hover:opacity-90 mt-2"
             style={{ background: "linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)" }}
           >
             매수 확정 &amp; 기록 저장
@@ -276,12 +319,20 @@ export function BuyClient({
                   className="flex justify-between text-zinc-600 dark:text-zinc-400"
                 >
                   <span>{item.holding.name}</span>
-                  <span>{item.quantity}주 · {formatFullKRW(item.cost)}</span>
+                  <span>{item.quantity}주 · {formatFullKRW(Math.round(item.cost * (1 + feeRate)))}</span>
                 </div>
               ))}
-              <div className="border-t border-zinc-200 dark:border-zinc-700 pt-2 flex justify-between font-semibold text-foreground">
-                <span>합계</span>
-                <span>{formatFullKRW(effectiveTotalCost)}</span>
+              <div className="border-t border-zinc-200 dark:border-zinc-700 pt-2 space-y-1">
+                {feeRatePct > 0 && (
+                  <div className="flex justify-between text-xs text-zinc-400">
+                    <span>수수료 ({feeRatePct}%)</span>
+                    <span>{formatFullKRW(feeAmount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-semibold text-foreground">
+                  <span>총 지출</span>
+                  <span>{formatFullKRW(totalWithFee)}</span>
+                </div>
               </div>
             </div>
             <div className="flex gap-2">

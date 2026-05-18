@@ -4,7 +4,7 @@ import { sql } from "@/lib/db";
 export async function getHoldings(userId: string) {
   return sql`
     SELECT id, user_id, code, name, category, sub_category,
-           current_price, shares, target_pct,
+           current_price, shares, target_pct, expense_ratio,
            created_at::text, updated_at::text
     FROM holdings WHERE user_id = ${userId} ORDER BY target_pct DESC
   `;
@@ -13,7 +13,7 @@ export async function getHoldings(userId: string) {
 export async function getCostBases(userId: string) {
   return sql`
     SELECT id, user_id, holding_id, total_cost, total_shares,
-           created_at::text
+           updated_at::text
     FROM cost_basis WHERE user_id = ${userId}
   `;
 }
@@ -21,7 +21,7 @@ export async function getCostBases(userId: string) {
 export async function getProfile(userId: string) {
   const [row] = await sql`
     SELECT id, email, display_name, monthly_budget,
-           last_price_update::text, created_at::text, updated_at::text
+           last_price_update::text, created_at::text
     FROM profiles WHERE id = ${userId}
   `;
   return row ?? null;

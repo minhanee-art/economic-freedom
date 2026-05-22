@@ -231,7 +231,7 @@ export function DashboardClient({
         isRefreshing={isRefreshing}
       />
 
-      <RebalanceAlert holdings={holdingsWithPnL} />
+      <RebalanceAlert holdings={holdingsWithPnL} categoryData={barData} />
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

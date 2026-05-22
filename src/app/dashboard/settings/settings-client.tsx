@@ -6,6 +6,10 @@ import { formatFullKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import type { Profile, Holding } from "@/types";
+import { useTheme, type Theme } from "@/lib/theme";
+import { useMemo } from "react";
+
+type HoldingGroupBy = "none" | "category" | "sub_category";
 
 interface Props {
   profile: Profile | null;
@@ -36,7 +40,28 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
   const [newPrice, setNewPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
 
+  const { theme, setTheme } = useTheme();
+  const [holdingGroupBy, setHoldingGroupBy] = useState<HoldingGroupBy>("none");
   const totalTargetPct = holdings.reduce((s, h) => s + Number(h.target_pct), 0);
+
+  const holdingGroups = useMemo(() => {
+    if (holdingGroupBy === "none") {
+      return [{ label: "", categoryKey: "", totalPct: 0, items: holdings }];
+    }
+    const key = holdingGroupBy === "category" ? "category" : "sub_category";
+    const map = new Map<string, Holding[]>();
+    for (const h of holdings) {
+      const k = String(h[key] || "기타");
+      if (!map.has(k)) map.set(k, []);
+      map.get(k)!.push(h);
+    }
+    return Array.from(map.entries()).map(([label, items]) => ({
+      label,
+      categoryKey: holdingGroupBy === "category" ? label : (items[0]?.category ?? ""),
+      totalPct: items.reduce((s, h) => s + Number(h.target_pct), 0),
+      items,
+    }));
+  }, [holdings, holdingGroupBy]);
   const isTarget100 = Math.abs(totalTargetPct - 100) < 0.01;
 
   // 프로필 저장
@@ -243,16 +268,40 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
 
       {/* 종목 관리 */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-sm font-semibold">
             종목 관리 ({holdings.length})
           </h3>
-          <button
-            onClick={() => setShowAdd(!showAdd)}
-            className="text-xs text-indigo-500 hover:text-indigo-600 font-medium"
-          >
-            {showAdd ? "닫기" : "+ 새 종목"}
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-xs">
+              {(
+                [
+                  { value: "none", label: "전체" },
+                  { value: "category", label: "자산군" },
+                  { value: "sub_category", label: "세부테마" },
+                ] as { value: HoldingGroupBy; label: string }[]
+              ).map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setHoldingGroupBy(opt.value)}
+                  className={cn(
+                    "px-2.5 py-1.5 transition-colors",
+                    holdingGroupBy === opt.value
+                      ? "bg-indigo-500 text-white"
+                      : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowAdd(!showAdd)}
+              className="text-xs text-indigo-500 hover:text-indigo-600 font-medium"
+            >
+              {showAdd ? "닫기" : "+ 새 종목"}
+            </button>
+          </div>
         </div>
 
         {/* 새 종목 추가 폼 */}
@@ -338,15 +387,63 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
           </div>
         )}
 
-        {/* 종목 카드 리스트 */}
-        <div className="space-y-2">
-          {holdings.map((h) => (
-            <HoldingSettingCard
-              key={h.id}
-              holding={h}
-              onUpdate={updateHolding}
-              onDelete={handleDeleteHolding}
-            />
+        {/* 종목 카드 리스트 — 그룹핑 */}
+        <div className="space-y-4">
+          {holdingGroups.map((group) => (
+            <div key={group.label || "_all"}>
+              {group.label && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className="w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ background: getCategoryColor(group.categoryKey) }}
+                  />
+                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    {group.label}
+                  </span>
+                  <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
+                  <span className="text-xs font-semibold text-zinc-500 tabular-nums">
+                    {group.totalPct.toFixed(1)}%
+                  </span>
+                </div>
+              )}
+              <div className="space-y-2">
+                {group.items.map((h) => (
+                  <HoldingSettingCard
+                    key={h.id}
+                    holding={h}
+                    onUpdate={updateHolding}
+                    onDelete={handleDeleteHolding}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 테마 설정 */}
+      <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+        <h3 className="text-sm font-semibold">테마</h3>
+        <div className="flex gap-2">
+          {(
+            [
+              { value: "light", label: "라이트", icon: "☀️" },
+              { value: "dark", label: "다크", icon: "🌙" },
+              { value: "system", label: "시스템", icon: "💻" },
+            ] as { value: Theme; label: string; icon: string }[]
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setTheme(opt.value)}
+              className={cn(
+                "flex-1 h-10 rounded-lg border text-sm font-medium transition-colors",
+                theme === opt.value
+                  ? "bg-indigo-500 text-white border-indigo-500"
+                  : "border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+              )}
+            >
+              {opt.icon} {opt.label}
+            </button>
           ))}
         </div>
       </section>

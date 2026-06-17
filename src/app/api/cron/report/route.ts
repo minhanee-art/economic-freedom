@@ -17,22 +17,22 @@ export const dynamic = "force-dynamic";
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-/** 대상 유저 id 확인 — REPORT_USER_ID 우선, 없으면 REPORT_USER_EMAIL로 조회 */
+/** 대상 유저 id 확인 — REPORT_USER_ID 우선, 없으면 REPORT_USER_EMAIL로 users 테이블 조회 */
 async function resolveUserId(): Promise<string | null> {
   const directId = process.env.REPORT_USER_ID;
   if (directId) return directId;
 
   const email = process.env.REPORT_USER_EMAIL;
   if (!email) return null;
-  const [row] = await sql`SELECT id FROM profiles WHERE email = ${email}`;
+  const [row] = await sql`SELECT id FROM users WHERE email = ${email}`;
   return (row?.id as string) ?? null;
 }
 
 function buildMessage(
-  profile: Profile,
   holdings: Holding[],
   costBases: CostBasis[],
-  dividends: Dividend[]
+  dividends: Dividend[],
+  monthlyBudget: number
 ): string {
   const withPnL = computeHoldingsWithPnL(holdings, costBases);
   const active = withPnL.filter((h) => h.shares > 0 || h.target_pct > 0);
@@ -42,7 +42,6 @@ function buildMessage(
   const pnl = totalValue - totalCost;
   const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
   const totalDividend = dividends.reduce((s, d) => s + Number(d.amount), 0);
-  const monthlyBudget = profile.monthly_budget ?? 0;
 
   const { categories, categoryAlerts, holdingAlerts } = computeRebalance(active);
 
@@ -122,15 +121,15 @@ async function handle(request: NextRequest) {
     getDividends(userId),
   ]);
 
-  if (!profile) {
-    return NextResponse.json({ error: "프로필 없음" }, { status: 404 });
-  }
+  // profiles 테이블이 비어 있을 수 있음 — 대시보드와 동일하게 기본값 30만 사용
+  const monthlyBudget =
+    (profile as unknown as Profile | null)?.monthly_budget ?? 300000;
 
   const message = buildMessage(
-    profile as unknown as Profile,
     holdings as unknown as Holding[],
     costBases as unknown as CostBasis[],
-    dividends as unknown as Dividend[]
+    dividends as unknown as Dividend[],
+    monthlyBudget
   );
 
   const appUrl = process.env.APP_URL ?? "https://economic-freedom.vercel.app";

@@ -15,8 +15,9 @@ export async function sendTelegramMessage(
   text: string,
   opts: SendMessageOptions = {}
 ): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  // 복붙 시 딸려오는 앞뒤 공백/줄바꿈 제거 (URL 404 방지)
+  const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+  const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
   if (!token || !chatId) {
     throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 환경변수가 없습니다");
   }

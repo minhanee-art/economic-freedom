@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis, HoldingWithPnL } from "@/types";
 import { usePortfolioStore } from "@/stores/portfolio-store";
+import { computeHoldingsWithPnL } from "@/lib/portfolio";
 import { SummaryHeader } from "@/components/portfolio/summary-header";
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
 import { HoldingCard } from "@/components/portfolio/holding-card";
@@ -23,38 +24,6 @@ interface Props {
 
 type GroupBy = "none" | "category" | "sub_category";
 type SortBy = "default" | "weight_desc" | "pnl_desc" | "pnl_asc";
-
-function computeHoldingsWithPnL(
-  holdings: Holding[],
-  costBases: CostBasis[]
-): HoldingWithPnL[] {
-  const cbMap = new Map(costBases.map((cb) => [cb.holding_id, cb]));
-  const totalValue = holdings.reduce(
-    (s, h) => s + h.current_price * h.shares,
-    0
-  );
-
-  return holdings.map((h) => {
-    const cb = cbMap.get(h.id);
-    const currentValue = h.current_price * h.shares;
-    const totalCost = cb?.total_cost ?? 0;
-    const totalShares = cb?.total_shares ?? 0;
-    const avgPrice = totalShares > 0 ? totalCost / totalShares : 0;
-    const profitLoss = currentValue - totalCost;
-    const profitLossPct = totalCost > 0 ? (profitLoss / totalCost) * 100 : 0;
-    const actualPct = totalValue > 0 ? (currentValue / totalValue) * 100 : 0;
-
-    return {
-      ...h,
-      total_cost: totalCost,
-      avg_price: avgPrice,
-      current_value: currentValue,
-      profit_loss: profitLoss,
-      profit_loss_pct: profitLossPct,
-      actual_pct: actualPct,
-    };
-  });
-}
 
 export function DashboardClient({
   initialHoldings,

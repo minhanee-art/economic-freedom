@@ -15,7 +15,6 @@ async function resolveUserId(): Promise<string | null> {
   return (row?.id as string) ?? null;
 }
 
-// 지수이동평균 계산
 function ema(data: number[], period: number): number {
   const k = 2 / (period + 1);
   let val = data[0];
@@ -25,7 +24,6 @@ function ema(data: number[], period: number): number {
   return val;
 }
 
-// RSI 계산 (단순 평균법)
 function calcRsi(closes: number[], period = 14): number {
   const slice = closes.slice(-(period + 1));
   let gains = 0, losses = 0;
@@ -40,29 +38,20 @@ function calcRsi(closes: number[], period = 14): number {
   return 100 - 100 / (1 + avgGain / avgLoss);
 }
 
-// MACD 크로스 방향 판단
-function calcMacdCross(closes: number[]): "golden" | "dead" | "neutral" {
-  const macd = ema(closes.slice(-30), 12) - ema(closes.slice(-40), 26);
-  const prevMacd = ema(closes.slice(-31, -1), 12) - ema(closes.slice(-41, -1), 26);
-  if (prevMacd < 0 && macd > 0) return "golden";
-  if (prevMacd > 0 && macd < 0) return "dead";
-  return "neutral";
-}
-
 interface StockSignal {
   name: string;
-  symbol: string;
-  currentPrice: number;
-  priceChange: number;
-  rsi: number;
+  flag: string;
+  price: string;
+  priceChange: string;
+  rsi: string;
   rsiSignal: string;
   rsiEmoji: string;
-  macdCross: string;
+  macdSignal: string;
   macdEmoji: string;
-  isStrong: boolean;
+  hasStrongSignal: boolean;
 }
 
-async function fetchAndAnalyze(symbol: string, name: string): Promise<StockSignal | null> {
+async function fetchAndAnalyze(symbol: string, name: string, market: string): Promise<StockSignal | null> {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=3mo`;
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
@@ -74,26 +63,45 @@ async function fetchAndAnalyze(symbol: string, name: string): Promise<StockSigna
     const closes = rawCloses.filter((c): c is number => c !== null);
     if (closes.length < 40) return null;
 
+    // RSI
     const rsi = calcRsi(closes);
-    const macdCross = calcMacdCross(closes);
-
-    const currentPrice = closes[closes.length - 1];
-    const prevPrice = closes[closes.length - 2];
-    const priceChange = prevPrice ? ((currentPrice - prevPrice) / prevPrice * 100) : 0;
-
     let rsiSignal: string, rsiEmoji: string;
     if (rsi <= 30) { rsiSignal = "과매도 (매수 기회)"; rsiEmoji = "🟢"; }
     else if (rsi >= 70) { rsiSignal = "과매수 (매도 고려)"; rsiEmoji = "🔴"; }
     else { rsiSignal = "중립"; rsiEmoji = "⚪"; }
 
+    // MACD (12, 26)
+    const macdLine = ema(closes.slice(-30), 12) - ema(closes.slice(-40), 26);
+    const prevMacd = ema(closes.slice(-31, -1), 12) - ema(closes.slice(-41, -1), 26);
     let macdSignal: string, macdEmoji: string;
-    if (macdCross === "golden") { macdSignal = "골든크로스 (매수)"; macdEmoji = "🟢"; }
-    else if (macdCross === "dead") { macdSignal = "데드크로스 (매도)"; macdEmoji = "🔴"; }
+    if (prevMacd < 0 && macdLine > 0) { macdSignal = "골든크로스 (매수)"; macdEmoji = "🟢"; }
+    else if (prevMacd > 0 && macdLine < 0) { macdSignal = "데드크로스 (매도)"; macdEmoji = "🔴"; }
     else { macdSignal = "횡보 중"; macdEmoji = "⚪"; }
 
-    const isStrong = rsiEmoji !== "⚪" || macdEmoji !== "⚪";
+    // 강한 시그널: RSI 극단 OR MACD 크로스
+    const hasStrongSignal =
+      rsiEmoji !== "⚪" ||
+      (prevMacd < 0 && macdLine > 0) ||
+      (prevMacd > 0 && macdLine < 0);
 
-    return { name, symbol, currentPrice, priceChange, rsi, rsiSignal, rsiEmoji, macdCross: macdSignal, macdEmoji, isStrong };
+    const currentPrice = closes[closes.length - 1];
+    const prevPrice = closes[closes.length - 2];
+    const pct = prevPrice ? ((currentPrice - prevPrice) / prevPrice * 100).toFixed(2) : "0.00";
+    const sign = parseFloat(pct) >= 0 ? "+" : "";
+
+    const flag = market === "KR" ? "🇰🇷" : "🇺🇸";
+    const price = market === "KR"
+      ? `${Math.round(currentPrice).toLocaleString()}원`
+      : `$${currentPrice.toFixed(2)}`;
+
+    return {
+      name, flag, price,
+      priceChange: `${sign}${pct}%`,
+      rsi: rsi.toFixed(1),
+      rsiSignal, rsiEmoji,
+      macdSignal, macdEmoji,
+      hasStrongSignal,
+    };
   } catch {
     return null;
   }
@@ -115,12 +123,11 @@ async function handle(request: NextRequest) {
   }
 
   const watchlist = await sql`SELECT name, code, market FROM watchlist WHERE user_id = ${userId}`;
-
-  // KR: code + '.KS', US: code (ticker)
   const stocks = watchlist
     .filter((s) => s.code)
     .map((s) => ({
       name: s.name as string,
+      market: s.market as string,
       symbol: s.market === "KR" ? `${s.code}.KS` : (s.code as string),
     }));
 
@@ -128,12 +135,13 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ success: true, skipped: true, reason: "no watchlist" });
   }
 
-  // 병렬 분석
-  const results = await Promise.all(stocks.map((s) => fetchAndAnalyze(s.symbol, s.name)));
+  const results = await Promise.all(
+    stocks.map((s) => fetchAndAnalyze(s.symbol, s.name, s.market))
+  );
   const signals = results.filter((r): r is StockSignal => r !== null);
-  const hasStrong = signals.some((s) => s.isStrong);
+  const strong = signals.filter((s) => s.hasStrongSignal);
 
-  if (!hasStrong) {
+  if (!strong.length) {
     return NextResponse.json({ success: true, skipped: true, reason: "no strong signals" });
   }
 
@@ -145,24 +153,24 @@ async function handle(request: NextRequest) {
     weekday: "short",
   });
 
-  let msg = `📊 기술적 분석 (RSI/MACD)\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n`;
+  let msg = `📉 기술적 분석 리포트\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n`;
 
-  for (const s of signals) {
-    if (!s.isStrong) continue; // 강한 시그널만 포함
-    const sign = s.priceChange >= 0 ? "+" : "";
-    const priceStr = s.symbol.endsWith(".KS")
-      ? `${s.currentPrice.toLocaleString()}원`
-      : `$${s.currentPrice.toFixed(2)}`;
-    msg += `${s.rsiEmoji !== "⚪" ? s.rsiEmoji : s.macdEmoji} ${s.name}\n`;
-    msg += `   현재가: ${priceStr} (${sign}${s.priceChange.toFixed(2)}%)\n`;
-    msg += `   RSI(14): ${s.rsi.toFixed(1)} ${s.rsiEmoji} ${s.rsiSignal}\n`;
-    msg += `   MACD: ${s.macdEmoji} ${s.macdCross}\n\n`;
+  msg += "🚨 주요 시그널\n\n";
+  for (const s of strong) {
+    msg += `${s.flag} ${s.name} (${s.price}, ${s.priceChange})\n`;
+    msg += `   RSI: ${s.rsi} ${s.rsiEmoji} ${s.rsiSignal}\n`;
+    msg += `   MACD: ${s.macdEmoji} ${s.macdSignal}\n\n`;
   }
 
-  msg += "⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
+  msg += "📊 전체 종목 현황\n\n";
+  for (const s of signals) {
+    msg += `${s.flag} ${s.name}: RSI ${s.rsi} ${s.rsiEmoji} | MACD ${s.macdEmoji} ${s.macdSignal}\n`;
+  }
+
+  msg += "\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
 
   await sendTelegramMessage(msg);
-  return NextResponse.json({ success: true, strongCount: signals.filter((s) => s.isStrong).length });
+  return NextResponse.json({ success: true, strongCount: strong.length });
 }
 
 export async function GET(request: NextRequest) {

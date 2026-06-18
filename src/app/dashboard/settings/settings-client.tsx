@@ -18,14 +18,23 @@ interface WatchlistItem {
   market: "KR" | "US";
 }
 
+interface CalendarItem {
+  id: string;
+  date: string;
+  stock: string;
+  type: string;
+  note: string;
+}
+
 interface Props {
   profile: Profile | null;
   holdings: Holding[];
   watchlist: WatchlistItem[];
+  dividendCalendar: CalendarItem[];
   userId: string;
 }
 
-export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, userId }: Props) {
+export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, dividendCalendar: initialCalendar, userId }: Props) {
   const router = useRouter();
   const [holdings, setHoldings] = useState(initialHoldings);
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
@@ -194,6 +203,44 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const flash = (msg: string) => {
     setSaveStatus(msg);
     setTimeout(() => setSaveStatus(""), 2000);
+  };
+
+  // 배당 캘린더
+  const [calendar, setCalendar] = useState<CalendarItem[]>(initialCalendar);
+  const [calDate, setCalDate] = useState("");
+  const [calStock, setCalStock] = useState("");
+  const [calType, setCalType] = useState("ex-date");
+  const [calNote, setCalNote] = useState("");
+  const [isAddingCal, setIsAddingCal] = useState(false);
+
+  const handleAddCalendar = async () => {
+    if (!calDate || !calStock) return;
+    setIsAddingCal(true);
+    try {
+      const res = await fetch("/api/dividend-calendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: calDate, stock: calStock, type: calType, note: calNote }),
+      });
+      if (!res.ok) throw new Error("추가 실패");
+      const item = await res.json() as CalendarItem;
+      setCalendar((prev) => [...prev, item].sort((a, b) => a.date.localeCompare(b.date)));
+      setCalDate("");
+      setCalStock("");
+      setCalNote("");
+      flash("일정 추가됨");
+    } catch (err) {
+      alert(`추가 실패: ${(err as Error).message}`);
+    } finally {
+      setIsAddingCal(false);
+    }
+  };
+
+  const handleDeleteCalendar = async (id: string) => {
+    const res = await fetch(`/api/dividend-calendar/${id}`, { method: "DELETE" });
+    if (!res.ok) { alert("삭제 실패"); return; }
+    setCalendar((prev) => prev.filter((c) => c.id !== id));
+    flash("일정 삭제됨");
   };
 
   // 감정분석 종목 watchlist
@@ -532,6 +579,90 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 </button>
               </li>
             ))}
+          </ul>
+        )}
+      </section>
+
+      {/* 배당 캘린더 */}
+      <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">📅 배당 캘린더 ({calendar.length})</h3>
+          <span className="text-[11px] text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
+        </div>
+
+        {/* 추가 폼 */}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={calDate}
+              onChange={(e) => setCalDate(e.target.value)}
+              className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            />
+            <select
+              value={calType}
+              onChange={(e) => setCalType(e.target.value)}
+              className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            >
+              <option value="ex-date">⚠️ 배당락일</option>
+              <option value="pay-date">💰 배당지급일</option>
+              <option value="meeting">🏛️ 주주총회</option>
+              <option value="other">📋 기타</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={calStock}
+              onChange={(e) => setCalStock(e.target.value)}
+              placeholder="종목명 (예: 삼성전자)"
+              className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            />
+            <input
+              type="text"
+              value={calNote}
+              onChange={(e) => setCalNote(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddCalendar()}
+              placeholder="메모 (예: 2024년 결산배당)"
+              className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            />
+            <button
+              onClick={handleAddCalendar}
+              disabled={!calDate || !calStock || isAddingCal}
+              className="h-9 px-4 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+            >
+              {isAddingCal ? "..." : "+ 추가"}
+            </button>
+          </div>
+        </div>
+
+        {/* 일정 리스트 */}
+        {calendar.length === 0 ? (
+          <p className="text-xs text-zinc-400 text-center py-2">배당 일정을 추가해 주세요.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {calendar.map((c) => {
+              const typeLabel: Record<string, string> = {
+                "ex-date": "⚠️ 배당락",
+                "pay-date": "💰 지급일",
+                "meeting": "🏛️ 주총",
+                "other": "📋 기타",
+              };
+              return (
+                <li key={c.id} className="flex items-center gap-2 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2">
+                  <span className="text-[11px] font-mono text-zinc-400 w-20 shrink-0">{c.date}</span>
+                  <span className="text-[11px] text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
+                  <span className="flex-1 text-sm truncate">{c.stock}</span>
+                  {c.note && <span className="text-[11px] text-zinc-400 truncate max-w-[100px]">{c.note}</span>}
+                  <button
+                    onClick={() => handleDeleteCalendar(c.id)}
+                    className="text-zinc-300 hover:text-red-500 transition-colors text-xs"
+                  >
+                    ✕
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

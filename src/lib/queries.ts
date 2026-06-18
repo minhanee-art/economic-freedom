@@ -57,7 +57,14 @@ export async function getPurchaseRecordsCount(userId: string): Promise<number> {
 
 export async function getWatchlist(userId: string) {
   return sql`
-    SELECT id, name, market, created_at::text
+    SELECT id, name, code, market, created_at::text
     FROM watchlist WHERE user_id = ${userId} ORDER BY created_at ASC
+  `;
+}
+
+export async function getDividendCalendar(userId: string) {
+  return sql`
+    SELECT id, date::text, stock, type, note
+    FROM dividend_calendar WHERE user_id = ${userId} ORDER BY date ASC
   `;
 }

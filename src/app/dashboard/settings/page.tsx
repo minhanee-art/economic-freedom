@@ -20,7 +20,7 @@ export default async function SettingsPage() {
     <SettingsClient
       profile={profile as any}
       holdings={holdings as unknown as Holding[]}
-      watchlist={watchlist as unknown as { id: string; name: string; market: "KR" | "US" }[]}
+      watchlist={watchlist as unknown as { id: string; name: string; code: string | null; market: "KR" | "US" }[]}
       userId={userId}
     />
   );

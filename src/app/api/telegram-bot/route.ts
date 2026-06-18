@@ -1,4 +1,4 @@
-// Telegram Webhook 핸들러 - 메시지 수신 시 Gemini로 즉시 답변
+// Telegram Webhook 핸들러 - 메시지 수신 시 OpenAI로 즉시 답변
 // GET /api/telegram-bot?setup=1 → 웹훅 등록 (최초 1회)
 // POST /api/telegram-bot → Telegram이 호출하는 웹훅 엔드포인트
 import { NextResponse, type NextRequest } from "next/server";
@@ -14,29 +14,27 @@ interface TelegramUpdate {
   };
 }
 
-async function callGemini(question: string, apiKey: string): Promise<string> {
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
+async function callOpenAI(question: string, apiKey: string): Promise<string> {
   const prompt = `너는 한국 배당투자 전문가 AI야. 간결하고 유용하게 답해줘. 이모지 써서 보기 좋게. 질문: ${question}`;
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { maxOutputTokens: 2048 },
-      }),
-      signal: AbortSignal.timeout(25000),
-    }
-  );
+  const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      max_tokens: 2048,
+    }),
+    signal: AbortSignal.timeout(25000),
+  });
   if (!res.ok) {
     const detail = await res.text();
-    throw new Error(`Gemini 오류 ${res.status}: ${detail.substring(0, 200)}`);
+    throw new Error(`OpenAI 오류 ${res.status}: ${detail.substring(0, 200)}`);
   }
-  const data = await res.json() as {
-    candidates: { content: { parts: { text: string }[] } }[];
-  };
-  return data.candidates[0]?.content?.parts?.[0]?.text?.trim() ?? "(응답 없음)";
+  const data = await res.json() as { choices: { message: { content: string } }[] };
+  return data.choices[0]?.message?.content?.trim() ?? "(응답 없음)";
 }
 
 async function telegramSend(chatId: number, text: string, botToken: string) {
@@ -51,11 +49,11 @@ async function telegramSend(chatId: number, text: string, botToken: string) {
 // POST: Telegram webhook
 export async function POST(request: NextRequest) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN?.trim() ?? "";
-  const geminiKey = process.env.GEMINI_API_KEY?.trim() ?? "";
+  const openaiKey = process.env.OPENAI_API_KEY?.trim() ?? "";
   const allowedChatId = process.env.TELEGRAM_CHAT_ID?.trim() ?? "";
 
-  if (!botToken || !geminiKey) {
-    return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN, GEMINI_API_KEY 필요" }, { status: 500 });
+  if (!botToken || !openaiKey) {
+    return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN, OPENAI_API_KEY 필요" }, { status: 500 });
   }
 
   let update: TelegramUpdate;
@@ -75,7 +73,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const answer = await callGemini(text, geminiKey);
+    const answer = await callOpenAI(text, openaiKey);
     await telegramSend(chatId, answer, botToken);
   } catch (err) {
     try {

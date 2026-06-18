@@ -15,6 +15,10 @@
     {
       "path": "/api/cron/portfolio",
       "schedule": "0 7 * * 1-5"
+    },
+    {
+      "path": "/api/cron/dividend-news",
+      "schedule": "0 0,9 * * *"
     }
   ]
 }

@@ -66,12 +66,14 @@ async function handle(request: NextRequest) {
     weekday: "short",
   });
 
+  const USD_KRW = 1380;
+
   let totalInvest = 0;
   let totalValue = 0;
   let bestStock = { name: "", pct: -9999 };
   let worstStock = { name: "", pct: 9999 };
 
-  let msg = `📊 포트폴리오 수익률 트래킹\n📅 ${today}\n\n`;
+  let msg = `📊 포트폴리오 리포트\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n`;
 
   // 한국 포트폴리오
   if (krHoldings.length > 0 && appkey) {
@@ -99,13 +101,13 @@ async function handle(request: NextRequest) {
           `${emoji} ${h.name}: ${result.price.toLocaleString()}원 ×${qty} = ${value.toLocaleString()}원 (${sign}${pct.toFixed(1)}%)`
         );
       }
-      if (krLines.length) msg += `🇰🇷 한국 포트폴리오\n━━━━━━━━━━━━━━━━\n${krLines.join("\n")}\n`;
+      if (krLines.length) msg += `🇰🇷 한국\n${krLines.join("\n")}\n\n`;
     } catch (err) {
-      msg += `🇰🇷 한국 데이터 오류: ${(err as Error).message}\n`;
+      msg += `🇰🇷 한국 데이터 오류: ${(err as Error).message}\n\n`;
     }
   }
 
-  // 미국 포트폴리오
+  // 미국 포트폴리오 (USD → KRW 환산으로 총액 계산)
   if (usHoldings.length > 0) {
     const usResults = await Promise.all(usHoldings.map((h) => getYahooPrice(h.code as string)));
     const usLines: string[] = [];
@@ -122,33 +124,31 @@ async function handle(request: NextRequest) {
       const pct = invest > 0 ? ((pnl / invest) * 100) : 0;
       const sign = pct >= 0 ? "+" : "";
       const emoji = pct >= 0 ? "📈" : "📉";
-      totalInvest += invest;
-      totalValue += value;
+      totalInvest += invest * USD_KRW;
+      totalValue += value * USD_KRW;
       if (pct > bestStock.pct) bestStock = { name: h.name as string, pct };
       if (pct < worstStock.pct) worstStock = { name: h.name as string, pct };
       usLines.push(
-        `${emoji} ${h.name} (${h.code}): $${result.price.toFixed(2)} ×${qty} = $${value.toFixed(2)} (${sign}${pct.toFixed(1)}%)`
+        `${emoji} ${h.name} (${h.code}): $${result.price.toFixed(2)} ×${qty} = $${value.toFixed(0)} (${sign}${pct.toFixed(1)}%)`
       );
     });
-    if (usLines.length) msg += `\n🇺🇸 미국 포트폴리오\n━━━━━━━━━━━━━━━━\n${usLines.join("\n")}\n`;
+    if (usLines.length) msg += `🇺🇸 미국\n${usLines.join("\n")}\n\n`;
   }
 
   // 총 요약
   if (totalInvest > 0) {
     const totalPnl = totalValue - totalInvest;
     const totalPct = (totalPnl / totalInvest) * 100;
-    const totalEmoji = totalPnl >= 0 ? "📈" : "📉";
-    msg += `\n━━━━━━━━━━━━━━━━\n`;
-    msg += `💼 총 투자: ${totalInvest.toLocaleString()}원\n`;
-    msg += `💰 총 평가: ${totalValue.toLocaleString()}원\n`;
-    msg += `${totalEmoji} 수익: ${totalPnl >= 0 ? "+" : ""}${totalPnl.toLocaleString()}원 (${totalPct >= 0 ? "+" : ""}${totalPct.toFixed(1)}%)\n`;
-    if (bestStock.name) msg += `🏆 최고: ${bestStock.name} (${bestStock.pct >= 0 ? "+" : ""}${bestStock.pct.toFixed(1)}%)\n`;
+    const totalPctSign = totalPct >= 0 ? "+" : "";
+    msg += `━━━━━━━━━━━━━━━━\n`;
+    msg += `💰 총 투자: ${Math.round(totalInvest).toLocaleString()}원\n`;
+    msg += `💎 현재 평가: ${Math.round(totalValue).toLocaleString()}원\n`;
+    msg += `📊 총 수익률: ${totalPctSign}${totalPct.toFixed(1)}%\n\n`;
+    if (bestStock.name) msg += `🏆 Best: ${bestStock.name} (${bestStock.pct >= 0 ? "+" : ""}${bestStock.pct.toFixed(1)}%)\n`;
     if (worstStock.name && worstStock.name !== bestStock.name) {
-      msg += `💀 최저: ${worstStock.name} (${worstStock.pct >= 0 ? "+" : ""}${worstStock.pct.toFixed(1)}%)\n`;
+      msg += `😢 Worst: ${worstStock.name} (${worstStock.pct >= 0 ? "+" : ""}${worstStock.pct.toFixed(1)}%)`;
     }
   }
-
-  msg += "\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
 
   await sendTelegramMessage(msg);
   return NextResponse.json({ success: true, holdings: holdings.length });

@@ -1,12 +1,12 @@
-// 매일 15:40 KST (평일) KIS + Yahoo Finance 장 마감 리포트 → 텔레그램 전송
+// 매일 15:40 KST (평일) 장 마감 리포트 → 텔레그램 전송
 import { NextResponse, type NextRequest } from "next/server";
 import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { getKisToken, getKisPrice } from "@/lib/kis";
+import { getYahooPrice } from "@/lib/yahoo";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-const KIS_BASE = "https://openapi.koreainvestment.com:9443";
 
 async function resolveUserId(): Promise<string | null> {
   const directId = process.env.REPORT_USER_ID;
@@ -15,68 +15,6 @@ async function resolveUserId(): Promise<string | null> {
   if (!email) return null;
   const [row] = await sql`SELECT id FROM users WHERE email = ${email}`;
   return (row?.id as string) ?? null;
-}
-
-async function getKisToken(appkey: string, appsecret: string): Promise<string> {
-  const res = await fetch(`${KIS_BASE}/oauth2/tokenP`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ grant_type: "client_credentials", appkey, appsecret }),
-  });
-  if (!res.ok) throw new Error(`KIS 토큰 발급 실패: ${res.status}`);
-  const data = await res.json() as { access_token: string };
-  return data.access_token;
-}
-
-async function getKisPrice(
-  code: string,
-  token: string,
-  appkey: string,
-  appsecret: string
-): Promise<{ price: number; changeRate: number; volume: number } | null> {
-  const url = new URL(`${KIS_BASE}/uapi/domestic-stock/v1/quotations/inquire-price`);
-  url.searchParams.set("FID_COND_MRKT_DIV_CODE", "J");
-  url.searchParams.set("FID_INPUT_ISCD", code);
-  const res = await fetch(url.toString(), {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      appkey,
-      appsecret,
-      tr_id: "FHKST01010100",
-      custtype: "P",
-    },
-    signal: AbortSignal.timeout(8000),
-  });
-  if (!res.ok) return null;
-  const data = await res.json() as { output?: Record<string, string> };
-  const o = data.output;
-  if (!o) return null;
-  return {
-    price: parseInt(o.stck_prpr ?? "0"),
-    changeRate: parseFloat(o.prdy_ctrt ?? "0"),
-    volume: parseInt(o.acml_vol ?? "0"),
-  };
-}
-
-async function getYahooPrice(
-  symbol: string
-): Promise<{ price: number; changeRate: number } | null> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=1d`;
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
-    const data = await res.json() as {
-      chart?: { result?: { meta?: { regularMarketPrice?: number; chartPreviousClose?: number } }[] };
-    };
-    const meta = data.chart?.result?.[0]?.meta;
-    if (!meta) return null;
-    const price = meta.regularMarketPrice ?? 0;
-    const prev = meta.chartPreviousClose ?? 0;
-    const changeRate = prev ? ((price - prev) / prev * 100) : 0;
-    return { price, changeRate };
-  } catch {
-    return null;
-  }
 }
 
 async function handle(request: NextRequest) {
@@ -115,7 +53,6 @@ async function handle(request: NextRequest) {
   if (krStocks.length > 0 && appkey) {
     try {
       const token = await getKisToken(appkey, appsecret);
-      // 순차 호출 (KIS API rate limit 고려)
       const krLines: string[] = [];
       for (const s of krStocks) {
         const result = await getKisPrice(s.code as string, token, appkey, appsecret);
@@ -126,9 +63,7 @@ async function handle(request: NextRequest) {
           `${emoji} ${s.name}: ${result.price.toLocaleString()}원 (${sign}${result.changeRate.toFixed(2)}%)  거래량: ${result.volume.toLocaleString()}`
         );
       }
-      if (krLines.length) {
-        msg += `🇰🇷 한국 장 마감\n━━━━━━━━━━━━━━━━\n${krLines.join("\n")}\n`;
-      }
+      if (krLines.length) msg += `🇰🇷 한국 장 마감\n━━━━━━━━━━━━━━━━\n${krLines.join("\n")}\n`;
     } catch (err) {
       msg += `🇰🇷 한국 장 데이터 오류: ${(err as Error).message}\n`;
     }
@@ -143,13 +78,9 @@ async function handle(request: NextRequest) {
       if (!result) return;
       const sign = result.changeRate >= 0 ? "+" : "";
       const emoji = result.changeRate >= 0 ? "📈" : "📉";
-      usLines.push(
-        `${emoji} ${s.name} (${s.code}): $${result.price.toFixed(2)} (${sign}${result.changeRate.toFixed(2)}%)`
-      );
+      usLines.push(`${emoji} ${s.name} (${s.code}): $${result.price.toFixed(2)} (${sign}${result.changeRate.toFixed(2)}%)`);
     });
-    if (usLines.length) {
-      msg += `\n🇺🇸 미국 주식 현황\n━━━━━━━━━━━━━━━━\n${usLines.join("\n")}\n`;
-    }
+    if (usLines.length) msg += `\n🇺🇸 미국 주식 현황\n━━━━━━━━━━━━━━━━\n${usLines.join("\n")}\n`;
   }
 
   msg += "\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
@@ -163,12 +94,7 @@ async function handle(request: NextRequest) {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
         body: JSON.stringify({
           model: "gpt-4o",
-          messages: [
-            {
-              role: "user",
-              content: `너는 배당투자 전문 애널리스트야. 아래 주식 데이터를 배당투자 관점에서 2-3문장으로 코멘트해줘. 데이터:\n${msg}`,
-            },
-          ],
+          messages: [{ role: "user", content: `너는 배당투자 전문 애널리스트야. 아래 주식 데이터를 배당투자 관점에서 2-3문장으로 코멘트해줘. 데이터:\n${msg}` }],
           max_tokens: 300,
         }),
         signal: AbortSignal.timeout(20000),
@@ -178,9 +104,7 @@ async function handle(request: NextRequest) {
         const comment = gptData.choices[0]?.message?.content?.trim();
         if (comment) msg += `\n\n💡 AI 코멘트\n${comment}`;
       }
-    } catch {
-      // GPT 실패해도 리포트는 정상 발송
-    }
+    } catch { /* GPT 실패해도 리포트 발송 */ }
   }
 
   await sendTelegramMessage(msg);
@@ -191,9 +115,6 @@ export async function GET(request: NextRequest) {
   try {
     return await handle(request);
   } catch (err) {
-    return NextResponse.json(
-      { success: false, error: (err as Error).message },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: (err as Error).message }, { status: 500 });
   }
 }

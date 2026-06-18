@@ -11,13 +11,20 @@ import { useMemo } from "react";
 
 type HoldingGroupBy = "none" | "category" | "sub_category";
 
+interface WatchlistItem {
+  id: string;
+  name: string;
+  market: "KR" | "US";
+}
+
 interface Props {
   profile: Profile | null;
   holdings: Holding[];
+  watchlist: WatchlistItem[];
   userId: string;
 }
 
-export function SettingsClient({ profile, holdings: initialHoldings, userId }: Props) {
+export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, userId }: Props) {
   const router = useRouter();
   const [holdings, setHoldings] = useState(initialHoldings);
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
@@ -186,6 +193,40 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
   const flash = (msg: string) => {
     setSaveStatus(msg);
     setTimeout(() => setSaveStatus(""), 2000);
+  };
+
+  // 감정분석 종목 watchlist
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(initialWatchlist);
+  const [wlName, setWlName] = useState("");
+  const [wlMarket, setWlMarket] = useState<"KR" | "US">("KR");
+  const [isAddingWl, setIsAddingWl] = useState(false);
+
+  const handleAddWatchlist = async () => {
+    if (!wlName.trim()) return;
+    setIsAddingWl(true);
+    try {
+      const res = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: wlName.trim(), market: wlMarket }),
+      });
+      if (!res.ok) throw new Error("추가 실패");
+      const item = await res.json() as WatchlistItem;
+      setWatchlist((prev) => [...prev, item]);
+      setWlName("");
+      flash("종목 추가됨");
+    } catch (err) {
+      alert(`추가 실패: ${(err as Error).message}`);
+    } finally {
+      setIsAddingWl(false);
+    }
+  };
+
+  const handleDeleteWatchlist = async (id: string) => {
+    const res = await fetch(`/api/watchlist/${id}`, { method: "DELETE" });
+    if (!res.ok) { alert("삭제 실패"); return; }
+    setWatchlist((prev) => prev.filter((w) => w.id !== id));
+    flash("종목 삭제됨");
   };
 
   const handleLogout = async () => {
@@ -419,6 +460,63 @@ export function SettingsClient({ profile, holdings: initialHoldings, userId }: P
             </div>
           ))}
         </div>
+      </section>
+
+      {/* 감정분석 종목 watchlist */}
+      <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">📡 감정분석 종목 ({watchlist.length})</h3>
+          <span className="text-[11px] text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
+        </div>
+
+        {/* 추가 폼 */}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={wlName}
+            onChange={(e) => setWlName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddWatchlist()}
+            placeholder="종목명 (예: 삼성전자, SCHD)"
+            className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+          />
+          <select
+            value={wlMarket}
+            onChange={(e) => setWlMarket(e.target.value as "KR" | "US")}
+            className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+          >
+            <option value="KR">🇰🇷 KR</option>
+            <option value="US">🇺🇸 US</option>
+          </select>
+          <button
+            onClick={handleAddWatchlist}
+            disabled={!wlName.trim() || isAddingWl}
+            className="h-9 px-3 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+          >
+            {isAddingWl ? "..." : "+ 추가"}
+          </button>
+        </div>
+
+        {/* 종목 리스트 */}
+        {watchlist.length === 0 ? (
+          <p className="text-xs text-zinc-400 text-center py-2">감정분석할 종목을 추가해 주세요.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {watchlist.map((w) => (
+              <li key={w.id} className="flex items-center gap-2 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2">
+                <span className="text-[11px] font-semibold text-zinc-400 w-7 shrink-0">
+                  {w.market === "US" ? "🇺🇸" : "🇰🇷"}
+                </span>
+                <span className="flex-1 text-sm">{w.name}</span>
+                <button
+                  onClick={() => handleDeleteWatchlist(w.id)}
+                  className="text-zinc-300 hover:text-red-500 transition-colors text-xs"
+                >
+                  ✕
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {/* 테마 설정 */}

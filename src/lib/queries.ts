@@ -54,3 +54,10 @@ export async function getPurchaseRecordsCount(userId: string): Promise<number> {
   const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM purchase_records WHERE user_id = ${userId}`;
   return count;
 }
+
+export async function getWatchlist(userId: string) {
+  return sql`
+    SELECT id, name, market, created_at::text
+    FROM watchlist WHERE user_id = ${userId} ORDER BY created_at ASC
+  `;
+}

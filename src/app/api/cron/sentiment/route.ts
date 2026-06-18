@@ -1,33 +1,18 @@
-// 매일 08:30 KST 구글 뉴스 수집 → GPT 감정분석 → 텔레그램 전송 cron
+// 매일 08:30 KST DB watchlist 종목 뉴스 수집 → GPT 감정분석 → 텔레그램 전송 cron
 import { NextResponse, type NextRequest } from "next/server";
+import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const SHEET_BASE =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vSyHVOzEVtov83161NOGwbIlzjoIWYtHjLjHAdOOZs08o7AJIhEkO14W0g6WOQBa3HQQ3tBzVTDw-8T/pub";
-
-function parseCsv(csv: string): Record<string, string>[] {
-  const lines = csv.trim().split("\n");
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
-  const rows: Record<string, string>[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const vals: string[] = [];
-    let cur = "";
-    let inQ = false;
-    for (const c of lines[i]) {
-      if (c === '"') { inQ = !inQ; continue; }
-      if (c === "," && !inQ) { vals.push(cur.trim()); cur = ""; continue; }
-      cur += c;
-    }
-    vals.push(cur.trim());
-    const obj: Record<string, string> = {};
-    headers.forEach((h, idx) => { obj[h] = vals[idx] ?? ""; });
-    rows.push(obj);
-  }
-  return rows;
+async function resolveUserId(): Promise<string | null> {
+  const directId = process.env.REPORT_USER_ID;
+  if (directId) return directId;
+  const email = process.env.REPORT_USER_EMAIL;
+  if (!email) return null;
+  const [row] = await sql`SELECT id FROM users WHERE email = ${email}`;
+  return (row?.id as string) ?? null;
 }
 
 async function fetchNewsHeadlines(stockName: string): Promise<string[]> {
@@ -56,15 +41,21 @@ async function handle(request: NextRequest) {
     }
   }
 
-  // 1. 구글 시트에서 종목 목록 가져오기
-  const csvRes = await fetch(`${SHEET_BASE}?gid=1874827743&single=true&output=csv`);
-  if (!csvRes.ok) throw new Error("구글 시트 요청 실패");
-  const rows = parseCsv(await csvRes.text());
-  const stocks = rows.filter((r) => r.market === "KR" || r.market === "US");
-  if (!stocks.length) return NextResponse.json({ error: "종목 없음" }, { status: 400 });
+  // 1. DB에서 감정분석 대상 종목 가져오기
+  const userId = await resolveUserId();
+  if (!userId) {
+    return NextResponse.json(
+      { error: "REPORT_USER_ID 또는 REPORT_USER_EMAIL 환경변수 필요" },
+      { status: 400 }
+    );
+  }
+  const stocks = await sql`SELECT name, market FROM watchlist WHERE user_id = ${userId}`;
+  if (!stocks.length) {
+    return NextResponse.json({ error: "감정분석 종목 없음 (설정 > 감정분석 종목에서 추가)" }, { status: 400 });
+  }
 
   // 2. 종목별 뉴스 수집 (병렬)
-  const newsResults = await Promise.all(stocks.map((s) => fetchNewsHeadlines(s.name)));
+  const newsResults = await Promise.all(stocks.map((s) => fetchNewsHeadlines(s.name as string)));
   let newsText = "";
   stocks.forEach((s, i) => {
     const headlines = newsResults[i];

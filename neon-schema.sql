@@ -77,6 +77,16 @@ CREATE TABLE IF NOT EXISTS cost_basis (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- 8. watchlist (감정분석 대상 종목)
+CREATE TABLE IF NOT EXISTS watchlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  market TEXT NOT NULL DEFAULT 'KR',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, name)
+);
+
 -- 인덱스
 CREATE UNIQUE INDEX IF NOT EXISTS idx_holdings_user_code ON holdings(user_id, code);
 CREATE INDEX IF NOT EXISTS idx_purchase_records_user_date ON purchase_records(user_id, date);

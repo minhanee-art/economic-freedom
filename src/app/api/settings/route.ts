@@ -7,8 +7,13 @@ import { DEFAULT_HOLDINGS } from "@/lib/constants";
 export async function PATCH(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const { monthlyBudget } = await request.json();
-  await sql`UPDATE profiles SET monthly_budget = ${monthlyBudget} WHERE id = ${session.userId}`;
+  const { monthlyBudget, displayName } = await request.json();
+  await sql`
+    UPDATE profiles
+    SET monthly_budget = ${monthlyBudget},
+        display_name = COALESCE(${displayName ?? null}, display_name)
+    WHERE id = ${session.userId}
+  `;
   return NextResponse.json({ ok: true });
 }
 

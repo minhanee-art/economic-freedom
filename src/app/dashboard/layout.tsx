@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -66,6 +67,14 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => r.json())
+      .then((d) => setDisplayName(d.displayName ?? null))
+      .catch(() => {});
+  }, []);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -80,12 +89,17 @@ export default function DashboardLayout({
           <Link href="/dashboard" className="font-bold text-lg">
             Pension Manager
           </Link>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-zinc-400 hover:text-white transition-colors"
-          >
-            로그아웃
-          </button>
+          <div className="flex items-center gap-3">
+            {displayName && (
+              <span className="text-sm text-zinc-300 hidden sm:block">{displayName}</span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
       </header>
 

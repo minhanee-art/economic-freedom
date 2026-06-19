@@ -86,7 +86,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
     const res = await fetch("/api/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ monthlyBudget }),
+      body: JSON.stringify({ monthlyBudget, displayName: displayName.trim() || null }),
     });
     if (!res.ok) { alert("저장 실패"); } else { flash("프로필 저장됨"); }
   };
@@ -298,12 +298,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         <h3 className="text-sm font-semibold">프로필</h3>
 
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">이메일</label>
+          <label className="block text-xs text-zinc-500 mb-1">이메일 <span className="text-zinc-400">(Google 계정, 변경 불가)</span></label>
           <input
             type="text"
             value={profile?.email ?? ""}
-            disabled
-            className="w-full h-10 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-400 dark:border-zinc-700 dark:bg-zinc-800"
+            readOnly
+            className="w-full h-10 rounded-lg border border-zinc-200 bg-zinc-50 px-3 text-sm text-zinc-400 cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
 
@@ -626,14 +626,14 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               placeholder="메모 (예: 2024년 결산배당)"
               className="flex-1 h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
-            <button
-              onClick={handleAddCalendar}
-              disabled={!calDate || !calStock || isAddingCal}
-              className="h-9 px-4 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
-            >
-              {isAddingCal ? "..." : "+ 추가"}
-            </button>
           </div>
+          <button
+            onClick={handleAddCalendar}
+            disabled={!calDate || !calStock || isAddingCal}
+            className="w-full h-9 rounded-lg bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+          >
+            {isAddingCal ? "..." : "+ 추가"}
+          </button>
         </div>
 
         {/* 일정 리스트 */}

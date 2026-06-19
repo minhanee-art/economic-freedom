@@ -207,7 +207,7 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
             id: r.id,
             holding_id: r.holding_id,
             amount: r.amount,
-            date: r.date ?? r.date,
+            date: r.date,
             memo: r.memo,
             created_at: r.created_at,
             holdings: r.holding_name

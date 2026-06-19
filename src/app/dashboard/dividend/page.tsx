@@ -14,7 +14,7 @@ export default async function DividendPage() {
 
   try {
     const [h, d] = await Promise.all([
-      sql`SELECT id, code, name, category FROM holdings WHERE user_id = ${userId} AND shares > 0 ORDER BY name`,
+      sql`SELECT id, code, name, category, shares FROM holdings WHERE user_id = ${userId} AND shares > 0 ORDER BY name`,
       sql`SELECT d.id, d.holding_id, d.amount, d.memo, d.date::text, d.created_at::text, h.name AS holding_name, h.code AS holding_code FROM dividends d LEFT JOIN holdings h ON h.id = d.holding_id WHERE d.user_id = ${userId} ORDER BY d.date DESC`,
     ]);
     holdingsWithShares = h as any[];

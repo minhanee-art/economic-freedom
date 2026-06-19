@@ -9,6 +9,7 @@ interface HoldingOption {
   code: string;
   name: string;
   category: string;
+  shares: number;
 }
 
 interface DividendRow {

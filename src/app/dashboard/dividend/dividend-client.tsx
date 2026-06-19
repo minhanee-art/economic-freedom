@@ -199,6 +199,25 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
         </button>
       </div>
 
+      <DividendAutoFetch
+        holdings={holdings}
+        onDone={(newRows) => {
+          // GET /api/dividends 응답을 DividendRow 형태로 변환
+          const mapped: DividendRow[] = newRows.map((r: any) => ({
+            id: r.id,
+            holding_id: r.holding_id,
+            amount: r.amount,
+            date: r.date ?? r.date,
+            memo: r.memo,
+            created_at: r.created_at,
+            holdings: r.holding_name
+              ? { name: r.holding_name, code: r.holding_code }
+              : null,
+          }));
+          setDividends(mapped);
+        }}
+      />
+
       {/* 월별 차트 */}
       {monthlyData.length > 0 && (
         <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
@@ -259,5 +278,111 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
         )}
       </div>
     </div>
+  );
+}
+
+type FetchStatus = "idle" | "loading" | "done" | "empty" | "error";
+
+interface AutoFetchProps {
+  holdings: HoldingOption[];
+  onDone: (newRows: DividendRow[]) => void;
+}
+
+function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
+  const [statusMap, setStatusMap] = useState<Map<string, FetchStatus>>(new Map());
+  const [messageMap, setMessageMap] = useState<Map<string, string>>(new Map());
+
+  const setStatus = (id: string, status: FetchStatus, msg = "") => {
+    setStatusMap((prev) => new Map(prev).set(id, status));
+    setMessageMap((prev) => new Map(prev).set(id, msg));
+  };
+
+  const handleFetch = async (holding: HoldingOption) => {
+    setStatus(holding.id, "loading");
+
+    try {
+      // 1. Naver API에서 분배금 이력 조회
+      const res = await fetch(`/api/market/etf-dividend?code=${holding.code}`);
+      const { distributions } = await res.json() as { distributions: Array<{ date: string; perShareAmount: number }> };
+
+      if (!distributions || distributions.length === 0) {
+        setStatus(holding.id, "empty", "데이터 없음");
+        return;
+      }
+
+      // 2. 금액 계산: perShareAmount × 보유수량
+      const items = distributions.map((d) => ({
+        holdingId: holding.id,
+        amount: d.perShareAmount * holding.shares,
+        date: d.date,
+        memo: "자동조회",
+      }));
+
+      // 3. 배치 upsert
+      const batchRes = await fetch("/api/dividends/batch", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items }),
+      });
+      const { inserted, updated } = await batchRes.json() as { inserted: number; updated: number };
+
+      setStatus(holding.id, "done", `${inserted + updated}건 저장 (신규 ${inserted}, 갱신 ${updated})`);
+
+      // 4. 배당 목록 갱신 (새로 fetch)
+      const newDivRes = await fetch("/api/dividends");
+      const newDivs = await newDivRes.json();
+      onDone(newDivs);
+    } catch {
+      setStatus(holding.id, "error", "오류 발생");
+    }
+  };
+
+  const statusColor: Record<FetchStatus, string> = {
+    idle: "",
+    loading: "text-zinc-400",
+    done: "text-emerald-600 dark:text-emerald-400",
+    empty: "text-zinc-400",
+    error: "text-red-500",
+  };
+
+  return (
+    <section className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">📥 분배금 자동조회</h3>
+        <span className="text-[11px] text-zinc-400">보유 종목 × 주당분배금</span>
+      </div>
+
+      {holdings.length === 0 ? (
+        <p className="text-xs text-zinc-400 text-center py-2">보유 종목이 없습니다.</p>
+      ) : (
+        <ul className="space-y-2">
+          {holdings.map((h) => {
+            const status = statusMap.get(h.id) ?? "idle";
+            const msg = messageMap.get(h.id) ?? "";
+            return (
+              <li
+                key={h.id}
+                className="flex items-center gap-3 rounded-lg border border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/50 px-3 py-2"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{h.name}</p>
+                  <p className="text-[11px] text-zinc-400 font-mono">{h.code} · {h.shares.toLocaleString()}주</p>
+                </div>
+                {msg && (
+                  <span className={`text-[11px] ${statusColor[status]}`}>{msg}</span>
+                )}
+                <button
+                  onClick={() => handleFetch(h)}
+                  disabled={status === "loading"}
+                  className="shrink-0 h-7 px-3 rounded-md bg-indigo-500 text-white text-xs font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+                >
+                  {status === "loading" ? "조회 중..." : "가져오기"}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }

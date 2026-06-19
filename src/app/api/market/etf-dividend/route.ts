@@ -21,7 +21,7 @@ export async function GET(request: Request) {
     // 확인된 응답 형식:
     //   { result: { totalCount: 26, result: [{ dividendAmount: 446, exDividendAt: "2026.04.29", dividendYield: 0.3 }, ...] } }
     const res = await fetch(
-      `https://m.stock.naver.com/front-api/stock/domestic/etf/dividendHistory/list?code=${code}&page=1&pageSize=100&firstPageSize=3`,
+      `https://m.stock.naver.com/front-api/stock/domestic/etf/dividendHistory/list?code=${code}&page=1&pageSize=50&firstPageSize=3`,
       {
         headers: {
           "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)",

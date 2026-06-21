@@ -4,11 +4,17 @@ import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
 import { signToken, setSessionCookie } from "@/lib/session";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
+import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
   if (!email || !password || password.length < 6) {
     return NextResponse.json({ error: "이메일과 비밀번호(6자 이상)를 입력해주세요." }, { status: 400 });
+  }
+
+  // 무차별 대입/스팸 가입 방어 — IP 기준
+  if (!(await authRateLimit(`signup:${clientIp(request)}`))) {
+    return NextResponse.json({ error: "가입 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
   }
 
   const existing = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;

@@ -3,11 +3,17 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
 import { signToken, setSessionCookie } from "@/lib/session";
+import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
   if (!email || !password) {
     return NextResponse.json({ error: "이메일과 비밀번호를 입력해주세요." }, { status: 400 });
+  }
+
+  // 무차별 대입 방어 — IP+이메일 기준 (bcrypt 비교 전에 차단)
+  if (!(await authRateLimit(`login:${clientIp(request)}:${String(email).toLowerCase()}`))) {
+    return NextResponse.json({ error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
   }
 
   const [user] = await sql`SELECT id, password_hash FROM users WHERE email = ${email} LIMIT 1`;

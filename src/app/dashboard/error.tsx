@@ -1,7 +1,19 @@
 "use client";
 
+import { useEffect } from "react";
+
 // 대시보드 하위 서버 컴포넌트(DB 쿼리 등) 렌더 실패 시 전체 붕괴 대신 재시도 UI 노출
-export default function DashboardError({ reset }: { reset: () => void }) {
+export default function DashboardError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  useEffect(() => {
+    console.error("[dashboard/error]", error);
+  }, [error]);
+
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
       <p className="text-3xl">⚠️</p>

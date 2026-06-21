@@ -25,7 +25,8 @@ export async function GET(request: Request) {
   try {
     const allETFs = await getETFList();
 
-    let filtered = allETFs;
+    // 5분 캐시 배열을 정렬로 in-place 변형하지 않도록 복사
+    let filtered = [...allETFs];
 
     // 이름/코드 검색
     if (query) {

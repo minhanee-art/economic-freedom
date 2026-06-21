@@ -51,6 +51,9 @@ export async function authRateLimit(identifier: string): Promise<boolean> {
 
 /** 요청에서 클라이언트 IP 추출 (Vercel은 x-forwarded-for 사용). */
 export function clientIp(request: Request): string {
+  // Vercel은 x-vercel-forwarded-for를 플랫폼이 직접 설정(클라이언트 위조 불가) → 우선 신뢰
+  const vercel = request.headers.get("x-vercel-forwarded-for");
+  if (vercel) return vercel.split(",")[0]?.trim() || "unknown";
   const xff = request.headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0]?.trim() || "unknown";
   return request.headers.get("x-real-ip") ?? "unknown";

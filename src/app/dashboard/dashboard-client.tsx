@@ -4,7 +4,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis, HoldingWithPnL } from "@/types";
-import { usePortfolioStore } from "@/stores/portfolio-store";
 import { computeHoldingsWithPnL } from "@/lib/portfolio";
 import { SummaryHeader } from "@/components/portfolio/summary-header";
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
@@ -32,18 +31,12 @@ export function DashboardClient({
   totalDividend,
   lastPriceUpdate,
 }: Props) {
-  const { setHoldings, setCostBases } = usePortfolioStore();
   const [holdings, setLocalHoldings] = useState(initialHoldings);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [sortBy, setSortBy] = useState<SortBy>("default");
   const router = useRouter();
-
-  useEffect(() => {
-    setHoldings(initialHoldings);
-    setCostBases(initialCostBases);
-  }, [initialHoldings, initialCostBases, setHoldings, setCostBases]);
 
   // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
   useEffect(() => {
@@ -99,7 +92,6 @@ export function DashboardClient({
         prices[h.code] ? { ...h, current_price: prices[h.code] } : h
       );
       setLocalHoldings(updatedHoldings);
-      setHoldings(updatedHoldings);
 
       const failCount = errors.length;
       setRefreshResult(
@@ -115,7 +107,7 @@ export function DashboardClient({
       setIsRefreshing(false);
       setTimeout(() => setRefreshResult(""), 4000);
     }
-  }, [holdings, router, setHoldings]);
+  }, [holdings, router]);
 
   const holdingsWithPnL = computeHoldingsWithPnL(holdings, initialCostBases);
 

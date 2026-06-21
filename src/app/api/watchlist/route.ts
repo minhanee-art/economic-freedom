@@ -23,7 +23,9 @@ export async function POST(request: Request) {
   const [row] = await sql`
     INSERT INTO watchlist (user_id, name, code, market)
     VALUES (${session.userId}, ${name.trim()}, ${c}, ${m})
+    ON CONFLICT (user_id, name) DO NOTHING
     RETURNING id, name, code, market, created_at::text
   `;
+  if (!row) return NextResponse.json({ error: "이미 등록된 종목입니다." }, { status: 409 });
   return NextResponse.json(row, { status: 201 });
 }

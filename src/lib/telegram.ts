@@ -22,29 +22,57 @@ export async function sendTelegramMessage(
     throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 환경변수가 없습니다");
   }
 
-  const body: Record<string, unknown> = {
-    chat_id: chatId,
-    text,
-    parse_mode: "HTML",
-    disable_web_page_preview: true,
-  };
-
-  if (opts.buttonUrl) {
-    body.reply_markup = {
-      inline_keyboard: [
-        [{ text: opts.buttonText ?? "📊 대시보드 열기", url: opts.buttonUrl }],
-      ],
+  // 텔레그램 메시지 길이 제한(4096자) 대응 — 줄 경계로 분할 전송
+  const chunks = splitMessage(text);
+  for (let i = 0; i < chunks.length; i++) {
+    const isLast = i === chunks.length - 1;
+    const body: Record<string, unknown> = {
+      chat_id: chatId,
+      text: chunks[i],
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
     };
-  }
+    // 인라인 버튼은 마지막 청크에만 부착
+    if (isLast && opts.buttonUrl) {
+      body.reply_markup = {
+        inline_keyboard: [
+          [{ text: opts.buttonText ?? "📊 대시보드 열기", url: opts.buttonUrl }],
+        ],
+      };
+    }
 
-  const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
 
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(`텔레그램 전송 실패 (${res.status}): ${detail}`);
+    if (!res.ok) {
+      const detail = await res.text();
+      throw new Error(`텔레그램 전송 실패 (${res.status}): ${detail}`);
+    }
   }
+}
+
+/** 텔레그램 4096자 제한에 맞춰 줄 경계 기준으로 분할(여유분 4000). */
+function splitMessage(text: string, limit = 4000): string[] {
+  if (text.length <= limit) return [text];
+  const chunks: string[] = [];
+  let current = "";
+  for (const line of text.split("\n")) {
+    if (line.length > limit) {
+      // 한 줄이 limit보다 길면 강제 분할
+      if (current) { chunks.push(current); current = ""; }
+      for (let i = 0; i < line.length; i += limit) chunks.push(line.slice(i, i + limit));
+      continue;
+    }
+    if (current.length + line.length + 1 > limit) {
+      chunks.push(current);
+      current = line;
+    } else {
+      current = current ? `${current}\n${line}` : line;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
 }

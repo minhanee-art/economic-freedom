@@ -290,6 +290,7 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
     try {
       // 1. Naver API에서 분배금 이력 조회
       const res = await fetch(`/api/market/etf-dividend?code=${holding.code}`);
+      if (!res.ok) throw new Error("분배금 조회 실패");
       const { distributions } = await res.json() as { distributions: Array<{ date: string; perShareAmount: number }> };
 
       if (!distributions || distributions.length === 0) {
@@ -297,10 +298,10 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
         return;
       }
 
-      // 2. 금액 계산: perShareAmount × 보유수량
+      // 2. 금액 계산: perShareAmount × 보유수량 (amount는 정수 컬럼이므로 반올림)
       const items = distributions.map((d) => ({
         holdingId: holding.id,
-        amount: d.perShareAmount * holding.shares,
+        amount: Math.round(d.perShareAmount * holding.shares),
         date: d.date,
         memo: "자동조회",
       }));
@@ -311,16 +312,16 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items }),
       });
+      if (!batchRes.ok) throw new Error("저장 실패");
       const { inserted, updated } = await batchRes.json() as { inserted: number; updated: number };
 
       setStatus(holding.id, "done", `${inserted + updated}건 저장 (신규 ${inserted}, 갱신 ${updated})`);
 
       // 4. 배당 목록 갱신 (새로 fetch)
       const newDivRes = await fetch("/api/dividends");
-      const newDivs = await newDivRes.json();
-      onDone(newDivs);
-    } catch {
-      setStatus(holding.id, "error", "오류 발생");
+      if (newDivRes.ok) onDone(await newDivRes.json());
+    } catch (err) {
+      setStatus(holding.id, "error", (err as Error).message || "오류 발생");
     }
   };
 

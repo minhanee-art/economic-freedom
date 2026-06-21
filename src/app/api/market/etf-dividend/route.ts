@@ -32,18 +32,20 @@ export async function GET(request: Request) {
 
     if (!res.ok) return NextResponse.json({ distributions: [] });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
 
-    if (!data?.isSuccess) return NextResponse.json({ distributions: [] });
-
-    const rawList: Array<{ dividendAmount: number; exDividendAt: string }> =
-      data?.result?.result ?? [];
+    // 응답 스키마 변화에 견고하게 — isSuccess 유무에 의존하지 않고 알려진 경로들을 순차 탐색
+    const rawList: Array<{ dividendAmount?: number; exDividendAt?: string }> = Array.isArray(data?.result?.result)
+      ? data.result.result
+      : Array.isArray(data?.result)
+        ? data.result
+        : [];
 
     const distributions: Distribution[] = rawList
       .map((item) => {
         // 날짜 형식: "2026.04.29" → "2026-04-29"
         const date = item.exDividendAt?.replace(/\./g, "-") ?? "";
-        const perShareAmount = item.dividendAmount ?? 0;
+        const perShareAmount = Number(item.dividendAmount) || 0;
         return { date, perShareAmount };
       })
       .filter((d) => d.date && d.perShareAmount > 0);

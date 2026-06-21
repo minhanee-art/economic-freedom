@@ -35,8 +35,11 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
     try {
       const offset = records.length;
       const res = await fetch(`/api/purchases?offset=${offset}&limit=${PAGE_SIZE}`);
+      if (!res.ok) throw new Error("불러오기 실패");
       const { records: more } = await res.json();
-      if (more) setRecords([...records, ...more]);
+      if (Array.isArray(more) && more.length) setRecords([...records, ...more]);
+    } catch {
+      alert("기록을 더 불러오지 못했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoadingMore(false);
     }

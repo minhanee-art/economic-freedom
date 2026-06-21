@@ -17,11 +17,20 @@ export async function POST(request: Request) {
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
-  const [user] = await sql`
+  // 동시 가입 레이스 — 위 SELECT를 통과한 두 요청이 동시에 INSERT하면 UNIQUE(email) 위반.
+  // 미처리 500 대신 409로 변환한다.
+  const insertedUsers = await sql`
     INSERT INTO users (email, password_hash)
     VALUES (${email}, ${passwordHash})
     RETURNING id
-  `;
+  `.catch((err: { code?: string }) => {
+    if (err?.code === "23505") return null;
+    throw err;
+  });
+  if (!insertedUsers) {
+    return NextResponse.json({ error: "이미 가입된 이메일입니다." }, { status: 409 });
+  }
+  const user = insertedUsers[0];
 
   // 기본 종목 15개 자동 생성
   for (const h of DEFAULT_HOLDINGS) {

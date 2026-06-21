@@ -24,34 +24,32 @@ export async function POST(request: Request) {
   const ownedHoldings = await sql`
     SELECT id FROM holdings WHERE id = ANY(${holdingIds}::uuid[]) AND user_id = ${session.userId}
   `;
-  const ownedSet = new Set(ownedHoldings.map((h: any) => h.id));
+  const ownedSet = new Set(ownedHoldings.map((h) => h.id));
 
   const validItems = items.filter((i) => ownedSet.has(i.holdingId));
   if (validItems.length === 0) return NextResponse.json({ inserted: 0, updated: 0 });
 
+  // 기존 (holding_id, date)를 한 번에 조회해 신규/갱신 수를 정확히 집계
+  const existing = await sql`
+    SELECT holding_id, date::text AS date FROM dividends
+    WHERE user_id = ${session.userId} AND holding_id = ANY(${holdingIds}::uuid[])
+  `;
+  const existingSet = new Set(existing.map((e) => `${e.holding_id}|${e.date}`));
   let inserted = 0;
   let updated = 0;
-
   for (const item of validItems) {
-    const [existing] = await sql`
-      SELECT id FROM dividends
-      WHERE holding_id = ${item.holdingId} AND date = ${item.date} AND user_id = ${session.userId}
-    `;
-    if (existing) {
-      await sql`
-        UPDATE dividends
-        SET amount = ${item.amount}, memo = ${item.memo}
-        WHERE id = ${existing.id}
-      `;
-      updated++;
-    } else {
-      await sql`
-        INSERT INTO dividends (user_id, holding_id, amount, date, memo)
-        VALUES (${session.userId}, ${item.holdingId}, ${item.amount}, ${item.date}, ${item.memo})
-      `;
-      inserted++;
-    }
+    if (existingSet.has(`${item.holdingId}|${item.date}`)) updated++;
+    else inserted++;
   }
+
+  // 모든 upsert를 하나의 트랜잭션으로 (원자성 + N+1 제거). (holding_id,date) UNIQUE 활용.
+  await sql.transaction(
+    validItems.map((item) => sql`
+      INSERT INTO dividends (user_id, holding_id, amount, date, memo)
+      VALUES (${session.userId}, ${item.holdingId}, ${item.amount}, ${item.date}, ${item.memo})
+      ON CONFLICT (holding_id, date) DO UPDATE SET amount = EXCLUDED.amount, memo = EXCLUDED.memo
+    `)
+  );
 
   return NextResponse.json({ inserted, updated });
 }

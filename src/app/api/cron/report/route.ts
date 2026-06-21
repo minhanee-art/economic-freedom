@@ -56,11 +56,19 @@ async function handle(request: NextRequest) {
   }
 
   const data = await loadPortfolio(userId);
+  // 타입별로 격리 — 한 리포트 전송 실패가 나머지를 막지 않도록
+  const sent: ReportType[] = [];
+  const failed: { type: ReportType; error: string }[] = [];
   for (const t of types) {
-    await sendReport(t, data);
+    try {
+      await sendReport(t, data);
+      sent.push(t);
+    } catch (err) {
+      failed.push({ type: t, error: (err as Error).message });
+    }
   }
 
-  return NextResponse.json({ success: true, sentTo: userId, sent: types });
+  return NextResponse.json({ success: failed.length === 0, sentTo: userId, sent, failed });
 }
 
 // Vercel Cron은 GET으로 호출. 수동 트리거도 GET.

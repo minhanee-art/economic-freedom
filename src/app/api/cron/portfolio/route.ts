@@ -77,10 +77,13 @@ async function handle(request: NextRequest) {
   if (krHoldings.length > 0 && appkey) {
     try {
       const token = await getKisToken(appkey, appsecret);
+      const krResults = await Promise.all(
+        krHoldings.map((h) => getKisPrice(h.code as string, token, appkey, appsecret))
+      );
       const krLines: string[] = [];
-      for (const h of krHoldings) {
-        const result = await getKisPrice(h.code as string, token, appkey, appsecret);
-        if (!result) continue;
+      krHoldings.forEach((h, idx) => {
+        const result = krResults[idx];
+        if (!result) return;
         const qty = Number(h.shares);
         const avgPrice = Number(h.total_shares) > 0
           ? Number(h.total_cost) / Number(h.total_shares)
@@ -98,7 +101,7 @@ async function handle(request: NextRequest) {
         krLines.push(
           `${emoji} ${h.name}: ${result.price.toLocaleString()}원 ×${qty} = ${value.toLocaleString()}원 (${sign}${pct.toFixed(1)}%)`
         );
-      }
+      });
       if (krLines.length) msg += `🇰🇷 한국\n${krLines.join("\n")}\n\n`;
     } catch (err) {
       msg += `🇰🇷 한국 데이터 오류: ${(err as Error).message}\n\n`;

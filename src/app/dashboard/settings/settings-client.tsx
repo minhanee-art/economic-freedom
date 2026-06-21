@@ -83,12 +83,17 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
   // 프로필 저장
   const saveProfile = async () => {
-    const res = await fetch("/api/settings", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ monthlyBudget, displayName: displayName.trim() || null }),
-    });
-    if (!res.ok) { alert("저장 실패"); } else { flash("프로필 저장됨"); }
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ monthlyBudget, displayName: displayName.trim() || null }),
+      });
+      if (!res.ok) throw new Error();
+      flash("프로필 저장됨");
+    } catch {
+      alert("저장 실패");
+    }
   };
 
   // 종목 필드 debounce 저장
@@ -109,13 +114,19 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       debounceTimers.current.set(
         key,
         setTimeout(async () => {
-          await fetch("/api/holdings", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id, [field]: value }),
-          });
-          flash("자동 저장됨");
-          debounceTimers.current.delete(key);
+          try {
+            const res = await fetch("/api/holdings", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id, [field]: value }),
+            });
+            if (!res.ok) throw new Error();
+            flash("자동 저장됨");
+          } catch {
+            flash("자동 저장 실패");
+          } finally {
+            debounceTimers.current.delete(key);
+          }
         }, 500)
       );
     },
@@ -178,14 +189,17 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
     try {
       if (dangerModal === "purchases") {
-        await fetch("/api/danger/purchases", { method: "DELETE" });
+        const res = await fetch("/api/danger/purchases", { method: "DELETE" });
+        if (!res.ok) throw new Error("삭제 실패");
         flash("매수 기록 전체 삭제됨");
         router.refresh();
       } else if (dangerModal === "dividends") {
-        await fetch("/api/danger/dividends", { method: "DELETE" });
+        const res = await fetch("/api/danger/dividends", { method: "DELETE" });
+        if (!res.ok) throw new Error("삭제 실패");
         flash("배당 기록 전체 삭제됨");
       } else if (dangerModal === "reset") {
-        await fetch("/api/settings", { method: "DELETE" });
+        const res = await fetch("/api/settings", { method: "DELETE" });
+        if (!res.ok) throw new Error("초기화 실패");
         flash("종목 초기화 완료");
         router.refresh();
       } else if (dangerModal === "account") {

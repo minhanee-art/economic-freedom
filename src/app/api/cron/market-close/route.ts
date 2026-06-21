@@ -51,16 +51,19 @@ async function handle(request: NextRequest) {
   if (krStocks.length > 0 && appkey) {
     try {
       const token = await getKisToken(appkey, appsecret);
+      const krResults = await Promise.all(
+        krStocks.map((s) => getKisPrice(s.code as string, token, appkey, appsecret))
+      );
       const krLines: string[] = [];
-      for (const s of krStocks) {
-        const result = await getKisPrice(s.code as string, token, appkey, appsecret);
-        if (!result) continue;
+      krStocks.forEach((s, idx) => {
+        const result = krResults[idx];
+        if (!result) return;
         const sign = result.changeRate >= 0 ? "+" : "";
         const emoji = result.changeRate >= 0 ? "📈" : "📉";
         krLines.push(
           `${emoji} ${s.name}: ${result.price.toLocaleString()}원 (${sign}${result.changeRate.toFixed(2)}%)  거래량: ${result.volume.toLocaleString()}`
         );
-      }
+      });
       if (krLines.length) msg += `🇰🇷 한국 장 마감\n━━━━━━━━━━━━━━━━\n${krLines.join("\n")}\n`;
     } catch (err) {
       msg += `🇰🇷 한국 장 데이터 오류: ${(err as Error).message}\n`;

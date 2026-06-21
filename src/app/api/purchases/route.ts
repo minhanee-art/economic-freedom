@@ -45,6 +45,14 @@ export async function POST(request: Request) {
     }
   }
 
+  // 소유 종목인지 검증 — 타인 holding_id로 유령 purchase_items/cost_basis 생성 방지(IDOR)
+  const holdingIds = [...new Set(items.map((i: { holdingId: string }) => i.holdingId))];
+  // 잘못된 형식의 UUID는 ::uuid[] 캐스팅에서 throw → 500 대신 400으로 흡수
+  const owned = await sql`SELECT id FROM holdings WHERE user_id = ${session.userId} AND id = ANY(${holdingIds}::uuid[])`.catch(() => null);
+  if (!owned || owned.length !== holdingIds.length) {
+    return NextResponse.json({ error: "유효하지 않거나 보유하지 않은 종목이 포함됐습니다." }, { status: 400 });
+  }
+
   const recordId = randomUUID();
 
   // 모든 쓰기를 하나의 원자적 트랜잭션으로 묶는다 — 중간 실패 시 전체 롤백되어

@@ -25,12 +25,17 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const { id, current_price, target_pct } = await request.json();
+  const { id, current_price, target_pct } = await request.json().catch(() => ({}));
+  if (!id) return NextResponse.json({ error: "id 필요" }, { status: 400 });
   if (current_price !== undefined) {
-    await sql`UPDATE holdings SET current_price = ${current_price} WHERE id = ${id} AND user_id = ${session.userId}`;
+    const p = Number(current_price);
+    if (!Number.isFinite(p) || p < 0) return NextResponse.json({ error: "current_price는 0 이상이어야 합니다." }, { status: 400 });
+    await sql`UPDATE holdings SET current_price = ${Math.round(p)} WHERE id = ${id} AND user_id = ${session.userId}`;
   }
   if (target_pct !== undefined) {
-    await sql`UPDATE holdings SET target_pct = ${target_pct} WHERE id = ${id} AND user_id = ${session.userId}`;
+    const t = Number(target_pct);
+    if (!Number.isFinite(t) || t < 0 || t > 100) return NextResponse.json({ error: "target_pct는 0~100이어야 합니다." }, { status: 400 });
+    await sql`UPDATE holdings SET target_pct = ${t} WHERE id = ${id} AND user_id = ${session.userId}`;
   }
   return NextResponse.json({ ok: true });
 }

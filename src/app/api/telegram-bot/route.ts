@@ -56,6 +56,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "TELEGRAM_BOT_TOKEN, OPENAI_API_KEY 필요" }, { status: 500 });
   }
 
+  // Telegram 시크릿 토큰 검증(설정된 경우) — URL을 아는 외부인의 위조 호출/OpenAI 비용 남용 차단
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() ?? "";
+  if (webhookSecret && request.headers.get("x-telegram-bot-api-secret-token") !== webhookSecret) {
+    return NextResponse.json({ ok: true });
+  }
+
   let update: TelegramUpdate;
   try {
     update = await request.json() as TelegramUpdate;
@@ -98,11 +104,12 @@ export async function GET(request: NextRequest) {
 
   const host = request.headers.get("host") ?? "";
   const webhookUrl = `https://${host}/api/telegram-bot`;
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET?.trim() ?? "";
 
-  const res = await fetch(
-    `https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}`,
-    { signal: AbortSignal.timeout(10000) }
-  );
+  const setupUrl =
+    `https://api.telegram.org/bot${botToken}/setWebhook?url=${encodeURIComponent(webhookUrl)}` +
+    (webhookSecret ? `&secret_token=${encodeURIComponent(webhookSecret)}` : "");
+  const res = await fetch(setupUrl, { signal: AbortSignal.timeout(10000) });
   const data = await res.json();
-  return NextResponse.json({ webhookUrl, telegram: data });
+  return NextResponse.json({ webhookUrl, secretTokenSet: Boolean(webhookSecret), telegram: data });
 }

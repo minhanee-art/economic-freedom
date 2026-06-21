@@ -5,11 +5,17 @@ import { signToken, setSessionCookie } from "@/lib/session";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
-  const origin = new URL(request.url).origin;
+  const url = new URL(request.url);
+  const origin = url.origin;
   const failUrl = `${origin}/login?error=google_failed`;
 
-  const code = new URL(request.url).searchParams.get("code");
-  if (!code) return NextResponse.redirect(failUrl);
+  // state(CSRF) 대조 — 시작 라우트가 심은 쿠키와 일치해야 한다
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const cookieState = request.cookies.get("g_oauth_state")?.value;
+  if (!code || !state || !cookieState || state !== cookieState) {
+    return NextResponse.redirect(failUrl);
+  }
 
   // 코드 → 액세스 토큰 교환
   const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -68,5 +74,6 @@ export async function GET(request: NextRequest) {
   const token = await signToken(user.id);
   const res = NextResponse.redirect(`${origin}/dashboard`);
   setSessionCookie(res, token);
+  res.cookies.delete("g_oauth_state");
   return res;
 }

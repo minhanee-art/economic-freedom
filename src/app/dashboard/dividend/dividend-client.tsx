@@ -19,7 +19,8 @@ interface DividendRow {
   date: string;
   memo: string | null;
   created_at: string;
-  holdings: { name: string; code: string } | null;
+  holding_name: string | null;
+  holding_code: string | null;
 }
 
 interface Props {
@@ -201,21 +202,7 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
 
       <DividendAutoFetch
         holdings={holdings}
-        onDone={(newRows) => {
-          // GET /api/dividends 응답을 DividendRow 형태로 변환
-          const mapped: DividendRow[] = newRows.map((r: any) => ({
-            id: r.id,
-            holding_id: r.holding_id,
-            amount: r.amount,
-            date: r.date,
-            memo: r.memo,
-            created_at: r.created_at,
-            holdings: r.holding_name
-              ? { name: r.holding_name, code: r.holding_code }
-              : null,
-          }));
-          setDividends(mapped);
-        }}
+        onDone={(newRows) => setDividends(newRows)}
       />
 
       {/* 월별 차트 */}
@@ -244,7 +231,7 @@ export function DividendClient({ holdings, initialDividends, userId }: Props) {
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate">
-                    {d.holdings?.name ?? "알 수 없음"}
+                    {d.holding_name ?? "알 수 없음"}
                   </p>
                   <p className="text-xs text-zinc-400">
                     {d.date}

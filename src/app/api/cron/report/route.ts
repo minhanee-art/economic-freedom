@@ -20,12 +20,10 @@ async function handle(request: NextRequest) {
   // 인증: Vercel Cron은 Authorization: Bearer <CRON_SECRET> 자동 첨부.
   // 수동 테스트는 ?secret=<CRON_SECRET> 쿼리로도 허용.
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    const querySecret = request.nextUrl.searchParams.get("secret");
-    if (auth !== `Bearer ${secret}` && querySecret !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = request.headers.get("authorization");
+  const querySecret = request.nextUrl.searchParams.get("secret");
+  if (!secret || (auth !== `Bearer ${secret}` && querySecret !== secret)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const userId = await resolveUserId();

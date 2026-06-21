@@ -14,6 +14,10 @@ export async function POST(request: Request) {
   if (!user) {
     return NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
   }
+  // Google OAuth 전용 계정(password_hash NULL)은 비밀번호 로그인을 사용할 수 없다.
+  if (!user.password_hash) {
+    return NextResponse.json({ error: "이 계정은 Google 로그인을 사용합니다." }, { status: 401 });
+  }
 
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {

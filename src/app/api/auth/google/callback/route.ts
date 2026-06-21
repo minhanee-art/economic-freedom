@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
   });
   if (!userRes.ok) return NextResponse.redirect(failUrl);
   const { id: googleId, email, name } = await userRes.json();
+  if (!googleId || !email) return NextResponse.redirect(failUrl);
 
   // 기존 구글 계정 조회
   let user = (await sql`SELECT id FROM users WHERE google_id = ${googleId}`)[0];

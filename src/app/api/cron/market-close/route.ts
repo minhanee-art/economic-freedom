@@ -19,12 +19,10 @@ async function resolveUserId(): Promise<string | null> {
 
 async function handle(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    const qs = request.nextUrl.searchParams.get("secret");
-    if (auth !== `Bearer ${secret}` && qs !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = request.headers.get("authorization");
+  const qs = request.nextUrl.searchParams.get("secret");
+  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const userId = await resolveUserId();

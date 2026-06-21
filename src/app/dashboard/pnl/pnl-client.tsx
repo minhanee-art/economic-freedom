@@ -273,15 +273,20 @@ function buildChartData(
 ) {
   if (records.length === 0) return [];
 
+  // 과거 시점의 실제 시장 평가금액은 당시 시세가 없어 복원할 수 없다.
+  // 따라서 과거 구간은 투입원금(원가) 기준선으로 표시하고, 실제 평가금액은
+  // 아래에서 현재 시점 한 점으로만 추가한다(여기서 손익 괴리가 드러난다).
   let cumulativeCost = 0;
-  const data = records.map((r) => {
-    cumulativeCost += r.total_spent;
-    return {
-      date: r.date,
-      invested: cumulativeCost,
-      value: r.total_value_after,
-    };
-  });
+  const data = [...records]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((r) => {
+      cumulativeCost += r.total_spent;
+      return {
+        date: r.date,
+        invested: cumulativeCost,
+        value: cumulativeCost,
+      };
+    });
 
   // 현재 시점 추가
   const currentValue = holdings.reduce(

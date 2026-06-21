@@ -53,12 +53,10 @@ function parseRss(xml: string, keyword: string, cutoff: Date): NewsItem[] {
 
 async function handle(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    const qs = request.nextUrl.searchParams.get("secret");
-    if (auth !== `Bearer ${secret}` && qs !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = request.headers.get("authorization");
+  const qs = request.nextUrl.searchParams.get("secret");
+  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);

@@ -1,10 +1,12 @@
 -- pension-manager Neon 스키마 (Supabase auth 제거, 커스텀 users 테이블 사용)
 
 -- 1. users (인증용 — Supabase auth.users 대체)
+--    password_hash는 Google OAuth 전용 계정을 위해 NULL 허용.
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
+  password_hash TEXT,
+  google_id TEXT UNIQUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -40,7 +42,8 @@ CREATE TABLE IF NOT EXISTS purchase_records (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   total_spent INTEGER NOT NULL DEFAULT 0,
-  total_value_after INTEGER NOT NULL DEFAULT 0,
+  -- 포트폴리오 평가금액(원)은 INT 범위(~21억)를 넘을 수 있어 BIGINT 사용
+  total_value_after BIGINT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -64,7 +67,8 @@ CREATE TABLE IF NOT EXISTS dividends (
   amount INTEGER NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   memo TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (holding_id, date)
 );
 
 -- 7. cost_basis (원가 기록)
@@ -82,9 +86,34 @@ CREATE TABLE IF NOT EXISTS watchlist (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
+  code TEXT,
   market TEXT NOT NULL DEFAULT 'KR',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, name)
+);
+
+-- 9. dividend_calendar (배당 캘린더)
+CREATE TABLE IF NOT EXISTS dividend_calendar (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  stock TEXT NOT NULL,
+  type TEXT NOT NULL,
+  note TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- 10. sell_items (매도 거래 영속화 — 재임포트 시 중복 차감 방지)
+CREATE TABLE IF NOT EXISTS sell_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  holding_id UUID NOT NULL REFERENCES holdings(id) ON DELETE CASCADE,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  quantity INTEGER NOT NULL,
+  price INTEGER NOT NULL,
+  date DATE NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 인덱스
@@ -92,6 +121,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_holdings_user_code ON holdings(user_id, co
 CREATE INDEX IF NOT EXISTS idx_purchase_records_user_date ON purchase_records(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_dividends_user_date ON dividends(user_id, date);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cost_basis_user_holding ON cost_basis(user_id, holding_id);
+CREATE INDEX IF NOT EXISTS idx_dividend_calendar_user_date ON dividend_calendar(user_id, date);
+CREATE INDEX IF NOT EXISTS idx_sell_items_user ON sell_items(user_id);
 
 -- updated_at 자동 갱신 트리거
 CREATE OR REPLACE FUNCTION update_updated_at()

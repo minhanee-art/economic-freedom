@@ -33,12 +33,10 @@ async function fetchNewsHeadlines(stockName: string): Promise<string[]> {
 
 async function handle(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = request.headers.get("authorization");
-    const qs = request.nextUrl.searchParams.get("secret");
-    if (auth !== `Bearer ${secret}` && qs !== secret) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  const auth = request.headers.get("authorization");
+  const qs = request.nextUrl.searchParams.get("secret");
+  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // 1. DB에서 감정분석 대상 종목 가져오기

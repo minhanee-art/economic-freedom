@@ -5,6 +5,8 @@ interface SendMessageOptions {
   /** 대시보드로 바로 이동하는 인라인 버튼 URL (선택) */
   buttonUrl?: string;
   buttonText?: string;
+  /** HTML 파싱 사용 여부 (기본 true). 평문 메시지는 false로 설정해 &,<,> 이스케이프 이슈 방지 */
+  html?: boolean;
 }
 
 /**
@@ -29,9 +31,10 @@ export async function sendTelegramMessage(
     const body: Record<string, unknown> = {
       chat_id: chatId,
       text: chunks[i],
-      parse_mode: "HTML",
       disable_web_page_preview: true,
     };
+    // 평문 메시지(html:false)는 parse_mode를 생략 — &,<,> 등으로 인한 Telegram 400 방지
+    if (opts.html !== false) body.parse_mode = "HTML";
     // 인라인 버튼은 마지막 청크에만 부착
     if (isLast && opts.buttonUrl) {
       body.reply_markup = {

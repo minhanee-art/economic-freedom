@@ -74,7 +74,7 @@ async function handle(request: NextRequest) {
   for (const u of upcoming) msg += `${u.text}\n\n`;
   msg += "💡 배당락일 전일까지 매수해야 배당 수령!";
 
-  await sendTelegramMessage(msg);
+  await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true, eventCount: upcoming.length });
 }
 

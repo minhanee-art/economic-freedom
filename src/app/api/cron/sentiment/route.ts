@@ -95,7 +95,7 @@ async function handle(request: NextRequest) {
   });
   const finalMessage = `🧠 AI 감정분석 종목 추천\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n${analysisResult}\n\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.`;
 
-  await sendTelegramMessage(finalMessage);
+  await sendTelegramMessage(finalMessage, { html: false });
   return NextResponse.json({ success: true, stocks: stocks.length });
 }
 

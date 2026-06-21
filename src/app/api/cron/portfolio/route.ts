@@ -151,7 +151,7 @@ async function handle(request: NextRequest) {
     }
   }
 
-  await sendTelegramMessage(msg);
+  await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true, holdings: holdings.length });
 }
 

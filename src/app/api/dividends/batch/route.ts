@@ -14,9 +14,17 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const { items }: { items: BatchItem[] } = await request.json();
+  const body = (await request.json().catch(() => null)) as { items?: BatchItem[] } | null;
+  const items = body?.items;
   if (!Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ inserted: 0, updated: 0 });
+  }
+  // 입력 검증 — 비정상 amount/date로 인한 비-JSON 500·INTEGER 오버플로 방지
+  for (const it of items) {
+    const amount = Number(it?.amount);
+    if (!it?.holdingId || !it?.date || typeof it.date !== "string" || !Number.isFinite(amount) || amount < 0 || amount > 2_147_483_647) {
+      return NextResponse.json({ error: "유효하지 않은 배당 항목이 있습니다." }, { status: 400 });
+    }
   }
 
   // holding이 실제로 이 사용자 소유인지 검증

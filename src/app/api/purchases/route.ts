@@ -40,7 +40,13 @@ export async function POST(request: Request) {
   for (const item of items) {
     const qty = Number(item?.quantity);
     const cost = Number(item?.cost);
-    if (!item?.holdingId || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(cost) || cost < 0) {
+    const price = Number(item?.price);
+    if (
+      !item?.holdingId ||
+      !Number.isFinite(qty) || qty <= 0 ||
+      !Number.isFinite(cost) || cost < 0 ||
+      !Number.isFinite(price) || price < 0
+    ) {
       return NextResponse.json({ error: "유효하지 않은 매수 항목이 있습니다." }, { status: 400 });
     }
   }

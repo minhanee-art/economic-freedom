@@ -108,7 +108,7 @@ async function handle(request: NextRequest) {
     } catch { /* GPT 실패해도 리포트 발송 */ }
   }
 
-  await sendTelegramMessage(msg);
+  await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true });
 }
 

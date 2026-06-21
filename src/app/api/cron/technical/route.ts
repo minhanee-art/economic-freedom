@@ -167,7 +167,7 @@ async function handle(request: NextRequest) {
 
   msg += "\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
 
-  await sendTelegramMessage(msg);
+  await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true, strongCount: strong.length });
 }
 

@@ -26,11 +26,29 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     const userId = session.userId;
 
-    const { items, skipDuplicates = true } = (await request.json()) as {
-      items: ImportItem[];
-      skipDuplicates?: boolean;
-    };
-    if (!items?.length) return NextResponse.json({ error: "데이터 없음" }, { status: 400 });
+    const body = (await request.json().catch(() => null)) as { items?: ImportItem[]; skipDuplicates?: boolean } | null;
+    const items = body?.items;
+    const skipDuplicates = body?.skipDuplicates ?? true;
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: "데이터 없음" }, { status: 400 });
+    }
+
+    // 입력 검증 — INTEGER 오버플로/NaN/음수로 인한 500·데이터 오염 방지
+    const INT_MAX = 2_147_483_647;
+    for (const it of items) {
+      const qty = Number(it.qty);
+      const price = Number(it.price);
+      const amount = Number(it.amount);
+      if (
+        !it.code || typeof it.code !== "string" ||
+        !it.date || typeof it.date !== "string" ||
+        !Number.isFinite(qty) || qty < 0 || qty > INT_MAX ||
+        !Number.isFinite(price) || price < 0 || price > INT_MAX ||
+        !Number.isFinite(amount) || amount < 0 || amount > INT_MAX
+      ) {
+        return NextResponse.json({ error: "유효하지 않은 거래 항목이 포함됐습니다." }, { status: 400 });
+      }
+    }
 
     const holdings = await sql`SELECT id, code, shares FROM holdings WHERE user_id = ${userId}`;
     const holdingMap = new Map<string, PlannedHolding>(

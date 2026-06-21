@@ -10,8 +10,8 @@ export async function PATCH(request: Request) {
   const body = await request.json().catch(() => ({}));
   const { monthlyBudget, displayName } = body;
 
-  if (monthlyBudget !== undefined && (!Number.isInteger(monthlyBudget) || monthlyBudget < 0)) {
-    return NextResponse.json({ error: "monthlyBudget는 0 이상 정수여야 합니다." }, { status: 400 });
+  if (monthlyBudget !== undefined && (!Number.isInteger(monthlyBudget) || monthlyBudget < 0 || monthlyBudget > 2_147_483_647)) {
+    return NextResponse.json({ error: "monthlyBudget는 0 이상의 정수여야 합니다." }, { status: 400 });
   }
 
   // displayName이 전달된 경우에만 갱신 — 빈 값이면 NULL로 초기화 허용(COALESCE 제거)

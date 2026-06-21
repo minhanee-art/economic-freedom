@@ -2,7 +2,9 @@ import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 
 export function formatDate(date: string | Date, pattern = "yyyy-MM-dd") {
-  return format(new Date(date), pattern, { locale: ko });
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return "";
+  return format(d, pattern, { locale: ko });
 }
 
 /** 원화 축약 표시: 1억↑ → "X.X억", 1만↑ → "X.X만", 그 외 → "₩1,234" */

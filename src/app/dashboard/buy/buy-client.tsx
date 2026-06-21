@@ -21,7 +21,6 @@ export function BuyClient({
   initialHoldings,
   initialCostBases,
   defaultBudget,
-  userId,
 }: Props) {
   const [holdings, setHoldings] = useState(initialHoldings);
   const [budget, setBudget] = useState(defaultBudget);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { formatFullKRW, formatKRW, cn } from "@/lib/utils";
+import { formatFullKRW, formatKRW } from "@/lib/utils";
 import { DividendBarChart } from "@/components/charts/dividend-bar-chart";
 
 interface HoldingOption {
@@ -29,7 +29,7 @@ interface Props {
   userId: string;
 }
 
-export function DividendClient({ holdings, initialDividends, userId }: Props) {
+export function DividendClient({ holdings, initialDividends }: Props) {
   const [dividends, setDividends] = useState(initialDividends);
   const [holdingId, setHoldingId] = useState("");
   const [amount, setAmount] = useState("");

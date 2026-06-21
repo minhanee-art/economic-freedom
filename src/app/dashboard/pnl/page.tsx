@@ -4,7 +4,7 @@ import { getSession } from "@/lib/session";
 import { getHoldings, getCostBases, getDividends } from "@/lib/queries";
 import { sql } from "@/lib/db";
 import { PnLClient } from "./pnl-client";
-import type { Holding, CostBasis } from "@/types";
+import type { PurchaseRecord } from "@/types";
 
 export default async function PnLPage() {
   const session = await getSession();
@@ -18,16 +18,13 @@ export default async function PnLPage() {
     getDividends(userId),
   ]);
 
-  const totalDividend = (dividends as any[]).reduce(
-    (s: number, d: any) => s + Number(d.amount),
-    0
-  );
+  const totalDividend = dividends.reduce((s, d) => s + Number(d.amount), 0);
 
   return (
     <PnLClient
-      holdings={holdings as unknown as Holding[]}
-      costBases={costBases as unknown as CostBasis[]}
-      purchaseRecords={purchaseRecords as any[]}
+      holdings={holdings}
+      costBases={costBases}
+      purchaseRecords={purchaseRecords as unknown as PurchaseRecord[]}
       totalDividend={totalDividend}
     />
   );

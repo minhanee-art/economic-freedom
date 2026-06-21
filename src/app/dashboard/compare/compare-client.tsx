@@ -133,6 +133,7 @@ export function CompareClient({ holdings }: Props) {
         );
       })
       .finally(() => setLoadingDetail(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selected 전체를 deps에 넣으면 무한 루프
   }, [selected.length]);
 
   const handleSearch = (q: string) => {
@@ -169,7 +170,7 @@ export function CompareClient({ holdings }: Props) {
     if (!item.detail) return item.changePct;
     if (period === "1m") return item.detail.returnRate1m;
     if (period === "3m") return item.detail.returnRate3m;
-    if (period === "6m") return (item.detail.returnRate3m + item.detail.returnRate1m) * 1.2; // 추정
+    if (period === "6m") return item.detail.returnRate3m; // 6m 실데이터 미제공 → 3m로 근사(조작 수치 제거)
     if (period === "1y") return item.detail.returnRate1y;
     return item.changePct;
   };

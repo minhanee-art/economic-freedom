@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getProfile, getHoldings, getWatchlist, getDividendCalendar } from "@/lib/queries";
 import { SettingsClient } from "./settings-client";
-import type { Holding } from "@/types";
 
 export default async function SettingsPage() {
   const session = await getSession();
@@ -19,10 +18,10 @@ export default async function SettingsPage() {
 
   return (
     <SettingsClient
-      profile={profile as any}
-      holdings={holdings as unknown as Holding[]}
-      watchlist={watchlist as unknown as { id: string; name: string; code: string | null; market: "KR" | "US" }[]}
-      dividendCalendar={dividendCalendar as unknown as { id: string; date: string; stock: string; type: string; note: string }[]}
+      profile={profile}
+      holdings={holdings}
+      watchlist={watchlist}
+      dividendCalendar={dividendCalendar}
       userId={userId}
     />
   );

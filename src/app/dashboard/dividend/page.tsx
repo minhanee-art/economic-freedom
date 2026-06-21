@@ -9,16 +9,19 @@ export default async function DividendPage() {
   if (!session) redirect("/login");
   const userId = session.userId;
 
-  let holdingsWithShares: any[] = [];
-  let dividends: any[] = [];
+  let holdingsWithShares: { id: string; code: string; name: string; category: string; shares: number }[] = [];
+  let dividends: {
+    id: string; holding_id: string; amount: number; date: string; memo: string | null;
+    created_at: string; holding_name: string | null; holding_code: string | null;
+  }[] = [];
 
   try {
     const [h, d] = await Promise.all([
       sql`SELECT id, code, name, category, shares FROM holdings WHERE user_id = ${userId} AND shares > 0 ORDER BY name`,
       sql`SELECT d.id, d.holding_id, d.amount, d.memo, d.date::text, d.created_at::text, h.name AS holding_name, h.code AS holding_code FROM dividends d LEFT JOIN holdings h ON h.id = d.holding_id WHERE d.user_id = ${userId} ORDER BY d.date DESC`,
     ]);
-    holdingsWithShares = h as any[];
-    dividends = d as any[];
+    holdingsWithShares = h as unknown as typeof holdingsWithShares;
+    dividends = d as unknown as typeof dividends;
   } catch (err) {
     console.error("[dividend/page] DB error:", err);
   }

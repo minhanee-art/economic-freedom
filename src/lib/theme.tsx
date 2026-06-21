@@ -24,8 +24,10 @@ function applyTheme(t: Theme) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("system");
 
+  // 마운트 시 저장된 테마를 즉시 적용 (localStorage는 클라이언트 전용 → effect에서 1회)
   useEffect(() => {
     const stored = (localStorage.getItem("theme") as Theme) || "system";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setThemeState(stored);
     applyTheme(stored);
 

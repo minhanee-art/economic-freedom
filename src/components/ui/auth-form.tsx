@@ -10,19 +10,6 @@ interface AuthFormProps {
   mode: "login" | "signup";
 }
 
-const ERROR_MESSAGES: Record<string, string> = {
-  "Invalid login credentials": "이메일 또는 비밀번호가 올바르지 않습니다.",
-  "Email not confirmed": "이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.",
-  "User already registered": "이미 가입된 이메일입니다.",
-  "Password should be at least 6 characters": "비밀번호는 6자 이상이어야 합니다.",
-  "Unable to validate email address: invalid format": "올바른 이메일 형식이 아닙니다.",
-  "Email rate limit exceeded": "너무 많은 요청이 발생했습니다. 잠시 후 다시 시도해주세요.",
-};
-
-function getErrorMessage(error: string): string {
-  return ERROR_MESSAGES[error] || error;
-}
-
 export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,12 +21,14 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   const isLogin = mode === "login";
 
-  // 저장된 이메일 불러오기
+  // 저장된 이메일 불러오기 (localStorage는 클라이언트 전용이라 마운트 후 1회 동기화)
   useEffect(() => {
     const saved = localStorage.getItem(SAVED_EMAIL_KEY);
     if (saved) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setEmail(saved);
       setRememberEmail(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, []);
 

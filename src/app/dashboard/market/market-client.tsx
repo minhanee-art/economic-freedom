@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatKRW, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -40,12 +40,6 @@ export function MarketClient() {
   const [loadingIndices, setLoadingIndices] = useState(true);
   const [newsQuery, setNewsQuery] = useState("연금");
 
-  useEffect(() => {
-    fetchIndices();
-    fetchVolume();
-    fetchNews("연금");
-  }, []);
-
   const fetchIndices = async () => {
     setLoadingIndices(true);
     try {
@@ -82,6 +76,14 @@ export function MarketClient() {
     }
     setLoadingNews(false);
   };
+
+  useEffect(() => {
+    // 마운트 시 시장 데이터 페치 (외부 API 동기화)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchIndices();
+    fetchVolume();
+    fetchNews("연금");
+  }, []);
 
   // 차트 데이터 — 이름 12자 제한, 가독성 확보
   const chartData = etfs.slice(0, 10).map((e) => ({

@@ -1,46 +1,54 @@
 // 공통 DB 쿼리 함수
 import { sql } from "@/lib/db";
+import type { Holding, CostBasis, Profile, Dividend, PurchaseRecord, PurchaseItem } from "@/types";
 
-export async function getHoldings(userId: string) {
-  return sql`
+export type PurchaseRecordRow = PurchaseRecord & { purchase_items: PurchaseItem[] | null };
+export type WatchlistRow = { id: string; name: string; code: string | null; market: "KR" | "US" };
+export type DividendCalendarRow = { id: string; date: string; stock: string; type: string; note: string };
+
+export async function getHoldings(userId: string): Promise<Holding[]> {
+  const rows = await sql`
     SELECT id, user_id, code, name, category, sub_category,
            current_price, shares,
            target_pct::float, expense_ratio::float,
            created_at::text, updated_at::text
     FROM holdings WHERE user_id = ${userId} ORDER BY target_pct DESC
   `;
+  return rows as unknown as Holding[];
 }
 
-export async function getCostBases(userId: string) {
-  return sql`
+export async function getCostBases(userId: string): Promise<CostBasis[]> {
+  const rows = await sql`
     SELECT id, user_id, holding_id, total_cost, total_shares,
            updated_at::text
     FROM cost_basis WHERE user_id = ${userId}
   `;
+  return rows as unknown as CostBasis[];
 }
 
-export async function getProfile(userId: string) {
+export async function getProfile(userId: string): Promise<Profile | null> {
   const [row] = await sql`
     SELECT id, email, display_name, monthly_budget,
            last_price_update::text, created_at::text
     FROM profiles WHERE id = ${userId}
   `;
-  return row ?? null;
+  return (row ?? null) as unknown as Profile | null;
 }
 
-export async function getDividends(userId: string) {
-  return sql`
+export async function getDividends(userId: string): Promise<Dividend[]> {
+  const rows = await sql`
     SELECT id, user_id, holding_id, amount, memo,
            date::text, created_at::text
     FROM dividends WHERE user_id = ${userId} ORDER BY date DESC
   `;
+  return rows as unknown as Dividend[];
 }
 
-export async function getPurchaseRecords(userId: string, limit = 20, offset = 0) {
-  return sql`
+export async function getPurchaseRecords(userId: string, limit = 20, offset = 0): Promise<PurchaseRecordRow[]> {
+  const rows = await sql`
     SELECT pr.id, pr.user_id, pr.total_spent, pr.total_value_after,
            pr.date::text, pr.created_at::text,
-           json_agg(pi ORDER BY pi.id) AS purchase_items
+           json_agg(pi ORDER BY pi.id) FILTER (WHERE pi.id IS NOT NULL) AS purchase_items
     FROM purchase_records pr
     LEFT JOIN purchase_items pi ON pi.record_id = pr.id
     WHERE pr.user_id = ${userId}
@@ -48,6 +56,7 @@ export async function getPurchaseRecords(userId: string, limit = 20, offset = 0)
     ORDER BY pr.date DESC
     LIMIT ${limit} OFFSET ${offset}
   `;
+  return rows as unknown as PurchaseRecordRow[];
 }
 
 export async function getPurchaseRecordsCount(userId: string): Promise<number> {
@@ -55,16 +64,18 @@ export async function getPurchaseRecordsCount(userId: string): Promise<number> {
   return count;
 }
 
-export async function getWatchlist(userId: string) {
-  return sql`
+export async function getWatchlist(userId: string): Promise<WatchlistRow[]> {
+  const rows = await sql`
     SELECT id, name, code, market, created_at::text
     FROM watchlist WHERE user_id = ${userId} ORDER BY created_at ASC
   `;
+  return rows as unknown as WatchlistRow[];
 }
 
-export async function getDividendCalendar(userId: string) {
-  return sql`
+export async function getDividendCalendar(userId: string): Promise<DividendCalendarRow[]> {
+  const rows = await sql`
     SELECT id, date::text, stock, type, note
     FROM dividend_calendar WHERE user_id = ${userId} ORDER BY date ASC
   `;
+  return rows as unknown as DividendCalendarRow[];
 }

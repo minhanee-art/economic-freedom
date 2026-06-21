@@ -1,8 +1,8 @@
 "use client";
 
 import type { Holding, CostBasis, PurchaseRecord } from "@/types";
-import { formatKRW, formatFullKRW, formatPercent, cn } from "@/lib/utils";
-import { getCategoryColor, CATEGORY_COLORS } from "@/lib/colors";
+import { formatKRW, formatPercent, cn } from "@/lib/utils";
+import { getCategoryColor } from "@/lib/colors";
 import { PnLAreaChart } from "@/components/charts/pnl-area-chart";
 
 interface HoldingPnL {

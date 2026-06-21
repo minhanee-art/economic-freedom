@@ -1,7 +1,7 @@
 // 매수 이력 서버 컴포넌트
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
-import { getPurchaseRecords, getPurchaseRecordsCount, getHoldings } from "@/lib/queries";
+import { getPurchaseRecords, getPurchaseRecordsCount, getHoldings, type PurchaseRecordRow } from "@/lib/queries";
 import { HistoryClient } from "./history-client";
 import type { Holding } from "@/types";
 
@@ -10,7 +10,7 @@ export default async function HistoryPage() {
   if (!session) redirect("/login");
   const userId = session.userId;
 
-  let initialRecords: any[] = [];
+  let initialRecords: PurchaseRecordRow[] = [];
   let totalCount = 0;
   let holdings: Holding[] = [];
 
@@ -20,9 +20,9 @@ export default async function HistoryPage() {
       getPurchaseRecordsCount(userId),
       getHoldings(userId),
     ]);
-    initialRecords = r as any[];
-    totalCount = c as number;
-    holdings = h as unknown as Holding[];
+    initialRecords = r;
+    totalCount = c;
+    holdings = h;
   } catch (err) {
     console.error("[history/page] DB error:", err);
   }

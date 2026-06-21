@@ -23,7 +23,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function ImportClient({ holdings, userId, onClose }: Props) {
+export function ImportClient({ holdings, onClose }: Props) {
   const [parsedRows, setParsedRows] = useState<ParsedRow[]>([]);
   const [error, setError] = useState("");
   const [isImporting, setIsImporting] = useState(false);

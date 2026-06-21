@@ -6,7 +6,7 @@ import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
 import { ImportClient } from "./import-client";
 
 interface RecordWithItems extends PurchaseRecord {
-  purchase_items: PurchaseItem[];
+  purchase_items: PurchaseItem[] | null;
 }
 
 interface Props {

@@ -48,7 +48,6 @@ export function RebalanceAlert({ holdings, categoryData }: Props) {
       <div className="space-y-2">
         {categoryRows.map((c) => {
           const isOver = c.diff > 0;
-          const isUnder = c.diff < 0;
           const isAlert = c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD;
           return (
             <div key={c.name} className="flex items-center gap-3">

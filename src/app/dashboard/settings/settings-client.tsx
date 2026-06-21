@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { formatFullKRW, cn } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import type { Profile, Holding } from "@/types";
@@ -34,7 +34,7 @@ interface Props {
   userId: string;
 }
 
-export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, dividendCalendar: initialCalendar, userId }: Props) {
+export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, dividendCalendar: initialCalendar }: Props) {
   const router = useRouter();
   const [holdings, setHoldings] = useState(initialHoldings);
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");

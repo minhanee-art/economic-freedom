@@ -14,7 +14,7 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
   const hasPnL = h.total_cost > 0;
 
   return (
-    <div className="flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+    <div className="flex rounded-xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
       {/* 카테고리 색상 바 */}
       <div
         className="w-1.5 shrink-0"
@@ -26,11 +26,11 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm font-semibold">{h.name}</p>
-            <p className="text-xs text-zinc-400">{h.code}</p>
+            <p className="text-xs text-zinc-400 tabular-nums">{h.code}</p>
           </div>
           <div className="text-right">
-            <p className="text-sm font-semibold">{formatKRW(h.current_value)}</p>
-            <p className="text-xs text-zinc-400">
+            <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>
+            <p className="text-xs text-zinc-400 tabular-nums">
               {h.shares}주 × ₩{h.current_price.toLocaleString()}
             </p>
           </div>
@@ -74,7 +74,7 @@ function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
         variant === "default" && "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400",
         variant === "indigo" && "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
         variant === "green" && "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",

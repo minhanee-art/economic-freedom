@@ -123,13 +123,13 @@ export function ImportClient({ holdings, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 p-6 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/40 backdrop-blur-sm px-4">
+      <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">거래내역 가져오기</h3>
+          <h3 className="text-lg font-semibold text-ink dark:text-zinc-100">거래내역 가져오기</h3>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-600"
+            className="flex items-center justify-center w-8 h-8 rounded-full text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -138,24 +138,24 @@ export function ImportClient({ holdings, onClose }: Props) {
         </div>
 
         {/* 안내 */}
-        <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800 px-4 py-3 text-sm space-y-2">
-          <p className="font-medium">미래에셋증권 거래내역 다운로드 방법:</p>
-          <ol className="list-decimal list-inside text-zinc-500 space-y-1 text-xs">
+        <div className="rounded-xl bg-canvas-soft dark:bg-zinc-800 border border-hairline dark:border-zinc-700 px-4 py-3 text-sm space-y-2">
+          <p className="font-semibold text-ink dark:text-zinc-100">미래에셋증권 거래내역 다운로드 방법:</p>
+          <ol className="list-decimal list-inside text-ink-mute dark:text-zinc-400 space-y-1 text-xs">
             <li>m.stock 앱 → 메뉴 → 자산/내역 → 거래내역</li>
             <li>기간 설정 후 조회 → 다운로드(엑셀/CSV)</li>
             <li>또는 HTS(카이로스) → [0650] 거래내역 → 엑셀 저장</li>
           </ol>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-zinc-400 tabular-nums">
             CSV 컬럼: 거래일자, 종목코드, 종목명, 매수/매도, 수량, 단가, 거래금액, 수수료, 세금
           </p>
         </div>
 
         {/* 직접 CSV 형식 안내 */}
-        <div className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-3 text-xs text-zinc-500 space-y-1">
-          <p className="font-medium text-zinc-600 dark:text-zinc-400">
+        <div className="rounded-xl border border-dashed border-hairline dark:border-zinc-700 px-4 py-3 text-xs text-ink-mute dark:text-zinc-500 space-y-1">
+          <p className="font-semibold text-ink dark:text-zinc-400">
             직접 CSV 만들기 (엑셀에서 저장):
           </p>
-          <pre className="bg-zinc-100 dark:bg-zinc-800 rounded p-2 overflow-x-auto">
+          <pre className="bg-canvas-soft dark:bg-zinc-800 border border-hairline dark:border-transparent rounded-lg p-2 overflow-x-auto tabular-nums">
 {`거래일자,종목코드,종목명,구분,수량,단가,거래금액,수수료,세금
 2025-03-15,305050,ACE 코스피,매수,3,55000,165000,0,0
 2025-03-15,354500,ACE 코스닥150,매수,5,17500,87500,0,0`}
@@ -173,7 +173,7 @@ export function ImportClient({ holdings, onClose }: Props) {
           />
           <button
             onClick={() => fileRef.current?.click()}
-            className="w-full h-11 rounded-xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 text-sm font-medium text-zinc-500 hover:border-indigo-500 hover:text-indigo-500 transition-colors"
+            className="w-full h-11 rounded-xl border-2 border-dashed border-hairline dark:border-zinc-700 text-sm font-semibold text-ink-mute dark:text-zinc-500 hover:border-indigo-500 hover:text-indigo-600 hover:bg-indigo-50/50 dark:hover:bg-indigo-900/10 transition-colors"
           >
             파일 선택 (CSV / XLSX)
           </button>
@@ -186,20 +186,20 @@ export function ImportClient({ holdings, onClose }: Props) {
               onChange={(e) => setSkipDuplicates(e.target.checked)}
               className="w-4 h-4 rounded accent-indigo-500"
             />
-            <span className="text-xs text-zinc-500">
+            <span className="text-xs text-ink-mute dark:text-zinc-500">
               기존 기록과 중복되는 항목 자동 건너뛰기
             </span>
           </label>
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 px-3 py-2.5 text-sm text-red-600 dark:text-red-400">
+          <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2.5 text-sm text-red-600 dark:text-red-400">
             {error}
           </div>
         )}
 
         {result && (
-          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
+          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-3 py-2.5 text-sm text-emerald-600 dark:text-emerald-400 font-medium">
             {result}
           </div>
         )}
@@ -207,7 +207,7 @@ export function ImportClient({ holdings, onClose }: Props) {
         {/* 파싱 결과 미리보기 */}
         {parsedRows.length > 0 && (
           <div className="space-y-3">
-            <p className="text-sm font-medium">
+            <p className="text-sm font-semibold text-ink dark:text-zinc-100 tabular-nums">
               {parsedRows.length}건 파싱됨
               {buyRows.length > 0 && ` · 매수 ${buyRows.length}`}
               {sellRows.length > 0 && ` · 매도 ${sellRows.length}`}
@@ -216,7 +216,7 @@ export function ImportClient({ holdings, onClose }: Props) {
 
             {/* 미등록 종목 안내 */}
             {actionableRows.some((r) => !holdingMap.has(r.code)) && (
-              <div className="rounded-lg bg-indigo-50 dark:bg-indigo-900/20 px-3 py-2 text-xs text-indigo-600 dark:text-indigo-400">
+              <div className="rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 px-3 py-2 text-xs text-indigo-600 dark:text-indigo-400">
                 미등록 종목이 자동으로 추가됩니다:{" "}
                 {actionableRows
                   .filter((r) => !holdingMap.has(r.code))
@@ -226,18 +226,18 @@ export function ImportClient({ holdings, onClose }: Props) {
               </div>
             )}
 
-            <div className="max-h-48 overflow-y-auto border border-zinc-200 dark:border-zinc-700 rounded-lg">
+            <div className="max-h-48 overflow-y-auto border border-hairline dark:border-zinc-700 rounded-xl">
               <table className="w-full text-xs">
-                <thead className="bg-zinc-50 dark:bg-zinc-800 sticky top-0">
-                  <tr>
-                    <th className="px-2 py-1.5 text-left">날짜</th>
-                    <th className="px-2 py-1.5 text-left">종목</th>
-                    <th className="px-2 py-1.5 text-left">구분</th>
-                    <th className="px-2 py-1.5 text-right">수량</th>
-                    <th className="px-2 py-1.5 text-right">금액</th>
+                <thead className="bg-canvas-soft dark:bg-zinc-800 sticky top-0">
+                  <tr className="text-ink-mute dark:text-zinc-400">
+                    <th className="px-2 py-2 text-left font-semibold">날짜</th>
+                    <th className="px-2 py-2 text-left font-semibold">종목</th>
+                    <th className="px-2 py-2 text-left font-semibold">구분</th>
+                    <th className="px-2 py-2 text-right font-semibold">수량</th>
+                    <th className="px-2 py-2 text-right font-semibold">금액</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <tbody className="divide-y divide-hairline dark:divide-zinc-800">
                   {parsedRows.map((row, i) => (
                     <tr
                       key={i}
@@ -245,13 +245,13 @@ export function ImportClient({ holdings, onClose }: Props) {
                         !["매수", "매도", "배당"].includes(row.type) ? "opacity-40" : ""
                       }
                     >
-                      <td className="px-2 py-1.5">{row.date}</td>
+                      <td className="px-2 py-1.5 tabular-nums">{row.date}</td>
                       <td className="px-2 py-1.5 truncate max-w-[120px]">
                         {row.name}
                       </td>
                       <td className="px-2 py-1.5">{row.type}</td>
-                      <td className="px-2 py-1.5 text-right">{row.quantity}</td>
-                      <td className="px-2 py-1.5 text-right">
+                      <td className="px-2 py-1.5 text-right tabular-nums">{row.quantity}</td>
+                      <td className="px-2 py-1.5 text-right tabular-nums">
                         {formatFullKRW(row.amount)}
                       </td>
                     </tr>
@@ -263,7 +263,7 @@ export function ImportClient({ holdings, onClose }: Props) {
             <button
               onClick={handleImport}
               disabled={isImporting || actionableRows.length === 0}
-              className="w-full h-11 rounded-xl bg-indigo-500 text-white text-sm font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors"
+              className="w-full h-11 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-card hover:bg-indigo-700 hover:shadow-float disabled:opacity-50 transition-all"
             >
               {isImporting
                 ? "가져오는 중..."

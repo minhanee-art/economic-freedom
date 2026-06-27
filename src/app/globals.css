@@ -5,23 +5,40 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-indigo-50:  #eff6ff;
-  --color-indigo-100: #dbeafe;
-  --color-indigo-200: #bfdbfe;
-  --color-indigo-400: #60a5fa;
-  --color-indigo-500: #2563eb;
-  --color-indigo-600: #1d4ed8;
-  --color-indigo-700: #1e40af;
-  --color-indigo-800: #1e3a8a;
-  --color-indigo-900: #1e3a8a;
-  --color-indigo-950: #172554;
-  --color-dark-header: #1e3a8a;
-  --font-sans: "Pretendard", system-ui, -apple-system, sans-serif;
+
+  /* Stripe-inspired indigo scale (brand primary #533afd) */
+  --color-indigo-50:  #f1f0ff;
+  --color-indigo-100: #e5e3ff;
+  --color-indigo-200: #b9b9f9;
+  --color-indigo-400: #665efd;
+  --color-indigo-500: #533afd;
+  --color-indigo-600: #4434d4;
+  --color-indigo-700: #2e2b8c;
+  --color-indigo-800: #232566;
+  --color-indigo-900: #1c1e54;
+  --color-indigo-950: #15173f;
+
+  /* Stripe brand tokens */
+  --color-brand: #533afd;
+  --color-brand-deep: #4434d4;
+  --color-brand-soft: #665efd;
+  --color-brand-dark: #1c1e54;
+  --color-ink: #0d253d;
+  --color-ink-mute: #64748d;
+  --color-hairline: #e3e8ee;
+  --color-canvas-soft: #f6f9fc;
+  --color-dark-header: #1c1e54;
+
+  /* Soft elevation shadows (Stripe Level 1 / Level 2) */
+  --shadow-card: 0 1px 3px rgba(0, 55, 112, 0.08);
+  --shadow-float: 0 8px 24px rgba(0, 55, 112, 0.08), 0 2px 6px rgba(0, 55, 112, 0.04);
+
+  --font-sans: "Pretendard", "Inter", system-ui, -apple-system, sans-serif;
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f6f9fc;
+  --foreground: #0d253d;
 }
 
 .dark {
@@ -33,4 +50,6 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  /* Stripe stylistic-set signature; ss01 globally, tnum via tabular-nums utility */
+  font-feature-settings: "ss01";
 }

@@ -36,16 +36,17 @@ export function AllocationBarChart({ data }: AllocationBarChartProps) {
             formatter={(v) => `${Number(v).toFixed(1)}%`}
             contentStyle={{
               fontSize: 12,
-              borderRadius: 8,
-              border: "1px solid #e4e4e7",
+              borderRadius: 12,
+              border: "1px solid #e3e8ee",
+              boxShadow: "0 8px 24px rgba(0,55,112,0.08)",
             }}
           />
           <Legend
             wrapperStyle={{ fontSize: 11 }}
             formatter={(value) => (value === "current" ? "현재" : "목표")}
           />
-          <Bar dataKey="target" fill="#CBD5E1" radius={[0, 4, 4, 0]} name="target" />
-          <Bar dataKey="current" fill="#6366F1" radius={[0, 4, 4, 0]} name="current" />
+          <Bar dataKey="target" fill="#dbe1ea" radius={[0, 4, 4, 0]} name="target" />
+          <Bar dataKey="current" fill="#533afd" radius={[0, 4, 4, 0]} name="current" />
         </BarChart>
       </ResponsiveContainer>
     </div>

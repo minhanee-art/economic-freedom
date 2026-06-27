@@ -1,6 +1,6 @@
 /** 자산군별 색상 */
 export const CATEGORY_COLORS: Record<string, string> = {
-  주식: "#6366F1",
+  주식: "#533afd",
   리츠: "#F97316",
   원자재: "#EAB308",
   채권: "#22C55E",

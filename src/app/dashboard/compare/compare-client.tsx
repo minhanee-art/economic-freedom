@@ -53,7 +53,7 @@ interface Props {
   holdings: Holding[];
 }
 
-const COLORS = ["#6366F1", "#F97316", "#22C55E", "#EF4444", "#EAB308"];
+const COLORS = ["#533afd", "#F97316", "#22C55E", "#EF4444", "#EAB308"];
 
 const THEMES = [
   "전체", "코스피", "코스닥", "미국", "배당", "반도체",
@@ -227,10 +227,10 @@ export function CompareClient({ holdings }: Props) {
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold">ETF 종목 비교</h2>
+        <h2 className="text-lg font-bold text-ink tracking-tight">ETF 종목 비교</h2>
         <button
           onClick={() => setShowSearch(!showSearch)}
-          className="text-xs text-indigo-500 font-medium"
+          className="rounded-full border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-all hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
         >
           {showSearch ? "검색 닫기" : "종목 검색"}
         </button>
@@ -242,7 +242,7 @@ export function CompareClient({ holdings }: Props) {
           {selected.map((s, i) => (
             <span
               key={s.code}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-card"
               style={{ background: COLORS[i] }}
             >
               {s.name.length > 10 ? s.name.slice(0, 10) + "…" : s.name}
@@ -254,7 +254,7 @@ export function CompareClient({ holdings }: Props) {
               </button>
             </span>
           ))}
-          <span className="text-xs text-zinc-400 self-center">
+          <span className="text-xs text-zinc-400 self-center tabular-nums">
             {selected.length}/{maxSelect}
           </span>
         </div>
@@ -262,7 +262,7 @@ export function CompareClient({ holdings }: Props) {
 
       {/* 검색 영역 */}
       {showSearch && (
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+        <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card space-y-3">
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400"
@@ -275,7 +275,7 @@ export function CompareClient({ holdings }: Props) {
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="ETF 이름 또는 종목코드 검색"
-              className="w-full h-10 rounded-lg border border-zinc-200 bg-zinc-50 pl-10 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-11 rounded-full border border-hairline bg-canvas-soft pl-10 pr-4 text-sm text-ink placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
 
@@ -285,10 +285,10 @@ export function CompareClient({ holdings }: Props) {
                 key={t}
                 onClick={() => handleTheme(t)}
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-medium whitespace-nowrap transition-colors",
+                  "px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
                   activeTheme === t
-                    ? "bg-indigo-500 text-white"
-                    : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "border border-hairline bg-white text-zinc-500 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
                 {t}
@@ -302,10 +302,10 @@ export function CompareClient({ holdings }: Props) {
                 key={o.value}
                 onClick={() => handleSort(o.value)}
                 className={cn(
-                  "px-2.5 py-1 rounded-md text-xs font-medium transition-colors",
+                  "px-3 py-1 rounded-full text-xs font-medium transition-colors",
                   sortBy === o.value
-                    ? "bg-zinc-800 text-white dark:bg-zinc-200 dark:text-zinc-900"
-                    : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "border border-hairline bg-white text-zinc-500 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
                 {o.label}
@@ -328,26 +328,26 @@ export function CompareClient({ holdings }: Props) {
                     onClick={() => !isSel && addToCompare(etf)}
                     disabled={isSel || selected.length >= maxSelect}
                     className={cn(
-                      "w-full flex items-center rounded-lg px-3 py-2.5 text-left transition-colors",
-                      isSel ? "bg-indigo-50 dark:bg-indigo-900/20 opacity-60" : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                      "w-full flex items-center rounded-xl px-3 py-2.5 text-left transition-colors",
+                      isSel ? "bg-indigo-50 dark:bg-indigo-900/20 opacity-60" : "hover:bg-canvas-soft dark:hover:bg-zinc-800"
                     )}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium truncate">{etf.name}</p>
                         {isMy && (
-                          <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                          <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
                             보유
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-zinc-400">
+                      <p className="text-xs text-zinc-400 tabular-nums">
                         {etf.code} · {etf.category} · 거래량 {fmtVol(etf.volume)}
                       </p>
                     </div>
                     <div className="text-right ml-2 shrink-0">
-                      <p className="text-sm font-semibold">₩{etf.price.toLocaleString()}</p>
-                      <p className={cn("text-xs", etf.changePct > 0 ? "text-red-500" : etf.changePct < 0 ? "text-blue-500" : "text-zinc-400")}>
+                      <p className="text-sm font-semibold tabular-nums">₩{etf.price.toLocaleString()}</p>
+                      <p className={cn("text-xs tabular-nums", etf.changePct > 0 ? "text-red-500" : etf.changePct < 0 ? "text-blue-500" : "text-zinc-400")}>
                         {etf.changePct > 0 ? "+" : ""}{etf.changePct.toFixed(2)}%
                       </p>
                     </div>
@@ -370,10 +370,10 @@ export function CompareClient({ holdings }: Props) {
                 key={p.value}
                 onClick={() => setPeriod(p.value)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
                   period === p.value
-                    ? "bg-indigo-500 text-white"
-                    : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "border border-hairline bg-white text-zinc-500 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
                 {p.label}
@@ -382,11 +382,11 @@ export function CompareClient({ holdings }: Props) {
           </div>
 
           {/* 비교 테이블 */}
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-x-auto">
+          <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-x-auto shadow-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="px-3 py-3 text-left text-xs text-zinc-500 font-medium sticky left-0 bg-white dark:bg-zinc-900 z-10">
+                <tr className="border-b border-hairline dark:border-zinc-800">
+                  <th className="px-3 py-3 text-left text-xs text-zinc-500 font-semibold sticky left-0 bg-white dark:bg-zinc-900 z-10">
                     항목
                   </th>
                   {selected.map((s, i) => (
@@ -449,8 +449,8 @@ export function CompareClient({ holdings }: Props) {
 
           {/* 유사/구성 종목 */}
           {selected.some((s) => s.detail?.similarETFs?.length) && (
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-              <h3 className="text-sm font-semibold mb-3">유사 ETF</h3>
+            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
+              <h3 className="text-sm font-semibold text-ink mb-3">유사 ETF</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {selected.map((s, i) => (
                   s.detail?.similarETFs?.length ? (
@@ -461,7 +461,7 @@ export function CompareClient({ holdings }: Props) {
                       {s.detail.similarETFs.map((sim) => (
                         <div key={sim.code} className="flex justify-between text-xs text-zinc-500">
                           <span>{sim.name}</span>
-                          <span>₩{sim.price}</span>
+                          <span className="tabular-nums">₩{sim.price}</span>
                         </div>
                       ))}
                     </div>
@@ -474,12 +474,12 @@ export function CompareClient({ holdings }: Props) {
           {/* 차트 그리드 */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 레이더 */}
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-              <h3 className="text-sm font-semibold mb-3">종합 비교</h3>
+            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
+              <h3 className="text-sm font-semibold text-ink mb-3">종합 비교</h3>
               <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData}>
-                    <PolarGrid stroke="#e4e4e7" />
+                    <PolarGrid stroke="#e3e8ee" />
                     <PolarAngleAxis dataKey="metric" tick={{ fontSize: 11, fill: "#71717a" }} />
                     <PolarRadiusAxis tick={false} domain={[0, 100]} />
                     {selected.map((s, i) => (
@@ -503,8 +503,8 @@ export function CompareClient({ holdings }: Props) {
             </div>
 
             {/* 수익률 바 */}
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-              <h3 className="text-sm font-semibold mb-3">
+            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
+              <h3 className="text-sm font-semibold text-ink mb-3">
                 수익률 비교 ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
               </h3>
               <div className="h-[260px]">
@@ -514,7 +514,7 @@ export function CompareClient({ holdings }: Props) {
                     <YAxis tick={{ fontSize: 10, fill: "#71717a" }} unit="%" />
                     <Tooltip
                       formatter={(v) => `${Number(v).toFixed(2)}%`}
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }}
+                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e3e8ee" }}
                     />
                     <Bar dataKey="수익률" radius={[6, 6, 0, 0]}>
                       {returnBarData.map((e, i) => (
@@ -527,14 +527,14 @@ export function CompareClient({ holdings }: Props) {
             </div>
 
             {/* 현재가 바 */}
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-              <h3 className="text-sm font-semibold mb-3">현재가 비교</h3>
+            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
+              <h3 className="text-sm font-semibold text-ink mb-3">현재가 비교</h3>
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData}>
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} />
                     <YAxis tick={{ fontSize: 10, fill: "#71717a" }} tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}만` : String(v)} />
-                    <Tooltip formatter={(v) => `₩${Number(v).toLocaleString()}`} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }} />
+                    <Tooltip formatter={(v) => `₩${Number(v).toLocaleString()}`} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e3e8ee" }} />
                     <Bar dataKey="현재가" radius={[6, 6, 0, 0]}>
                       {barData.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
@@ -544,14 +544,14 @@ export function CompareClient({ holdings }: Props) {
             </div>
 
             {/* 거래량 바 */}
-            <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-              <h3 className="text-sm font-semibold mb-3">거래량 비교</h3>
+            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
+              <h3 className="text-sm font-semibold text-ink mb-3">거래량 비교</h3>
               <div className="h-[200px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeBarData}>
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} />
                     <YAxis tick={{ fontSize: 10, fill: "#71717a" }} tickFormatter={(v) => fmtVol(v)} />
-                    <Tooltip formatter={(v) => `${Number(v).toLocaleString()}주`} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e4e4e7" }} />
+                    <Tooltip formatter={(v) => `${Number(v).toLocaleString()}주`} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e3e8ee" }} />
                     <Bar dataKey="거래량" radius={[6, 6, 0, 0]}>
                       {volumeBarData.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
@@ -593,7 +593,7 @@ function CRow({
         {label}
       </td>
       {vals.map((v, i) => (
-        <td key={i} className={cn("px-3 py-2.5 text-right text-xs", bold ? "font-bold" : "font-medium", colors?.[i])}>
+        <td key={i} className={cn("px-3 py-2.5 text-right text-xs tabular-nums", bold ? "font-bold" : "font-medium", colors?.[i])}>
           {v}
         </td>
       ))}

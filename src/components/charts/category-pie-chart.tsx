@@ -42,8 +42,9 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
               formatter={(value) => formatKRW(Number(value))}
               contentStyle={{
                 fontSize: 12,
-                borderRadius: 8,
-                border: "1px solid #e4e4e7",
+                borderRadius: 12,
+                border: "1px solid #e3e8ee",
+                boxShadow: "0 8px 24px rgba(0,55,112,0.08)",
               }}
             />
           </PieChart>

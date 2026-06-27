@@ -97,10 +97,10 @@ export function MarketClient() {
       {/* 주요 지수 */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold">주요 지수</h2>
+          <h2 className="text-lg font-bold text-ink tracking-tight">주요 지수</h2>
           <button
             onClick={fetchIndices}
-            className="text-xs text-indigo-500 hover:text-indigo-600 font-medium"
+            className="rounded-full border border-hairline bg-white px-3.5 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:shadow-card transition-all dark:bg-zinc-900 dark:border-zinc-800"
           >
             새로고침
           </button>
@@ -109,7 +109,7 @@ export function MarketClient() {
         {loadingIndices ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 animate-pulse">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="rounded-xl bg-zinc-200 dark:bg-zinc-800 h-16" />
+              <div key={i} className="rounded-2xl bg-zinc-200/70 dark:bg-zinc-800 h-16" />
             ))}
           </div>
         ) : (
@@ -120,15 +120,15 @@ export function MarketClient() {
               return (
                 <div
                   key={idx.id}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
+                  className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-card transition-shadow hover:shadow-float"
                 >
                   <p className="text-xs text-zinc-400 mb-1">{idx.name}</p>
-                  <p className="text-base font-bold tabular-nums">
+                  <p className="text-base font-bold tabular-nums text-ink">
                     {idx.value === "--" ? "--" : Number(idx.value.replace(/,/g, "")).toLocaleString()}
                   </p>
                   <p
                     className={cn(
-                      "text-xs font-medium",
+                      "text-xs font-medium tabular-nums",
                       isUp ? "text-red-500" : isDown ? "text-blue-500" : "text-zinc-400"
                     )}
                   >
@@ -145,10 +145,10 @@ export function MarketClient() {
       {/* 거래량 TOP 10 */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold">거래량 TOP 10</h2>
+          <h2 className="text-lg font-bold text-ink tracking-tight">거래량 TOP 10</h2>
           <button
             onClick={fetchVolume}
-            className="text-xs text-indigo-500 hover:text-indigo-600 font-medium"
+            className="rounded-full border border-hairline bg-white px-3.5 py-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 hover:shadow-card transition-all dark:bg-zinc-900 dark:border-zinc-800"
           >
             새로고침
           </button>
@@ -157,13 +157,13 @@ export function MarketClient() {
         {loadingETF ? (
           <div className="space-y-2 animate-pulse">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl bg-zinc-200 dark:bg-zinc-800 h-16" />
+              <div key={i} className="rounded-2xl bg-zinc-200/70 dark:bg-zinc-800 h-16" />
             ))}
           </div>
         ) : (
           <>
             {chartData.length > 0 && (
-              <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 mb-3">
+              <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 mb-3 shadow-card">
                 <div className="h-[260px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
@@ -174,7 +174,7 @@ export function MarketClient() {
                     >
                       <XAxis
                         type="number"
-                        tick={{ fontSize: 11, fill: "#71717a" }}
+                        tick={{ fontSize: 11, fill: "#64748d" }}
                         tickFormatter={(v) =>
                           v >= 100000000
                             ? `${(v / 100000000).toFixed(0)}억`
@@ -187,23 +187,24 @@ export function MarketClient() {
                         type="category"
                         dataKey="name"
                         width={100}
-                        tick={{ fontSize: 11, fill: "#71717a" }}
+                        tick={{ fontSize: 11, fill: "#64748d" }}
                       />
                       <Tooltip
                         formatter={(v) => [`${Number(v).toLocaleString()}주`, "거래량"]}
                         contentStyle={{
                           fontSize: 12,
-                          borderRadius: 8,
-                          border: "1px solid #e4e4e7",
+                          borderRadius: 12,
+                          border: "1px solid #e3e8ee",
                           background: "#fff",
-                          color: "#171717",
+                          color: "#0d253d",
+                          boxShadow: "0 8px 24px rgba(0, 55, 112, 0.08)",
                         }}
                       />
                       <Bar dataKey="volume" radius={[0, 6, 6, 0]}>
                         {chartData.map((entry, i) => (
                           <Cell
                             key={i}
-                            fill={entry.changePct >= 0 ? "#6366F1" : "#EF4444"}
+                            fill={entry.changePct >= 0 ? "#533afd" : "#EF4444"}
                           />
                         ))}
                       </Bar>
@@ -217,24 +218,24 @@ export function MarketClient() {
               {etfs.map((etf) => (
                 <div
                   key={etf.code}
-                  className="flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
+                  className="flex items-center rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-card transition-shadow hover:shadow-float"
                 >
-                  <span className="w-6 text-sm font-bold text-zinc-400">
+                  <span className="w-6 text-sm font-bold text-zinc-400 tabular-nums">
                     {etf.rank}
                   </span>
                   <div className="flex-1 min-w-0 ml-2">
-                    <p className="text-sm font-semibold truncate">{etf.name}</p>
-                    <p className="text-xs text-zinc-400">
+                    <p className="text-sm font-semibold truncate text-ink">{etf.name}</p>
+                    <p className="text-xs text-zinc-400 tabular-nums">
                       {etf.code} · 거래량 {etf.volume.toLocaleString()}주
                     </p>
                   </div>
                   <div className="text-right ml-3 shrink-0">
-                    <p className="text-sm font-semibold">
+                    <p className="text-sm font-semibold tabular-nums text-ink">
                       ₩{etf.price.toLocaleString()}
                     </p>
                     <p
                       className={cn(
-                        "text-xs font-medium",
+                        "text-xs font-medium tabular-nums",
                         etf.changePct > 0
                           ? "text-red-500"
                           : etf.changePct < 0
@@ -255,7 +256,7 @@ export function MarketClient() {
 
       {/* ETF 뉴스 */}
       <section>
-        <h2 className="text-lg font-bold mb-3">ETF 뉴스</h2>
+        <h2 className="text-lg font-bold text-ink tracking-tight mb-3">ETF 뉴스</h2>
 
         <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
           {["연금", "배당ETF", "코스피", "미국ETF", "금ETF", "채권"].map(
@@ -264,10 +265,10 @@ export function MarketClient() {
                 key={keyword}
                 onClick={() => fetchNews(keyword)}
                 className={cn(
-                  "px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors",
+                  "px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
                   newsQuery === keyword
-                    ? "bg-indigo-500 text-white"
-                    : "bg-zinc-100 text-zinc-500 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700"
+                    ? "bg-indigo-600 text-white shadow-card"
+                    : "bg-white border border-hairline text-zinc-600 hover:border-indigo-200 hover:text-indigo-600 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
                 )}
               >
                 {keyword}
@@ -279,7 +280,7 @@ export function MarketClient() {
         {loadingNews ? (
           <div className="space-y-2 animate-pulse">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl bg-zinc-200 dark:bg-zinc-800 h-16" />
+              <div key={i} className="rounded-2xl bg-zinc-200/70 dark:bg-zinc-800 h-16" />
             ))}
           </div>
         ) : news.length === 0 ? (
@@ -294,9 +295,9 @@ export function MarketClient() {
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                className="block rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-card transition-shadow hover:shadow-float"
               >
-                <p className="text-sm font-medium line-clamp-2">{item.title}</p>
+                <p className="text-sm font-medium line-clamp-2 text-ink">{item.title}</p>
                 <p className="text-xs text-zinc-400 mt-1">
                   {item.source}
                   {item.date && ` · ${item.date}`}

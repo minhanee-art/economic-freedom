@@ -131,7 +131,7 @@ export default function DashboardLayout({
       </nav>
 
       {/* 콘텐츠 */}
-      <main className="flex-1 bg-zinc-50 dark:bg-zinc-950">
+      <main className="flex-1 bg-[var(--color-canvas-soft)] dark:bg-zinc-950">
         <div className="mx-auto max-w-[860px] px-4 py-5">
           {children}
         </div>

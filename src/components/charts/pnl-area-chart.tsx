@@ -28,12 +28,12 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
         <AreaChart data={data}>
           <defs>
             <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#94A3B8" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#94A3B8" stopOpacity={0} />
+              <stop offset="5%" stopColor="#b9b9f9" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#b9b9f9" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
+              <stop offset="5%" stopColor="#533afd" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#533afd" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
@@ -51,8 +51,11 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
             labelFormatter={(label) => `${label}`}
             contentStyle={{
               fontSize: 12,
-              borderRadius: 8,
-              border: "1px solid #e4e4e7",
+              borderRadius: 12,
+              border: "1px solid #e3e8ee",
+              boxShadow:
+                "0 8px 24px rgba(0, 55, 112, 0.08), 0 2px 6px rgba(0, 55, 112, 0.04)",
+              color: "#0d253d",
             }}
           />
           <Legend
@@ -64,7 +67,8 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
           <Area
             type="monotone"
             dataKey="invested"
-            stroke="#94A3B8"
+            stroke="#b9b9f9"
+            strokeWidth={2}
             fillOpacity={1}
             fill="url(#colorInvested)"
             name="invested"
@@ -72,7 +76,8 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
           <Area
             type="monotone"
             dataKey="value"
-            stroke="#6366F1"
+            stroke="#533afd"
+            strokeWidth={2}
             fillOpacity={1}
             fill="url(#colorValue)"
             name="value"

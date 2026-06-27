@@ -42,7 +42,7 @@ export function RebalanceAlert({ holdings, categoryData }: Props) {
   const hasAdvice = categoryAlerts.length > 0 || holdingAlerts.length > 0;
 
   return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-4 space-y-3">
+    <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 px-5 py-4 space-y-3 shadow-card">
       <p className="text-sm font-semibold">테마별 비중 현황</p>
 
       <div className="space-y-2">

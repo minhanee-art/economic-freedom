@@ -196,11 +196,11 @@ export function DashboardClient({
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-3">자산군별 비중</h3>
             <CategoryPieChart data={pieData} />
           </div>
-          <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
+          <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-3">현재 vs 목표 비중</h3>
             <AllocationBarChart data={barData} />
           </div>
@@ -217,8 +217,8 @@ export function DashboardClient({
           {activeHoldings.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap">
               {/* 그룹 컨트롤 */}
-              <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-xs">
-                <span className="px-2 py-1 text-zinc-400 shrink-0 border-r border-zinc-200 dark:border-zinc-700">그룹</span>
+              <div className="flex items-center rounded-full border border-[var(--color-hairline)] dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
+                <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">그룹</span>
                 {(
                   [
                     { value: "none", label: "전체" },
@@ -242,8 +242,8 @@ export function DashboardClient({
               </div>
 
               {/* 정렬 컨트롤 */}
-              <div className="flex items-center rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden text-xs">
-                <span className="px-2 py-1 text-zinc-400 shrink-0 border-r border-zinc-200 dark:border-zinc-700">정렬</span>
+              <div className="flex items-center rounded-full border border-[var(--color-hairline)] dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
+                <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">정렬</span>
                 {(
                   [
                     { value: "default", label: "목표비중" },

@@ -99,7 +99,7 @@ export interface Child {
   created_at: string;
 }
 
-export type GiftType = "lump" | "installment";
+export type GiftType = "lump" | "installment" | "government_support";
 
 export interface ChildGift {
   id: string;

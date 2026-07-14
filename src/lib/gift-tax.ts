@@ -29,13 +29,14 @@ export function exemptionLimit(birthDate: string, atDate: Date = new Date()): nu
 
 /** 기준일로부터 최근 10년(rolling) 내 증여 합계 */
 export function cumulativeGiftsWithin10Years(
-  gifts: { date: string; amount: number }[],
+  gifts: { date: string; amount: number; gift_type?: string }[],
   atDate: Date = new Date()
 ): number {
   const tenYearsAgo = new Date(atDate);
   tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
   return gifts
     .filter((g) => {
+      if (g.gift_type && g.gift_type !== "lump" && g.gift_type !== "installment") return false;
       const d = new Date(g.date);
       return d > tenYearsAgo && d <= atDate;
     })

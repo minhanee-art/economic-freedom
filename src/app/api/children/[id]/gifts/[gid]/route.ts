@@ -1,4 +1,4 @@
-// 자녀 증여 기록 개별 수정(신고여부 등)/삭제 API
+// 자녀 계좌 입금/증여 기록 개별 수정(신고여부 등)/삭제 API
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -20,7 +20,7 @@ export async function PATCH(
   const memo = typeof body?.memo === "string" ? body.memo.slice(0, 200) : undefined;
 
   if (amount !== undefined && (!Number.isFinite(amount) || amount <= 0 || amount > INT_MAX)) {
-    return NextResponse.json({ error: "증여 금액을 올바르게 입력해주세요." }, { status: 400 });
+    return NextResponse.json({ error: "금액을 올바르게 입력해주세요." }, { status: 400 });
   }
   if (reportDate !== undefined && reportDate !== null && (!/^\d{4}-\d{2}-\d{2}$/.test(reportDate) || isNaN(new Date(reportDate).getTime()))) {
     return NextResponse.json({ error: "신고일(YYYY-MM-DD)을 올바르게 입력해주세요." }, { status: 400 });

@@ -1,4 +1,4 @@
-// 자녀 증여 기록 CRUD API
+// 자녀 계좌 입금/증여 기록 CRUD API
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/session";
@@ -34,14 +34,16 @@ export async function POST(
   const body = await request.json().catch(() => null);
   const date = typeof body?.date === "string" ? body.date : "";
   const amount = Number(body?.amount);
-  const giftType = body?.giftType === "installment" ? "installment" : "lump";
+  const giftType = ["lump", "installment", "government_support"].includes(body?.giftType)
+    ? body.giftType
+    : "lump";
   const memo = typeof body?.memo === "string" ? body.memo.slice(0, 200) : null;
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || isNaN(new Date(date).getTime())) {
     return NextResponse.json({ error: "날짜(YYYY-MM-DD)를 올바르게 입력해주세요." }, { status: 400 });
   }
   if (!Number.isFinite(amount) || amount <= 0 || amount > INT_MAX) {
-    return NextResponse.json({ error: "증여 금액을 올바르게 입력해주세요." }, { status: 400 });
+    return NextResponse.json({ error: "금액을 올바르게 입력해주세요." }, { status: 400 });
   }
 
   const [row] = await sql`

@@ -43,7 +43,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("이 자녀 프로필과 증여 기록·보유 종목을 모두 삭제하시겠습니까?")) return;
+    if (!confirm("이 자녀 프로필과 입금/증여 기록·보유 종목을 모두 삭제하시겠습니까?")) return;
     const res = await fetch(`/api/children/${id}`, { method: "DELETE" });
     if (res.ok) setChildren(children.filter((c) => c.id !== id));
     else alert("삭제 실패");
@@ -54,7 +54,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
       <div>
         <h2 className="text-lg font-bold">자녀 계좌 관리</h2>
         <p className="text-sm text-zinc-400 mt-0.5">
-          자녀별 증여 기록·보유 종목을 관리하고 증여세 공제한도를 추적하세요.
+          자녀별 증여·정부지원금 입금·보유 종목을 관리하고 증여세 공제한도를 추적하세요.
         </p>
       </div>
 
@@ -121,7 +121,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
                 href={`/dashboard/children/${c.id}`}
                 className="block px-4 py-2.5 text-center text-xs font-medium text-indigo-500 border-t border-zinc-100 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
               >
-                증여 기록 · 보유 종목 · 신고 가이드 보기 →
+                입금/증여 기록 · 보유 종목 · 신고 가이드 보기 →
               </Link>
             </div>
           ))}

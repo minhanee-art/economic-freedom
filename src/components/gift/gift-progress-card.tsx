@@ -5,7 +5,7 @@ import { getAge, isMinor, exemptionLimit, cumulativeGiftsWithin10Years } from "@
 
 interface Props {
   birthDate: string;
-  gifts: { date: string; amount: number }[];
+  gifts: { date: string; amount: number; gift_type?: string }[];
 }
 
 export function GiftProgressCard({ birthDate, gifts }: Props) {
@@ -35,6 +35,7 @@ export function GiftProgressCard({ birthDate, gifts }: Props) {
       </div>
       <p className="text-xs text-zinc-400">
         최근 10년 누적 증여액 {formatKRW(used)} / {formatKRW(limit)}
+        <span className="block mt-0.5">정부지원금·비증여 입금은 공제한도 계산에서 제외합니다.</span>
       </p>
       {over && (
         <p className="text-xs text-red-500">

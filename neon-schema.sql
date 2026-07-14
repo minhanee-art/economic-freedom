@@ -125,14 +125,14 @@ CREATE TABLE IF NOT EXISTS children (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 10. child_gifts (자녀 증여 기록 — 일괄/분할(정기금) 증여 추적 + 신고 여부)
+-- 10. child_gifts (자녀 계좌 입금/증여 기록 — 증여와 정부지원금 등 비증여 입금 구분)
 CREATE TABLE IF NOT EXISTS child_gifts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   child_id UUID NOT NULL REFERENCES children(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   amount INTEGER NOT NULL,
-  gift_type TEXT NOT NULL DEFAULT 'lump', -- 'lump'(일괄) | 'installment'(분할/정기금)
+  gift_type TEXT NOT NULL DEFAULT 'lump', -- 'lump'(일괄 증여) | 'installment'(분할/정기금 증여) | 'government_support'(정부지원금/비증여 입금)
   reported BOOLEAN NOT NULL DEFAULT false,
   report_date DATE,
   memo TEXT,

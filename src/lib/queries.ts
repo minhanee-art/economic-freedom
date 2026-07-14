@@ -84,7 +84,7 @@ export async function getDividendCalendar(userId: string): Promise<DividendCalen
 
 export type ChildRow = { id: string; name: string; birth_date: string; created_at: string };
 export type ChildGiftRow = {
-  id: string; child_id: string; date: string; amount: number; gift_type: string;
+  id: string; child_id: string; date: string; amount: number; gift_type: "lump" | "installment" | "government_support" | string;
   reported: boolean; report_date: string | null; memo: string | null; created_at: string;
 };
 export type ChildHoldingRow = {

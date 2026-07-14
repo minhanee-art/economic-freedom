@@ -15,8 +15,15 @@ interface Props {
 }
 
 type Tab = "gifts" | "holdings" | "guide";
+type ChildMoneyType = "lump" | "installment" | "government_support";
 
-const GIFT_TYPE_LABEL: Record<string, string> = { lump: "일괄", installment: "분할(정기금)" };
+const GIFT_TYPE_LABEL: Record<string, string> = {
+  lump: "일괄 증여",
+  installment: "분할(정기금) 증여",
+  government_support: "정부지원금",
+};
+
+const NON_GIFT_TYPES = new Set(["government_support"]);
 
 export function ChildDetailClient({ child, initialGifts, initialHoldings }: Props) {
   const [tab, setTab] = useState<Tab>("gifts");
@@ -37,7 +44,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
       {/* 탭 */}
       <div className="flex gap-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
         {([
-          ["gifts", "증여 기록"],
+          ["gifts", "입금/증여 기록"],
           ["holdings", "보유 종목"],
           ["guide", "신고 가이드"],
         ] as [Tab, string][]).map(([key, label]) => (
@@ -74,7 +81,7 @@ function GiftsTab({
 }) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [amount, setAmount] = useState("");
-  const [giftType, setGiftType] = useState<"lump" | "installment">("lump");
+  const [giftType, setGiftType] = useState<ChildMoneyType>("lump");
   const [memo, setMemo] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
@@ -134,8 +141,11 @@ function GiftsTab({
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold">증여 기록 추가</h3>
-        <div className="flex gap-2">
+        <h3 className="text-sm font-semibold">입금/증여 기록 추가</h3>
+        <p className="text-xs text-zinc-400">
+          정부·지자체에서 자녀 계좌로 직접 지급되는 돈은 “정부지원금”으로 기록하면 증여 한도 계산과 신고 관리에서 제외됩니다.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
             onClick={() => setGiftType("lump")}
             className={cn(
@@ -157,6 +167,17 @@ function GiftsTab({
             )}
           >
             분할(정기금) 증여
+          </button>
+          <button
+            onClick={() => setGiftType("government_support")}
+            className={cn(
+              "flex-1 h-9 rounded-lg text-xs font-medium border transition-colors",
+              giftType === "government_support"
+                ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "border-zinc-200 dark:border-zinc-700 text-zinc-500"
+            )}
+          >
+            정부지원금
           </button>
         </div>
 
@@ -191,10 +212,24 @@ function GiftsTab({
             type="text"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
-            placeholder={giftType === "installment" ? "예: 월 20만원 × 10년 정기금 계약" : "예: 세뱃돈, 입학축하금"}
+            placeholder={
+              giftType === "installment"
+                ? "예: 월 20만원 × 10년 정기금 계약"
+                : giftType === "government_support"
+                  ? "예: 아동수당, 부모급여, 지자체 지원금"
+                  : "예: 세뱃돈, 입학축하금"
+            }
             className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
+
+        {giftType === "government_support" && (
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+            국가·지자체 지원금, 아동수당, 부모급여처럼 지급 주체가 부모가 아니고 자녀 계좌로 직접 들어온 돈은
+            증여로 보지 않는 별도 입금으로 관리합니다. 단, 부모가 받은 돈을 다시 자녀에게 넘기는 구조라면
+            사실관계에 따라 증여 이슈가 생길 수 있으니 증빙을 함께 보관하세요.
+          </div>
+        )}
 
         {giftType === "installment" && (
           <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-3 space-y-2">
@@ -234,12 +269,12 @@ function GiftsTab({
           disabled={!date || !amount || isAdding}
           className="w-full h-10 rounded-lg bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isAdding ? "추가 중..." : "증여 기록 추가"}
+          {isAdding ? "추가 중..." : "입금 기록 추가"}
         </button>
       </div>
 
       {gifts.length === 0 ? (
-        <p className="text-sm text-zinc-400 py-8 text-center">아직 증여 기록이 없습니다.</p>
+        <p className="text-sm text-zinc-400 py-8 text-center">아직 입금/증여 기록이 없습니다.</p>
       ) : (
         <div className="space-y-2">
           {gifts.map((g) => (
@@ -252,13 +287,20 @@ function GiftsTab({
                   <span
                     className={cn(
                       "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
-                      g.gift_type === "installment"
+                      g.gift_type === "government_support"
+                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        : g.gift_type === "installment"
                         ? "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
                         : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                     )}
                   >
                     {GIFT_TYPE_LABEL[g.gift_type] ?? g.gift_type}
                   </span>
+                  {NON_GIFT_TYPES.has(g.gift_type) && (
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                      비증여
+                    </span>
+                  )}
                   {g.reported && (
                     <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                       신고완료
@@ -274,17 +316,23 @@ function GiftsTab({
                 {formatFullKRW(g.amount)}
               </p>
               <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => toggleReported(g)}
-                  className={cn(
-                    "text-[11px] px-2 py-1 rounded-md border transition-colors",
-                    g.reported
-                      ? "border-zinc-200 dark:border-zinc-700 text-zinc-400"
-                      : "border-indigo-200 dark:border-indigo-800 text-indigo-500"
-                  )}
-                >
-                  {g.reported ? "신고취소" : "신고완료"}
-                </button>
+                {NON_GIFT_TYPES.has(g.gift_type) ? (
+                  <span className="text-[11px] px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
+                    신고제외
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => toggleReported(g)}
+                    className={cn(
+                      "text-[11px] px-2 py-1 rounded-md border transition-colors",
+                      g.reported
+                        ? "border-zinc-200 dark:border-zinc-700 text-zinc-400"
+                        : "border-indigo-200 dark:border-indigo-800 text-indigo-500"
+                    )}
+                  >
+                    {g.reported ? "신고취소" : "신고완료"}
+                  </button>
+                )}
                 <button
                   onClick={() => handleDelete(g.id)}
                   className="text-zinc-300 hover:text-red-500 transition-colors"

@@ -79,3 +79,53 @@ export async function getDividendCalendar(userId: string): Promise<DividendCalen
   `;
   return rows as unknown as DividendCalendarRow[];
 }
+
+// ── 자녀 계좌 / 증여 관리 ──────────────────────────────
+
+export type ChildRow = { id: string; name: string; birth_date: string; created_at: string };
+export type ChildGiftRow = {
+  id: string; child_id: string; date: string; amount: number; gift_type: string;
+  reported: boolean; report_date: string | null; memo: string | null; created_at: string;
+};
+export type ChildHoldingRow = {
+  id: string; child_id: string; code: string; name: string;
+  shares: number; avg_price: number; current_price: number; created_at: string; updated_at: string;
+};
+
+export async function getChildren(userId: string): Promise<ChildRow[]> {
+  const rows = await sql`
+    SELECT id, name, birth_date::text, created_at::text
+    FROM children WHERE user_id = ${userId} ORDER BY created_at ASC
+  `;
+  return rows as unknown as ChildRow[];
+}
+
+export async function getChild(userId: string, childId: string): Promise<ChildRow | null> {
+  const [row] = await sql`
+    SELECT id, name, birth_date::text, created_at::text
+    FROM children WHERE id = ${childId} AND user_id = ${userId}
+  `;
+  return (row ?? null) as unknown as ChildRow | null;
+}
+
+/** childId 생략 시 사용자의 전체 자녀 증여 기록(요약용) */
+export async function getChildGifts(userId: string, childId?: string): Promise<ChildGiftRow[]> {
+  const rows = childId
+    ? await sql`
+        SELECT id, child_id, date::text, amount, gift_type, reported, report_date::text, memo, created_at::text
+        FROM child_gifts WHERE user_id = ${userId} AND child_id = ${childId} ORDER BY date DESC
+      `
+    : await sql`
+        SELECT id, child_id, date::text, amount, gift_type, reported, report_date::text, memo, created_at::text
+        FROM child_gifts WHERE user_id = ${userId} ORDER BY date DESC
+      `;
+  return rows as unknown as ChildGiftRow[];
+}
+
+export async function getChildHoldings(userId: string, childId: string): Promise<ChildHoldingRow[]> {
+  const rows = await sql`
+    SELECT id, child_id, code, name, shares, avg_price, current_price, created_at::text, updated_at::text
+    FROM child_holdings WHERE user_id = ${userId} AND child_id = ${childId} ORDER BY created_at ASC
+  `;
+  return rows as unknown as ChildHoldingRow[];
+}

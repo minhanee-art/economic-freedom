@@ -86,3 +86,43 @@ export interface DividendWithHolding extends Dividend {
   holding_name: string;
   holding_code: string;
 }
+
+// ============================================
+// 자녀 계좌 / 증여 관리 타입
+// ============================================
+
+export interface Child {
+  id: string;
+  user_id: string;
+  name: string;
+  birth_date: string;
+  created_at: string;
+}
+
+export type GiftType = "lump" | "installment";
+
+export interface ChildGift {
+  id: string;
+  child_id: string;
+  user_id: string;
+  date: string;
+  amount: number;
+  gift_type: GiftType;
+  reported: boolean;
+  report_date: string | null;
+  memo: string | null;
+  created_at: string;
+}
+
+export interface ChildHolding {
+  id: string;
+  child_id: string;
+  user_id: string;
+  code: string;
+  name: string;
+  shares: number;
+  avg_price: number;
+  current_price: number;
+  created_at: string;
+  updated_at: string;
+}

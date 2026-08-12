@@ -14,7 +14,7 @@ export default async function DashboardPage() {
     getCostBases(userId),
     getProfile(userId),
     getDividends(userId),
-    getDividendCalendar(userId),
+    getDividendCalendar(userId).catch(() => []),
   ]);
 
   const totalDividend = dividends.reduce((s, d) => s + Number(d.amount), 0);

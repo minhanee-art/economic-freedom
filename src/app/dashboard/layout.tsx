@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [menuQuery, setMenuQuery] = useState("");
+  const [activeNavGroup, setActiveNavGroup] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/me")
@@ -56,14 +57,24 @@ export default function DashboardLayout({
             Pension Manager
           </Link>
 
-          <nav className="ml-2 hidden flex-1 items-center gap-1 lg:flex" aria-label="대메뉴">
+          <nav
+            className="ml-2 hidden flex-1 items-center gap-1 lg:flex"
+            aria-label="대메뉴"
+            onMouseLeave={() => setActiveNavGroup(null)}
+          >
             {dashboardNavGroups.map((group) => {
               const isGroupActive = group.items.some(isItemActive);
+              const isDropdownOpen = activeNavGroup === group.label;
 
               return (
-                <div key={group.label} className="group relative">
+                <div
+                  key={group.label}
+                  className="relative"
+                  onMouseEnter={() => setActiveNavGroup(group.label)}
+                >
                   <button
                     type="button"
+                    onFocus={() => setActiveNavGroup(group.label)}
                     className={cn(
                       "inline-flex h-10 items-center gap-1 rounded-2xl px-3 text-sm font-semibold transition-colors",
                       isGroupActive
@@ -77,7 +88,14 @@ export default function DashboardLayout({
                     </svg>
                   </button>
 
-                  <div className="invisible absolute left-0 top-full z-50 w-72 translate-y-2 rounded-[1.35rem] border border-white/10 bg-white p-2 text-ink opacity-0 shadow-float transition-all group-hover:visible group-hover:translate-y-1 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-1 group-focus-within:opacity-100 dark:bg-zinc-900 dark:text-zinc-100">
+                  <div
+                    className={cn(
+                      "absolute left-0 top-full z-50 w-72 rounded-[1.35rem] border border-white/10 bg-white p-2 text-ink shadow-float transition-all dark:bg-zinc-900 dark:text-zinc-100",
+                      isDropdownOpen
+                        ? "visible translate-y-1 opacity-100"
+                        : "invisible translate-y-2 opacity-0"
+                    )}
+                  >
                     <div className="px-3 py-2">
                       <p className="text-sm font-bold">{group.label}</p>
                       <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{group.description}</p>

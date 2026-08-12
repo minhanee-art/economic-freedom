@@ -53,3 +53,8 @@ body {
   /* Stripe stylistic-set signature; ss01 globally, tnum via tabular-nums utility */
   font-feature-settings: "ss01";
 }
+
+.dashboard-sharp,
+.dashboard-sharp * {
+  border-radius: 0 !important;
+}

@@ -22,6 +22,7 @@ export default function DashboardLayout({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [menuQuery, setMenuQuery] = useState("");
   const [activeNavGroup, setActiveNavGroup] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     fetch("/api/me")
@@ -29,6 +30,36 @@ export default function DashboardLayout({
       .then((d) => setDisplayName(d.displayName ?? null))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const prefetchAll = () => dashboardNavItems.forEach((item) => router.prefetch(item.href));
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      const idleId = window.requestIdleCallback(prefetchAll, { timeout: 1500 });
+      return () => window.cancelIdleCallback(idleId);
+    }
+    const timeoutId = globalThis.setTimeout(prefetchAll, 350);
+    return () => globalThis.clearTimeout(timeoutId);
+  }, [router]);
+
+  useEffect(() => {
+    const timeoutId = globalThis.setTimeout(() => {
+      setIsNavigating(false);
+      setActiveNavGroup(null);
+      setIsSearchOpen(false);
+    }, 0);
+    return () => globalThis.clearTimeout(timeoutId);
+  }, [pathname]);
+
+  const prefetchRoute = (href: string) => {
+    router.prefetch(href);
+  };
+
+  const handleRouteIntent = (href: string) => {
+    prefetchRoute(href);
+    setIsSearchOpen(false);
+    setActiveNavGroup(null);
+    if (href !== pathname) setIsNavigating(true);
+  };
 
   const handleAuthButton = async () => {
     if (!displayName) {
@@ -55,10 +86,13 @@ export default function DashboardLayout({
   }, [normalizedQuery]);
 
   return (
-    <div className="flex min-h-full flex-col pb-24 md:pb-0">
+    <div className="dashboard-sharp flex min-h-full flex-col pb-24 md:pb-0">
+      {isNavigating && (
+        <div className="fixed inset-x-0 top-0 z-[60] h-1 bg-indigo-500 shadow-[0_0_12px_rgba(83,58,253,0.45)]" />
+      )}
       <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm shadow-indigo-950/20">
         <div className="relative mx-auto flex min-h-16 max-w-[1120px] items-center gap-3 px-4 py-2 sm:px-6">
-          <Link href="/dashboard" className="shrink-0 text-lg font-bold tracking-tight">
+          <Link href="/dashboard" prefetch onClick={() => handleRouteIntent("/dashboard")} onMouseEnter={() => prefetchRoute("/dashboard")} className="shrink-0 text-lg font-bold tracking-tight">
             Pension Manager
           </Link>
 
@@ -110,6 +144,10 @@ export default function DashboardLayout({
                         <Link
                           key={item.href}
                           href={item.href}
+                          prefetch
+                          onClick={() => handleRouteIntent(item.href)}
+                          onMouseEnter={() => prefetchRoute(item.href)}
+                          onFocus={() => prefetchRoute(item.href)}
                           className={cn(
                             "flex items-center gap-3 border border-transparent px-3 py-2.5 transition-colors",
                             isItemActive(item)
@@ -175,7 +213,10 @@ export default function DashboardLayout({
                         <Link
                           key={item.href}
                           href={item.href}
-                          onClick={() => setIsSearchOpen(false)}
+                          prefetch
+                          onMouseEnter={() => prefetchRoute(item.href)}
+                          onFocus={() => prefetchRoute(item.href)}
+                          onClick={() => handleRouteIntent(item.href)}
                           className={cn(
                             "flex items-center gap-3 border border-transparent px-3 py-2.5 transition-colors active:scale-[0.99]",
                             isItemActive(item)
@@ -229,6 +270,10 @@ export default function DashboardLayout({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
+                onClick={() => handleRouteIntent(item.href)}
+                onTouchStart={() => prefetchRoute(item.href)}
+                onMouseEnter={() => prefetchRoute(item.href)}
                 className={cn(
                   "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-[11px] font-semibold transition-all active:scale-95",
                   isActive

@@ -1,6 +1,7 @@
 // 대시보드 클라이언트 — 시세 자동 갱신, 테마별 그룹·정렬, 차트
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis, HoldingWithPnL } from "@/types";
@@ -11,7 +12,8 @@ import { HoldingCard } from "@/components/portfolio/holding-card";
 import { CategoryPieChart } from "@/components/charts/category-pie-chart";
 import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
 import { getCategoryColor } from "@/lib/colors";
-import { cn } from "@/lib/utils";
+import { cn, formatKRW } from "@/lib/utils";
+import { extraNavItems } from "@/lib/dashboard-navigation";
 
 interface Props {
   initialHoldings: Holding[];
@@ -113,6 +115,8 @@ export function DashboardClient({
 
   const totalValue = holdingsWithPnL.reduce((s, h) => s + h.current_value, 0);
   const totalCost = holdingsWithPnL.reduce((s, h) => s + h.total_cost, 0);
+  const totalPnL = totalValue - totalCost;
+  const totalPnLPct = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 
   const activeHoldings = holdingsWithPnL.filter(
     (h) => h.shares > 0 || h.target_pct > 0
@@ -170,7 +174,7 @@ export function DashboardClient({
   }));
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 md:space-y-6">
       {refreshResult && (
         <div
           className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
@@ -182,6 +186,75 @@ export function DashboardClient({
           {refreshResult}
         </div>
       )}
+
+      <section className="overflow-hidden rounded-[1.75rem] border border-indigo-100 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
+        <div className="relative px-5 py-6 sm:px-6">
+          <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_20%_0%,rgba(83,58,253,0.22),transparent_36%),linear-gradient(135deg,rgba(28,30,84,0.10),transparent_45%)] dark:bg-[radial-gradient(circle_at_20%_0%,rgba(83,58,253,0.25),transparent_38%)]" />
+          <div className="relative space-y-5">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-indigo-500">HOME</p>
+                <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-white sm:text-3xl">
+                  오늘 볼 화면을 한 곳에 모았어요
+                </h1>
+                <p className="mt-2 max-w-xl text-sm leading-6 text-ink-mute dark:text-zinc-400">
+                  하단에는 자주 쓰는 5개 메뉴만 남기고, 나머지 기능은 홈 버튼으로 빠르게 열 수 있게 정리했습니다.
+                </p>
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-indigo-500 px-4 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(83,58,253,0.24)] transition-all hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-60"
+              >
+                {isRefreshing ? "갱신 중..." : "시세 새로고침"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <HomeStat label="평가금액" value={formatKRW(totalValue)} />
+              <HomeStat
+                label="총 손익"
+                value={formatKRW(totalPnL)}
+                tone={totalPnL >= 0 ? "up" : "down"}
+                sub={`${totalPnLPct >= 0 ? "+" : ""}${totalPnLPct.toFixed(2)}%`}
+              />
+              <HomeStat label="보유 종목" value={`${activeHoldings.length}개`} />
+              <HomeStat label="월 적립금" value={formatKRW(monthlyBudget)} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-[1.5rem] border border-[var(--color-hairline)] bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-base font-bold tracking-tight">추가 메뉴</h2>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              하단 메뉴에서 뺀 기능은 홈에서 버튼으로 실행합니다.
+            </p>
+          </div>
+          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">
+            {extraNavItems.length}개
+          </span>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {extraNavItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group flex min-h-20 items-center gap-3 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-4 transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50/60 active:scale-[0.99] dark:border-zinc-800 dark:bg-zinc-950/60 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-card transition-colors group-hover:bg-indigo-500 group-hover:text-white dark:bg-zinc-900">
+                {item.icon}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-bold text-zinc-900 dark:text-zinc-100">{item.label}</span>
+                <span className="mt-0.5 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">{item.description}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <SummaryHeader
         totalValue={totalValue}
@@ -209,15 +282,15 @@ export function DashboardClient({
 
       {/* 종목 리스트 */}
       <div>
-        <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-sm font-semibold">
             보유 종목 ({activeHoldings.length})
           </h3>
 
           {activeHoldings.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center">
               {/* 그룹 컨트롤 */}
-              <div className="flex items-center rounded-full border border-[var(--color-hairline)] dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
+              <div className="flex items-center overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
                 <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">그룹</span>
                 {(
                   [
@@ -230,7 +303,7 @@ export function DashboardClient({
                     key={opt.value}
                     onClick={() => setGroupBy(opt.value)}
                     className={cn(
-                      "px-2 py-1 transition-colors",
+                      "flex-1 px-2.5 py-2 transition-colors sm:flex-none sm:py-1.5",
                       groupBy === opt.value
                         ? "bg-indigo-500 text-white"
                         : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
@@ -242,7 +315,7 @@ export function DashboardClient({
               </div>
 
               {/* 정렬 컨트롤 */}
-              <div className="flex items-center rounded-full border border-[var(--color-hairline)] dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
+              <div className="flex items-center overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
                 <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">정렬</span>
                 {(
                   [
@@ -256,7 +329,7 @@ export function DashboardClient({
                     key={opt.value}
                     onClick={() => setSortBy(opt.value)}
                     className={cn(
-                      "px-2 py-1 transition-colors",
+                      "flex-1 px-2.5 py-2 transition-colors sm:flex-none sm:py-1.5",
                       sortBy === opt.value
                         ? "bg-indigo-500 text-white"
                         : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
@@ -301,6 +374,35 @@ export function DashboardClient({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function HomeStat({
+  label,
+  value,
+  sub,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  tone?: "neutral" | "up" | "down";
+}) {
+  return (
+    <div className="rounded-2xl border border-white/70 bg-white/80 p-3 shadow-card backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/60">
+      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
+      <p
+        className={cn(
+          "mt-1 text-lg font-bold tabular-nums tracking-tight",
+          tone === "up" && "text-emerald-600 dark:text-emerald-400",
+          tone === "down" && "text-red-600 dark:text-red-400",
+          tone === "neutral" && "text-zinc-950 dark:text-white"
+        )}
+      >
+        {value}
+      </p>
+      {sub && <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-400">{sub}</p>}
     </div>
   );
 }

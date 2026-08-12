@@ -9,6 +9,12 @@ export type DashboardNavItem = {
   bottom: boolean;
 };
 
+export type DashboardNavGroup = {
+  label: string;
+  description: string;
+  items: DashboardNavItem[];
+};
+
 const iconClassName = "h-5 w-5";
 
 export const dashboardNavItems: DashboardNavItem[] = [
@@ -129,3 +135,34 @@ export const dashboardNavItems: DashboardNavItem[] = [
 
 export const bottomNavItems = dashboardNavItems.filter((item) => item.bottom);
 export const extraNavItems = dashboardNavItems.filter((item) => !item.bottom);
+
+export const dashboardNavGroups: DashboardNavGroup[] = [
+  {
+    label: "투자 실행",
+    description: "매수와 거래 기록",
+    items: dashboardNavItems.filter((item) =>
+      ["/dashboard/buy", "/dashboard/history"].includes(item.href)
+    ),
+  },
+  {
+    label: "성과 분석",
+    description: "자산 현황·손익·배당",
+    items: dashboardNavItems.filter((item) =>
+      ["/dashboard", "/dashboard/pnl", "/dashboard/dividend"].includes(item.href)
+    ),
+  },
+  {
+    label: "시장 도구",
+    description: "시장 현황과 ETF 비교",
+    items: dashboardNavItems.filter((item) =>
+      ["/dashboard/market", "/dashboard/compare"].includes(item.href)
+    ),
+  },
+  {
+    label: "가족·설정",
+    description: "자녀 계좌와 환경 설정",
+    items: dashboardNavItems.filter((item) =>
+      ["/dashboard/children", "/dashboard/settings"].includes(item.href)
+    ),
+  },
+];

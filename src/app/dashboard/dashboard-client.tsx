@@ -14,6 +14,7 @@ import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
 import { getCategoryColor } from "@/lib/colors";
 import { cn, formatKRW } from "@/lib/utils";
 import { extraNavItems } from "@/lib/dashboard-navigation";
+import type { DividendCalendarRow } from "@/lib/queries";
 
 interface Props {
   initialHoldings: Holding[];
@@ -21,10 +22,37 @@ interface Props {
   monthlyBudget: number;
   totalDividend: number;
   lastPriceUpdate: string | null;
+  dividendCalendar: DividendCalendarRow[];
 }
 
 type GroupBy = "none" | "category" | "sub_category";
 type SortBy = "default" | "weight_desc" | "pnl_desc" | "pnl_asc";
+
+const PENSION_QUOTES = [
+  "연금은 시장을 맞히는 일이 아니라, 시간을 내 편으로 쌓는 일입니다.",
+  "오늘의 적립은 작아 보여도 복리의 시간표에서는 가장 앞자리에 놓입니다.",
+  "노후 현금흐름은 한 번의 수익률보다 오래 지속되는 습관에서 만들어집니다.",
+  "분산된 연금 포트폴리오는 불확실한 시장을 견디는 생활 방어선입니다.",
+  "경제적 자유는 큰 매수 한 번보다 정해진 날의 꾸준한 실행에 더 가깝습니다.",
+];
+
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+
+type TodayInfo = {
+  date: Date;
+  dateKey: string;
+  fullDate: string;
+  weekOfYear: number;
+};
+
+type EconomicEvent = {
+  id: string;
+  date: string;
+  title: string;
+  type: string;
+  note: string;
+  source: string;
+};
 
 export function DashboardClient({
   initialHoldings,
@@ -32,13 +60,21 @@ export function DashboardClient({
   monthlyBudget,
   totalDividend,
   lastPriceUpdate,
+  dividendCalendar,
 }: Props) {
   const [holdings, setLocalHoldings] = useState(initialHoldings);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [sortBy, setSortBy] = useState<SortBy>("default");
+  const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
+  const [quoteIndex, setQuoteIndex] = useState(0);
   const router = useRouter();
+
+  useEffect(() => {
+    setTodayInfo(getTodayInfo(new Date()));
+    setQuoteIndex(Math.floor(Math.random() * PENSION_QUOTES.length));
+  }, []);
 
   // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
   useEffect(() => {
@@ -173,6 +209,11 @@ export function DashboardClient({
     current: Number((categoryCurrentMap.get(name) ?? 0).toFixed(1)),
   }));
 
+  const economicEvents = useMemo(() => {
+    const baseDate = todayInfo?.date ?? new Date();
+    return buildEconomicEvents(dividendCalendar, baseDate);
+  }, [dividendCalendar, todayInfo]);
+
   return (
     <div className="space-y-5 md:space-y-6">
       {refreshResult && (
@@ -195,11 +236,17 @@ export function DashboardClient({
               <div>
                 <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-indigo-500">HOME</p>
                 <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-white sm:text-3xl">
-                  오늘 볼 화면을 한 곳에 모았어요
+                  {PENSION_QUOTES[quoteIndex]}
                 </h1>
-                <p className="mt-2 max-w-xl text-sm leading-6 text-ink-mute dark:text-zinc-400">
-                  하단에는 자주 쓰는 5개 메뉴만 남기고, 나머지 기능은 홈 버튼으로 빠르게 열 수 있게 정리했습니다.
-                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-mute dark:text-zinc-400">
+                  <span className="rounded-full bg-white/80 px-3 py-1 font-semibold text-ink shadow-card dark:bg-zinc-950/70 dark:text-zinc-100">
+                    {todayInfo?.fullDate ?? "오늘"}
+                  </span>
+                  <span className="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+                    {todayInfo ? `${todayInfo.weekOfYear}주차` : "주차 계산 중"}
+                  </span>
+                  <span>장기 연금 관리는 날짜를 기록하는 것부터 시작합니다.</span>
+                </div>
               </div>
               <button
                 onClick={handleRefresh}
@@ -220,6 +267,29 @@ export function DashboardClient({
               />
               <HomeStat label="보유 종목" value={`${activeHoldings.length}개`} />
               <HomeStat label="월 적립금" value={formatKRW(monthlyBudget)} />
+            </div>
+
+            <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-card backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/60">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold tracking-tight text-ink dark:text-white">경제 캘린더</h2>
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    등록된 배당락일과 월간 경제 체크 이벤트를 함께 봅니다.
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/dividend"
+                  className="shrink-0 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 dark:bg-indigo-500/15 dark:text-indigo-300"
+                >
+                  배당 관리
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+                {economicEvents.map((event) => (
+                  <EconomicEventCard key={event.id} event={event} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -405,4 +475,120 @@ function HomeStat({
       {sub && <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-400">{sub}</p>}
     </div>
   );
+}
+
+function EconomicEventCard({ event }: { event: EconomicEvent }) {
+  return (
+    <div className="rounded-2xl border border-zinc-100 bg-white/90 p-3 transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-indigo-500/30">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+          {formatEventDate(event.date)}
+        </span>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-1 text-[11px] font-bold",
+            event.type.includes("배당") && "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
+            event.type.includes("실적") && "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+            !event.type.includes("배당") && !event.type.includes("실적") && "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
+          )}
+        >
+          {event.type}
+        </span>
+      </div>
+      <p className="text-sm font-bold text-zinc-950 dark:text-white">{event.title}</p>
+      <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{event.note}</p>
+      <p className="mt-2 text-[11px] font-semibold text-zinc-400">{event.source}</p>
+    </div>
+  );
+}
+
+function getTodayInfo(date: Date): TodayInfo {
+  return {
+    date,
+    dateKey: toDateKey(date),
+    fullDate: `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEKDAYS[date.getDay()]}요일`,
+    weekOfYear: getISOWeek(date),
+  };
+}
+
+function buildEconomicEvents(
+  dividendCalendar: DividendCalendarRow[],
+  baseDate: Date
+): EconomicEvent[] {
+  const todayKey = toDateKey(baseDate);
+  const dividendEvents = dividendCalendar
+    .filter((item) => item.date >= todayKey)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 3)
+    .map((item) => ({
+      id: item.id,
+      date: item.date,
+      title: item.stock,
+      type: item.type || "배당 일정",
+      note: item.note || "배당 캘린더에 등록된 일정입니다.",
+      source: "등록된 배당 캘린더",
+    }));
+
+  const nextMonday = addDays(baseDate, ((8 - baseDate.getDay()) % 7) || 7);
+  const nextMonthStart = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
+  const earningsSeasonMonths = [0, 3, 6, 9];
+  const isEarningsSeason = earningsSeasonMonths.includes(baseDate.getMonth());
+
+  const checklistEvents: EconomicEvent[] = [
+    {
+      id: "earnings-check",
+      date: toDateKey(nextMonday),
+      title: isEarningsSeason ? "미국 기업 실적 발표 시즌 점검" : "관심 기업 실적 발표 일정 확인",
+      type: "실적 체크",
+      note: "ETF 편입 비중이 큰 기업의 실적 발표가 지수 변동성을 키울 수 있습니다.",
+      source: "월간 경제 체크",
+    },
+    {
+      id: "macro-check",
+      date: toDateKey(addDays(baseDate, 5)),
+      title: "물가·금리 일정 확인",
+      type: "경제 일정",
+      note: "금리와 물가 지표는 채권·배당 ETF의 가격 흐름을 흔들 수 있습니다.",
+      source: "월간 경제 체크",
+    },
+    {
+      id: "monthly-pension-check",
+      date: toDateKey(nextMonthStart),
+      title: "월 적립·리밸런싱 점검",
+      type: "연금 관리",
+      note: "정해진 예산과 목표 비중을 다시 확인하고 다음 매수 계획을 준비합니다.",
+      source: "개인 연금 루틴",
+    },
+  ];
+
+  return [...dividendEvents, ...checklistEvents]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 4);
+}
+
+function toDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addDays(date: Date, days: number): Date {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+}
+
+function getISOWeek(date: Date): number {
+  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNumber = target.getUTCDay() || 7;
+  target.setUTCDate(target.getUTCDate() + 4 - dayNumber);
+  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
+  return Math.ceil(((target.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+function formatEventDate(date: string): string {
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return `${parsed.getMonth() + 1}/${parsed.getDate()}(${WEEKDAYS[parsed.getDay()]})`;
 }

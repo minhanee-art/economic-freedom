@@ -228,31 +228,43 @@ export function DashboardClient({
         </div>
       )}
 
-      <section className="overflow-hidden rounded-[1.75rem] border border-indigo-100 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
-        <div className="relative px-5 py-6 sm:px-6">
-          <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_20%_0%,rgba(83,58,253,0.22),transparent_36%),linear-gradient(135deg,rgba(28,30,84,0.10),transparent_45%)] dark:bg-[radial-gradient(circle_at_20%_0%,rgba(83,58,253,0.25),transparent_38%)]" />
+      <section className="overflow-hidden rounded-[2rem] border border-indigo-100/80 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
+        <div className="relative px-5 py-6 sm:px-7 sm:py-7">
+          <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute left-8 top-0 h-24 w-72 rounded-full bg-sky-300/25 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-28 left-1/4 h-56 w-56 rounded-full bg-emerald-300/15 blur-3xl" />
           <div className="relative space-y-5">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="mb-2 text-xs font-semibold tracking-[0.18em] text-indigo-500">HOME</p>
-                <h1 className="text-2xl font-bold tracking-tight text-ink dark:text-white sm:text-3xl">
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-2xl bg-dark-header px-3 py-2 text-xs font-bold text-white shadow-[0_10px_24px_rgba(28,30,84,0.18)] dark:bg-indigo-500/20 dark:text-indigo-200">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-xl bg-white/15">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.8 11.2 3a1.15 1.15 0 0 1 1.6 0L21 10.8M5.2 9.5v9.1c0 .77.63 1.4 1.4 1.4h3.15v-4.25c0-.69.56-1.25 1.25-1.25h2c.69 0 1.25.56 1.25 1.25V20h3.15c.77 0 1.4-.63 1.4-1.4V9.5" />
+                    </svg>
+                  </span>
+                  연금 홈
+                </div>
+                <h1 className="text-[1.7rem] font-black leading-tight tracking-[-0.045em] text-ink dark:text-white sm:text-4xl lg:text-[2.55rem]">
                   {PENSION_QUOTES[quoteIndex]}
                 </h1>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-ink-mute dark:text-zinc-400">
-                  <span className="rounded-full bg-white/80 px-3 py-1 font-semibold text-ink shadow-card dark:bg-zinc-950/70 dark:text-zinc-100">
+                <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-ink-mute dark:text-zinc-400">
+                  <span className="rounded-2xl border border-white/70 bg-white/90 px-3.5 py-2 font-bold text-ink shadow-card backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/70 dark:text-zinc-100">
                     {todayInfo?.fullDate ?? "오늘"}
                   </span>
-                  <span className="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300">
+                  <span className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3.5 py-2 font-bold text-indigo-600 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300">
                     {todayInfo ? `${todayInfo.weekOfYear}주차` : "주차 계산 중"}
                   </span>
-                  <span>장기 연금 관리는 날짜를 기록하는 것부터 시작합니다.</span>
+                  <span className="w-full text-xs font-medium sm:w-auto sm:text-sm">장기 연금 관리는 날짜를 기록하는 것부터 시작합니다.</span>
                 </div>
               </div>
               <button
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className="inline-flex min-h-11 items-center justify-center rounded-2xl bg-indigo-500 px-4 text-sm font-semibold text-white shadow-[0_10px_22px_rgba(83,58,253,0.24)] transition-all hover:bg-indigo-600 active:scale-[0.98] disabled:opacity-60"
+                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-white/90 px-4 text-sm font-bold text-indigo-600 shadow-[0_14px_30px_rgba(83,58,253,0.16)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50 active:scale-[0.98] disabled:opacity-60 dark:border-indigo-500/20 dark:bg-zinc-950/70 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
               >
+                <svg className={cn("h-4 w-4", isRefreshing && "animate-spin")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
+                </svg>
                 {isRefreshing ? "갱신 중..." : "시세 새로고침"}
               </button>
             </div>

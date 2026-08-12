@@ -28,14 +28,6 @@ interface Props {
 type GroupBy = "none" | "category" | "sub_category";
 type SortBy = "default" | "weight_desc" | "pnl_desc" | "pnl_asc";
 
-const PENSION_QUOTES = [
-  "연금은 시장을 맞히는 일이 아니라, 시간을 내 편으로 쌓는 일입니다.",
-  "오늘의 적립은 작아 보여도 복리의 시간표에서는 가장 앞자리에 놓입니다.",
-  "노후 현금흐름은 한 번의 수익률보다 오래 지속되는 습관에서 만들어집니다.",
-  "분산된 연금 포트폴리오는 불확실한 시장을 견디는 생활 방어선입니다.",
-  "경제적 자유는 큰 매수 한 번보다 정해진 날의 꾸준한 실행에 더 가깝습니다.",
-];
-
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
 type TodayInfo = {
@@ -68,12 +60,10 @@ export function DashboardClient({
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [sortBy, setSortBy] = useState<SortBy>("default");
   const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
-  const [quoteIndex, setQuoteIndex] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     setTodayInfo(getTodayInfo(new Date()));
-    setQuoteIndex(Math.floor(Math.random() * PENSION_QUOTES.length));
   }, []);
 
   // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
@@ -214,11 +204,13 @@ export function DashboardClient({
     return buildEconomicEvents(dividendCalendar, baseDate);
   }, [dividendCalendar, todayInfo]);
 
+  const homeExtraNavItems = extraNavItems.filter((item) => item.href !== "/dashboard/history");
+
   return (
     <div className="space-y-5 md:space-y-6">
       {refreshResult && (
         <div
-          className={`rounded-xl px-4 py-2.5 text-sm font-medium ${
+          className={`border px-4 py-2.5 text-sm font-medium ${
             refreshResult.includes("실패")
               ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
               : "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
@@ -228,60 +220,48 @@ export function DashboardClient({
         </div>
       )}
 
-      <section className="overflow-hidden rounded-[2rem] border border-indigo-100/80 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
+      <section className="overflow-hidden border border-indigo-100/80 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
         <div className="relative px-5 py-6 sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-          <div className="pointer-events-none absolute left-8 top-0 h-24 w-72 rounded-full bg-sky-300/25 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-28 left-1/4 h-56 w-56 rounded-full bg-emerald-300/15 blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-0 h-32 w-1/2 bg-gradient-to-bl from-indigo-500/15 via-sky-300/10 to-transparent" />
+          <div className="pointer-events-none absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-500/10" />
           <div className="relative space-y-5">
-            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="border-b border-zinc-200 pb-5 dark:border-zinc-800">
               <div className="max-w-3xl">
-                <div className="mb-4 inline-flex items-center gap-2 rounded-2xl bg-dark-header px-3 py-2 text-xs font-bold text-white shadow-[0_10px_24px_rgba(28,30,84,0.18)] dark:bg-indigo-500/20 dark:text-indigo-200">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-xl bg-white/15">
+                <div className="mb-4 inline-flex items-center gap-2 border border-dark-header bg-dark-header px-3 py-2 text-xs font-bold text-white shadow-[6px_6px_0_rgba(83,58,253,0.16)] dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-200">
+                  <span className="flex h-6 w-6 items-center justify-center border border-white/20 bg-white/10">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.8 11.2 3a1.15 1.15 0 0 1 1.6 0L21 10.8M5.2 9.5v9.1c0 .77.63 1.4 1.4 1.4h3.15v-4.25c0-.69.56-1.25 1.25-1.25h2c.69 0 1.25.56 1.25 1.25V20h3.15c.77 0 1.4-.63 1.4-1.4V9.5" />
                     </svg>
                   </span>
                   연금 홈
                 </div>
-                <h1 className="text-[1.7rem] font-black leading-tight tracking-[-0.045em] text-ink dark:text-white sm:text-4xl lg:text-[2.55rem]">
-                  {PENSION_QUOTES[quoteIndex]}
+                <h1 className="text-[1.7rem] font-black leading-tight tracking-[-0.04em] text-ink dark:text-white sm:text-4xl lg:text-[2.45rem]">
+                  든든한 노후를 위한 {todayInfo?.weekOfYear ?? 33}주차 여정입니다.
                 </h1>
-                <div className="mt-5 flex flex-wrap items-center gap-2 text-sm text-ink-mute dark:text-zinc-400">
-                  <span className="rounded-2xl border border-white/70 bg-white/90 px-3.5 py-2 font-bold text-ink shadow-card backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/70 dark:text-zinc-100">
-                    {todayInfo?.fullDate ?? "오늘"}
-                  </span>
-                  <span className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3.5 py-2 font-bold text-indigo-600 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300">
-                    {todayInfo ? `${todayInfo.weekOfYear}주차` : "주차 계산 중"}
-                  </span>
-                  <span className="w-full text-xs font-medium sm:w-auto sm:text-sm">장기 연금 관리는 날짜를 기록하는 것부터 시작합니다.</span>
-                </div>
+                <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-ink-mute dark:text-zinc-400">
+                  한 번의 수익률보다 오래 지속되는 습관이 안정적인 현금흐름을 만듭니다.
+                </p>
+                <p className="mt-5 border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold text-ink shadow-card dark:border-zinc-800 dark:bg-zinc-950/70 dark:text-zinc-100 sm:text-sm">
+                  {todayInfo?.fullDate ?? "2026년 8월 12일 수요일"} | {todayInfo ? `${todayInfo.weekOfYear}주차` : "33주차"} | 장기 연금 관리는 날짜를 기록하는 것부터 시작합니다.
+                </p>
               </div>
-              <button
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-2xl border border-indigo-100 bg-white/90 px-4 text-sm font-bold text-indigo-600 shadow-[0_14px_30px_rgba(83,58,253,0.16)] backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50 active:scale-[0.98] disabled:opacity-60 dark:border-indigo-500/20 dark:bg-zinc-950/70 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
-              >
-                <svg className={cn("h-4 w-4", isRefreshing && "animate-spin")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
-                </svg>
-                {isRefreshing ? "갱신 중..." : "시세 새로고침"}
-              </button>
             </div>
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <HomeStat label="평가금액" value={formatKRW(totalValue)} />
+              <HomeStat label="평가금액" value={formatKRW(totalValue)} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
               <HomeStat
                 label="총 손익"
                 value={formatKRW(totalPnL)}
                 tone={totalPnL >= 0 ? "up" : "down"}
                 sub={`${totalPnLPct >= 0 ? "+" : ""}${totalPnLPct.toFixed(2)}%`}
+                onRefresh={handleRefresh}
+                isRefreshing={isRefreshing}
               />
-              <HomeStat label="보유 종목" value={`${activeHoldings.length}개`} />
-              <HomeStat label="월 적립금" value={formatKRW(monthlyBudget)} />
+              <HomeStat label="보유 종목" value={`${activeHoldings.length}개`} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
+              <HomeStat label="월 적립금" value={formatKRW(monthlyBudget)} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
             </div>
 
-            <div className="rounded-[1.35rem] border border-white/70 bg-white/80 p-4 shadow-card backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/60">
+            <div className="border border-zinc-200 bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-base font-bold tracking-tight text-ink dark:text-white">경제 캘린더</h2>
@@ -291,7 +271,7 @@ export function DashboardClient({
                 </div>
                 <Link
                   href="/dashboard/dividend"
-                  className="shrink-0 rounded-full bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 dark:bg-indigo-500/15 dark:text-indigo-300"
+                  className="shrink-0 border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-600 transition-colors hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300"
                 >
                   배당 관리
                 </Link>
@@ -307,7 +287,7 @@ export function DashboardClient({
         </div>
       </section>
 
-      <section className="rounded-[1.5rem] border border-[var(--color-hairline)] bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
+      <section className="border border-[var(--color-hairline)] bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold tracking-tight">추가 메뉴</h2>
@@ -315,18 +295,18 @@ export function DashboardClient({
               하단 메뉴에서 뺀 기능은 홈에서 버튼으로 실행합니다.
             </p>
           </div>
-          <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300">
-            {extraNavItems.length}개
+          <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+            {homeExtraNavItems.length}개
           </span>
         </div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {extraNavItems.map((item) => (
+          {homeExtraNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="group flex min-h-20 items-center gap-3 rounded-2xl border border-zinc-100 bg-zinc-50/70 p-4 transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:bg-indigo-50/60 active:scale-[0.99] dark:border-zinc-800 dark:bg-zinc-950/60 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+              className="group flex min-h-20 items-center gap-3 border border-zinc-200 bg-zinc-50/70 p-4 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50/60 active:translate-y-0 dark:border-zinc-800 dark:bg-zinc-950/60 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-indigo-500 shadow-card transition-colors group-hover:bg-indigo-500 group-hover:text-white dark:bg-zinc-900">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-zinc-200 bg-white text-indigo-500 shadow-card transition-colors group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white dark:border-zinc-800 dark:bg-zinc-900">
                 {item.icon}
               </span>
               <span className="min-w-0">
@@ -351,11 +331,11 @@ export function DashboardClient({
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
+          <div className="border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-3">자산군별 비중</h3>
             <CategoryPieChart data={pieData} />
           </div>
-          <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
+          <div className="border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-3">현재 vs 목표 비중</h3>
             <AllocationBarChart data={barData} />
           </div>
@@ -372,7 +352,7 @@ export function DashboardClient({
           {activeHoldings.length > 0 && (
             <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center">
               {/* 그룹 컨트롤 */}
-              <div className="flex items-center overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="flex items-center overflow-hidden border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
                 <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">그룹</span>
                 {(
                   [
@@ -397,7 +377,7 @@ export function DashboardClient({
               </div>
 
               {/* 정렬 컨트롤 */}
-              <div className="flex items-center overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="flex items-center overflow-hidden border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
                 <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">정렬</span>
                 {(
                   [
@@ -436,7 +416,7 @@ export function DashboardClient({
                 {group.label && (
                   <div className="flex items-center gap-2 mb-2">
                     <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      className="w-2.5 h-2.5 shrink-0"
                       style={{ background: getCategoryColor(group.label) }}
                     />
                     <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
@@ -465,15 +445,34 @@ function HomeStat({
   value,
   sub,
   tone = "neutral",
+  onRefresh,
+  isRefreshing = false,
 }: {
   label: string;
   value: string;
   sub?: string;
   tone?: "neutral" | "up" | "down";
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/80 p-3 shadow-card backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-950/60">
-      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
+    <div className="border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
+        {onRefresh && (
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="flex h-7 w-7 shrink-0 items-center justify-center border border-zinc-200 bg-zinc-50 text-zinc-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+          >
+            <span className="sr-only">업데이트</span>
+            <svg className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
+            </svg>
+          </button>
+        )}
+      </div>
       <p
         className={cn(
           "mt-1 text-lg font-bold tabular-nums tracking-tight",
@@ -491,17 +490,18 @@ function HomeStat({
 
 function EconomicEventCard({ event }: { event: EconomicEvent }) {
   return (
-    <div className="rounded-2xl border border-zinc-100 bg-white/90 p-3 transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-card dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-indigo-500/30">
+    <div className="border border-zinc-200 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-card dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-indigo-500/30">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {formatEventDate(event.date)}
         </span>
         <span
           className={cn(
-            "rounded-full px-2.5 py-1 text-[11px] font-bold",
-            event.type.includes("배당") && "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
-            event.type.includes("실적") && "bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
-            !event.type.includes("배당") && !event.type.includes("실적") && "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
+            "border px-2.5 py-1 text-[11px] font-bold",
+            (event.type.includes("배당") || event.type.includes("실적")) &&
+              "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
+            !event.type.includes("배당") && !event.type.includes("실적") &&
+              "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
           )}
         >
           {event.type}
@@ -531,12 +531,12 @@ function buildEconomicEvents(
   const dividendEvents = dividendCalendar
     .filter((item) => item.date >= todayKey)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 3)
+    .slice(0, 1)
     .map((item) => ({
       id: item.id,
       date: item.date,
-      title: item.stock,
-      type: item.type || "배당 일정",
+      title: "배당 기록",
+      type: "배당 기록",
       note: item.note || "배당 캘린더에 등록된 일정입니다.",
       source: "등록된 배당 캘린더",
     }));
@@ -558,24 +558,31 @@ function buildEconomicEvents(
     {
       id: "macro-check",
       date: toDateKey(addDays(baseDate, 5)),
-      title: "물가·금리 일정 확인",
+      title: "물가-금리 일정 확인",
       type: "경제 일정",
-      note: "금리와 물가 지표는 채권·배당 ETF의 가격 흐름을 흔들 수 있습니다.",
+      note: "금리와 물가 지표는 채권/배당 ETF의 가격 흐름을 흔들 수 있습니다.",
       source: "월간 경제 체크",
     },
     {
       id: "monthly-pension-check",
       date: toDateKey(nextMonthStart),
-      title: "월 적립·리밸런싱 점검",
+      title: "월 적립-리밸런싱 점검",
       type: "연금 관리",
       note: "정해진 예산과 목표 비중을 다시 확인하고 다음 매수 계획을 준비합니다.",
       source: "개인 연금 루틴",
     },
   ];
 
-  return [...dividendEvents, ...checklistEvents]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 4);
+  const dividendRecord = dividendEvents[0] ?? {
+    id: "dividend-record",
+    date: todayKey,
+    title: "배당 기록",
+    type: "배당 기록",
+    note: "분배금 입금 내역과 배당락일을 한 번에 점검합니다.",
+    source: "배당 관리",
+  };
+
+  return [...checklistEvents, dividendRecord].slice(0, 4);
 }
 
 function toDateKey(date: Date): string {

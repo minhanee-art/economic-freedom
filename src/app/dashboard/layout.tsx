@@ -30,7 +30,12 @@ export default function DashboardLayout({
       .catch(() => {});
   }, []);
 
-  const handleLogout = async () => {
+  const handleAuthButton = async () => {
+    if (!displayName) {
+      router.push("/login");
+      return;
+    }
+
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
   };
@@ -76,10 +81,10 @@ export default function DashboardLayout({
                     type="button"
                     onFocus={() => setActiveNavGroup(group.label)}
                     className={cn(
-                      "inline-flex h-10 items-center gap-1 rounded-2xl px-3 text-sm font-semibold transition-colors",
+                      "inline-flex h-10 items-center gap-1 border border-transparent px-3 text-sm font-semibold transition-colors",
                       isGroupActive
-                        ? "bg-white/10 text-white"
-                        : "text-zinc-300 hover:bg-white/10 hover:text-white"
+                        ? "border-white/15 bg-white/10 text-white"
+                        : "text-zinc-300 hover:border-white/10 hover:bg-white/10 hover:text-white"
                     )}
                   >
                     {group.label}
@@ -90,7 +95,7 @@ export default function DashboardLayout({
 
                   <div
                     className={cn(
-                      "absolute left-0 top-full z-50 w-72 rounded-[1.35rem] border border-white/10 bg-white p-2 text-ink shadow-float transition-all dark:bg-zinc-900 dark:text-zinc-100",
+                      "absolute left-0 top-full z-50 w-72 border border-zinc-200 bg-white p-2 text-ink shadow-float transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100",
                       isDropdownOpen
                         ? "visible translate-y-1 opacity-100"
                         : "invisible translate-y-2 opacity-0"
@@ -106,13 +111,13 @@ export default function DashboardLayout({
                           key={item.href}
                           href={item.href}
                           className={cn(
-                            "flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors",
+                            "flex items-center gap-3 border border-transparent px-3 py-2.5 transition-colors",
                             isItemActive(item)
-                              ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
-                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
+                              : "hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
                           )}
                         >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-indigo-500 dark:bg-zinc-800">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-200 bg-zinc-100 text-indigo-500 dark:border-zinc-700 dark:bg-zinc-800">
                             {item.icon}
                           </span>
                           <span className="min-w-0">
@@ -134,7 +139,7 @@ export default function DashboardLayout({
                 type="button"
                 onClick={() => setIsSearchOpen((open) => !open)}
                 className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-2xl border border-white/10 px-3 text-sm font-semibold transition-colors",
+                  "inline-flex h-10 items-center gap-2 border border-white/10 px-3 text-sm font-semibold transition-colors",
                   isSearchOpen
                     ? "bg-white text-dark-header"
                     : "bg-white/10 text-white hover:bg-white/15"
@@ -148,9 +153,9 @@ export default function DashboardLayout({
               </button>
 
               {isSearchOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] rounded-[1.35rem] border border-zinc-200 bg-white p-3 text-ink shadow-float dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                <div className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] border border-zinc-200 bg-white p-3 text-ink shadow-float dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
                   <label className="sr-only" htmlFor="dashboard-menu-search">메뉴 검색</label>
-                  <div className="flex items-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
+                  <div className="flex items-center gap-2 border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
                     <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
                     </svg>
@@ -172,13 +177,13 @@ export default function DashboardLayout({
                           href={item.href}
                           onClick={() => setIsSearchOpen(false)}
                           className={cn(
-                            "flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors active:scale-[0.99]",
+                            "flex items-center gap-3 border border-transparent px-3 py-2.5 transition-colors active:scale-[0.99]",
                             isItemActive(item)
-                              ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
-                              : "hover:bg-zinc-50 dark:hover:bg-zinc-800"
+                              ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
+                              : "hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
                           )}
                         >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 text-indigo-500 dark:bg-zinc-800">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-200 bg-zinc-100 text-indigo-500 dark:border-zinc-700 dark:bg-zinc-800">
                             {item.icon}
                           </span>
                           <span className="min-w-0">
@@ -197,10 +202,10 @@ export default function DashboardLayout({
               <span className="text-sm text-zinc-300 hidden sm:block">{displayName}</span>
             )}
             <button
-              onClick={handleLogout}
-              className="text-sm text-zinc-400 transition-colors hover:text-white"
+              onClick={handleAuthButton}
+              className="border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
             >
-              로그아웃
+              {displayName ? "로그아웃" : "로그인"}
             </button>
           </div>
         </div>
@@ -225,13 +230,13 @@ export default function DashboardLayout({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex min-w-0 flex-col items-center gap-1 rounded-2xl px-1.5 py-2 text-[11px] font-semibold transition-all active:scale-95",
+                  "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-[11px] font-semibold transition-all active:scale-95",
                   isActive
-                    ? "bg-indigo-50 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300"
-                    : "text-zinc-400 hover:bg-zinc-50 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                    ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
+                    : "text-zinc-400 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-700 dark:hover:border-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
-                <span className={cn("rounded-xl p-1", isActive && "bg-white shadow-card dark:bg-zinc-900")}>{item.icon}</span>
+                <span className={cn("border border-transparent p-1", isActive && "border-zinc-200 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900")}>{item.icon}</span>
                 <span className="truncate">{item.shortLabel}</span>
               </Link>
             );

@@ -24,31 +24,31 @@ export function SummaryHeader({
 
   return (
     <div
-      className="rounded-2xl px-6 py-6 text-white shadow-float"
+      className="rounded-[1.5rem] px-5 py-5 text-white shadow-float sm:px-6 sm:py-6"
       style={{
         background:
           "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
       }}
     >
-      <div className="flex items-start justify-between mb-5">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1.5">
             총 평가금액
           </p>
-          <p className="text-3xl font-semibold tabular-nums tracking-tight">
+          <p className="text-3xl font-semibold tabular-nums tracking-tight sm:text-4xl">
             {formatKRW(totalValue)}
           </p>
         </div>
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="text-xs font-medium text-white bg-white/10 hover:bg-white/20 border border-white/20 rounded-full px-4 py-1.5 transition-colors disabled:opacity-50"
+          className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98] disabled:opacity-50 sm:w-auto"
         >
           {isRefreshing ? "갱신 중..." : "시세 새로고침"}
         </button>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <div>
           <p className="text-xs text-indigo-200 mb-0.5">총 손익</p>
           <p

@@ -14,21 +14,21 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
   const hasPnL = h.total_cost > 0;
 
   return (
-    <div className="flex rounded-xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
+    <div className="flex overflow-hidden rounded-2xl border border-[var(--color-hairline)] bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
       {/* 카테고리 색상 바 */}
       <div
         className="w-1.5 shrink-0"
         style={{ background: getCategoryColor(h.category) }}
       />
 
-      <div className="flex-1 px-4 py-3 space-y-2">
+      <div className="flex-1 space-y-3 px-4 py-3">
         {/* 상단: 종목명 + 코드 */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <p className="text-sm font-semibold">{h.name}</p>
             <p className="text-xs text-zinc-400 tabular-nums">{h.code}</p>
           </div>
-          <div className="text-right">
+          <div className="sm:text-right">
             <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>
             <p className="text-xs text-zinc-400 tabular-nums">
               {h.shares}주 × ₩{h.current_price.toLocaleString()}

@@ -24,7 +24,7 @@ export function SummaryHeader({
 
   return (
     <div
-      className="rounded-[1.5rem] px-5 py-5 text-white shadow-float sm:px-6 sm:py-6"
+      className="px-5 py-5 text-white shadow-float sm:px-6 sm:py-6"
       style={{
         background:
           "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
@@ -42,7 +42,7 @@ export function SummaryHeader({
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="inline-flex min-h-10 w-full items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98] disabled:opacity-50 sm:w-auto"
+          className="inline-flex min-h-10 w-full items-center justify-center border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98] disabled:opacity-50 sm:w-auto"
         >
           {isRefreshing ? "갱신 중..." : "시세 새로고침"}
         </button>

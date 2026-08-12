@@ -222,8 +222,6 @@ export function DashboardClient({
 
       <section className="overflow-hidden border border-indigo-100/80 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
         <div className="relative px-5 py-6 sm:px-7 sm:py-7">
-          <div className="pointer-events-none absolute right-0 top-0 h-32 w-1/2 bg-gradient-to-bl from-indigo-500/15 via-sky-300/10 to-transparent" />
-          <div className="pointer-events-none absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-indigo-50/80 to-transparent dark:from-indigo-500/10" />
           <div className="relative space-y-5">
             <div className="border-b border-zinc-200 pb-5 dark:border-zinc-800">
               <div className="max-w-3xl">

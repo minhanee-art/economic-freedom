@@ -12,6 +12,8 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
   const diff = h.actual_pct - h.target_pct;
   const showDiff = h.target_pct > 0 && Math.abs(diff) >= 3;
   const hasPnL = h.total_cost > 0;
+  const targetPct = Math.max(0, Math.min(100, h.target_pct));
+  const actualPct = Math.max(0, Math.min(100, h.actual_pct));
 
   return (
     <div className="flex overflow-hidden border border-[var(--color-hairline)] bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
@@ -36,11 +38,30 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
           </div>
         </div>
 
+        {/* 설정 비중 vs 현재 보유 비중 */}
+        <div className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/50">
+          <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold">
+            <span className="text-zinc-500 dark:text-zinc-400">내 설정 비중</span>
+            <span className="tabular-nums text-ink dark:text-zinc-100">{h.target_pct.toFixed(1)}%</span>
+          </div>
+          <div className="h-2 overflow-hidden bg-zinc-200 dark:bg-zinc-800">
+            <div className="h-full bg-zinc-400 dark:bg-zinc-500" style={{ width: `${targetPct}%` }} />
+          </div>
+
+          <div className="mb-2 mt-3 flex items-center justify-between gap-3 text-xs font-semibold">
+            <span className="text-indigo-600 dark:text-indigo-300">현재 보유 비중</span>
+            <span className="tabular-nums text-indigo-600 dark:text-indigo-300">{h.actual_pct.toFixed(1)}%</span>
+          </div>
+          <div className="h-2 overflow-hidden bg-indigo-100 dark:bg-indigo-950">
+            <div className="h-full bg-indigo-500" style={{ width: `${actualPct}%` }} />
+          </div>
+        </div>
+
         {/* 뱃지 행 */}
         <div className="flex flex-wrap gap-1.5">
-          <Badge label={`목표 ${h.target_pct}%`} variant="default" />
+          <Badge label={`설정 ${h.target_pct.toFixed(1)}%`} variant="default" />
           <Badge
-            label={`현재 ${h.actual_pct.toFixed(1)}%`}
+            label={`현재 보유 ${h.actual_pct.toFixed(1)}%`}
             variant="indigo"
           />
           {hasPnL && (

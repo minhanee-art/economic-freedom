@@ -1,19 +1,40 @@
 "use client";
 
+import { useState } from "react";
 import type { HoldingWithPnL } from "@/types";
 import { formatKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 
 interface HoldingCardProps {
   holding: HoldingWithPnL;
+  onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
+  isSavingTargetPct?: boolean;
 }
 
-export function HoldingCard({ holding: h }: HoldingCardProps) {
+export function HoldingCard({
+  holding: h,
+  onTargetPctChange,
+  isSavingTargetPct = false,
+}: HoldingCardProps) {
   const diff = h.actual_pct - h.target_pct;
   const showDiff = h.target_pct > 0 && Math.abs(diff) >= 3;
   const hasPnL = h.total_cost > 0;
   const targetPct = Math.max(0, Math.min(100, h.target_pct));
   const actualPct = Math.max(0, Math.min(100, h.actual_pct));
+  const [targetInput, setTargetInput] = useState(h.target_pct.toFixed(1));
+  const parsedTargetInput = Number(targetInput);
+  const hasTargetChange =
+    Number.isFinite(parsedTargetInput) && parsedTargetInput !== h.target_pct;
+
+  async function saveTargetPct() {
+    if (!onTargetPctChange) return;
+    const nextTargetPct = Number(targetInput);
+    if (!Number.isFinite(nextTargetPct)) return;
+    const clampedTargetPct = Math.max(0, Math.min(100, nextTargetPct));
+    setTargetInput(clampedTargetPct.toFixed(1));
+    if (clampedTargetPct === h.target_pct) return;
+    await onTargetPctChange(h.id, clampedTargetPct);
+  }
 
   return (
     <div className="flex overflow-hidden border border-[var(--color-hairline)] bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
@@ -40,9 +61,36 @@ export function HoldingCard({ holding: h }: HoldingCardProps) {
 
         {/* 설정 비중 vs 현재 보유 비중 */}
         <div className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/50">
-          <div className="mb-2 flex items-center justify-between gap-3 text-xs font-semibold">
-            <span className="text-zinc-500 dark:text-zinc-400">내 설정 비중</span>
-            <span className="tabular-nums text-ink dark:text-zinc-100">{h.target_pct.toFixed(1)}%</span>
+          <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">내 설정 비중</span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                max="100"
+                step="0.5"
+                value={targetInput}
+                onChange={(e) => setTargetInput(e.target.value)}
+                onBlur={saveTargetPct}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") e.currentTarget.blur();
+                }}
+                disabled={!onTargetPctChange || isSavingTargetPct}
+                aria-label={`${h.name} 설정 비중`}
+                className="h-8 w-20 border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums text-ink focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              />
+              <span className="text-xs font-semibold text-zinc-500">%</span>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={saveTargetPct}
+                disabled={!onTargetPctChange || !hasTargetChange || isSavingTargetPct}
+                className="h-8 border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+              >
+                {isSavingTargetPct ? "저장중" : "저장"}
+              </button>
+            </div>
           </div>
           <div className="h-2 overflow-hidden bg-zinc-200 dark:bg-zinc-800">
             <div className="h-full bg-zinc-400 dark:bg-zinc-500" style={{ width: `${targetPct}%` }} />

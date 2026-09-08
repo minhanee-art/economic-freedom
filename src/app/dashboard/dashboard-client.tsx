@@ -59,6 +59,7 @@ export function DashboardClient({
   const [refreshResult, setRefreshResult] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [sortBy, setSortBy] = useState<SortBy>("default");
+  const [savingTargetPctId, setSavingTargetPctId] = useState<string | null>(null);
   const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
   const router = useRouter();
 
@@ -136,6 +137,38 @@ export function DashboardClient({
       setTimeout(() => setRefreshResult(""), 4000);
     }
   }, [holdings, router]);
+
+  const handleTargetPctChange = useCallback(
+    async (holdingId: string, targetPct: number) => {
+      const previousHoldings = holdings;
+      const nextTargetPct = Math.max(0, Math.min(100, targetPct));
+      setSavingTargetPctId(holdingId);
+      setRefreshResult("");
+      setLocalHoldings((current) =>
+        current.map((h) =>
+          h.id === holdingId ? { ...h, target_pct: nextTargetPct } : h
+        )
+      );
+
+      try {
+        const res = await fetch("/api/holdings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: holdingId, target_pct: nextTargetPct }),
+        });
+        if (!res.ok) throw new Error("설정 비중 저장 실패");
+        setRefreshResult("설정 비중 저장 완료");
+        router.refresh();
+      } catch (err) {
+        setLocalHoldings(previousHoldings);
+        setRefreshResult(`설정 비중 저장 실패: ${(err as Error).message}`);
+      } finally {
+        setSavingTargetPctId(null);
+        setTimeout(() => setRefreshResult(""), 3000);
+      }
+    },
+    [holdings, router]
+  );
 
   const holdingsWithPnL = computeHoldingsWithPnL(holdings, initialCostBases);
 
@@ -426,7 +459,12 @@ export function DashboardClient({
                 )}
                 <div className="space-y-2">
                   {group.items.map((h) => (
-                    <HoldingCard key={h.id} holding={h} />
+                    <HoldingCard
+                      key={h.id}
+                      holding={h}
+                      onTargetPctChange={handleTargetPctChange}
+                      isSavingTargetPct={savingTargetPctId === h.id}
+                    />
                   ))}
                 </div>
               </div>

@@ -17,6 +17,14 @@ interface Props {
 
 const QUICK_AMOUNTS = [100000, 200000, 300000, 500000, 1000000];
 
+type SortMode = "recommended" | "quantity-desc" | "quantity-asc";
+
+const SORT_OPTIONS: { value: SortMode; label: string }[] = [
+  { value: "recommended", label: "추천순" },
+  { value: "quantity-desc", label: "수량 많은순" },
+  { value: "quantity-asc", label: "수량 적은순" },
+];
+
 export function BuyClient({
   initialHoldings,
   initialCostBases,
@@ -30,6 +38,7 @@ export function BuyClient({
   const [successMessage, setSuccessMessage] = useState("");
   const [priceStatus, setPriceStatus] = useState("");
   const [quantityOverrides, setQuantityOverrides] = useState<Record<string, number>>({});
+  const [sortMode, setSortMode] = useState<SortMode>("recommended");
   // 증권사 수수료율 (%) — localStorage 유지
   const [feeRatePct, setFeeRatePct] = useState<number>(() => {
     if (typeof window !== "undefined") {
@@ -119,6 +128,25 @@ export function BuyClient({
   const effectiveRemaining = budget - totalWithFee;
   const buyItems = effectiveItems.filter((item) => item.quantity > 0);
 
+  const sortedEffectiveItems = useMemo(() => {
+    if (sortMode === "recommended") return effectiveItems;
+
+    return [...effectiveItems].sort((a, b) => {
+      const quantityDiff =
+        sortMode === "quantity-desc"
+          ? b.quantity - a.quantity
+          : a.quantity - b.quantity;
+
+      if (quantityDiff !== 0) return quantityDiff;
+      return b.gapPct - a.gapPct;
+    });
+  }, [effectiveItems, sortMode]);
+
+  const sortedBuyItems = useMemo(
+    () => sortedEffectiveItems.filter((item) => item.quantity > 0),
+    [sortedEffectiveItems]
+  );
+
   function handleQuantityChange(holdingId: string, qty: number) {
     setQuantityOverrides((prev) => ({ ...prev, [holdingId]: Math.max(0, qty) }));
   }
@@ -148,7 +176,7 @@ export function BuyClient({
     try {
       const date = new Date().toISOString().split("T")[0];
       // 수수료를 각 종목 cost에 비례 배분
-      const items = buyItems.map((item) => ({
+      const items = sortedBuyItems.map((item) => ({
         holdingId: item.holding.id,
         code: item.holding.code,
         name: item.holding.name,
@@ -165,7 +193,7 @@ export function BuyClient({
       if (!res.ok) throw new Error("매수 실행 실패");
 
       setSuccessMessage(
-        `${buyItems.length}개 종목, 총 ${formatFullKRW(totalWithFee)} 매수 완료! (수수료 ${formatFullKRW(feeAmount)} 포함)`
+        `${sortedBuyItems.length}개 종목, 총 ${formatFullKRW(totalWithFee)} 매수 완료! (수수료 ${formatFullKRW(feeAmount)} 포함)`
       );
       setShowConfirm(false);
 
@@ -254,11 +282,30 @@ export function BuyClient({
       {/* 매수 계획 카드 리스트 */}
       {budget > 0 && (
         <div>
-          <h3 className="text-sm font-semibold mb-3 text-ink dark:text-zinc-100">
-            매수 계획 (<span className="tabular-nums">{buyItems.length}</span>종목)
-          </h3>
+          <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+              매수 계획 (<span className="tabular-nums">{buyItems.length}</span>종목)
+            </h3>
+            <div className="flex flex-wrap gap-1.5" aria-label="매수 계획 정렬">
+              {SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setSortMode(option.value)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                    sortMode === option.value
+                      ? "bg-indigo-500 text-white shadow-card"
+                      : "border border-hairline bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="space-y-2">
-            {effectiveItems.map((item) => (
+            {sortedEffectiveItems.map((item) => (
               <BuyPlanCard
                 key={item.holding.id}
                 item={item}
@@ -311,7 +358,7 @@ export function BuyClient({
           <div className="w-full max-w-sm rounded-2xl border border-hairline bg-white dark:bg-zinc-900 dark:border-zinc-800 p-6 space-y-4 shadow-float">
             <h3 className="text-lg font-bold text-ink dark:text-zinc-100">매수를 확정하시겠습니까?</h3>
             <div className="space-y-2 text-sm">
-              {buyItems.map((item) => (
+              {sortedBuyItems.map((item) => (
                 <div
                   key={item.holding.id}
                   className="flex justify-between text-zinc-600 dark:text-zinc-400"

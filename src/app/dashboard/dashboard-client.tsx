@@ -60,6 +60,7 @@ export function DashboardClient({
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
   const [sortBy, setSortBy] = useState<SortBy>("default");
   const [savingTargetPctId, setSavingTargetPctId] = useState<string | null>(null);
+  const [savingCategoryTarget, setSavingCategoryTarget] = useState<string | null>(null);
   const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
   const router = useRouter();
 
@@ -164,6 +165,74 @@ export function DashboardClient({
         setRefreshResult(`설정 비중 저장 실패: ${(err as Error).message}`);
       } finally {
         setSavingTargetPctId(null);
+        setTimeout(() => setRefreshResult(""), 3000);
+      }
+    },
+    [holdings, router]
+  );
+
+  const handleCategoryTargetPctChange = useCallback(
+    async (category: string, targetPct: number) => {
+      const previousHoldings = holdings;
+      const categoryHoldings = holdings.filter((h) => h.category === category);
+      if (categoryHoldings.length === 0) return;
+
+      const nextCategoryTargetPct = Math.max(0, Math.min(100, targetPct));
+      const currentCategoryTargetPct = categoryHoldings.reduce(
+        (sum, h) => sum + h.target_pct,
+        0
+      );
+      const nextTargets = new Map<string, number>();
+
+      if (currentCategoryTargetPct > 0) {
+        let assigned = 0;
+        categoryHoldings.forEach((h, index) => {
+          const isLast = index === categoryHoldings.length - 1;
+          const nextTarget = isLast
+            ? Math.max(0, +(nextCategoryTargetPct - assigned).toFixed(1))
+            : +((h.target_pct / currentCategoryTargetPct) * nextCategoryTargetPct).toFixed(1);
+          assigned += nextTarget;
+          nextTargets.set(h.id, nextTarget);
+        });
+      } else {
+        let assigned = 0;
+        categoryHoldings.forEach((h, index) => {
+          const isLast = index === categoryHoldings.length - 1;
+          const nextTarget = isLast
+            ? Math.max(0, +(nextCategoryTargetPct - assigned).toFixed(1))
+            : +(nextCategoryTargetPct / categoryHoldings.length).toFixed(1);
+          assigned += nextTarget;
+          nextTargets.set(h.id, nextTarget);
+        });
+      }
+
+      setSavingCategoryTarget(category);
+      setRefreshResult("");
+      setLocalHoldings((current) =>
+        current.map((h) =>
+          nextTargets.has(h.id) ? { ...h, target_pct: nextTargets.get(h.id)! } : h
+        )
+      );
+
+      try {
+        await Promise.all(
+          categoryHoldings.map((h) =>
+            fetch("/api/holdings", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: h.id, target_pct: nextTargets.get(h.id) ?? h.target_pct }),
+            }).then((res) => {
+              if (!res.ok) throw new Error(`${h.name} 설정 비중 저장 실패`);
+            })
+          )
+        );
+        setRefreshResult(`${category} 테마 설정 비중 저장 완료`);
+        router.refresh();
+      } catch (err) {
+        setLocalHoldings(previousHoldings);
+        setRefreshResult(`테마 설정 비중 저장 실패: ${(err as Error).message}`);
+      } finally {
+        setSavingCategoryTarget(null);
         setTimeout(() => setRefreshResult(""), 3000);
       }
     },
@@ -358,7 +427,14 @@ export function DashboardClient({
         isRefreshing={isRefreshing}
       />
 
-      <RebalanceAlert holdings={holdingsWithPnL} categoryData={barData} />
+      <RebalanceAlert
+        holdings={holdingsWithPnL}
+        categoryData={barData}
+        onTargetPctChange={handleTargetPctChange}
+        onCategoryTargetPctChange={handleCategoryTargetPctChange}
+        savingTargetPctId={savingTargetPctId}
+        savingCategoryTarget={savingCategoryTarget}
+      />
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

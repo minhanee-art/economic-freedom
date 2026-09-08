@@ -14,6 +14,10 @@ interface CategoryBalance {
 interface Props {
   holdings: HoldingWithPnL[];
   categoryData: CategoryBalance[];
+  onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
+  onCategoryTargetPctChange?: (category: string, targetPct: number) => Promise<void>;
+  savingTargetPctId?: string | null;
+  savingCategoryTarget?: string | null;
 }
 
 const CATEGORY_THRESHOLD = 3;
@@ -24,8 +28,16 @@ function getCategoryAdvice(name: string, diff: number): string {
   return `${name} ETF 추가 매수 고려`;
 }
 
-export function RebalanceAlert({ holdings, categoryData }: Props) {
+export function RebalanceAlert({
+  holdings,
+  categoryData,
+  onTargetPctChange,
+  onCategoryTargetPctChange,
+  savingTargetPctId,
+  savingCategoryTarget,
+}: Props) {
   const [showAdvice, setShowAdvice] = useState(false);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
 
   const categoryRows = useMemo(
@@ -61,7 +73,7 @@ export function RebalanceAlert({ holdings, categoryData }: Props) {
         <div>
           <p className="text-sm font-semibold">테마별 비중 현황</p>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            내가 설정한 비중과 현재 보유 비중을 비교합니다.
+            개별 종목 설정 비중의 합계가 테마 설정 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다.
           </p>
         </div>
         <button
@@ -86,12 +98,23 @@ export function RebalanceAlert({ holdings, categoryData }: Props) {
         {categoryRows.map((c) => {
           const isOver = c.diff > 0;
           const isAlert = c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD;
+          const categoryHoldings = holdings
+            .filter((h) => h.category === c.name)
+            .sort((a, b) => b.target_pct - a.target_pct);
+          const isExpanded = expandedCategory === c.name;
+
           return (
             <div key={c.name} className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/50">
-              <div className="mb-2 flex items-center gap-3">
+              <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <span className="w-14 shrink-0 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{c.name}</span>
-                <div className="flex-1 flex items-center gap-1.5 text-xs text-zinc-500">
-                  <span>설정 <b className="text-zinc-700 dark:text-zinc-300 tabular-nums">{c.target.toFixed(1)}%</b></span>
+                <div className="flex-1 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
+                  <CategoryTargetEditor
+                    key={`${c.name}-${c.target}`}
+                    category={c.name}
+                    target={c.target}
+                    onCategoryTargetPctChange={onCategoryTargetPctChange}
+                    isSaving={savingCategoryTarget === c.name}
+                  />
                   <span className="text-zinc-300 dark:text-zinc-600">·</span>
                   <span>현재 보유 <b className="text-zinc-700 dark:text-zinc-300 tabular-nums">{c.current.toFixed(1)}%</b></span>
                 </div>
@@ -119,6 +142,29 @@ export function RebalanceAlert({ holdings, categoryData }: Props) {
                   />
                 </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setExpandedCategory(isExpanded ? null : c.name)}
+                className="mt-3 text-xs font-bold text-indigo-600 transition-colors hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200"
+              >
+                {isExpanded ? "종목 비중 닫기" : `${categoryHoldings.length}개 종목 비중 수정`}
+              </button>
+
+              {isExpanded && (
+                <div className="mt-3 space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    {c.name} 테마 안에서 종목별 설정 비중을 직접 수정할 수 있습니다. 저장하면 위 테마 설정 비중 합계도 바로 바뀝니다.
+                  </p>
+                  {categoryHoldings.map((h) => (
+                    <ThemeHoldingTargetRow
+                      key={`${h.id}-${h.target_pct}`}
+                      holding={h}
+                      onTargetPctChange={onTargetPctChange}
+                      isSaving={savingTargetPctId === h.id}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -198,6 +244,132 @@ export function RebalanceAlert({ holdings, categoryData }: Props) {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function CategoryTargetEditor({
+  category,
+  target,
+  onCategoryTargetPctChange,
+  isSaving = false,
+}: {
+  category: string;
+  target: number;
+  onCategoryTargetPctChange?: (category: string, targetPct: number) => Promise<void>;
+  isSaving?: boolean;
+}) {
+  const [input, setInput] = useState(target.toFixed(1));
+  const parsedInput = Number(input);
+  const hasChange = Number.isFinite(parsedInput) && parsedInput !== target;
+
+  async function save() {
+    if (!onCategoryTargetPctChange) return;
+    const nextTarget = Number(input);
+    if (!Number.isFinite(nextTarget)) return;
+    const clampedTarget = Math.max(0, Math.min(100, nextTarget));
+    setInput(clampedTarget.toFixed(1));
+    if (clampedTarget === target) return;
+    await onCategoryTargetPctChange(category, clampedTarget);
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span>설정</span>
+      <input
+        type="number"
+        inputMode="decimal"
+        min="0"
+        max="100"
+        step="0.5"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur();
+        }}
+        disabled={!onCategoryTargetPctChange || isSaving}
+        aria-label={`${category} 테마 설정 비중`}
+        className="h-8 w-20 border border-zinc-200 bg-white px-2 text-right text-xs font-bold tabular-nums text-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+      />
+      <span>%</span>
+      <button
+        type="button"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={save}
+        disabled={!onCategoryTargetPctChange || !hasChange || isSaving}
+        className="h-8 border border-indigo-100 bg-indigo-50 px-2 text-[11px] font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+      >
+        {isSaving ? "저장중" : "저장"}
+      </button>
+    </span>
+  );
+}
+
+function ThemeHoldingTargetRow({
+  holding,
+  onTargetPctChange,
+  isSaving = false,
+}: {
+  holding: HoldingWithPnL;
+  onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
+  isSaving?: boolean;
+}) {
+  const diff = holding.actual_pct - holding.target_pct;
+  const isAlert = holding.target_pct > 0 && Math.abs(diff) >= HOLDING_THRESHOLD;
+  const [input, setInput] = useState(holding.target_pct.toFixed(1));
+  const parsedInput = Number(input);
+  const hasChange = Number.isFinite(parsedInput) && parsedInput !== holding.target_pct;
+
+  async function save() {
+    if (!onTargetPctChange) return;
+    const nextTarget = Number(input);
+    if (!Number.isFinite(nextTarget)) return;
+    const clampedTarget = Math.max(0, Math.min(100, nextTarget));
+    setInput(clampedTarget.toFixed(1));
+    if (clampedTarget === holding.target_pct) return;
+    await onTargetPctChange(holding.id, clampedTarget);
+  }
+
+  return (
+    <div className="grid gap-2 border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">{holding.name}</p>
+        <p className="text-xs text-zinc-400 tabular-nums">
+          현재 보유 {holding.actual_pct.toFixed(1)}% · 차이{" "}
+          <span className={isAlert ? (diff > 0 ? "text-red-500" : "text-blue-500") : "text-zinc-400"}>
+            {diff > 0 ? "+" : ""}{diff.toFixed(1)}%p
+          </span>
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          min="0"
+          max="100"
+          step="0.5"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onBlur={save}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") e.currentTarget.blur();
+          }}
+          disabled={!onTargetPctChange || isSaving}
+          aria-label={`${holding.name} 설정 비중`}
+          className="h-8 w-20 border border-zinc-200 bg-zinc-50 px-2 text-right text-sm font-bold tabular-nums text-zinc-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
+        />
+        <span className="text-xs font-semibold text-zinc-500">%</span>
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={save}
+          disabled={!onTargetPctChange || !hasChange || isSaving}
+          className="h-8 border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+        >
+          {isSaving ? "저장중" : "저장"}
+        </button>
+      </div>
     </div>
   );
 }

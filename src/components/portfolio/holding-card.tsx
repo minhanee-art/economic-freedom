@@ -21,7 +21,15 @@ export function HoldingCard({
   const hasPnL = h.total_cost > 0;
   const targetPct = Math.max(0, Math.min(100, h.target_pct));
   const actualPct = Math.max(0, Math.min(100, h.actual_pct));
-  const [targetInput, setTargetInput] = useState(h.target_pct.toFixed(1));
+  const [targetDraft, setTargetDraft] = useState<{
+    holdingId: string;
+    targetPct: number;
+    value: string;
+  } | null>(null);
+  const targetInput =
+    targetDraft?.holdingId === h.id && targetDraft.targetPct === h.target_pct
+      ? targetDraft.value
+      : h.target_pct.toFixed(1);
   const parsedTargetInput = Number(targetInput);
   const hasTargetChange =
     Number.isFinite(parsedTargetInput) && parsedTargetInput !== h.target_pct;
@@ -31,7 +39,11 @@ export function HoldingCard({
     const nextTargetPct = Number(targetInput);
     if (!Number.isFinite(nextTargetPct)) return;
     const clampedTargetPct = Math.max(0, Math.min(100, nextTargetPct));
-    setTargetInput(clampedTargetPct.toFixed(1));
+    setTargetDraft({
+      holdingId: h.id,
+      targetPct: h.target_pct,
+      value: clampedTargetPct.toFixed(1),
+    });
     if (clampedTargetPct === h.target_pct) return;
     await onTargetPctChange(h.id, clampedTargetPct);
   }
@@ -71,7 +83,13 @@ export function HoldingCard({
                 max="100"
                 step="0.5"
                 value={targetInput}
-                onChange={(e) => setTargetInput(e.target.value)}
+                onChange={(e) =>
+                  setTargetDraft({
+                    holdingId: h.id,
+                    targetPct: h.target_pct,
+                    value: e.target.value,
+                  })
+                }
                 onBlur={saveTargetPct}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") e.currentTarget.blur();

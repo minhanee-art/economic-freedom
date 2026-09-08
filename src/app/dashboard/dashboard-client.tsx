@@ -55,6 +55,7 @@ export function DashboardClient({
   dividendCalendar,
 }: Props) {
   const [holdings, setLocalHoldings] = useState(initialHoldings);
+  const [costBases, setCostBases] = useState(initialCostBases);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState("");
   const [groupBy, setGroupBy] = useState<GroupBy>("none");
@@ -239,7 +240,29 @@ export function DashboardClient({
     [holdings, router]
   );
 
-  const holdingsWithPnL = computeHoldingsWithPnL(holdings, initialCostBases);
+  const handleTradeComplete = useCallback(
+    (result: { holding: Holding; costBasis: CostBasis | null }) => {
+      setLocalHoldings((current) =>
+        current.map((h) => (h.id === result.holding.id ? result.holding : h))
+      );
+      setCostBases((current) => {
+        if (!result.costBasis) return current;
+        const exists = current.some((cb) => cb.holding_id === result.costBasis?.holding_id);
+        if (exists) {
+          return current.map((cb) =>
+            cb.holding_id === result.costBasis?.holding_id ? result.costBasis : cb
+          );
+        }
+        return [...current, result.costBasis];
+      });
+      setRefreshResult("거래가 DB에 반영되었습니다.");
+      router.refresh();
+      setTimeout(() => setRefreshResult(""), 3000);
+    },
+    [router]
+  );
+
+  const holdingsWithPnL = computeHoldingsWithPnL(holdings, costBases);
 
   const totalValue = holdingsWithPnL.reduce((s, h) => s + h.current_value, 0);
   const totalCost = holdingsWithPnL.reduce((s, h) => s + h.total_cost, 0);
@@ -539,6 +562,7 @@ export function DashboardClient({
                       key={h.id}
                       holding={h}
                       onTargetPctChange={handleTargetPctChange}
+                      onTradeComplete={handleTradeComplete}
                       isSavingTargetPct={savingTargetPctId === h.id}
                     />
                   ))}

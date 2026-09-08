@@ -23,6 +23,16 @@ interface Props {
 const CATEGORY_THRESHOLD = 3;
 const HOLDING_THRESHOLD = 5;
 
+type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc";
+
+const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
+  { value: "diff", label: "차이 큰순" },
+  { value: "target-desc", label: "설정↓" },
+  { value: "target-asc", label: "설정↑" },
+  { value: "current-desc", label: "현재↓" },
+  { value: "current-asc", label: "현재↑" },
+];
+
 function getCategoryAdvice(name: string, diff: number): string {
   if (diff > 0) return `${name} 신규 매수 자제, 다른 자산군 우선 매수`;
   return `${name} ETF 추가 매수 고려`;
@@ -38,6 +48,7 @@ export function RebalanceAlert({
 }: Props) {
   const [showAdvice, setShowAdvice] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [categorySort, setCategorySort] = useState<CategorySort>("diff");
   const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
 
   const categoryRows = useMemo(
@@ -45,8 +56,14 @@ export function RebalanceAlert({
       categoryData
         .filter((c) => c.target > 0 || c.current > 0)
         .map((c) => ({ ...c, diff: +(c.current - c.target).toFixed(1) }))
-        .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff)),
-    [categoryData]
+        .sort((a, b) => {
+          if (categorySort === "target-desc") return b.target - a.target;
+          if (categorySort === "target-asc") return a.target - b.target;
+          if (categorySort === "current-desc") return b.current - a.current;
+          if (categorySort === "current-asc") return a.current - b.current;
+          return Math.abs(b.diff) - Math.abs(a.diff);
+        }),
+    [categoryData, categorySort]
   );
 
   const categoryAlerts = categoryRows.filter(
@@ -94,6 +111,24 @@ export function RebalanceAlert({
         </button>
       </div>
 
+      <div className="flex flex-wrap items-center gap-1.5 border border-zinc-100 bg-zinc-50 p-2 text-xs shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">
+        <span className="px-1.5 font-semibold text-zinc-500 dark:text-zinc-400">테마 정렬</span>
+        {CATEGORY_SORT_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => setCategorySort(option.value)}
+            className={`border px-2.5 py-1.5 font-bold transition-colors ${
+              categorySort === option.value
+                ? "border-indigo-500 bg-indigo-500 text-white"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-2">
         {categoryRows.map((c) => {
           const isOver = c.diff > 0;
@@ -104,7 +139,11 @@ export function RebalanceAlert({
           const isExpanded = expandedCategory === c.name;
 
           return (
-            <div key={c.name} className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/50">
+            <div
+              key={c.name}
+              className="cursor-pointer border border-zinc-100 bg-zinc-50 p-3 transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+              onClick={() => setExpandedCategory(isExpanded ? null : c.name)}
+            >
               <div className="mb-2 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <span className="w-14 shrink-0 text-sm font-semibold text-zinc-700 dark:text-zinc-300">{c.name}</span>
                 <div className="flex-1 flex flex-wrap items-center gap-1.5 text-xs text-zinc-500">
@@ -144,14 +183,20 @@ export function RebalanceAlert({
               </div>
               <button
                 type="button"
-                onClick={() => setExpandedCategory(isExpanded ? null : c.name)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpandedCategory(isExpanded ? null : c.name);
+                }}
                 className="mt-3 text-xs font-bold text-indigo-600 transition-colors hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-200"
               >
-                {isExpanded ? "종목 비중 닫기" : `${categoryHoldings.length}개 종목 비중 수정`}
+                {isExpanded ? "종목 비중 닫기" : `${categoryHoldings.length}개 종목 보기/수정`}
               </button>
 
               {isExpanded && (
-                <div className="mt-3 space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                <div
+                  className="mt-3 space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                     {c.name} 테마 안에서 종목별 설정 비중을 직접 수정할 수 있습니다. 저장하면 위 테마 설정 비중 합계도 바로 바뀝니다.
                   </p>
@@ -274,7 +319,7 @@ function CategoryTargetEditor({
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5">
+    <span className="inline-flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
       <span>설정</span>
       <input
         type="number"

@@ -4,14 +4,12 @@
 import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { Holding, CostBasis, HoldingWithPnL } from "@/types";
+import type { Holding, CostBasis } from "@/types";
 import { computeHoldingsWithPnL } from "@/lib/portfolio";
 import { SummaryHeader } from "@/components/portfolio/summary-header";
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
-import { HoldingCard } from "@/components/portfolio/holding-card";
 import { CategoryPieChart } from "@/components/charts/category-pie-chart";
 import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
-import { getCategoryColor } from "@/lib/colors";
 import { cn, formatKRW } from "@/lib/utils";
 import { extraNavItems } from "@/lib/dashboard-navigation";
 import type { DividendCalendarRow } from "@/lib/queries";
@@ -24,9 +22,6 @@ interface Props {
   lastPriceUpdate: string | null;
   dividendCalendar: DividendCalendarRow[];
 }
-
-type GroupBy = "none" | "category" | "sub_category";
-type SortBy = "default" | "weight_desc" | "pnl_desc" | "pnl_asc";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -58,8 +53,6 @@ export function DashboardClient({
   const [costBases, setCostBases] = useState(initialCostBases);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshResult, setRefreshResult] = useState("");
-  const [groupBy, setGroupBy] = useState<GroupBy>("none");
-  const [sortBy, setSortBy] = useState<SortBy>("default");
   const [savingTargetPctId, setSavingTargetPctId] = useState<string | null>(null);
   const [savingCategoryTarget, setSavingCategoryTarget] = useState<string | null>(null);
   const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
@@ -273,29 +266,6 @@ export function DashboardClient({
     (h) => h.shares > 0 || h.target_pct > 0
   );
 
-  // 정렬
-  const sortedHoldings = useMemo(() => {
-    return [...activeHoldings].sort((a, b) => {
-      if (sortBy === "pnl_desc") return b.profit_loss_pct - a.profit_loss_pct;
-      if (sortBy === "pnl_asc") return a.profit_loss_pct - b.profit_loss_pct;
-      if (sortBy === "weight_desc") return b.actual_pct - a.actual_pct;
-      return b.target_pct - a.target_pct;
-    });
-  }, [activeHoldings, sortBy]);
-
-  // 그룹핑
-  const holdingGroups = useMemo(() => {
-    if (groupBy === "none") return [{ label: "", items: sortedHoldings }];
-    const key = groupBy === "category" ? "category" : "sub_category";
-    const map = new Map<string, HoldingWithPnL[]>();
-    for (const h of sortedHoldings) {
-      const k = String(h[key] || "기타");
-      if (!map.has(k)) map.set(k, []);
-      map.get(k)!.push(h);
-    }
-    return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
-  }, [sortedHoldings, groupBy]);
-
   // 파이차트 데이터
   const categoryMap = new Map<string, number>();
   holdingsWithPnL.forEach((h) => {
@@ -450,15 +420,6 @@ export function DashboardClient({
         isRefreshing={isRefreshing}
       />
 
-      <RebalanceAlert
-        holdings={holdingsWithPnL}
-        categoryData={barData}
-        onTargetPctChange={handleTargetPctChange}
-        onCategoryTargetPctChange={handleCategoryTargetPctChange}
-        savingTargetPctId={savingTargetPctId}
-        savingCategoryTarget={savingCategoryTarget}
-      />
-
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
@@ -472,107 +433,15 @@ export function DashboardClient({
         </div>
       )}
 
-      {/* 종목 리스트 */}
-      <div>
-        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h3 className="text-sm font-semibold">
-            보유 종목 ({activeHoldings.length})
-          </h3>
-
-          {activeHoldings.length > 0 && (
-            <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center">
-              {/* 그룹 컨트롤 */}
-              <div className="flex items-center overflow-hidden border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
-                <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">그룹</span>
-                {(
-                  [
-                    { value: "none", label: "전체" },
-                    { value: "category", label: "자산군" },
-                    { value: "sub_category", label: "세부테마" },
-                  ] as { value: GroupBy; label: string }[]
-                ).map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setGroupBy(opt.value)}
-                    className={cn(
-                      "flex-1 px-2.5 py-2 transition-colors sm:flex-none sm:py-1.5",
-                      groupBy === opt.value
-                        ? "bg-indigo-500 text-white"
-                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* 정렬 컨트롤 */}
-              <div className="flex items-center overflow-hidden border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
-                <span className="px-2.5 py-1 text-zinc-400 shrink-0 border-r border-[var(--color-hairline)] dark:border-zinc-700">정렬</span>
-                {(
-                  [
-                    { value: "default", label: "목표비중" },
-                    { value: "weight_desc", label: "현재비중" },
-                    { value: "pnl_desc", label: "수익↓" },
-                    { value: "pnl_asc", label: "수익↑" },
-                  ] as { value: SortBy; label: string }[]
-                ).map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => setSortBy(opt.value)}
-                    className={cn(
-                      "flex-1 px-2.5 py-2 transition-colors sm:flex-none sm:py-1.5",
-                      sortBy === opt.value
-                        ? "bg-indigo-500 text-white"
-                        : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400"
-                    )}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {activeHoldings.length === 0 ? (
-          <p className="text-sm text-zinc-400 py-8 text-center">
-            아직 보유 종목이 없습니다. 매수 계획에서 첫 매수를 시작해보세요.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {holdingGroups.map((group) => (
-              <div key={group.label || "_all"}>
-                {group.label && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <span
-                      className="w-2.5 h-2.5 shrink-0"
-                      style={{ background: getCategoryColor(group.label) }}
-                    />
-                    <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      {group.label}
-                    </span>
-                    <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
-                    <span className="text-xs text-zinc-400">{group.items.length}종목</span>
-                  </div>
-                )}
-                <div className="space-y-2">
-                  {group.items.map((h) => (
-                    <HoldingCard
-                      key={h.id}
-                      holding={h}
-                      portfolioTotalValue={totalValue}
-                      onTargetPctChange={handleTargetPctChange}
-                      onTradeComplete={handleTradeComplete}
-                      isSavingTargetPct={savingTargetPctId === h.id}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <RebalanceAlert
+        holdings={holdingsWithPnL}
+        categoryData={barData}
+        onTargetPctChange={handleTargetPctChange}
+        onCategoryTargetPctChange={handleCategoryTargetPctChange}
+        onTradeComplete={handleTradeComplete}
+        savingTargetPctId={savingTargetPctId}
+        savingCategoryTarget={savingCategoryTarget}
+      />
     </div>
   );
 }

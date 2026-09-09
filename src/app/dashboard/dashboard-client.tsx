@@ -561,6 +561,7 @@ export function DashboardClient({
                     <HoldingCard
                       key={h.id}
                       holding={h}
+                      portfolioTotalValue={totalValue}
                       onTargetPctChange={handleTargetPctChange}
                       onTradeComplete={handleTradeComplete}
                       isSavingTargetPct={savingTargetPctId === h.id}

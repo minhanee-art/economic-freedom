@@ -3,8 +3,7 @@
 
 import { useMemo, useState } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
-import { formatKRW, cn } from "@/lib/utils";
-import { getCategoryColor } from "@/lib/colors";
+import { formatKRW } from "@/lib/utils";
 import { HoldingCard } from "@/components/portfolio/holding-card";
 
 interface CategoryBalance {
@@ -27,8 +26,6 @@ const CATEGORY_THRESHOLD = 3;
 const HOLDING_THRESHOLD = 5;
 
 type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc";
-type GroupBy = "none" | "category" | "sub_category";
-type SortBy = "default" | "weight_desc" | "pnl_desc" | "pnl_asc";
 
 const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "diff", label: "차이 큰순" },
@@ -53,13 +50,9 @@ export function RebalanceAlert({
   savingCategoryTarget,
 }: Props) {
   const [showAdvice, setShowAdvice] = useState(false);
-  const [showHoldings, setShowHoldings] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categorySort, setCategorySort] = useState<CategorySort>("diff");
-  const [groupBy, setGroupBy] = useState<GroupBy>("category");
-  const [sortBy, setSortBy] = useState<SortBy>("default");
   const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
-  const activeHoldings = holdings.filter((h) => h.shares > 0 || h.target_pct > 0);
 
   const categoryRows = useMemo(
     () =>
@@ -79,27 +72,6 @@ export function RebalanceAlert({
   const targetTotalPct = categoryRows.reduce((sum, c) => sum + c.target, 0);
   const currentTotalPct = categoryRows.reduce((sum, c) => sum + c.current, 0);
   const totalDiffPct = +(currentTotalPct - targetTotalPct).toFixed(1);
-
-  const sortedHoldings = useMemo(() => {
-    return [...activeHoldings].sort((a, b) => {
-      if (sortBy === "pnl_desc") return b.profit_loss_pct - a.profit_loss_pct;
-      if (sortBy === "pnl_asc") return a.profit_loss_pct - b.profit_loss_pct;
-      if (sortBy === "weight_desc") return b.actual_pct - a.actual_pct;
-      return b.target_pct - a.target_pct;
-    });
-  }, [activeHoldings, sortBy]);
-
-  const holdingGroups = useMemo(() => {
-    if (groupBy === "none") return [{ label: "", items: sortedHoldings }];
-    const key = groupBy === "category" ? "category" : "sub_category";
-    const map = new Map<string, HoldingWithPnL[]>();
-    for (const h of sortedHoldings) {
-      const label = String(h[key] || "기타");
-      if (!map.has(label)) map.set(label, []);
-      map.get(label)!.push(h);
-    }
-    return Array.from(map.entries()).map(([label, items]) => ({ label, items }));
-  }, [groupBy, sortedHoldings]);
 
   const categoryAlerts = categoryRows.filter(
     (c) => c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD
@@ -260,14 +232,16 @@ export function RebalanceAlert({
                   onClick={(e) => e.stopPropagation()}
                 >
                   <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                    {c.name} 테마 안에서 종목별 설정 비중을 직접 수정할 수 있습니다. 저장하면 위 테마 설정 비중 합계도 바로 바뀝니다.
+                    {c.name} 테마 보유종목입니다. 설정 비중 수정, 바로 매수/매도까지 여기서 실행할 수 있습니다.
                   </p>
                   {categoryHoldings.map((h) => (
-                    <ThemeHoldingTargetRow
-                      key={`${h.id}-${h.target_pct}`}
+                    <HoldingCard
+                      key={h.id}
                       holding={h}
+                      portfolioTotalValue={totalValue}
                       onTargetPctChange={onTargetPctChange}
-                      isSaving={savingTargetPctId === h.id}
+                      onTradeComplete={onTradeComplete}
+                      isSavingTargetPct={savingTargetPctId === h.id}
                     />
                   ))}
                 </div>
@@ -275,92 +249,6 @@ export function RebalanceAlert({
             </div>
           );
         })}
-      </div>
-
-      <div className="border border-zinc-100 bg-zinc-50 p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">
-        <button
-          type="button"
-          onClick={() => setShowHoldings((value) => !value)}
-          className="flex w-full items-center justify-between gap-3 text-left"
-        >
-          <span>
-            <span className="block text-sm font-black text-zinc-900 dark:text-zinc-100">보유 종목 ({activeHoldings.length})</span>
-            <span className="mt-1 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-              클릭하면 기존 보유 종목 카드가 테마별 비중 현황 안에서 펼쳐집니다.
-            </span>
-          </span>
-          <span className="shrink-0 border border-indigo-100 bg-white px-3 py-1.5 text-xs font-bold text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/10 dark:text-indigo-300">
-            {showHoldings ? "접기" : "보기"}
-          </span>
-        </button>
-
-        {showHoldings && (
-          <div className="mt-3 space-y-3 border-t border-zinc-200 pt-3 dark:border-zinc-800">
-            {activeHoldings.length === 0 ? (
-              <p className="py-6 text-center text-sm text-zinc-400">
-                아직 보유 종목이 없습니다. 매수 계획에서 첫 매수를 시작해보세요.
-              </p>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-end">
-                  <HoldingControl
-                    label="그룹"
-                    options={[
-                      { value: "none", label: "전체" },
-                      { value: "category", label: "자산군" },
-                      { value: "sub_category", label: "세부테마" },
-                    ]}
-                    value={groupBy}
-                    onChange={setGroupBy}
-                  />
-                  <HoldingControl
-                    label="정렬"
-                    options={[
-                      { value: "default", label: "목표비중" },
-                      { value: "weight_desc", label: "현재비중" },
-                      { value: "pnl_desc", label: "수익↓" },
-                      { value: "pnl_asc", label: "수익↑" },
-                    ]}
-                    value={sortBy}
-                    onChange={setSortBy}
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  {holdingGroups.map((group) => (
-                    <div key={group.label || "_all"}>
-                      {group.label && (
-                        <div className="mb-2 flex items-center gap-2">
-                          <span
-                            className="h-2.5 w-2.5 shrink-0"
-                            style={{ background: getCategoryColor(group.label) }}
-                          />
-                          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                            {group.label}
-                          </span>
-                          <div className="h-px flex-1 bg-zinc-100 dark:bg-zinc-800" />
-                          <span className="text-xs text-zinc-400">{group.items.length}종목</span>
-                        </div>
-                      )}
-                      <div className="space-y-2">
-                        {group.items.map((h) => (
-                          <HoldingCard
-                            key={h.id}
-                            holding={h}
-                            portfolioTotalValue={totalValue}
-                            onTargetPctChange={onTargetPctChange}
-                            onTradeComplete={onTradeComplete}
-                            isSavingTargetPct={savingTargetPctId === h.id}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </div>
 
       {showAdvice && (
@@ -441,41 +329,6 @@ export function RebalanceAlert({
   );
 }
 
-function HoldingControl<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { value: T; label: string }[];
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div className="flex items-center overflow-hidden border border-[var(--color-hairline)] bg-white text-xs shadow-card dark:border-zinc-700 dark:bg-zinc-900">
-      <span className="shrink-0 border-r border-[var(--color-hairline)] px-2.5 py-1 text-zinc-400 dark:border-zinc-700">
-        {label}
-      </span>
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          onClick={() => onChange(option.value)}
-          className={cn(
-            "flex-1 px-2.5 py-2 transition-colors sm:flex-none sm:py-1.5",
-            value === option.value
-              ? "bg-indigo-500 text-white"
-              : "text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
-          )}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 function CategoryTargetEditor({
   category,
   target,
@@ -534,70 +387,4 @@ function CategoryTargetEditor({
   );
 }
 
-function ThemeHoldingTargetRow({
-  holding,
-  onTargetPctChange,
-  isSaving = false,
-}: {
-  holding: HoldingWithPnL;
-  onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
-  isSaving?: boolean;
-}) {
-  const diff = holding.actual_pct - holding.target_pct;
-  const isAlert = holding.target_pct > 0 && Math.abs(diff) >= HOLDING_THRESHOLD;
-  const [input, setInput] = useState(holding.target_pct.toFixed(1));
-  const parsedInput = Number(input);
-  const hasChange = Number.isFinite(parsedInput) && parsedInput !== holding.target_pct;
 
-  async function save() {
-    if (!onTargetPctChange) return;
-    const nextTarget = Number(input);
-    if (!Number.isFinite(nextTarget)) return;
-    const clampedTarget = Math.max(0, Math.min(100, nextTarget));
-    setInput(clampedTarget.toFixed(1));
-    if (clampedTarget === holding.target_pct) return;
-    await onTargetPctChange(holding.id, clampedTarget);
-  }
-
-  return (
-    <div className="grid gap-2 border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-[1fr_auto] sm:items-center">
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-zinc-800 dark:text-zinc-100">{holding.name}</p>
-        <p className="text-xs text-zinc-400 tabular-nums">
-          현재 보유 {holding.actual_pct.toFixed(1)}% · 차이{" "}
-          <span className={isAlert ? (diff > 0 ? "text-red-500" : "text-blue-500") : "text-zinc-400"}>
-            {diff > 0 ? "+" : ""}{diff.toFixed(1)}%p
-          </span>
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          inputMode="decimal"
-          min="0"
-          max="100"
-          step="0.5"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onBlur={save}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") e.currentTarget.blur();
-          }}
-          disabled={!onTargetPctChange || isSaving}
-          aria-label={`${holding.name} 설정 비중`}
-          className="h-8 w-20 border border-zinc-200 bg-zinc-50 px-2 text-right text-sm font-bold tabular-nums text-zinc-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-        />
-        <span className="text-xs font-semibold text-zinc-500">%</span>
-        <button
-          type="button"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={save}
-          disabled={!onTargetPctChange || !hasChange || isSaving}
-          className="h-8 border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
-        >
-          {isSaving ? "저장중" : "저장"}
-        </button>
-      </div>
-    </div>
-  );
-}

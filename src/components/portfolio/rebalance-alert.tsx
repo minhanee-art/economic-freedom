@@ -66,6 +66,10 @@ export function RebalanceAlert({
     [categoryData, categorySort]
   );
 
+  const targetTotalPct = categoryRows.reduce((sum, c) => sum + c.target, 0);
+  const currentTotalPct = categoryRows.reduce((sum, c) => sum + c.current, 0);
+  const totalDiffPct = +(currentTotalPct - targetTotalPct).toFixed(1);
+
   const categoryAlerts = categoryRows.filter(
     (c) => c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD
   );
@@ -109,6 +113,33 @@ export function RebalanceAlert({
             </span>
           )}
         </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 border border-indigo-100 bg-indigo-50/70 p-3 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/10 sm:grid-cols-3">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-indigo-500 dark:text-indigo-300">현재 총 합계 비율</p>
+          <p className="mt-1 text-2xl font-black tabular-nums text-indigo-700 dark:text-indigo-200">
+            {currentTotalPct.toFixed(1)}%
+          </p>
+        </div>
+        <div className="border-t border-indigo-100 pt-2 dark:border-indigo-500/20 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
+          <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">설정 합계</p>
+          <p className="mt-1 text-base font-black tabular-nums text-zinc-800 dark:text-zinc-100">
+            {targetTotalPct.toFixed(1)}%
+          </p>
+        </div>
+        <div className="border-t border-indigo-100 pt-2 dark:border-indigo-500/20 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
+          <p className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">합계 차이</p>
+          <p className={`mt-1 text-base font-black tabular-nums ${
+            Math.abs(totalDiffPct) >= 0.1
+              ? totalDiffPct > 0
+                ? "text-red-500"
+                : "text-blue-500"
+              : "text-zinc-500 dark:text-zinc-400"
+          }`}>
+            {totalDiffPct > 0 ? "+" : ""}{totalDiffPct.toFixed(1)}%p
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5 border border-zinc-100 bg-zinc-50 p-2 text-xs shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">

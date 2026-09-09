@@ -298,7 +298,10 @@ export function HoldingCard({
                         단가 ₩{Math.round(buyPrice || 0).toLocaleString()} 기준 <b className="tabular-nums">{targetBuyQuantity}주</b> 매수가 필요합니다.
                       </p>
                       <p className="mt-1 tabular-nums">
-                        예상 {formatKRW(targetBuyCost)} · 매수 후 약 {projectedPctAfterTargetBuy.toFixed(1)}%
+                        주문금액: {targetBuyQuantity}주 × ₩{Math.round(buyPrice || 0).toLocaleString()} = <b>{formatKRW(targetBuyCost)}</b>
+                      </p>
+                      <p className="mt-1 tabular-nums">
+                        매수 후 예상 비중 약 {projectedPctAfterTargetBuy.toFixed(1)}%
                       </p>
                       <button
                         type="button"

@@ -44,24 +44,52 @@ export function HoldingCard({
   const [tradePrice, setTradePrice] = useState(String(Math.round(h.current_price)));
   const [isTrading, setIsTrading] = useState(false);
   const [tradeStatus, setTradeStatus] = useState("");
-  const buyPrice = Number(tradePrice);
+  const tradeUnitPrice = Number(tradePrice);
+  const validTradePrice = Number.isFinite(tradeUnitPrice) && tradeUnitPrice > 0;
   const effectivePortfolioTotalValue = portfolioTotalValue ?? h.current_value;
   const targetRatio = h.target_pct / 100;
   const targetBuyQuantity =
-    h.target_pct > 0 && h.target_pct < 100 && Number.isFinite(buyPrice) && buyPrice > 0
+    h.target_pct > 0 && h.target_pct < 100 && validTradePrice
       ? Math.max(
           0,
           Math.ceil(
             (targetRatio * effectivePortfolioTotalValue - h.current_value) /
-              (buyPrice * (1 - targetRatio))
+              (tradeUnitPrice * (1 - targetRatio))
           )
         )
       : 0;
-  const targetBuyCost = targetBuyQuantity * (Number.isFinite(buyPrice) ? buyPrice : 0);
+  const targetSellQuantity =
+    h.target_pct <= 0 && validTradePrice
+      ? h.shares
+      : h.target_pct < 100 && validTradePrice
+      ? Math.min(
+          h.shares,
+          Math.max(
+            0,
+            Math.ceil(
+              (h.current_value - targetRatio * effectivePortfolioTotalValue) /
+                (tradeUnitPrice * (1 - targetRatio))
+            )
+          )
+        )
+      : 0;
+  const targetBuyCost = targetBuyQuantity * (validTradePrice ? tradeUnitPrice : 0);
+  const targetSellAmount = targetSellQuantity * (validTradePrice ? tradeUnitPrice : 0);
   const projectedPctAfterTargetBuy =
     effectivePortfolioTotalValue + targetBuyCost > 0
       ? ((h.current_value + targetBuyCost) / (effectivePortfolioTotalValue + targetBuyCost)) * 100
       : 0;
+  const projectedPctAfterTargetSell =
+    effectivePortfolioTotalValue - targetSellAmount > 0
+      ? Math.max(
+          0,
+          ((h.current_value - targetSellAmount) /
+            (effectivePortfolioTotalValue - targetSellAmount)) *
+            100
+        )
+      : 0;
+  const enteredQuantity = Number(tradeQuantity) || 0;
+  const enteredTradeAmount = enteredQuantity * (Number(tradePrice) || 0);
 
   async function saveTargetPct() {
     if (!onTargetPctChange) return;
@@ -282,23 +310,31 @@ export function HoldingCard({
                 </button>
               </div>
               <p className="mt-2 text-xs text-zinc-400 tabular-nums">
-                예상금액 {formatKRW((Number(tradeQuantity) || 0) * (Number(tradePrice) || 0))}
+                입력 합계: {enteredQuantity}주 × ₩{Math.round(Number(tradePrice) || 0).toLocaleString()} = {formatKRW(enteredTradeAmount)}
               </p>
-              {tradeAction === "buy" && (
-                <div className="mt-3 border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-                  <p className="font-black">설정 비중 맞춤 주문 계산</p>
-                  {h.target_pct <= 0 ? (
+
+              <div
+                className={`mt-3 border p-3 text-xs ${
+                  tradeAction === "buy"
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+                    : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+                }`}
+              >
+                <p className="font-black">리밸런싱 자동계산</p>
+                {!validTradePrice ? (
+                  <p className="mt-1">단가를 0보다 큰 숫자로 입력하면 추천 수량이 계산됩니다.</p>
+                ) : tradeAction === "buy" ? (
+                  h.target_pct <= 0 ? (
                     <p className="mt-1">설정 비중이 0%라 추천 매수 수량이 없습니다.</p>
                   ) : h.target_pct >= 100 ? (
                     <p className="mt-1">설정 비중 100%는 전체 포트폴리오 기준으로 자동 계산할 수 없습니다.</p>
                   ) : targetBuyQuantity > 0 ? (
                     <>
                       <p className="mt-1 leading-5">
-                        현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면
-                        단가 ₩{Math.round(buyPrice || 0).toLocaleString()} 기준 <b className="tabular-nums">{targetBuyQuantity}주</b> 매수가 필요합니다.
+                        현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 <b className="tabular-nums">{targetBuyQuantity}주</b> 매수가 필요합니다.
                       </p>
                       <p className="mt-1 tabular-nums">
-                        주문금액: {targetBuyQuantity}주 × ₩{Math.round(buyPrice || 0).toLocaleString()} = <b>{formatKRW(targetBuyCost)}</b>
+                        매수 합계: {targetBuyQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetBuyCost)}</b>
                       </p>
                       <p className="mt-1 tabular-nums">
                         매수 후 예상 비중 약 {projectedPctAfterTargetBuy.toFixed(1)}%
@@ -313,11 +349,36 @@ export function HoldingCard({
                     </>
                   ) : (
                     <p className="mt-1">
-                      현재 보유 비중이 설정 비중 이상입니다. 추가 매수보다 다른 부족 종목 매수를 검토하세요.
+                      현재 보유 비중이 설정 비중 이상입니다. 매수보다 매도 또는 부족 종목 매수를 검토하세요.
                     </p>
-                  )}
-                </div>
-              )}
+                  )
+                ) : h.target_pct >= 100 ? (
+                  <p className="mt-1">설정 비중이 100%라 추천 매도 수량이 없습니다.</p>
+                ) : targetSellQuantity > 0 ? (
+                  <>
+                    <p className="mt-1 leading-5">
+                      현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 <b className="tabular-nums">{targetSellQuantity}주</b> 매도가 필요합니다.
+                    </p>
+                    <p className="mt-1 tabular-nums">
+                      매도 합계: {targetSellQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetSellAmount)}</b>
+                    </p>
+                    <p className="mt-1 tabular-nums">
+                      매도 후 예상 비중 약 {projectedPctAfterTargetSell.toFixed(1)}%
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setTradeQuantity(String(targetSellQuantity))}
+                      className="mt-2 border border-red-300 bg-white px-2.5 py-1.5 font-bold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
+                    >
+                      추천 {targetSellQuantity}주 적용
+                    </button>
+                  </>
+                ) : (
+                  <p className="mt-1">
+                    현재 보유 비중이 설정 비중 이하입니다. 매도보다 추가 매수를 검토하세요.
+                  </p>
+                )}
+              </div>
             </div>
           )}
           {tradeStatus && (

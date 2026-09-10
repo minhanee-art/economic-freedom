@@ -19,6 +19,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [menuQuery, setMenuQuery] = useState("");
   const [activeNavGroup, setActiveNavGroup] = useState<string | null>(null);
@@ -27,8 +28,11 @@ export default function DashboardLayout({
   useEffect(() => {
     fetch("/api/me")
       .then((r) => r.json())
-      .then((d) => setDisplayName(d.displayName ?? null))
-      .catch(() => {});
+      .then((d) => {
+        setIsAuthenticated(Boolean(d.authenticated));
+        setDisplayName(d.displayName ?? d.email ?? null);
+      })
+      .catch(() => setIsAuthenticated(false));
   }, []);
 
   useEffect(() => {
@@ -62,7 +66,7 @@ export default function DashboardLayout({
   };
 
   const handleAuthButton = async () => {
-    if (!displayName) {
+    if (!isAuthenticated) {
       router.push("/login");
       return;
     }
@@ -239,14 +243,14 @@ export default function DashboardLayout({
               )}
             </div>
 
-            {displayName && (
+            {isAuthenticated && displayName && (
               <span className="text-sm text-zinc-300 hidden sm:block">{displayName}</span>
             )}
             <button
               onClick={handleAuthButton}
               className="border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
             >
-              {displayName ? "로그아웃" : "로그인"}
+              {isAuthenticated ? "로그아웃" : "로그인"}
             </button>
           </div>
         </div>

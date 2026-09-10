@@ -5,10 +5,10 @@ import { getSession } from "@/lib/session";
 
 export async function GET() {
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+  if (!session) return NextResponse.json({ authenticated: false, error: "인증 필요" }, { status: 401 });
 
   const [row] = await sql`
     SELECT display_name, email FROM profiles WHERE id = ${session.userId}
   `;
-  return NextResponse.json({ displayName: row?.display_name ?? null, email: row?.email ?? null });
+  return NextResponse.json({ authenticated: true, displayName: row?.display_name ?? null, email: row?.email ?? null });
 }

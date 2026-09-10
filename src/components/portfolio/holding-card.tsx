@@ -15,6 +15,10 @@ interface HoldingCardProps {
 
 type TradeAction = "buy" | "sell";
 
+function formatHoldingName(name: string): string {
+  return name.replace(/^\s*미래에셋(?:증권)?\s+/, "");
+}
+
 export function HoldingCard({
   holding: h,
   portfolioTotalValue,
@@ -27,6 +31,7 @@ export function HoldingCard({
   const hasPnL = h.total_cost > 0;
   const targetPct = Math.max(0, Math.min(100, h.target_pct));
   const actualPct = Math.max(0, Math.min(100, h.actual_pct));
+  const displayName = formatHoldingName(h.name);
   const [targetDraft, setTargetDraft] = useState<{
     holdingId: string;
     targetPct: number;
@@ -161,8 +166,13 @@ export function HoldingCard({
         {/* 상단: 종목명 + 코드 */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <p className="text-sm font-semibold">{h.name}</p>
-            <p className="text-xs text-zinc-400 tabular-nums">{h.code}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="border border-zinc-200 bg-zinc-100 px-2 py-0.5 text-xs font-bold tabular-nums text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                {h.code}
+              </span>
+              <p className="min-w-0 text-sm font-semibold">{displayName}</p>
+            </div>
+            <p className="mt-1 text-xs text-zinc-400">종목번호</p>
           </div>
           <div className="sm:text-right">
             <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>

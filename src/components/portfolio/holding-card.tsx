@@ -10,6 +10,7 @@ interface HoldingCardProps {
   portfolioTotalValue?: number;
   onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
   onTradeComplete?: (result: { holding: Holding; costBasis: CostBasis | null }) => void;
+  onHoldingDetailsChange?: (holdingId: string, patch: { code?: string; shares?: number }) => Promise<void>;
   isSavingTargetPct?: boolean;
 }
 
@@ -27,6 +28,7 @@ export function HoldingCard({
   portfolioTotalValue,
   onTargetPctChange,
   onTradeComplete,
+  onHoldingDetailsChange,
   isSavingTargetPct = false,
 }: HoldingCardProps) {
   const diff = h.actual_pct - h.target_pct;
@@ -50,6 +52,11 @@ export function HoldingCard({
   const [tradeAction, setTradeAction] = useState<TradeAction | null>(null);
   const [tradeQuantity, setTradeQuantity] = useState("1");
   const [tradePrice, setTradePrice] = useState(String(Math.round(h.current_price)));
+  const [showDetailsEditor, setShowDetailsEditor] = useState(false);
+  const [codeDraft, setCodeDraft] = useState(h.code);
+  const [sharesDraft, setSharesDraft] = useState(String(h.shares));
+  const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [detailsStatus, setDetailsStatus] = useState("");
   const [isTrading, setIsTrading] = useState(false);
   const [tradeStatus, setTradeStatus] = useState("");
   const tradeUnitPrice = Number(tradePrice);
@@ -113,6 +120,36 @@ export function HoldingCard({
     await onTargetPctChange(h.id, clampedTargetPct);
   }
 
+  async function saveDetails() {
+    if (!onHoldingDetailsChange) return;
+    const nextShares = Number(sharesDraft);
+    const nextCode = codeDraft.trim();
+    if (!Number.isInteger(nextShares) || nextShares < 0) {
+      setDetailsStatus("보유수량은 0 이상 정수로 입력해주세요.");
+      return;
+    }
+    if (nextCode && !/^[0-9A-Za-z]{1,12}$/.test(nextCode)) {
+      setDetailsStatus("종목번호는 숫자/영문 12자 이하로 입력해주세요.");
+      return;
+    }
+    if (nextCode === h.code && nextShares === h.shares) {
+      setShowDetailsEditor(false);
+      return;
+    }
+
+    setIsSavingDetails(true);
+    setDetailsStatus("");
+    try {
+      await onHoldingDetailsChange(h.id, { code: nextCode, shares: nextShares });
+      setDetailsStatus("종목번호/보유수량 정정 완료");
+      setShowDetailsEditor(false);
+    } catch (err) {
+      setDetailsStatus((err as Error).message);
+    } finally {
+      setIsSavingDetails(false);
+    }
+  }
+
   async function executeTrade() {
     if (!tradeAction) return;
     const quantity = Number(tradeQuantity);
@@ -173,7 +210,7 @@ export function HoldingCard({
               <p className="min-w-0 text-sm font-semibold">{displayName}</p>
             </div>
             <p className="mt-1 text-xs font-semibold tabular-nums text-zinc-400">
-              종목번호 <span className="text-zinc-600 dark:text-zinc-300">{h.code}</span>
+              종목번호 <span className={cn("text-zinc-600 dark:text-zinc-300", !h.code && "text-red-500 dark:text-red-300")}>{h.code || "미등록"}</span>
             </p>
           </div>
           <div className="sm:text-right">
@@ -277,7 +314,69 @@ export function HoldingCard({
             >
               바로 매도
             </button>
+            {onHoldingDetailsChange && (
+              <button
+                type="button"
+                onClick={() => {
+                  setCodeDraft(h.code);
+                  setSharesDraft(String(h.shares));
+                  setDetailsStatus("");
+                  setShowDetailsEditor((value) => !value);
+                }}
+                className="h-9 border border-zinc-200 bg-zinc-50 px-3 text-xs font-bold text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                수량/코드 정정
+              </button>
+            )}
           </div>
+
+          {showDetailsEditor && (
+            <div className="mt-3 border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
+              <p className="mb-2 text-xs font-black text-amber-700 dark:text-amber-200">종목번호 / 보유수량 정정</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_96px_auto] sm:items-end">
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">종목번호</span>
+                  <input
+                    type="text"
+                    value={codeDraft}
+                    onChange={(e) => setCodeDraft(e.target.value)}
+                    placeholder="예: 360750"
+                    disabled={isSavingDetails}
+                    className="h-9 w-full border border-amber-200 bg-white px-2 text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">보유수량</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    value={sharesDraft}
+                    onChange={(e) => setSharesDraft(e.target.value)}
+                    disabled={isSavingDetails}
+                    className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                  />
+                </label>
+                <button
+                  type="button"
+                  onClick={saveDetails}
+                  disabled={isSavingDetails}
+                  className="col-span-2 h-9 border border-amber-600 bg-amber-600 px-3 text-xs font-black text-white transition-colors hover:bg-amber-700 disabled:opacity-60 sm:col-span-1"
+                >
+                  {isSavingDetails ? "저장 중" : "정정 저장"}
+                </button>
+              </div>
+              <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-200">
+                거래내역 재계산이 아니라 현재 보유수량 표시값을 정정합니다. TIGER 미국S&P500 종목번호는 360750입니다.
+              </p>
+              {detailsStatus && (
+                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-emerald-600 dark:text-emerald-300" : "text-red-500"}`}>
+                  {detailsStatus}
+                </p>
+              )}
+            </div>
+          )}
 
           {tradeAction && (
             <div className="mt-3 border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/50">

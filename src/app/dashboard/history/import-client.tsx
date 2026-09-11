@@ -281,6 +281,9 @@ const NAME_CODE_MAP: Record<string, string> = {
   "TIGER200": "102110",
   "TIGER골드선물": "319640",
   "TIGER나스닥100": "133690",
+  "TIGER미국S&P500": "360750",
+  "TIGER미국SP500": "360750",
+  "TIGER미국에스앤피500": "360750",
   "TIGER미국채10년선물": "305080",
   "TIGERMSCI": "182480",
   "TIGER미국MSCI리츠": "182480",
@@ -429,12 +432,13 @@ function parseCSV(text: string): ParsedRow[] {
     const price = priceIdx !== -1 ? parseNum(cols[priceIdx]) : 0;
     const amount =
       amountIdx !== -1 ? parseNum(cols[amountIdx]) : price * quantity;
-    const code = codeIdx !== -1 ? cols[codeIdx].replace(/[^0-9A-Za-z]/g, "") : "";
     const name = nameIdx !== -1 ? cols[nameIdx] : "";
+    const code = codeIdx !== -1 ? cols[codeIdx].replace(/[^0-9A-Za-z]/g, "") || matchFundCode(name) : matchFundCode(name);
     const type = typeIdx !== -1 ? normalizeType(cols[typeIdx]) : "매수";
     const fee = feeIdx !== -1 ? parseNum(cols[feeIdx]) : 0;
     const tax = taxIdx !== -1 ? parseNum(cols[taxIdx]) : 0;
 
+    if (!code) continue;
     rows.push({ date, code, name, type, quantity, price, amount, fee, tax });
   }
 
@@ -533,6 +537,7 @@ function parseHTMLTable(html: string): ParsedRow[] {
 
     const type = normalizeType(tradeType);
     const code = matchFundCode(name);
+    if (!code) continue;
 
     rows.push({
       date,

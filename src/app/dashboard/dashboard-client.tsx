@@ -13,6 +13,7 @@ import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
 import { cn, formatKRW } from "@/lib/utils";
 import { extraNavItems } from "@/lib/dashboard-navigation";
 import type { DividendCalendarRow } from "@/lib/queries";
+import { CATEGORIES } from "@/lib/constants";
 
 interface Props {
   initialHoldings: Holding[];
@@ -39,6 +40,20 @@ type EconomicEvent = {
   type: string;
   note: string;
   source: string;
+};
+
+type NewHoldingPayload = {
+  code: string;
+  name: string;
+  category: (typeof CATEGORIES)[number];
+  sub_category: string;
+  current_price: number;
+  target_pct: number;
+};
+
+type HoldingDetailsPatch = {
+  code?: string;
+  shares?: number;
 };
 
 export function DashboardClient({
@@ -255,6 +270,110 @@ export function DashboardClient({
     [router]
   );
 
+  const handleAddHolding = useCallback(
+    async (payload: NewHoldingPayload) => {
+      const body = {
+        code: payload.code.trim(),
+        name: payload.name.trim(),
+        category: payload.category,
+        sub_category: payload.sub_category.trim(),
+        current_price: Math.max(0, Math.round(payload.current_price)),
+        target_pct: Math.max(0, Math.min(100, payload.target_pct)),
+      };
+
+      const res = await fetch("/api/holdings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error ?? "종목 추가 실패");
+      }
+
+      const createdHolding: Holding = {
+        ...data,
+        target_pct: Number(data.target_pct ?? body.target_pct),
+        current_price: Number(data.current_price ?? body.current_price),
+        shares: Number(data.shares ?? 0),
+        expense_ratio: Number(data.expense_ratio ?? 0),
+      };
+      setLocalHoldings((current) => [...current, createdHolding]);
+      setRefreshResult("종목 추가 완료");
+      router.refresh();
+      setTimeout(() => setRefreshResult(""), 3000);
+    },
+    [router]
+  );
+
+  const handleDeleteHolding = useCallback(
+    async (holdingId: string) => {
+      const targetHolding = holdings.find((h) => h.id === holdingId);
+      if (!targetHolding) return;
+      if (targetHolding.shares > 0) {
+        throw new Error("보유수량이 있는 종목은 삭제할 수 없습니다.");
+      }
+
+      const res = await fetch("/api/holdings", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: holdingId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error ?? "종목 삭제 실패");
+      }
+
+      setLocalHoldings((current) => current.filter((h) => h.id !== holdingId));
+      setCostBases((current) => current.filter((cb) => cb.holding_id !== holdingId));
+      setRefreshResult("종목 삭제 완료");
+      router.refresh();
+      setTimeout(() => setRefreshResult(""), 3000);
+    },
+    [holdings, router]
+  );
+
+  const handleHoldingDetailsChange = useCallback(
+    async (holdingId: string, patch: HoldingDetailsPatch) => {
+      const res = await fetch("/api/holdings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: holdingId, ...patch }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error ?? "종목 정보 정정 실패");
+      }
+
+      if (data?.holding) {
+        const updatedHolding: Holding = {
+          ...data.holding,
+          target_pct: Number(data.holding.target_pct ?? 0),
+          current_price: Number(data.holding.current_price ?? 0),
+          shares: Number(data.holding.shares ?? 0),
+          expense_ratio: Number(data.holding.expense_ratio ?? 0),
+        };
+        setLocalHoldings((current) =>
+          current.map((h) => (h.id === holdingId ? updatedHolding : h))
+        );
+        if (patch.shares !== undefined) {
+          setCostBases((current) =>
+            current.map((cb) =>
+              cb.holding_id === holdingId
+                ? { ...cb, total_shares: Math.max(0, Math.round(patch.shares ?? 0)) }
+                : cb
+            )
+          );
+        }
+      }
+
+      setRefreshResult("종목 정보 정정 완료");
+      router.refresh();
+      setTimeout(() => setRefreshResult(""), 3000);
+    },
+    [router]
+  );
+
   const holdingsWithPnL = computeHoldingsWithPnL(holdings, costBases);
 
   const totalValue = holdingsWithPnL.reduce((s, h) => s + h.current_value, 0);
@@ -439,6 +558,9 @@ export function DashboardClient({
         onTargetPctChange={handleTargetPctChange}
         onCategoryTargetPctChange={handleCategoryTargetPctChange}
         onTradeComplete={handleTradeComplete}
+        onAddHolding={handleAddHolding}
+        onDeleteHolding={handleDeleteHolding}
+        onHoldingDetailsChange={handleHoldingDetailsChange}
         savingTargetPctId={savingTargetPctId}
         savingCategoryTarget={savingCategoryTarget}
       />

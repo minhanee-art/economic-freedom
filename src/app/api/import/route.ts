@@ -20,6 +20,45 @@ interface PlannedHolding {
   shares: number;
 }
 
+const NAME_CODE_MAP: Record<string, string> = {
+  "TIGER200": "102110",
+  "TIGER골드선물": "319640",
+  "TIGER나스닥100": "133690",
+  "TIGER미국S&P500": "360750",
+  "TIGER미국SP500": "360750",
+  "TIGER미국에스앤피500": "360750",
+  "TIGER미국채10년선물": "305080",
+  "TIGERMSCI": "182480",
+  "TIGER미국MSCI리츠": "182480",
+  "TIGER미국배당": "458730",
+  "TIGER필라델피아": "497570",
+  "필라델피아AI반도체": "497570",
+  "KODEXMSCI": "251350",
+  "KODEXWTI": "261220",
+  "KODEX인도": "453810",
+  "KODEX코스피100": "237350",
+  "KODEX은선물": "144600",
+  "KODEX단기채권": "153130",
+  "KODEX200": "069500",
+  "KODEX레버리지": "122630",
+  "KODEX인버스": "114800",
+  "ACE코스피": "305050",
+  "ACE코스닥": "354500",
+  "ACE싱가포르": "316300",
+  "ACE테슬라": "457480",
+  "PLUS고배당": "161510",
+  "KINDEX": "354350",
+  "ARIRANG": "195980",
+};
+
+function matchFundCode(name: string): string {
+  const normalized = name.replace(/\s/g, "");
+  for (const [key, code] of Object.entries(NAME_CODE_MAP)) {
+    if (normalized.includes(key)) return code;
+  }
+  return "";
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getSession();
@@ -33,9 +72,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "데이터 없음" }, { status: 400 });
     }
 
-    // 입력 검증 — INTEGER 오버플로/NaN/음수로 인한 500·데이터 오염 방지
+    const normalizedItems = items.map((it) => ({
+      ...it,
+      code: String(it.code || matchFundCode(it.name || "")).trim(),
+    }));
+
+    // 입력 검증 — INTEGER 오버플로/NaN/음수/빈 종목코드로 인한 데이터 오염 방지
     const INT_MAX = 2_147_483_647;
-    for (const it of items) {
+    for (const it of normalizedItems) {
       const qty = Number(it.qty);
       const price = Number(it.price);
       const amount = Number(it.amount);
@@ -88,9 +132,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const buyItems = items.filter((i) => !i.type || i.type === "매수");
-    const sellItems = items.filter((i) => i.type === "매도");
-    const dividendItems = items.filter((i) => i.type === "배당");
+    const buyItems = normalizedItems.filter((i) => !i.type || i.type === "매수");
+    const sellItems = normalizedItems.filter((i) => i.type === "매도");
+    const dividendItems = normalizedItems.filter((i) => i.type === "배당");
     let buyCount = 0, sellCount = 0, dividendCount = 0, totalRecords = 0, dupSkipped = 0;
     const autoAdded: string[] = [];
 

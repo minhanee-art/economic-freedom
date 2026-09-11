@@ -44,6 +44,7 @@ const CATEGORY_THRESHOLD = 3;
 const HOLDING_THRESHOLD = 5;
 
 type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc";
+type HoldingSort = "return-desc" | "code-asc" | "name-asc";
 
 const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "diff", label: "차이 큰순" },
@@ -52,6 +53,52 @@ const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "current-desc", label: "현재↓" },
   { value: "current-asc", label: "현재↑" },
 ];
+
+const HOLDING_SORT_OPTIONS: { value: HoldingSort; label: string }[] = [
+  { value: "return-desc", label: "수익률순" },
+  { value: "code-asc", label: "티커순" },
+  { value: "name-asc", label: "종목명순" },
+];
+
+function normalizeSortText(value: string): string {
+  return value.replace(/\s/g, "").toLocaleUpperCase("ko-KR");
+}
+
+function inferHoldingCode(name: string): string {
+  const normalized = name.replace(/\s/g, "");
+  if (
+    normalized.includes("TIGER미국S&P500") ||
+    normalized.includes("TIGER미국SP500") ||
+    normalized.includes("TIGER미국에스앤피500")
+  ) {
+    return "360750";
+  }
+  return "";
+}
+
+function holdingCodeForSort(holding: HoldingWithPnL): string {
+  return holding.code || inferHoldingCode(holding.name) || holding.name;
+}
+
+function compareHoldingBySort(a: HoldingWithPnL, b: HoldingWithPnL, sort: HoldingSort): number {
+  if (sort === "code-asc") {
+    return normalizeSortText(holdingCodeForSort(a)).localeCompare(
+      normalizeSortText(holdingCodeForSort(b)),
+      "ko-KR",
+      { numeric: true }
+    );
+  }
+  if (sort === "name-asc") {
+    return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", {
+      numeric: true,
+    });
+  }
+  const returnDiff = b.profit_loss_pct - a.profit_loss_pct;
+  if (returnDiff !== 0) return returnDiff;
+  return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", {
+    numeric: true,
+  });
+}
 
 function getCategoryAdvice(name: string, diff: number): string {
   if (diff > 0) return `${name} 신규 매수 자제, 다른 자산군 우선 매수`;
@@ -75,6 +122,7 @@ export function RebalanceAlert({
   const [expandedHiddenCategory, setExpandedHiddenCategory] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categorySort, setCategorySort] = useState<CategorySort>("diff");
+  const [holdingSort, setHoldingSort] = useState<HoldingSort>("return-desc");
   const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
 
   const categoryRows = useMemo(() => {
@@ -206,10 +254,10 @@ export function RebalanceAlert({
           const allCategoryHoldings = holdings.filter((h) => h.category === c.name);
           const categoryHoldings = allCategoryHoldings
             .filter((h) => h.shares > 0 && h.target_pct > 0)
-            .sort((a, b) => b.target_pct - a.target_pct);
+            .sort((a, b) => compareHoldingBySort(a, b, holdingSort));
           const hiddenCategoryHoldings = allCategoryHoldings
             .filter((h) => h.shares <= 0 || h.target_pct <= 0)
-            .sort((a, b) => b.target_pct - a.target_pct);
+            .sort((a, b) => compareHoldingBySort(a, b, holdingSort));
           const isExpanded = expandedCategory === c.name;
           const isHiddenExpanded = expandedHiddenCategory === c.name;
 
@@ -278,9 +326,28 @@ export function RebalanceAlert({
                   className="mt-3 space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                    {c.name} 테마 보유종목입니다. 설정 비중 수정, 바로 매수/매도까지 여기서 실행할 수 있습니다.
-                  </p>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                      {c.name} 테마 보유종목입니다. 설정 비중 수정, 바로 매수/매도까지 여기서 실행할 수 있습니다.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                      <span className="font-semibold text-zinc-500 dark:text-zinc-400">보유종목 정렬</span>
+                      {HOLDING_SORT_OPTIONS.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => setHoldingSort(option.value)}
+                          className={`border px-2.5 py-1.5 font-bold transition-colors ${
+                            holdingSort === option.value
+                              ? "border-indigo-500 bg-indigo-500 text-white"
+                              : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   {categoryHoldings.length > 0 ? (
                     categoryHoldings.map((h) => (
                       <HoldingCard

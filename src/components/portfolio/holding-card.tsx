@@ -17,10 +17,23 @@ interface HoldingCardProps {
 type TradeAction = "buy" | "sell";
 
 function formatHoldingName(name: string): string {
-  return name.replace(
+  const strippedName = name.replace(
     /^\s*(미래에셋(?:증권|자산운용)?|삼성(?:증권|자산운용)?|한화(?:투자증권|자산운용)?|한국투자(?:증권|신탁운용)?|KB(?:증권|자산운용)?|신한(?:투자증권|자산운용)?|키움(?:증권|자산운용)?|NH(?:-Amundi)?(?:투자증권|자산운용)?|타임폴리오(?:자산운용)?|마이다스(?:에셋)?(?:자산운용)?)\s*/,
     ""
   );
+  return strippedName.replace(/증권상장지수투자신탁.*$/, "").trim() || strippedName;
+}
+
+function inferHoldingCode(name: string): string {
+  const normalized = name.replace(/\s/g, "");
+  if (
+    normalized.includes("TIGER미국S&P500") ||
+    normalized.includes("TIGER미국SP500") ||
+    normalized.includes("TIGER미국에스앤피500")
+  ) {
+    return "360750";
+  }
+  return "";
 }
 
 export function HoldingCard({
@@ -37,6 +50,9 @@ export function HoldingCard({
   const targetPct = Math.max(0, Math.min(100, h.target_pct));
   const actualPct = Math.max(0, Math.min(100, h.actual_pct));
   const displayName = formatHoldingName(h.name);
+  const inferredCode = inferHoldingCode(h.name);
+  const displayCode = h.code || inferredCode;
+  const isCodeInferred = !h.code && Boolean(inferredCode);
   const [targetDraft, setTargetDraft] = useState<{
     holdingId: string;
     targetPct: number;
@@ -53,7 +69,7 @@ export function HoldingCard({
   const [tradeQuantity, setTradeQuantity] = useState("1");
   const [tradePrice, setTradePrice] = useState(String(Math.round(h.current_price)));
   const [showDetailsEditor, setShowDetailsEditor] = useState(false);
-  const [codeDraft, setCodeDraft] = useState(h.code);
+  const [codeDraft, setCodeDraft] = useState(h.code || inferHoldingCode(h.name));
   const [sharesDraft, setSharesDraft] = useState(String(h.shares));
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [detailsStatus, setDetailsStatus] = useState("");
@@ -123,7 +139,7 @@ export function HoldingCard({
   async function saveDetails() {
     if (!onHoldingDetailsChange) return;
     const nextShares = Number(sharesDraft);
-    const nextCode = codeDraft.trim();
+    const nextCode = codeDraft.trim() || inferHoldingCode(h.name);
     if (!Number.isInteger(nextShares) || nextShares < 0) {
       setDetailsStatus("보유수량은 0 이상 정수로 입력해주세요.");
       return;
@@ -204,13 +220,30 @@ export function HoldingCard({
 
       <div className="flex-1 space-y-3 px-4 py-3">
         {/* 상단: 종목명 + 코드 */}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="min-w-0 text-sm font-semibold">{displayName}</p>
+              <span
+                className={cn(
+                  "inline-flex items-center border px-2.5 py-1 text-sm font-black tabular-nums shadow-card",
+                  displayCode
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-200"
+                    : "border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300"
+                )}
+              >
+                {displayCode ? `티커 ${displayCode}` : "티커 미등록"}
+              </span>
+              {isCodeInferred && (
+                <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                  이름 기준 추정
+                </span>
+              )}
             </div>
-            <p className="mt-1 text-xs font-semibold tabular-nums text-zinc-400">
-              종목번호 <span className={cn("text-zinc-600 dark:text-zinc-300", !h.code && "text-red-500 dark:text-red-300")}>{h.code || "미등록"}</span>
+            <p className="mt-2 break-keep text-base font-black leading-6 text-zinc-950 dark:text-white">
+              {displayName}
+            </p>
+            <p className="mt-1 text-[11px] font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
+              원문: {h.name}
             </p>
           </div>
           <div className="sm:text-right">
@@ -318,7 +351,7 @@ export function HoldingCard({
               <button
                 type="button"
                 onClick={() => {
-                  setCodeDraft(h.code);
+                  setCodeDraft(h.code || inferredCode);
                   setSharesDraft(String(h.shares));
                   setDetailsStatus("");
                   setShowDetailsEditor((value) => !value);
@@ -368,7 +401,7 @@ export function HoldingCard({
                 </button>
               </div>
               <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-200">
-                거래내역 재계산이 아니라 현재 보유수량 표시값을 정정합니다. TIGER 미국S&P500 종목번호는 360750입니다.
+                거래내역 재계산이 아니라 현재 보유수량 표시값을 정정합니다. TIGER 미국S&P500 티커/종목번호는 360750입니다.
               </p>
               {detailsStatus && (
                 <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-emerald-600 dark:text-emerald-300" : "text-red-500"}`}>

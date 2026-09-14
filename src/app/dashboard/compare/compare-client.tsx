@@ -90,6 +90,16 @@ const COMPARISON_LABELS = {
 };
 
 const codeLabel = (item: CompareItem) => item.code || item.name;
+const STORAGE_KEY = "pension-manager:compare-state:v1";
+
+type StoredCompareState = {
+  selected?: CompareItem[];
+  period?: string;
+  activeTheme?: string;
+  sortBy?: string;
+  searchQuery?: string;
+  showSearch?: boolean;
+};
 
 export function CompareClient({ holdings }: Props) {
   const [selected, setSelected] = useState<CompareItem[]>([]);
@@ -101,6 +111,7 @@ export function CompareClient({ holdings }: Props) {
   const [showSearch, setShowSearch] = useState(true);
   const [period, setPeriod] = useState("3m");
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [hasRestored, setHasRestored] = useState(false);
   const maxSelect = 5;
 
   const holdingMap = useMemo(
@@ -131,6 +142,42 @@ export function CompareClient({ holdings }: Props) {
   useEffect(() => {
     search("", "전체", "volume");
   }, [search]);
+
+  // 페이지 이동 후 돌아와도 사용자가 직접 초기화하기 전까지 비교 상태 유지
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as StoredCompareState;
+      const savedSelected = Array.isArray(saved.selected)
+        ? saved.selected.filter((item) => item?.code && item?.name).slice(0, maxSelect)
+        : [];
+
+      if (savedSelected.length > 0) setSelected(savedSelected);
+      if (saved.period && PERIOD_OPTIONS.some((p) => p.value === saved.period)) setPeriod(saved.period);
+      if (saved.activeTheme && THEMES.includes(saved.activeTheme)) setActiveTheme(saved.activeTheme);
+      if (saved.sortBy && SORT_OPTIONS.some((o) => o.value === saved.sortBy)) setSortBy(saved.sortBy);
+      if (typeof saved.searchQuery === "string") setSearchQuery(saved.searchQuery);
+      if (typeof saved.showSearch === "boolean") setShowSearch(saved.showSearch);
+    } catch {
+      window.localStorage.removeItem(STORAGE_KEY);
+    } finally {
+      setHasRestored(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!hasRestored) return;
+    const snapshot: StoredCompareState = {
+      selected,
+      period,
+      activeTheme,
+      sortBy,
+      searchQuery,
+      showSearch,
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  }, [activeTheme, hasRestored, period, searchQuery, selected, showSearch, sortBy]);
 
   // 선택 변경 시 상세 정보 로드
   useEffect(() => {
@@ -181,6 +228,17 @@ export function CompareClient({ holdings }: Props) {
 
   const removeFromCompare = (code: string) => {
     setSelected(selected.filter((s) => s.code !== code));
+  };
+
+  const resetCompare = () => {
+    setSelected([]);
+    setPeriod("3m");
+    setActiveTheme("전체");
+    setSortBy("volume");
+    setSearchQuery("");
+    setShowSearch(true);
+    window.localStorage.removeItem(STORAGE_KEY);
+    search("", "전체", "volume");
   };
 
   // 기간별 수익률 가져오기
@@ -247,14 +305,24 @@ export function CompareClient({ holdings }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-lg font-bold text-ink tracking-tight">ETF 종목 비교</h2>
-        <button
-          onClick={() => setShowSearch(!showSearch)}
-          className="rounded-full border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-all hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
-        >
-          {showSearch ? "검색 닫기" : "종목 검색"}
-        </button>
+        <div className="flex items-center gap-2">
+          {selected.length > 0 && (
+            <button
+              onClick={resetCompare}
+              className="rounded-full border border-red-100 bg-red-50 px-4 py-1.5 text-xs font-semibold text-red-600 shadow-card transition-all hover:border-red-200 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300"
+            >
+              비교 초기화
+            </button>
+          )}
+          <button
+            onClick={() => setShowSearch(!showSearch)}
+            className="rounded-full border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-all hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
+          >
+            {showSearch ? "검색 닫기" : "종목 검색"}
+          </button>
+        </div>
       </div>
 
       {/* 선택 칩 */}

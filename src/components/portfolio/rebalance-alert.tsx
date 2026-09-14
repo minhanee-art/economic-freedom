@@ -20,6 +20,8 @@ type NewHoldingPayload = {
   sub_category: string;
   current_price: number;
   target_pct: number;
+  shares: number;
+  avg_price: number;
 };
 
 type HoldingDetailsPatch = {
@@ -618,11 +620,16 @@ function AddHoldingForm({
   const [subCategory, setSubCategory] = useState("");
   const [price, setPrice] = useState("");
   const [targetPct, setTargetPct] = useState("0.0");
+  const [shares, setShares] = useState("");
+  const [avgPrice, setAvgPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [status, setStatus] = useState("");
 
   const parsedPrice = Number(price.replace(/[^0-9]/g, "")) || 0;
   const parsedTargetPct = Number(targetPct);
+  const parsedShares = Number(shares.replace(/[^0-9]/g, "")) || 0;
+  const parsedAvgPrice = Number(avgPrice.replace(/[^0-9]/g, "")) || 0;
+  const totalCost = parsedShares * parsedAvgPrice;
   const canSubmit =
     code.trim().length > 0 &&
     name.trim().length > 0 &&
@@ -630,6 +637,9 @@ function AddHoldingForm({
     Number.isFinite(parsedTargetPct) &&
     parsedTargetPct >= 0 &&
     parsedTargetPct <= 100 &&
+    Number.isInteger(parsedShares) &&
+    parsedShares >= 0 &&
+    (parsedShares === 0 || parsedAvgPrice > 0) &&
     !isAdding;
 
   async function submit() {
@@ -644,13 +654,17 @@ function AddHoldingForm({
         sub_category: subCategory,
         current_price: parsedPrice,
         target_pct: parsedTargetPct,
+        shares: parsedShares,
+        avg_price: parsedAvgPrice,
       });
       setCode("");
       setName("");
       setSubCategory("");
       setPrice("");
       setTargetPct("0.0");
-      setStatus("종목을 추가했습니다. 보유수량 0주 또는 설정비중 0%인 종목은 대시보드 목록에서 숨겨집니다.");
+      setShares("");
+      setAvgPrice("");
+      setStatus("종목을 추가했습니다. 보유수량 0주 또는 설정비중 0%인 종목은 숨김 관리 영역에 표시됩니다.");
     } catch (err) {
       setStatus((err as Error).message);
     } finally {
@@ -732,6 +746,35 @@ function AddHoldingForm({
             className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </Field>
+        <Field label="보유수량">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={shares}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, "");
+              setShares(value ? Number(value).toLocaleString() : "");
+            }}
+            placeholder="0"
+            className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </Field>
+        <Field label="평단가">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={avgPrice}
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, "");
+              setAvgPrice(value ? Number(value).toLocaleString() : "");
+            }}
+            placeholder="0"
+            className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </Field>
+      </div>
+      <div className="mt-2 border border-indigo-100 bg-white/70 px-3 py-2 text-xs font-semibold text-zinc-600 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-950/40 dark:text-zinc-300">
+        초기 보유원가: <span className="font-black tabular-nums text-zinc-900 dark:text-zinc-100">{parsedShares.toLocaleString()}주 × ₩{parsedAvgPrice.toLocaleString()} = ₩{totalCost.toLocaleString()}</span>
       </div>
       <button
         type="button"

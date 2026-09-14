@@ -49,6 +49,8 @@ type NewHoldingPayload = {
   sub_category: string;
   current_price: number;
   target_pct: number;
+  shares: number;
+  avg_price: number;
 };
 
 type HoldingDetailsPatch = {
@@ -279,6 +281,8 @@ export function DashboardClient({
         sub_category: payload.sub_category.trim(),
         current_price: Math.max(0, Math.round(payload.current_price)),
         target_pct: Math.max(0, Math.min(100, payload.target_pct)),
+        shares: Math.max(0, Math.round(payload.shares)),
+        avg_price: Math.max(0, Math.round(payload.avg_price)),
       };
 
       const res = await fetch("/api/holdings", {
@@ -291,14 +295,18 @@ export function DashboardClient({
         throw new Error(data?.error ?? "종목 추가 실패");
       }
 
+      const row = data?.holding ?? data;
       const createdHolding: Holding = {
-        ...data,
-        target_pct: Number(data.target_pct ?? body.target_pct),
-        current_price: Number(data.current_price ?? body.current_price),
-        shares: Number(data.shares ?? 0),
-        expense_ratio: Number(data.expense_ratio ?? 0),
+        ...row,
+        target_pct: Number(row.target_pct ?? body.target_pct),
+        current_price: Number(row.current_price ?? body.current_price),
+        shares: Number(row.shares ?? body.shares),
+        expense_ratio: Number(row.expense_ratio ?? 0),
       };
       setLocalHoldings((current) => [...current, createdHolding]);
+      if (data?.costBasis) {
+        setCostBases((current) => [...current, data.costBasis as CostBasis]);
+      }
       setRefreshResult("종목 추가 완료");
       router.refresh();
       setTimeout(() => setRefreshResult(""), 3000);

@@ -1,8 +1,11 @@
 // holdings CRUD API
 import { NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+
+const INT_MAX = 2_147_483_647;
 
 export async function GET() {
   const session = await getSession();
@@ -16,13 +19,81 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
-  const body = await request.json();
+  const body = await request.json().catch(() => ({}));
+  const code = String(body.code ?? "").trim();
+  const name = String(body.name ?? "").trim();
+  const category = String(body.category ?? "").trim();
+  const subCategory = String(body.sub_category ?? "기타").trim() || "기타";
+  const currentPrice = Number(body.current_price ?? 0);
+  const targetPct = Number(body.target_pct ?? 0);
+  const shares = Number(body.shares ?? 0);
+  const avgPrice = Number(body.avg_price ?? 0);
+
+  if (!code || !name || !category) return NextResponse.json({ error: "종목코드, 종목명, 대분류가 필요합니다." }, { status: 400 });
+  if (!Number.isFinite(currentPrice) || currentPrice < 0 || currentPrice > INT_MAX) return NextResponse.json({ error: "현재가는 0 이상이어야 합니다." }, { status: 400 });
+  if (!Number.isFinite(targetPct) || targetPct < 0 || targetPct > 100) return NextResponse.json({ error: "설정비중은 0~100이어야 합니다." }, { status: 400 });
+  if (!Number.isInteger(shares) || shares < 0 || shares > INT_MAX) return NextResponse.json({ error: "보유수량은 0 이상 정수여야 합니다." }, { status: 400 });
+  if (!Number.isFinite(avgPrice) || avgPrice < 0 || avgPrice > INT_MAX || (shares > 0 && avgPrice <= 0)) {
+    return NextResponse.json({ error: "보유수량을 입력할 때는 평단가가 0보다 커야 합니다." }, { status: 400 });
+  }
+
+  const holdingId = randomUUID();
+  const roundedCurrentPrice = Math.round(currentPrice);
+  const roundedAvgPrice = Math.round(avgPrice);
+  const totalCost = shares * roundedAvgPrice;
+  const queries: ReturnType<typeof sql>[] = [
+    sql`
+      INSERT INTO holdings (id, user_id, account_id, code, name, category, sub_category, current_price, shares, target_pct)
+      VALUES (${holdingId}, ${session.userId}, ${accountId}, ${code}, ${name}, ${category}, ${subCategory}, ${roundedCurrentPrice}, ${shares}, ${targetPct})
+    `,
+  ];
+
+  let purchaseRecordId: string | null = null;
+  if (shares > 0) {
+    purchaseRecordId = randomUUID();
+    const today = new Date().toISOString().split("T")[0];
+    queries.push(sql`
+      INSERT INTO cost_basis (user_id, account_id, holding_id, total_cost, total_shares)
+      VALUES (${session.userId}, ${accountId}, ${holdingId}, ${totalCost}, ${shares})
+      ON CONFLICT (user_id, holding_id)
+      DO UPDATE SET total_cost = EXCLUDED.total_cost,
+                    total_shares = EXCLUDED.total_shares,
+                    account_id = EXCLUDED.account_id
+    `);
+    queries.push(sql`
+      INSERT INTO purchase_records (id, user_id, account_id, date, total_spent, total_value_after)
+      VALUES (${purchaseRecordId}, ${session.userId}, ${accountId}, ${today}, ${totalCost}, 0)
+    `);
+    queries.push(sql`
+      INSERT INTO purchase_items (record_id, holding_id, code, name, quantity, price_at_purchase, cost)
+      VALUES (${purchaseRecordId}, ${holdingId}, ${code}, ${name}, ${shares}, ${roundedAvgPrice}, ${totalCost})
+    `);
+    queries.push(sql`
+      UPDATE purchase_records
+      SET total_value_after = (
+        SELECT COALESCE(SUM(h.shares * h.current_price), 0)
+        FROM holdings h WHERE h.user_id = ${session.userId} AND h.account_id = ${accountId}
+      )
+      WHERE id = ${purchaseRecordId}
+    `);
+  }
+
+  await sql.transaction(queries);
+
   const [row] = await sql`
-    INSERT INTO holdings (user_id, account_id, code, name, category, sub_category, current_price, target_pct)
-    VALUES (${session.userId}, ${accountId}, ${body.code}, ${body.name}, ${body.category}, ${body.sub_category ?? "기타"}, ${body.current_price ?? 0}, ${body.target_pct ?? 0})
-    RETURNING *
+    SELECT id, user_id, account_id, code, name, category, sub_category,
+           current_price, shares,
+           target_pct::float, expense_ratio::float,
+           created_at::text, updated_at::text
+    FROM holdings
+    WHERE id = ${holdingId} AND user_id = ${session.userId} AND account_id = ${accountId}
   `;
-  return NextResponse.json(row, { status: 201 });
+  const [costBasis] = await sql`
+    SELECT id, user_id, account_id, holding_id, total_cost, total_shares, updated_at::text
+    FROM cost_basis
+    WHERE holding_id = ${holdingId} AND user_id = ${session.userId} AND account_id = ${accountId}
+  `;
+  return NextResponse.json({ ...row, holding: row, costBasis: costBasis ?? null }, { status: 201 });
 }
 
 export async function PATCH(request: Request) {

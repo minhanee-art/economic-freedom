@@ -14,8 +14,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
-  Legend,
   Cell,
 } from "recharts";
 
@@ -41,6 +39,8 @@ interface ETFDetail {
   returnRate1y: number;
   description: string;
   similarETFs: { code: string; name: string; price: string }[];
+  components: { code: string; name: string; weight: number }[];
+  componentTotalWeight: number;
 }
 
 interface CompareItem extends SearchETF {
@@ -72,6 +72,24 @@ const PERIOD_OPTIONS = [
   { value: "6m", label: "6개월" },
   { value: "1y", label: "1년" },
 ];
+
+const COMPARISON_LABELS = {
+  code: "종목코드",
+  category: "분류/테마",
+  price: "현재가(원)",
+  dayChange: "당일 등락률(%)",
+  returnRate: "선택 기간 수익률(%)",
+  volume: "거래량(주)",
+  tradingValue: "거래대금(원)",
+  fee: "총보수(연 %)",
+  dividendYield: "분배금 수익률(%)",
+  issuer: "운용사",
+  marketValue: "시가총액",
+  nav: "기준가 NAV",
+  shares: "내 보유수량",
+};
+
+const codeLabel = (item: CompareItem) => item.code || item.name;
 
 export function CompareClient({ holdings }: Props) {
   const [selected, setSelected] = useState<CompareItem[]>([]);
@@ -177,19 +195,22 @@ export function CompareClient({ holdings }: Props) {
 
   // 차트 데이터
   const barData = selected.map((s, i) => ({
-    name: s.name.length > 7 ? s.name.slice(0, 7) + "…" : s.name,
+    name: s.name,
+    code: codeLabel(s),
     현재가: s.price,
     color: COLORS[i],
   }));
 
   const returnBarData = selected.map((s, i) => ({
-    name: s.name.length > 7 ? s.name.slice(0, 7) + "…" : s.name,
+    name: s.name,
+    code: codeLabel(s),
     수익률: getReturn(s),
     color: COLORS[i],
   }));
 
   const volumeBarData = selected.map((s, i) => ({
-    name: s.name.length > 7 ? s.name.slice(0, 7) + "…" : s.name,
+    name: s.name,
+    code: codeLabel(s),
     거래량: s.volume,
     color: COLORS[i],
   }));
@@ -342,7 +363,7 @@ export function CompareClient({ holdings }: Props) {
                         )}
                       </div>
                       <p className="text-xs text-zinc-400 tabular-nums">
-                        {etf.code} · {etf.category} · 거래량 {fmtVol(etf.volume)}
+                        <strong className="font-extrabold text-zinc-700 dark:text-zinc-200">{etf.code}</strong> · {etf.category} · 거래량 {fmtVol(etf.volume)}
                       </p>
                     </div>
                     <div className="text-right ml-2 shrink-0">
@@ -390,23 +411,26 @@ export function CompareClient({ holdings }: Props) {
                     항목
                   </th>
                   {selected.map((s, i) => (
-                    <th key={s.code} className="px-3 py-3 text-right text-xs font-bold min-w-[100px]" style={{ color: COLORS[i] }}>
-                      {s.name.length > 8 ? s.name.slice(0, 8) + "…" : s.name}
+                    <th key={s.code} className="px-3 py-3 text-right min-w-[140px]" style={{ color: COLORS[i] }}>
+                      <span className="block text-sm font-extrabold tabular-nums">{s.code}</span>
+                      <span className="block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 whitespace-normal break-keep">
+                        {s.name}
+                      </span>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
-                <CRow label="종목코드" vals={selected.map((s) => s.code)} />
-                <CRow label="카테고리" vals={selected.map((s) => s.category)} />
-                <CRow label="현재가" vals={selected.map((s) => `₩${s.price.toLocaleString()}`)} />
+                <CRow label={COMPARISON_LABELS.code} vals={selected.map((s) => s.code)} bold />
+                <CRow label={COMPARISON_LABELS.category} vals={selected.map((s) => s.category)} />
+                <CRow label={COMPARISON_LABELS.price} vals={selected.map((s) => `₩${s.price.toLocaleString()}`)} />
                 <CRow
-                  label="등락률(당일)"
+                  label={COMPARISON_LABELS.dayChange}
                   vals={selected.map((s) => `${s.changePct > 0 ? "+" : ""}${s.changePct.toFixed(2)}%`)}
                   colors={selected.map((s) => s.changePct > 0 ? "text-red-500" : s.changePct < 0 ? "text-blue-500" : "")}
                 />
                 <CRow
-                  label={`수익률(${PERIOD_OPTIONS.find((p) => p.value === period)?.label})`}
+                  label={`${COMPARISON_LABELS.returnRate} · ${PERIOD_OPTIONS.find((p) => p.value === period)?.label}`}
                   vals={selected.map((s) => {
                     const r = getReturn(s);
                     return `${r > 0 ? "+" : ""}${r.toFixed(2)}%`;
@@ -416,38 +440,96 @@ export function CompareClient({ holdings }: Props) {
                     return r > 0 ? "text-red-500" : r < 0 ? "text-blue-500" : "";
                   })}
                 />
-                <CRow label="거래량" vals={selected.map((s) => fmtVol(s.volume))} />
-                <CRow label="거래대금" vals={selected.map((s) => fmtVal(s.tradingValue))} />
+                <CRow label={COMPARISON_LABELS.volume} vals={selected.map((s) => fmtVol(s.volume))} />
+                <CRow label={COMPARISON_LABELS.tradingValue} vals={selected.map((s) => fmtVal(s.tradingValue))} />
                 <CRow
-                  label="총보수(%)"
+                  label={COMPARISON_LABELS.fee}
                   vals={selected.map((s) => s.detail ? `${s.detail.totalFee}%` : "-")}
                   bold
                 />
                 <CRow
-                  label="배당수익률"
+                  label={COMPARISON_LABELS.dividendYield}
                   vals={selected.map((s) => s.detail ? `${s.detail.dividendYield}%` : "-")}
                 />
                 <CRow
-                  label="운용사"
+                  label={COMPARISON_LABELS.issuer}
                   vals={selected.map((s) => s.detail?.issuer ?? "-")}
                 />
                 <CRow
-                  label="시가총액"
+                  label={COMPARISON_LABELS.marketValue}
                   vals={selected.map((s) => s.detail?.marketValue ?? "-")}
                 />
                 <CRow
-                  label="NAV"
+                  label={COMPARISON_LABELS.nav}
                   vals={selected.map((s) => s.detail?.nav ?? "-")}
                 />
                 <CRow
-                  label="보유수량"
+                  label={COMPARISON_LABELS.shares}
                   vals={selected.map((s) => s.shares > 0 ? `${s.shares}주` : "-")}
                 />
               </tbody>
             </table>
           </div>
 
-          {/* 유사/구성 종목 */}
+          {/* ETF 구성 종목 */}
+          <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-ink">ETF 구성 종목·편입비율 비교</h3>
+                <p className="mt-1 text-xs text-zinc-500">
+                  각 ETF의 상위 편입 종목과 비중입니다. 종목코드는 굵게 표시했습니다.
+                </p>
+              </div>
+              {loadingDetail && <span className="text-xs text-zinc-400">구성 종목 로딩 중...</span>}
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {selected.map((s, i) => {
+                const components = s.detail?.components ?? [];
+                return (
+                  <div key={s.code} className="rounded-xl border border-zinc-100 bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+                    <div className="mb-2 flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-extrabold tabular-nums" style={{ color: COLORS[i] }}>{s.code}</p>
+                        <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 truncate">{s.name}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-bold text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-300">
+                        표시합계 {(s.detail?.componentTotalWeight ?? 0).toFixed(2)}%
+                      </span>
+                    </div>
+                    {components.length > 0 ? (
+                      <div className="space-y-2">
+                        {components.slice(0, 10).map((component) => (
+                          <div key={`${s.code}-${component.code || component.name}`} className="space-y-1">
+                            <div className="flex items-center justify-between gap-2 text-xs">
+                              <span className="min-w-0 truncate text-zinc-700 dark:text-zinc-300">
+                                <strong className="font-extrabold text-zinc-950 dark:text-white">{component.code || "코드없음"}</strong>
+                                <span className="ml-1">{component.name}</span>
+                              </span>
+                              <span className="shrink-0 font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
+                                {component.weight.toFixed(2)}%
+                              </span>
+                            </div>
+                            <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${Math.min(component.weight * 5, 100)}%`, background: COLORS[i] }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-lg bg-white px-3 py-4 text-center text-xs text-zinc-400 dark:bg-zinc-900">
+                        구성 종목 데이터 없음
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 유사 ETF */}
           {selected.some((s) => s.detail?.similarETFs?.length) && (
             <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
               <h3 className="text-sm font-semibold text-ink mb-3">유사 ETF</h3>
@@ -493,13 +575,10 @@ export function CompareClient({ holdings }: Props) {
                         strokeWidth={2}
                       />
                     ))}
-                    <Legend
-                      wrapperStyle={{ fontSize: 11 }}
-                      formatter={(value) => <span style={{ color: "#374151", fontWeight: 500 }}>{value}</span>}
-                    />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
+              <ChartLegend items={selected} />
             </div>
 
             {/* 수익률 바 */}
@@ -507,15 +586,11 @@ export function CompareClient({ holdings }: Props) {
               <h3 className="text-sm font-semibold text-ink mb-3">
                 수익률 비교 ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
               </h3>
-              <div className="h-[260px]">
+              <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={returnBarData}>
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} />
+                  <BarChart data={returnBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
+                    <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
                     <YAxis tick={{ fontSize: 10, fill: "#71717a" }} unit="%" />
-                    <Tooltip
-                      formatter={(v) => `${Number(v).toFixed(2)}%`}
-                      contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e3e8ee" }}
-                    />
                     <Bar dataKey="수익률" radius={[6, 6, 0, 0]}>
                       {returnBarData.map((e, i) => (
                         <Cell key={i} fill={e.color} />
@@ -524,40 +599,41 @@ export function CompareClient({ holdings }: Props) {
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              <ChartLegend items={selected} />
             </div>
 
             {/* 현재가 바 */}
             <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
               <h3 className="text-sm font-semibold text-ink mb-3">현재가 비교</h3>
-              <div className="h-[200px]">
+              <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={barData}>
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} />
+                  <BarChart data={barData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
+                    <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
                     <YAxis tick={{ fontSize: 10, fill: "#71717a" }} tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}만` : String(v)} />
-                    <Tooltip formatter={(v) => `₩${Number(v).toLocaleString()}`} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e3e8ee" }} />
                     <Bar dataKey="현재가" radius={[6, 6, 0, 0]}>
                       {barData.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              <ChartLegend items={selected} />
             </div>
 
             {/* 거래량 바 */}
             <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
               <h3 className="text-sm font-semibold text-ink mb-3">거래량 비교</h3>
-              <div className="h-[200px]">
+              <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={volumeBarData}>
-                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#71717a" }} />
+                  <BarChart data={volumeBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
+                    <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
                     <YAxis tick={{ fontSize: 10, fill: "#71717a" }} tickFormatter={(v) => fmtVol(v)} />
-                    <Tooltip formatter={(v) => `${Number(v).toLocaleString()}주`} contentStyle={{ fontSize: 12, borderRadius: 8, border: "1px solid #e3e8ee" }} />
                     <Bar dataKey="거래량" radius={[6, 6, 0, 0]}>
                       {volumeBarData.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+              <ChartLegend items={selected} />
             </div>
           </div>
 
@@ -598,6 +674,47 @@ function CRow({
         </td>
       ))}
     </tr>
+  );
+}
+
+function AxisTick({
+  x = 0,
+  y = 0,
+  payload,
+}: {
+  x?: number;
+  y?: number;
+  payload?: { value?: string };
+}) {
+  const value = String(payload?.value ?? "");
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text
+        x={0}
+        y={0}
+        dy={12}
+        textAnchor="middle"
+        fill="#3f3f46"
+        fontSize={11}
+        fontWeight={800}
+      >
+        {value}
+      </text>
+    </g>
+  );
+}
+
+function ChartLegend({ items }: { items: CompareItem[] }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+      {items.map((item, i) => (
+        <div key={item.code} className="flex min-w-0 items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-300">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: COLORS[i] }} />
+          <strong className="shrink-0 font-extrabold tabular-nums text-zinc-950 dark:text-white">{item.code}</strong>
+          <span className="max-w-[240px] whitespace-normal break-keep leading-snug">{item.name}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 

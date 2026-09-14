@@ -11,6 +11,12 @@ import {
   type DashboardNavItem,
 } from "@/lib/dashboard-navigation";
 
+type PortfolioAccount = {
+  id: string;
+  name: string;
+  owner_type: "self" | "spouse" | "child" | "other";
+};
+
 export default function DashboardLayout({
   children,
 }: {
@@ -24,6 +30,9 @@ export default function DashboardLayout({
   const [menuQuery, setMenuQuery] = useState("");
   const [activeNavGroup, setActiveNavGroup] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [accounts, setAccounts] = useState<PortfolioAccount[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState("");
+  const [isAccountSaving, setIsAccountSaving] = useState(false);
 
   useEffect(() => {
     fetch("/api/me")
@@ -34,6 +43,18 @@ export default function DashboardLayout({
       })
       .catch(() => setIsAuthenticated(false));
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    fetch("/api/accounts")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        setAccounts(data.accounts ?? []);
+        setActiveAccountId(data.activeAccountId ?? data.accounts?.[0]?.id ?? "");
+      })
+      .catch(() => {});
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const prefetchAll = () => dashboardNavItems.forEach((item) => router.prefetch(item.href));
@@ -73,6 +94,39 @@ export default function DashboardLayout({
 
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");
+  };
+
+  const switchAccount = async (accountId: string) => {
+    if (!accountId || accountId === activeAccountId) return;
+    setIsAccountSaving(true);
+    const res = await fetch("/api/accounts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountId }),
+    });
+    if (res.ok) {
+      setActiveAccountId(accountId);
+      router.refresh();
+    }
+    setIsAccountSaving(false);
+  };
+
+  const addAccount = async () => {
+    const name = window.prompt("추가할 계좌 이름을 입력하세요. 예: 아빠, 아내, 첫째");
+    if (!name?.trim()) return;
+    setIsAccountSaving(true);
+    const res = await fetch("/api/accounts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim(), ownerType: "other" }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setAccounts((current) => [...current, data.account]);
+      setActiveAccountId(data.account.id);
+      router.refresh();
+    }
+    setIsAccountSaving(false);
   };
 
   const isItemActive = (item: DashboardNavItem) =>
@@ -176,6 +230,30 @@ export default function DashboardLayout({
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            {accounts.length > 0 && (
+              <div className="flex items-center gap-1 border border-white/10 bg-white/10 p-1">
+                <select
+                  value={activeAccountId}
+                  onChange={(event) => switchAccount(event.target.value)}
+                  disabled={isAccountSaving}
+                  className="h-9 max-w-24 bg-transparent px-1 text-xs font-bold text-white outline-none disabled:opacity-60 sm:max-w-36 sm:px-2 [&_option]:bg-zinc-900"
+                  aria-label="관리 계좌 선택"
+                >
+                  {accounts.map((account) => (
+                    <option key={account.id} value={account.id}>{account.name}</option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={addAccount}
+                  disabled={isAccountSaving}
+                  className="flex h-9 w-9 items-center justify-center border border-white/10 text-sm font-black text-white transition-colors hover:bg-white/10 disabled:opacity-60"
+                  aria-label="계좌 추가"
+                >
+                  +
+                </button>
+              </div>
+            )}
             <div className="relative">
               <button
                 type="button"

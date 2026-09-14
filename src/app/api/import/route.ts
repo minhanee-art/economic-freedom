@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 interface ImportItem {
   date: string;
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     const userId = session.userId;
+    const accountId = await getActivePortfolioAccountId(userId);
 
     const body = (await request.json().catch(() => null)) as { items?: ImportItem[]; skipDuplicates?: boolean } | null;
     const items = body?.items;
@@ -94,7 +96,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const holdings = await sql`SELECT id, code, shares FROM holdings WHERE user_id = ${userId}`;
+    const holdings = await sql`SELECT id, code, shares FROM holdings WHERE user_id = ${userId} AND account_id = ${accountId}`;
     const holdingMap = new Map<string, PlannedHolding>(
       holdings.map((h) => [h.code as string, { id: h.id as string, code: h.code as string, shares: h.shares as number }])
     );
@@ -109,14 +111,14 @@ export async function POST(request: Request) {
         SELECT pi.code, pi.quantity, pi.price_at_purchase, pr.date::text AS date
         FROM purchase_items pi
         JOIN purchase_records pr ON pr.id = pi.record_id
-        WHERE pr.user_id = ${userId}
+        WHERE pr.user_id = ${userId} AND pr.account_id = ${accountId}
       `;
       existingItems.forEach((item) => {
         existingBuyKeys.add(`${item.date}|${item.code}|${item.quantity}|${item.price_at_purchase}`);
       });
 
       const existingSells = await sql`
-        SELECT code, quantity, price, date::text AS date FROM sell_items WHERE user_id = ${userId}
+        SELECT code, quantity, price, date::text AS date FROM sell_items WHERE user_id = ${userId} AND account_id = ${accountId}
       `;
       existingSells.forEach((s) => {
         existingSellKeys.add(`${s.date}|${s.code}|${s.quantity}|${s.price}`);
@@ -125,7 +127,7 @@ export async function POST(request: Request) {
       const existingDivs = await sql`
         SELECT d.amount, d.date::text AS date, h.code
         FROM dividends d JOIN holdings h ON h.id = d.holding_id
-        WHERE d.user_id = ${userId}
+        WHERE d.user_id = ${userId} AND d.account_id = ${accountId}
       `;
       existingDivs.forEach((d) => {
         existingDividendKeys.add(`${d.date}|${d.code}`);
@@ -148,8 +150,8 @@ export async function POST(request: Request) {
         holding = { id: randomUUID(), code: item.code, shares: 0 };
         holdingMap.set(item.code, holding);
         queries.push(sql`
-          INSERT INTO holdings (id, user_id, code, name, category, sub_category, current_price, target_pct)
-          VALUES (${holding.id}, ${userId}, ${item.code}, ${item.name}, '주식', '기타', ${item.price || 0}, 0)
+          INSERT INTO holdings (id, user_id, account_id, code, name, category, sub_category, current_price, target_pct)
+          VALUES (${holding.id}, ${userId}, ${accountId}, ${item.code}, ${item.name}, '주식', '기타', ${item.price || 0}, 0)
         `);
         autoAdded.push(`${item.name}(${item.code})`);
       }
@@ -181,8 +183,8 @@ export async function POST(request: Request) {
       cumulativeInvested += totalSpent;
       const recordId = randomUUID();
       queries.push(sql`
-        INSERT INTO purchase_records (id, user_id, date, total_spent, total_value_after)
-        VALUES (${recordId}, ${userId}, ${date}, ${totalSpent}, ${cumulativeInvested})
+        INSERT INTO purchase_records (id, user_id, account_id, date, total_spent, total_value_after)
+        VALUES (${recordId}, ${userId}, ${accountId}, ${date}, ${totalSpent}, ${cumulativeInvested})
       `);
       totalRecords++;
       for (const row of rows) {
@@ -190,8 +192,8 @@ export async function POST(request: Request) {
         queries.push(sql`INSERT INTO purchase_items (record_id, holding_id, code, name, quantity, price_at_purchase, cost) VALUES (${recordId}, ${h.id}, ${row.code}, ${row.name}, ${row.qty}, ${row.price}, ${row.amount})`);
         queries.push(sql`UPDATE holdings SET shares = shares + ${row.qty} WHERE id = ${h.id}`);
         queries.push(sql`
-          INSERT INTO cost_basis (user_id, holding_id, total_cost, total_shares)
-          VALUES (${userId}, ${h.id}, ${row.amount}, ${row.qty})
+          INSERT INTO cost_basis (user_id, account_id, holding_id, total_cost, total_shares)
+          VALUES (${userId}, ${accountId}, ${h.id}, ${row.amount}, ${row.qty})
           ON CONFLICT (user_id, holding_id)
           DO UPDATE SET total_cost = cost_basis.total_cost + EXCLUDED.total_cost,
                         total_shares = cost_basis.total_shares + EXCLUDED.total_shares
@@ -214,11 +216,11 @@ export async function POST(request: Request) {
         UPDATE cost_basis
         SET total_cost = GREATEST(0, ROUND(total_cost - (total_cost::numeric / NULLIF(total_shares, 0)) * ${row.qty})),
             total_shares = GREATEST(0, total_shares - ${row.qty})
-        WHERE user_id = ${userId} AND holding_id = ${h.id} AND total_shares > 0
+        WHERE user_id = ${userId} AND account_id = ${accountId} AND holding_id = ${h.id} AND total_shares > 0
       `);
       queries.push(sql`
-        INSERT INTO sell_items (user_id, holding_id, code, name, quantity, price, date)
-        VALUES (${userId}, ${h.id}, ${row.code}, ${row.name}, ${row.qty}, ${row.price}, ${row.date})
+        INSERT INTO sell_items (user_id, account_id, holding_id, code, name, quantity, price, date)
+        VALUES (${userId}, ${accountId}, ${h.id}, ${row.code}, ${row.name}, ${row.qty}, ${row.price}, ${row.date})
       `);
       sellCount++;
     }
@@ -234,8 +236,8 @@ export async function POST(request: Request) {
       if (skipDuplicates && existingDividendKeys.has(key)) { dupSkipped++; continue; }
       // DO NOTHING: 기존 (종목,날짜) 배당을 조용히 덮어쓰지 않는다(실제 금액 유실 방지).
       queries.push(sql`
-        INSERT INTO dividends (user_id, holding_id, amount, date, memo)
-        VALUES (${userId}, ${h.id}, ${row.amount}, ${row.date}, 'CSV 자동 등록')
+        INSERT INTO dividends (user_id, account_id, holding_id, amount, date, memo)
+        VALUES (${userId}, ${accountId}, ${h.id}, ${row.amount}, ${row.date}, 'CSV 자동 등록')
         ON CONFLICT (holding_id, date) DO NOTHING
       `);
       dividendCount++;

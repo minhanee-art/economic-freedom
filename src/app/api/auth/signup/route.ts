@@ -5,6 +5,7 @@ import { sql } from "@/lib/db";
 import { signToken, setSessionCookie } from "@/lib/session";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
+import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json();
@@ -37,12 +38,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "이미 가입된 이메일입니다." }, { status: 409 });
   }
   const user = insertedUsers[0];
+  const accountId = await getActivePortfolioAccountId(user.id);
 
   // 기본 종목 15개 자동 생성
   for (const h of DEFAULT_HOLDINGS) {
     await sql`
-      INSERT INTO holdings (user_id, code, name, category, sub_category, current_price, target_pct)
-      VALUES (${user.id}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category}, ${h.current_price ?? 0}, ${h.target_pct})
+      INSERT INTO holdings (user_id, account_id, code, name, category, sub_category, current_price, target_pct)
+      VALUES (${user.id}, ${accountId}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category}, ${h.current_price ?? 0}, ${h.target_pct})
       ON CONFLICT DO NOTHING
     `;
   }

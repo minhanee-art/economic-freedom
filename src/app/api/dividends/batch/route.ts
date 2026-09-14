@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/session";
+import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 interface BatchItem {
   holdingId: string;
@@ -13,6 +14,7 @@ interface BatchItem {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
+  const accountId = await getActivePortfolioAccountId(session.userId);
 
   const body = (await request.json().catch(() => null)) as { items?: BatchItem[] } | null;
   const items = body?.items;
@@ -30,7 +32,7 @@ export async function POST(request: Request) {
   // holding이 실제로 이 사용자 소유인지 검증
   const holdingIds = [...new Set(items.map((i) => i.holdingId))];
   const ownedHoldings = await sql`
-    SELECT id FROM holdings WHERE id = ANY(${holdingIds}::uuid[]) AND user_id = ${session.userId}
+    SELECT id FROM holdings WHERE id = ANY(${holdingIds}::uuid[]) AND user_id = ${session.userId} AND account_id = ${accountId}
   `;
   const ownedSet = new Set(ownedHoldings.map((h) => h.id));
 
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
   // 기존 (holding_id, date)를 한 번에 조회해 신규/갱신 수를 정확히 집계
   const existing = await sql`
     SELECT holding_id, date::text AS date FROM dividends
-    WHERE user_id = ${session.userId} AND holding_id = ANY(${holdingIds}::uuid[])
+    WHERE user_id = ${session.userId} AND account_id = ${accountId} AND holding_id = ANY(${holdingIds}::uuid[])
   `;
   const existingSet = new Set(existing.map((e) => `${e.holding_id}|${e.date}`));
   let inserted = 0;
@@ -53,9 +55,9 @@ export async function POST(request: Request) {
   // 모든 upsert를 하나의 트랜잭션으로 (원자성 + N+1 제거). (holding_id,date) UNIQUE 활용.
   await sql.transaction(
     validItems.map((item) => sql`
-      INSERT INTO dividends (user_id, holding_id, amount, date, memo)
-      VALUES (${session.userId}, ${item.holdingId}, ${item.amount}, ${item.date}, ${item.memo})
-      ON CONFLICT (holding_id, date) DO UPDATE SET amount = EXCLUDED.amount, memo = EXCLUDED.memo
+      INSERT INTO dividends (user_id, account_id, holding_id, amount, date, memo)
+      VALUES (${session.userId}, ${accountId}, ${item.holdingId}, ${item.amount}, ${item.date}, ${item.memo})
+      ON CONFLICT (holding_id, date) DO UPDATE SET amount = EXCLUDED.amount, memo = EXCLUDED.memo, account_id = EXCLUDED.account_id
     `)
   );
 

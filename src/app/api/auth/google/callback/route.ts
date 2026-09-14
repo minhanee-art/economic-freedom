@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { signToken, setSessionCookie } from "@/lib/session";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
+import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 export async function GET(request: NextRequest) {
   const url = new URL(request.url);
@@ -56,10 +57,11 @@ export async function GET(request: NextRequest) {
         VALUES (${email}, ${googleId})
         RETURNING id
       `;
+      const accountId = await getActivePortfolioAccountId(user.id);
       for (const h of DEFAULT_HOLDINGS) {
         await sql`
-          INSERT INTO holdings (user_id, code, name, category, sub_category, current_price, target_pct)
-          VALUES (${user.id}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category}, ${h.current_price ?? 0}, ${h.target_pct})
+          INSERT INTO holdings (user_id, account_id, code, name, category, sub_category, current_price, target_pct)
+          VALUES (${user.id}, ${accountId}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category}, ${h.current_price ?? 0}, ${h.target_pct})
           ON CONFLICT DO NOTHING
         `;
       }

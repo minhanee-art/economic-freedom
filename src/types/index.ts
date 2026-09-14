@@ -14,6 +14,7 @@ export interface Profile {
 export interface Holding {
   id: string;
   user_id: string;
+  account_id?: string;
   code: string;
   name: string;
   category: string;       // 주식 | 리츠 | 원자재 | 채권
@@ -29,6 +30,7 @@ export interface Holding {
 export interface PurchaseRecord {
   id: string;
   user_id: string;
+  account_id?: string;
   date: string;
   total_spent: number;
   total_value_after: number;
@@ -49,6 +51,7 @@ export interface PurchaseItem {
 export interface Dividend {
   id: string;
   user_id: string;
+  account_id?: string;
   holding_id: string;
   amount: number;
   date: string;
@@ -59,6 +62,7 @@ export interface Dividend {
 export interface CostBasis {
   id: string;
   user_id: string;
+  account_id?: string;
   holding_id: string;
   total_cost: number;
   total_shares: number;

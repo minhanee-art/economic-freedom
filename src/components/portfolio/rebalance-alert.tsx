@@ -45,8 +45,8 @@ interface Props {
 const CATEGORY_THRESHOLD = 3;
 const HOLDING_THRESHOLD = 5;
 
-type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc";
-type HoldingSort = "return-desc" | "code-asc" | "name-asc";
+type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc" | "name-asc" | "name-desc";
+type HoldingSort = "return-desc" | "code-asc" | "name-asc" | "name-desc" | "shares-desc" | "shares-asc";
 
 const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "diff", label: "차이 큰순" },
@@ -54,12 +54,17 @@ const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "target-asc", label: "설정↑" },
   { value: "current-desc", label: "현재↓" },
   { value: "current-asc", label: "현재↑" },
+  { value: "name-asc", label: "테마명↑" },
+  { value: "name-desc", label: "테마명↓" },
 ];
 
 const HOLDING_SORT_OPTIONS: { value: HoldingSort; label: string }[] = [
   { value: "return-desc", label: "수익률순" },
   { value: "code-asc", label: "티커순" },
-  { value: "name-asc", label: "종목명순" },
+  { value: "name-asc", label: "종목명↑" },
+  { value: "name-desc", label: "종목명↓" },
+  { value: "shares-desc", label: "보유수량↓" },
+  { value: "shares-asc", label: "보유수량↑" },
 ];
 
 function normalizeSortText(value: string): string {
@@ -95,6 +100,25 @@ function compareHoldingBySort(a: HoldingWithPnL, b: HoldingWithPnL, sort: Holdin
       numeric: true,
     });
   }
+  if (sort === "name-desc") {
+    return normalizeSortText(b.name).localeCompare(normalizeSortText(a.name), "ko-KR", {
+      numeric: true,
+    });
+  }
+  if (sort === "shares-desc") {
+    const shareDiff = b.shares - a.shares;
+    if (shareDiff !== 0) return shareDiff;
+    return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", {
+      numeric: true,
+    });
+  }
+  if (sort === "shares-asc") {
+    const shareDiff = a.shares - b.shares;
+    if (shareDiff !== 0) return shareDiff;
+    return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", {
+      numeric: true,
+    });
+  }
   const returnDiff = b.profit_loss_pct - a.profit_loss_pct;
   if (returnDiff !== 0) return returnDiff;
   return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", {
@@ -125,6 +149,7 @@ export function RebalanceAlert({
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categorySort, setCategorySort] = useState<CategorySort>("diff");
   const [holdingSort, setHoldingSort] = useState<HoldingSort>("return-desc");
+  const [holdingSearch, setHoldingSearch] = useState("");
   const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
 
   const categoryRows = useMemo(() => {
@@ -137,6 +162,8 @@ export function RebalanceAlert({
         if (categorySort === "target-asc") return a.target - b.target;
         if (categorySort === "current-desc") return b.current - a.current;
         if (categorySort === "current-asc") return a.current - b.current;
+        if (categorySort === "name-asc") return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", { numeric: true });
+        if (categorySort === "name-desc") return normalizeSortText(b.name).localeCompare(normalizeSortText(a.name), "ko-KR", { numeric: true });
         return Math.abs(b.diff) - Math.abs(a.diff);
       });
   }, [categoryData, categorySort, holdings]);
@@ -153,6 +180,20 @@ export function RebalanceAlert({
     .filter((h) => h.target_pct > 0 && Math.abs(h.actual_pct - h.target_pct) >= HOLDING_THRESHOLD)
     .map((h) => ({ ...h, diff: +(h.actual_pct - h.target_pct).toFixed(1) }))
     .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+  const normalizedHoldingSearch = normalizeSortText(holdingSearch.trim());
+  const searchedHoldings = normalizedHoldingSearch
+    ? holdings
+        .filter((h) => {
+          const haystack = normalizeSortText(
+            [h.code, inferHoldingCode(h.name), h.name, h.category, h.sub_category]
+              .filter(Boolean)
+              .join(" ")
+          );
+          return haystack.includes(normalizedHoldingSearch);
+        })
+        .sort((a, b) => compareHoldingBySort(a, b, holdingSort))
+    : [];
 
   if (categoryRows.length === 0) return null;
 
@@ -203,6 +244,85 @@ export function RebalanceAlert({
       {showAddHolding && onAddHolding && (
         <AddHoldingForm onAddHolding={onAddHolding} />
       )}
+
+      <div className="border border-zinc-100 bg-zinc-50 p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-black text-zinc-700 dark:text-zinc-200">보유종목 검색</p>
+            <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
+              종목명·종목번호·테마로 검색해서 바로 설정비중 조정, 매수, 매도할 수 있습니다.
+            </p>
+          </div>
+          {holdingSearch && (
+            <button
+              type="button"
+              onClick={() => setHoldingSearch("")}
+              className="self-start border border-zinc-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-zinc-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+            >
+              검색 초기화
+            </button>
+          )}
+        </div>
+        <div className="mt-3 flex items-center gap-2 border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
+          <svg className="h-4 w-4 shrink-0 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
+          </svg>
+          <input
+            type="search"
+            value={holdingSearch}
+            onChange={(e) => setHoldingSearch(e.target.value)}
+            placeholder="예: 나스닥, TIGER, 360750, 배당"
+            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-zinc-900 outline-none placeholder:text-zinc-400 dark:text-zinc-100"
+          />
+        </div>
+        {normalizedHoldingSearch && (
+          <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="font-bold text-zinc-600 dark:text-zinc-300">
+                검색 결과 {searchedHoldings.length}개
+              </span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {searchedHoldings.length > 0 && (
+                  <span className="mr-1 text-zinc-400">숨김 종목 포함</span>
+                )}
+                {HOLDING_SORT_OPTIONS.map((option) => (
+                  <button
+                    key={`search-${option.value}`}
+                    type="button"
+                    onClick={() => setHoldingSort(option.value)}
+                    className={`border px-2 py-1 font-bold transition-colors ${
+                      holdingSort === option.value
+                        ? "border-indigo-500 bg-indigo-500 text-white"
+                        : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {searchedHoldings.length === 0 ? (
+              <p className="border border-dashed border-zinc-200 bg-white px-3 py-5 text-center text-sm font-semibold text-zinc-400 dark:border-zinc-700 dark:bg-zinc-900">
+                일치하는 보유종목이 없습니다.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {searchedHoldings.map((holding) => (
+                  <HoldingCard
+                    key={`search-${holding.id}`}
+                    holding={holding}
+                    portfolioTotalValue={totalValue}
+                    onTargetPctChange={onTargetPctChange}
+                    onTradeComplete={onTradeComplete}
+                    onHoldingDetailsChange={onHoldingDetailsChange}
+                    isSavingTargetPct={savingTargetPctId === holding.id}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-2 border border-indigo-100 bg-indigo-50/70 p-3 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/10 sm:grid-cols-3">
         <div>

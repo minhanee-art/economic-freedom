@@ -26,7 +26,9 @@ type NewHoldingPayload = {
 
 type HoldingDetailsPatch = {
   code?: string;
+  name?: string;
   shares?: number;
+  avg_price?: number;
 };
 
 interface Props {

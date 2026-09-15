@@ -100,7 +100,7 @@ export async function PATCH(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
-  const { id, current_price, target_pct, code, shares } = await request.json().catch(() => ({}));
+  const { id, current_price, target_pct, code, name, shares, avg_price } = await request.json().catch(() => ({}));
   if (!id) return NextResponse.json({ error: "id 필요" }, { status: 400 });
   if (current_price !== undefined) {
     const p = Number(current_price);
@@ -119,17 +119,42 @@ export async function PATCH(request: Request) {
     }
     await sql`UPDATE holdings SET code = ${nextCode} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
   }
-  if (shares !== undefined) {
-    const nextShares = Number(shares);
+  if (name !== undefined) {
+    const nextName = String(name).trim();
+    if (!nextName) return NextResponse.json({ error: "상품명을 입력해주세요." }, { status: 400 });
+    await sql`UPDATE holdings SET name = ${nextName} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
+  }
+  if (shares !== undefined || avg_price !== undefined) {
+    const [currentHolding] = await sql`
+      SELECT shares
+      FROM holdings
+      WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}
+    `;
+    if (!currentHolding) return NextResponse.json({ error: "현재 계좌에서 종목을 찾을 수 없습니다." }, { status: 404 });
+
+    const nextShares = shares !== undefined ? Number(shares) : Number(currentHolding.shares ?? 0);
     if (!Number.isInteger(nextShares) || nextShares < 0) {
       return NextResponse.json({ error: "보유수량은 0 이상 정수여야 합니다." }, { status: 400 });
     }
+    const nextAvgPrice = Number(avg_price ?? 0);
+    if (!Number.isFinite(nextAvgPrice) || nextAvgPrice < 0 || (nextShares > 0 && nextAvgPrice <= 0)) {
+      return NextResponse.json({ error: "보유수량이 있으면 평단가는 0보다 커야 합니다." }, { status: 400 });
+    }
+    const roundedAvgPrice = Math.round(nextAvgPrice);
+    const totalCost = nextShares * roundedAvgPrice;
     await sql`UPDATE holdings SET shares = ${nextShares} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
-    await sql`
-      UPDATE cost_basis
-      SET total_shares = ${nextShares}
-      WHERE holding_id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}
-    `;
+    if (nextShares > 0) {
+      await sql`
+        INSERT INTO cost_basis (user_id, account_id, holding_id, total_cost, total_shares)
+        VALUES (${session.userId}, ${accountId}, ${id}, ${totalCost}, ${nextShares})
+        ON CONFLICT (user_id, holding_id)
+        DO UPDATE SET total_cost = EXCLUDED.total_cost,
+                      total_shares = EXCLUDED.total_shares,
+                      account_id = EXCLUDED.account_id
+      `;
+    } else {
+      await sql`DELETE FROM cost_basis WHERE holding_id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
+    }
   }
   const [row] = await sql`
     SELECT id, user_id, account_id, code, name, category, sub_category,
@@ -139,7 +164,12 @@ export async function PATCH(request: Request) {
     FROM holdings
     WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}
   `;
-  return NextResponse.json({ ok: true, holding: row });
+  const [costBasis] = await sql`
+    SELECT id, user_id, account_id, holding_id, total_cost, total_shares, updated_at::text
+    FROM cost_basis
+    WHERE holding_id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}
+  `;
+  return NextResponse.json({ ok: true, holding: row, costBasis: costBasis ?? null });
 }
 
 export async function DELETE(request: Request) {

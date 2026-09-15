@@ -10,7 +10,7 @@ interface HoldingCardProps {
   portfolioTotalValue?: number;
   onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
   onTradeComplete?: (result: { holding: Holding; costBasis: CostBasis | null }) => void;
-  onHoldingDetailsChange?: (holdingId: string, patch: { code?: string; shares?: number }) => Promise<void>;
+  onHoldingDetailsChange?: (holdingId: string, patch: { code?: string; name?: string; shares?: number; avg_price?: number }) => Promise<void>;
   isSavingTargetPct?: boolean;
 }
 
@@ -70,7 +70,9 @@ export function HoldingCard({
   const [tradePrice, setTradePrice] = useState(String(Math.round(h.current_price)));
   const [showDetailsEditor, setShowDetailsEditor] = useState(false);
   const [codeDraft, setCodeDraft] = useState(h.code || inferHoldingCode(h.name));
+  const [nameDraft, setNameDraft] = useState(h.name);
   const [sharesDraft, setSharesDraft] = useState(String(h.shares));
+  const [avgPriceDraft, setAvgPriceDraft] = useState(String(Math.round(h.avg_price || 0)));
   const [isSavingDetails, setIsSavingDetails] = useState(false);
   const [detailsStatus, setDetailsStatus] = useState("");
   const [isTrading, setIsTrading] = useState(false);
@@ -140,15 +142,25 @@ export function HoldingCard({
     if (!onHoldingDetailsChange) return;
     const nextShares = Number(sharesDraft);
     const nextCode = codeDraft.trim() || inferHoldingCode(h.name);
+    const nextName = nameDraft.trim();
+    const nextAvgPrice = Number(avgPriceDraft);
+    if (!nextName) {
+      setDetailsStatus("상품명을 입력해주세요.");
+      return;
+    }
     if (!Number.isInteger(nextShares) || nextShares < 0) {
       setDetailsStatus("보유수량은 0 이상 정수로 입력해주세요.");
+      return;
+    }
+    if (!Number.isFinite(nextAvgPrice) || nextAvgPrice < 0 || (nextShares > 0 && nextAvgPrice <= 0)) {
+      setDetailsStatus("보유수량이 있으면 평단가는 0보다 커야 합니다.");
       return;
     }
     if (nextCode && !/^[0-9A-Za-z]{1,12}$/.test(nextCode)) {
       setDetailsStatus("종목번호는 숫자/영문 12자 이하로 입력해주세요.");
       return;
     }
-    if (nextCode === h.code && nextShares === h.shares) {
+    if (nextCode === h.code && nextName === h.name && nextShares === h.shares && nextAvgPrice === Math.round(h.avg_price || 0)) {
       setShowDetailsEditor(false);
       return;
     }
@@ -156,8 +168,8 @@ export function HoldingCard({
     setIsSavingDetails(true);
     setDetailsStatus("");
     try {
-      await onHoldingDetailsChange(h.id, { code: nextCode, shares: nextShares });
-      setDetailsStatus("종목번호/보유수량 정정 완료");
+      await onHoldingDetailsChange(h.id, { code: nextCode, name: nextName, shares: nextShares, avg_price: nextAvgPrice });
+      setDetailsStatus("종목 정보 정정 완료");
       setShowDetailsEditor(false);
     } catch (err) {
       setDetailsStatus((err as Error).message);
@@ -352,23 +364,25 @@ export function HoldingCard({
                 type="button"
                 onClick={() => {
                   setCodeDraft(h.code || inferredCode);
+                  setNameDraft(h.name);
                   setSharesDraft(String(h.shares));
+                  setAvgPriceDraft(String(Math.round(h.avg_price || 0)));
                   setDetailsStatus("");
                   setShowDetailsEditor((value) => !value);
                 }}
                 className="h-9 border border-zinc-200 bg-zinc-50 px-3 text-xs font-bold text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
               >
-                수량/코드 정정
+                종목 정보 정정
               </button>
             )}
           </div>
 
           {showDetailsEditor && (
             <div className="mt-3 border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
-              <p className="mb-2 text-xs font-black text-amber-700 dark:text-amber-200">종목번호 / 보유수량 정정</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_96px_auto] sm:items-end">
+              <p className="mb-2 text-xs font-black text-amber-700 dark:text-amber-200">품번 / 상품명 / 수량 / 평단가 정정</p>
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-[120px_1fr_96px_120px_auto] lg:items-end">
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">종목번호</span>
+                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">품번/종목번호</span>
                   <input
                     type="text"
                     value={codeDraft}
@@ -376,6 +390,17 @@ export function HoldingCard({
                     placeholder="예: 360750"
                     disabled={isSavingDetails}
                     className="h-9 w-full border border-amber-200 bg-white px-2 text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                  />
+                </label>
+                <label className="col-span-2 block lg:col-span-1">
+                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">상품명</span>
+                  <input
+                    type="text"
+                    value={nameDraft}
+                    onChange={(e) => setNameDraft(e.target.value)}
+                    placeholder="예: TIGER 미국나스닥100"
+                    disabled={isSavingDetails}
+                    className="h-9 w-full border border-amber-200 bg-white px-2 text-sm font-bold focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </label>
                 <label className="block">
@@ -391,17 +416,30 @@ export function HoldingCard({
                     className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </label>
+                <label className="block">
+                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">평단가</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min="0"
+                    step="1"
+                    value={avgPriceDraft}
+                    onChange={(e) => setAvgPriceDraft(e.target.value)}
+                    disabled={isSavingDetails}
+                    className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={saveDetails}
                   disabled={isSavingDetails}
-                  className="col-span-2 h-9 border border-amber-600 bg-amber-600 px-3 text-xs font-black text-white transition-colors hover:bg-amber-700 disabled:opacity-60 sm:col-span-1"
+                  className="col-span-2 h-9 border border-amber-600 bg-amber-600 px-3 text-xs font-black text-white transition-colors hover:bg-amber-700 disabled:opacity-60 lg:col-span-1"
                 >
                   {isSavingDetails ? "저장 중" : "정정 저장"}
                 </button>
               </div>
               <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-200">
-                거래내역 재계산이 아니라 현재 보유수량 표시값을 정정합니다. TIGER 미국S&P500 티커/종목번호는 360750입니다.
+                거래내역 전체 재계산이 아니라 현재 표시값과 평단 기준 원가를 정정합니다. 보유수량이 있으면 평단가는 0보다 커야 합니다.
               </p>
               {detailsStatus && (
                 <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-emerald-600 dark:text-emerald-300" : "text-red-500"}`}>

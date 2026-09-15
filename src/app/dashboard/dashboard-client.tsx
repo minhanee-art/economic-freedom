@@ -55,7 +55,9 @@ type NewHoldingPayload = {
 
 type HoldingDetailsPatch = {
   code?: string;
+  name?: string;
   shares?: number;
+  avg_price?: number;
 };
 
 export function DashboardClient({
@@ -364,14 +366,18 @@ export function DashboardClient({
         setLocalHoldings((current) =>
           current.map((h) => (h.id === holdingId ? updatedHolding : h))
         );
-        if (patch.shares !== undefined) {
-          setCostBases((current) =>
-            current.map((cb) =>
-              cb.holding_id === holdingId
-                ? { ...cb, total_shares: Math.max(0, Math.round(patch.shares ?? 0)) }
-                : cb
-            )
-          );
+        if (patch.shares !== undefined || patch.avg_price !== undefined) {
+          if (data?.costBasis) {
+            setCostBases((current) => {
+              const updatedCostBasis = data.costBasis as CostBasis;
+              const exists = current.some((cb) => cb.holding_id === holdingId);
+              return exists
+                ? current.map((cb) => cb.holding_id === holdingId ? updatedCostBasis : cb)
+                : [...current, updatedCostBasis];
+            });
+          } else {
+            setCostBases((current) => current.filter((cb) => cb.holding_id !== holdingId));
+          }
         }
       }
 

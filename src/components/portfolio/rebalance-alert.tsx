@@ -1,7 +1,7 @@
 "use client";
 // 리밸런싱 알림 — 테마별 비중 현황 및 개별 종목 조언
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
 import { formatKRW } from "@/lib/utils";
 import { HoldingCard } from "@/components/portfolio/holding-card";
@@ -50,6 +50,16 @@ const HOLDING_THRESHOLD = 5;
 type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc" | "name-asc" | "name-desc";
 type HoldingSort = "return-desc" | "code-asc" | "name-asc" | "name-desc" | "shares-desc" | "shares-asc";
 type HoldingViewMode = "wide" | "grid" | "chart";
+type CandlePeriod = "day" | "week" | "month" | "year";
+
+interface CandlePoint {
+  date: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
 
 const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "diff", label: "차이 큰순" },
@@ -74,6 +84,13 @@ const HOLDING_VIEW_OPTIONS: { value: HoldingViewMode; label: string }[] = [
   { value: "wide", label: "상세+차트" },
   { value: "grid", label: "상세" },
   { value: "chart", label: "간단" },
+];
+
+const CANDLE_PERIOD_OPTIONS: { value: CandlePeriod; label: string }[] = [
+  { value: "day", label: "일봉" },
+  { value: "week", label: "주봉" },
+  { value: "month", label: "월봉" },
+  { value: "year", label: "년봉" },
 ];
 
 function normalizeSortText(value: string): string {
@@ -716,7 +733,7 @@ function HoldingWideChartCard({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px]">
+    <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_340px]">
       <HoldingCandlePanel holding={holding} className="order-1 lg:order-2" />
       <div className="order-2 min-w-0 lg:order-1">{children}</div>
     </div>
@@ -724,101 +741,207 @@ function HoldingWideChartCard({
 }
 
 function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithPnL; className?: string }) {
+  const [period, setPeriod] = useState<CandlePeriod>("day");
+  const [remoteCandles, setRemoteCandles] = useState<CandlePoint[]>([]);
+  const [chartError, setChartError] = useState("");
+  const code = holding.code || inferHoldingCode(holding.name);
   const startPrice = holding.avg_price > 0 ? holding.avg_price : holding.current_price;
   const endPrice = holding.current_price > 0 ? holding.current_price : startPrice;
-  const changePct = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
-  const isPositive = endPrice >= startPrice;
-  const wave = [0, 0.018, -0.011, 0.024, -0.007, 0];
-  const closes = wave.map((offset, index) => {
-    const progress = index / (wave.length - 1);
-    const trendPrice = startPrice + (endPrice - startPrice) * progress;
-    return Math.max(1, trendPrice * (1 + offset));
-  });
-  closes[closes.length - 1] = Math.max(1, endPrice);
-  const candles = closes.map((close, index) => {
-    const open = index === 0 ? startPrice : closes[index - 1];
-    const spread = Math.max(open, close) * (0.012 + index * 0.001);
-    return {
-      open,
-      close,
-      high: Math.max(open, close) + spread,
-      low: Math.max(1, Math.min(open, close) - spread),
-    };
-  });
+
+  useEffect(() => {
+    if (!code) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    fetch(`/api/market/candles?code=${encodeURIComponent(code)}&period=${period}`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error ?? "차트 조회 실패");
+        setRemoteCandles(Array.isArray(data?.candles) ? data.candles : []);
+        setChartError("");
+      })
+      .catch((err) => {
+        if ((err as Error).name === "AbortError") return;
+        setRemoteCandles([]);
+        setChartError((err as Error).message);
+      })
+      .finally(() => undefined);
+
+    return () => controller.abort();
+  }, [code, period]);
+
+  const candles = remoteCandles.length > 0
+    ? remoteCandles
+    : buildFallbackCandles(startPrice, endPrice, holding.shares);
+  const firstClose = candles[0]?.close ?? startPrice;
+  const lastCandle = candles[candles.length - 1];
+  const lastClose = lastCandle?.close ?? endPrice;
+  const changePct = firstClose > 0 ? ((lastClose - firstClose) / firstClose) * 100 : 0;
+  const isPositive = lastClose >= firstClose;
   const high = Math.max(...candles.map((c) => c.high));
   const low = Math.min(...candles.map((c) => c.low));
+  const mid = (high + low) / 2;
   const range = Math.max(1, high - low);
-  const y = (price: number) => 96 - ((price - low) / range) * 76;
+  const chartBottom = 166;
+  const chartHeight = chartBottom - 34;
+  const y = (price: number) => chartBottom - ((price - low) / range) * chartHeight;
+  const avgY = y(startPrice);
+  const currentY = y(lastClose);
+  const maxVolume = Math.max(...candles.map((c) => c.volume), 1);
+  const periodLabel = CANDLE_PERIOD_OPTIONS.find((option) => option.value === period)?.label ?? "일봉";
+  const visibleChartError = code ? chartError : "종목번호 미등록";
 
   return (
-    <aside className={`border border-zinc-200 bg-gradient-to-b from-white to-zinc-50 p-3 shadow-card dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950 ${className}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div>
-          <p className="text-[11px] font-black text-zinc-500 dark:text-zinc-400">수익 캔들</p>
-          <p className="mt-1 text-sm font-black tabular-nums text-zinc-950 dark:text-white">
-            ₩{Math.round(endPrice).toLocaleString()}
-          </p>
+    <aside className={`overflow-hidden border border-zinc-200 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900 ${className}`}>
+      <div className="border-b border-zinc-100 bg-gradient-to-r from-zinc-50 to-white px-3 py-2.5 dark:border-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black text-zinc-500 dark:text-zinc-400">{periodLabel} 캔들</p>
+            <p className="mt-1 truncate text-sm font-black text-zinc-950 dark:text-white">
+              {code || "미등록"} · {holding.name}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 border px-2 py-1 text-[11px] font-black tabular-nums ${
+              isPositive
+                ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+                : "border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+            }`}
+          >
+            {isPositive ? "+" : ""}{changePct.toFixed(1)}%
+          </span>
         </div>
-        <span
-          className={`border px-2 py-1 text-[11px] font-black tabular-nums ${
-            isPositive
-              ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-              : "border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
-          }`}
-        >
-          {isPositive ? "+" : ""}{changePct.toFixed(1)}%
-        </span>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {CANDLE_PERIOD_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                setPeriod(option.value);
+                setRemoteCandles([]);
+                setChartError("");
+              }}
+              className={`border px-2 py-1 text-[11px] font-black transition-colors ${
+                period === option.value
+                  ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                  : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      <svg
-        viewBox="0 0 168 112"
-        role="img"
-        aria-label={`${holding.name} 평단 대비 현재가 캔들 그래프`}
-        className="mt-3 h-28 w-full text-zinc-200 dark:text-zinc-800"
-      >
-        {[28, 56, 84].map((lineY) => (
-          <line key={lineY} x1="4" x2="164" y1={lineY} y2={lineY} stroke="currentColor" strokeWidth="1" />
-        ))}
-        {candles.map((candle, index) => {
-          const x = 18 + index * 26;
-          const top = y(Math.max(candle.open, candle.close));
-          const bottom = y(Math.min(candle.open, candle.close));
-          const bodyHeight = Math.max(3, bottom - top);
-          const up = candle.close >= candle.open;
-          return (
-            <g key={index}>
-              <line
-                x1={x}
-                x2={x}
-                y1={y(candle.high)}
-                y2={y(candle.low)}
-                stroke={up ? "#10b981" : "#ef4444"}
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-              <rect
-                x={x - 6}
-                y={top}
-                width="12"
-                height={bodyHeight}
-                fill={up ? "#10b981" : "#ef4444"}
-                rx="1"
-              />
+      <div className="p-3">
+        <svg
+          viewBox="0 0 320 228"
+          role="img"
+          aria-label={`${holding.name} ${periodLabel} 상세 캔들 그래프`}
+          className="h-56 w-full text-zinc-200 dark:text-zinc-800"
+        >
+          <defs>
+            <linearGradient id={`candle-bg-${holding.id}`} x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#eef2ff" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="320" height="228" fill={`url(#candle-bg-${holding.id})`} />
+          {[high, mid, low].map((price) => (
+            <g key={price}>
+              <line x1="48" x2="304" y1={y(price)} y2={y(price)} stroke="currentColor" strokeDasharray="4 5" />
+              <text x="4" y={y(price) + 4} fill="#71717a" fontSize="10" fontWeight="700">
+                {Math.round(price).toLocaleString()}
+              </text>
             </g>
-          );
-        })}
-      </svg>
+          ))}
+          <line x1="48" x2="304" y1={avgY} y2={avgY} stroke="#64748b" strokeDasharray="3 4" strokeWidth="1.5" />
+          <text x="244" y={avgY - 5} fill="#64748b" fontSize="10" fontWeight="800">평단</text>
+          <line x1="48" x2="304" y1={currentY} y2={currentY} stroke={isPositive ? "#059669" : "#dc2626"} strokeDasharray="5 3" strokeWidth="1.5" />
+          <text x="244" y={currentY + 12} fill={isPositive ? "#059669" : "#dc2626"} fontSize="10" fontWeight="800">종가</text>
+          {candles.map((candle, index) => {
+            const x = candles.length > 1 ? 60 + index * (232 / (candles.length - 1)) : 176;
+            const bodyWidth = Math.max(5, Math.min(14, 180 / candles.length));
+            const top = y(Math.max(candle.open, candle.close));
+            const bottom = y(Math.min(candle.open, candle.close));
+            const bodyHeight = Math.max(4, bottom - top);
+            const up = candle.close >= candle.open;
+            const color = up ? "#10b981" : "#ef4444";
+            const volumeHeight = (candle.volume / maxVolume) * 30;
+            return (
+              <g key={`${candle.date}-${index}`}>
+                <rect x={x - bodyWidth / 2} y={210 - volumeHeight} width={bodyWidth} height={volumeHeight} fill={color} opacity="0.22" />
+                <line x1={x} x2={x} y1={y(candle.high)} y2={y(candle.low)} stroke={color} strokeWidth="2" strokeLinecap="round" />
+                <rect x={x - bodyWidth / 2} y={top} width={bodyWidth} height={bodyHeight} fill={color} rx="1.5" />
+                <line x1={x - bodyWidth / 2} x2={x + bodyWidth / 2} y1={y(candle.open)} y2={y(candle.open)} stroke="#ffffff" strokeOpacity="0.45" />
+              </g>
+            );
+          })}
+          <line x1="48" x2="304" y1="212" y2="212" stroke="currentColor" />
+          <text x="48" y="225" fill="#71717a" fontSize="10" fontWeight="700">{formatCandleDate(candles[0]?.date)}</text>
+          <text x="258" y="225" fill="#71717a" fontSize="10" fontWeight="700">{formatCandleDate(lastCandle?.date)}</text>
+        </svg>
 
-      <div className="grid grid-cols-2 gap-1 text-[11px] font-bold tabular-nums">
-        <span className="border border-zinc-100 bg-white px-2 py-1 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          평단 ₩{Math.round(startPrice || 0).toLocaleString()}
-        </span>
-        <span className="border border-zinc-100 bg-white px-2 py-1 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-          {holding.shares.toLocaleString()}주
-        </span>
+        <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] font-bold tabular-nums">
+          <span className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            시가 ₩{Math.round(lastCandle.open).toLocaleString()}
+          </span>
+          <span className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            종가 ₩{Math.round(lastCandle.close).toLocaleString()}
+          </span>
+          <span className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            고가 ₩{Math.round(high).toLocaleString()}
+          </span>
+          <span className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+            저가 ₩{Math.round(low).toLocaleString()}
+          </span>
+        </div>
+        <p className="mt-2 text-[10px] font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
+          {visibleChartError
+            ? `${visibleChartError} · 보유 데이터 기준 대체 차트를 표시 중입니다.`
+            : `외부 시세 기준 ${periodLabel} 차트입니다. 평단선은 내 보유 평균단가입니다.`}
+        </p>
       </div>
     </aside>
   );
+}
+
+function buildFallbackCandles(startPrice: number, endPrice: number, shares: number): CandlePoint[] {
+  const safeStart = Math.max(1, startPrice || endPrice || 1);
+  const safeEnd = Math.max(1, endPrice || safeStart);
+  const changePct = safeStart > 0 ? ((safeEnd - safeStart) / safeStart) * 100 : 0;
+  const volatility = Math.min(0.07, Math.max(0.018, Math.abs(changePct) / 180));
+  const pattern = [0, 0.42, -0.25, 0.62, 0.16, -0.38, 0.54, -0.08, 0.72, 0.24, -0.18, 0];
+  const closes = pattern.map((offset, index) => {
+    const progress = index / (pattern.length - 1);
+    const trendPrice = safeStart + (safeEnd - safeStart) * progress;
+    return Math.max(1, trendPrice * (1 + offset * volatility));
+  });
+  closes[0] = safeStart;
+  closes[closes.length - 1] = safeEnd;
+
+  return closes.map((close, index) => {
+    const open = index === 0 ? safeStart : closes[index - 1];
+    const wick = Math.max(open, close) * (volatility * (0.32 + (index % 4) * 0.08));
+    return {
+      date: index === 0 ? "매입" : index === closes.length - 1 ? "현재" : `${index + 1}`,
+      open,
+      close,
+      high: Math.max(open, close) + wick,
+      low: Math.max(1, Math.min(open, close) - wick * 0.82),
+      volume: shares * (0.72 + ((index * 7) % 9) / 10),
+    };
+  });
+}
+
+function formatCandleDate(date?: string): string {
+  if (!date) return "-";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date.slice(5).replace("-", "/");
+  return date;
 }
 
 function CategoryTargetEditor({

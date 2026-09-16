@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import { DividendBarChart } from "@/components/charts/dividend-bar-chart";
 
@@ -36,6 +36,11 @@ export function DividendClient({ holdings, initialDividends }: Props) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [memo, setMemo] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    setDividends(initialDividends);
+    setHoldingId("");
+  }, [initialDividends]);
 
   // 요약 계산
   const totalAmount = dividends.reduce((s, d) => s + d.amount, 0);

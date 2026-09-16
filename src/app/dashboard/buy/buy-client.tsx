@@ -50,6 +50,12 @@ export function BuyClient({
   const router = useRouter();
 
   useEffect(() => {
+    setHoldings(initialHoldings);
+    setQuantityOverrides({});
+    setPriceStatus("");
+  }, [initialHoldings]);
+
+  useEffect(() => {
     setQuantityOverrides({});
   }, [budget]);
 

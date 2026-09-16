@@ -81,6 +81,12 @@ export function DashboardClient({
     setTodayInfo(getTodayInfo(new Date()));
   }, []);
 
+  useEffect(() => {
+    setLocalHoldings(initialHoldings);
+    setCostBases(initialCostBases);
+    setRefreshResult("");
+  }, [initialHoldings, initialCostBases]);
+
   // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
   useEffect(() => {
     if (!lastPriceUpdate) return;

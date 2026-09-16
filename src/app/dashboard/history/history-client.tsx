@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
 import { ImportClient } from "./import-client";
@@ -23,6 +23,10 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const hasMore = records.length < totalCount;
+
+  useEffect(() => {
+    setRecords(initialRecords);
+  }, [initialRecords]);
 
   // 누적 통계
   const totalSpent = records.reduce((s, r) => s + r.total_spent, 0);

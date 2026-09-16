@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
@@ -60,6 +60,11 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const { theme, setTheme } = useTheme();
   const [holdingGroupBy, setHoldingGroupBy] = useState<HoldingGroupBy>("none");
   const totalTargetPct = holdings.reduce((s, h) => s + Number(h.target_pct), 0);
+
+  useEffect(() => {
+    setHoldings(initialHoldings);
+    setSaveStatus("");
+  }, [initialHoldings]);
 
   const holdingGroups = useMemo(() => {
     if (holdingGroupBy === "none") {

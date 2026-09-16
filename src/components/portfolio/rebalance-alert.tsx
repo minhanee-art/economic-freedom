@@ -71,9 +71,9 @@ const HOLDING_SORT_OPTIONS: { value: HoldingSort; label: string }[] = [
 ];
 
 const HOLDING_VIEW_OPTIONS: { value: HoldingViewMode; label: string }[] = [
-  { value: "wide", label: "가로형" },
-  { value: "grid", label: "칸형" },
-  { value: "chart", label: "간단차트" },
+  { value: "wide", label: "상세+차트" },
+  { value: "grid", label: "상세" },
+  { value: "chart", label: "간단" },
 ];
 
 function normalizeSortText(value: string): string {
@@ -235,17 +235,29 @@ export function RebalanceAlert({
 
     return (
       <div className={holdingViewMode === "grid" ? "grid grid-cols-1 gap-2 xl:grid-cols-2" : "space-y-2"}>
-        {items.map((holding) => (
-          <HoldingCard
-            key={`${keyPrefix}-${holding.id}`}
-            holding={holding}
-            portfolioTotalValue={totalValue}
-            onTargetPctChange={onTargetPctChange}
-            onTradeComplete={onTradeComplete}
-            onHoldingDetailsChange={onHoldingDetailsChange}
-            isSavingTargetPct={savingTargetPctId === holding.id}
-          />
-        ))}
+        {items.map((holding) => {
+          const card = (
+            <HoldingCard
+              key={`${keyPrefix}-${holding.id}`}
+              holding={holding}
+              portfolioTotalValue={totalValue}
+              onTargetPctChange={onTargetPctChange}
+              onTradeComplete={onTradeComplete}
+              onHoldingDetailsChange={onHoldingDetailsChange}
+              isSavingTargetPct={savingTargetPctId === holding.id}
+            />
+          );
+
+          if (holdingViewMode === "wide") {
+            return (
+              <HoldingWideChartCard key={`${keyPrefix}-${holding.id}`} holding={holding}>
+                {card}
+              </HoldingWideChartCard>
+            );
+          }
+
+          return card;
+        })}
       </div>
     );
   }
@@ -693,6 +705,119 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
         </span>
       </div>
     </div>
+  );
+}
+
+function HoldingWideChartCard({
+  holding,
+  children,
+}: {
+  holding: HoldingWithPnL;
+  children: ReactNode;
+}) {
+  return (
+    <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_220px]">
+      <HoldingCandlePanel holding={holding} className="order-1 lg:order-2" />
+      <div className="order-2 min-w-0 lg:order-1">{children}</div>
+    </div>
+  );
+}
+
+function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithPnL; className?: string }) {
+  const startPrice = holding.avg_price > 0 ? holding.avg_price : holding.current_price;
+  const endPrice = holding.current_price > 0 ? holding.current_price : startPrice;
+  const changePct = startPrice > 0 ? ((endPrice - startPrice) / startPrice) * 100 : 0;
+  const isPositive = endPrice >= startPrice;
+  const wave = [0, 0.018, -0.011, 0.024, -0.007, 0];
+  const closes = wave.map((offset, index) => {
+    const progress = index / (wave.length - 1);
+    const trendPrice = startPrice + (endPrice - startPrice) * progress;
+    return Math.max(1, trendPrice * (1 + offset));
+  });
+  closes[closes.length - 1] = Math.max(1, endPrice);
+  const candles = closes.map((close, index) => {
+    const open = index === 0 ? startPrice : closes[index - 1];
+    const spread = Math.max(open, close) * (0.012 + index * 0.001);
+    return {
+      open,
+      close,
+      high: Math.max(open, close) + spread,
+      low: Math.max(1, Math.min(open, close) - spread),
+    };
+  });
+  const high = Math.max(...candles.map((c) => c.high));
+  const low = Math.min(...candles.map((c) => c.low));
+  const range = Math.max(1, high - low);
+  const y = (price: number) => 96 - ((price - low) / range) * 76;
+
+  return (
+    <aside className={`border border-zinc-200 bg-gradient-to-b from-white to-zinc-50 p-3 shadow-card dark:border-zinc-800 dark:from-zinc-900 dark:to-zinc-950 ${className}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-[11px] font-black text-zinc-500 dark:text-zinc-400">수익 캔들</p>
+          <p className="mt-1 text-sm font-black tabular-nums text-zinc-950 dark:text-white">
+            ₩{Math.round(endPrice).toLocaleString()}
+          </p>
+        </div>
+        <span
+          className={`border px-2 py-1 text-[11px] font-black tabular-nums ${
+            isPositive
+              ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+              : "border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+          }`}
+        >
+          {isPositive ? "+" : ""}{changePct.toFixed(1)}%
+        </span>
+      </div>
+
+      <svg
+        viewBox="0 0 168 112"
+        role="img"
+        aria-label={`${holding.name} 평단 대비 현재가 캔들 그래프`}
+        className="mt-3 h-28 w-full text-zinc-200 dark:text-zinc-800"
+      >
+        {[28, 56, 84].map((lineY) => (
+          <line key={lineY} x1="4" x2="164" y1={lineY} y2={lineY} stroke="currentColor" strokeWidth="1" />
+        ))}
+        {candles.map((candle, index) => {
+          const x = 18 + index * 26;
+          const top = y(Math.max(candle.open, candle.close));
+          const bottom = y(Math.min(candle.open, candle.close));
+          const bodyHeight = Math.max(3, bottom - top);
+          const up = candle.close >= candle.open;
+          return (
+            <g key={index}>
+              <line
+                x1={x}
+                x2={x}
+                y1={y(candle.high)}
+                y2={y(candle.low)}
+                stroke={up ? "#10b981" : "#ef4444"}
+                strokeWidth="2"
+                strokeLinecap="round"
+              />
+              <rect
+                x={x - 6}
+                y={top}
+                width="12"
+                height={bodyHeight}
+                fill={up ? "#10b981" : "#ef4444"}
+                rx="1"
+              />
+            </g>
+          );
+        })}
+      </svg>
+
+      <div className="grid grid-cols-2 gap-1 text-[11px] font-bold tabular-nums">
+        <span className="border border-zinc-100 bg-white px-2 py-1 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          평단 ₩{Math.round(startPrice || 0).toLocaleString()}
+        </span>
+        <span className="border border-zinc-100 bg-white px-2 py-1 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          {holding.shares.toLocaleString()}주
+        </span>
+      </div>
+    </aside>
   );
 }
 

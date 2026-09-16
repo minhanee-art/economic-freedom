@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import type { Holding } from "@/types";
 import { cn } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/constants";
 import {
   RadarChart,
   Radar,
@@ -102,6 +104,7 @@ type StoredCompareState = {
 };
 
 export function CompareClient({ holdings }: Props) {
+  const router = useRouter();
   const [selected, setSelected] = useState<CompareItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchETF[]>([]);
@@ -112,12 +115,19 @@ export function CompareClient({ holdings }: Props) {
   const [period, setPeriod] = useState("3m");
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [hasRestored, setHasRestored] = useState(false);
+  const [addedCodes, setAddedCodes] = useState<Set<string>>(new Set());
+  const [addingCode, setAddingCode] = useState<string | null>(null);
+  const [addStatus, setAddStatus] = useState("");
   const maxSelect = 5;
 
   const holdingMap = useMemo(
     () => new Map(holdings.map((h) => [h.code, h])),
     [holdings]
   );
+
+  useEffect(() => {
+    setAddedCodes(new Set());
+  }, [holdings]);
 
   const search = useCallback(
     async (query: string, theme: string, sort: string) => {
@@ -241,6 +251,39 @@ export function CompareClient({ holdings }: Props) {
     search("", "전체", "volume");
   };
 
+  const addToPortfolio = async (etf: SearchETF) => {
+    if (holdingMap.has(etf.code) || addedCodes.has(etf.code) || addingCode) return;
+    setAddingCode(etf.code);
+    setAddStatus("");
+    try {
+      const res = await fetch("/api/holdings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: etf.code,
+          name: etf.name,
+          category: inferPortfolioCategory(etf.category),
+          sub_category: etf.category || "기타",
+          current_price: Math.max(0, Math.round(etf.price)),
+          target_pct: 0,
+          shares: 0,
+          avg_price: 0,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "종목 추가 실패");
+
+      setAddedCodes((current) => new Set(current).add(etf.code));
+      setAddStatus(`${etf.code} ${etf.name} 추가 완료 · 대시보드에서 설정비중을 입력하세요.`);
+      router.refresh();
+    } catch (err) {
+      setAddStatus((err as Error).message);
+    } finally {
+      setAddingCode(null);
+      setTimeout(() => setAddStatus(""), 4000);
+    }
+  };
+
   // 기간별 수익률 가져오기
   const getReturn = (item: CompareItem) => {
     if (!item.detail) return item.changePct;
@@ -352,6 +395,15 @@ export function CompareClient({ holdings }: Props) {
       {/* 검색 영역 */}
       {showSearch && (
         <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card space-y-3">
+          {addStatus && (
+            <p className={`border px-3 py-2 text-xs font-bold ${
+              addStatus.includes("완료")
+                ? "border-emerald-200 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+                : "border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+            }`}>
+              {addStatus}
+            </p>
+          )}
           <div className="relative">
             <svg
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400"
@@ -410,18 +462,21 @@ export function CompareClient({ holdings }: Props) {
             ) : (
               searchResults.map((etf) => {
                 const isSel = selected.some((s) => s.code === etf.code);
-                const isMy = holdingMap.has(etf.code);
+                const isMy = holdingMap.has(etf.code) || addedCodes.has(etf.code);
                 return (
-                  <button
+                  <div
                     key={etf.code}
-                    onClick={() => !isSel && addToCompare(etf)}
-                    disabled={isSel || selected.length >= maxSelect}
                     className={cn(
-                      "w-full flex items-center rounded-xl px-3 py-2.5 text-left transition-colors",
+                      "w-full flex items-center gap-2 rounded-xl px-3 py-2.5 text-left transition-colors",
                       isSel ? "bg-indigo-50 dark:bg-indigo-900/20 opacity-60" : "hover:bg-canvas-soft dark:hover:bg-zinc-800"
                     )}
                   >
-                    <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => !isSel && addToCompare(etf)}
+                      disabled={isSel || selected.length >= maxSelect}
+                      className="min-w-0 flex-1 text-left disabled:cursor-not-allowed"
+                    >
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium truncate">{etf.name}</p>
                         {isMy && (
@@ -433,14 +488,22 @@ export function CompareClient({ holdings }: Props) {
                       <p className="text-xs text-zinc-400 tabular-nums">
                         <strong className="font-extrabold text-zinc-700 dark:text-zinc-200">{etf.code}</strong> · {etf.category} · 거래량 {fmtVol(etf.volume)}
                       </p>
-                    </div>
+                    </button>
                     <div className="text-right ml-2 shrink-0">
                       <p className="text-sm font-semibold tabular-nums">₩{etf.price.toLocaleString()}</p>
                       <p className={cn("text-xs tabular-nums", etf.changePct > 0 ? "text-red-500" : etf.changePct < 0 ? "text-blue-500" : "text-zinc-400")}>
                         {etf.changePct > 0 ? "+" : ""}{etf.changePct.toFixed(2)}%
                       </p>
                     </div>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => addToPortfolio(etf)}
+                      disabled={isMy || addingCode === etf.code || Boolean(addingCode)}
+                      className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-black text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                    >
+                      {isMy ? "추가됨" : addingCode === etf.code ? "추가중" : "내 계좌 추가"}
+                    </button>
+                  </div>
                 );
               })
             )}
@@ -784,6 +847,14 @@ function ChartLegend({ items }: { items: CompareItem[] }) {
       ))}
     </div>
   );
+}
+
+function inferPortfolioCategory(theme: string): (typeof CATEGORIES)[number] {
+  if ((CATEGORIES as readonly string[]).includes(theme)) return theme as (typeof CATEGORIES)[number];
+  if (["리츠"].includes(theme)) return "리츠";
+  if (["금", "원유", "은"].includes(theme)) return "원자재";
+  if (["채권"].includes(theme)) return "채권";
+  return "주식";
 }
 
 function fmtVol(v: number): string {

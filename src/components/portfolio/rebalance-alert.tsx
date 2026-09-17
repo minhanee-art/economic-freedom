@@ -24,6 +24,13 @@ type NewHoldingPayload = {
   avg_price: number;
 };
 
+type AddHoldingSearchETF = {
+  code: string;
+  name: string;
+  price: number;
+  category: string;
+};
+
 type HoldingDetailsPatch = {
   code?: string;
   name?: string;
@@ -112,6 +119,14 @@ function inferHoldingCode(name: string): string {
 
 function holdingCodeForSort(holding: HoldingWithPnL): string {
   return holding.code || inferHoldingCode(holding.name) || holding.name;
+}
+
+function inferPortfolioCategory(theme: string): (typeof CATEGORIES)[number] {
+  if ((CATEGORIES as readonly string[]).includes(theme)) return theme as (typeof CATEGORIES)[number];
+  if (theme === "리츠") return "리츠";
+  if (["금", "원유", "은"].includes(theme)) return "원자재";
+  if (theme === "채권") return "채권";
+  return "주식";
 }
 
 function readStoredHiddenHoldingIds(): string[] {
@@ -444,7 +459,26 @@ export function RebalanceAlert({
       </div>
 
       {showAddHolding && onAddHolding && (
-        <AddHoldingForm onAddHolding={onAddHolding} />
+        <div className="fixed inset-0 z-50 flex items-end bg-zinc-950/40 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
+          <div className="max-h-[92vh] w-full overflow-y-auto border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-2xl">
+            <div className="mb-3 flex items-start justify-between gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
+              <div>
+                <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">신규 종목 추가</p>
+                <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                  종목은 검색으로 불러오고, 보유수량·평단가·설정비중만 입력합니다.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddHolding(false)}
+                className="border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-black text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+              >
+                닫기
+              </button>
+            </div>
+            <AddHoldingForm onAddHolding={onAddHolding} onClose={() => setShowAddHolding(false)} />
+          </div>
+        </div>
       )}
 
       {showHiddenHoldings && (
@@ -1323,29 +1357,28 @@ function HiddenHoldingManager({
 
 function AddHoldingForm({
   onAddHolding,
+  onClose,
 }: {
   onAddHolding: (payload: NewHoldingPayload) => Promise<void>;
+  onClose?: () => void;
 }) {
-  const [code, setCode] = useState("");
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("주식");
-  const [subCategory, setSubCategory] = useState("");
-  const [price, setPrice] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<AddHoldingSearchETF[]>([]);
+  const [selectedEtf, setSelectedEtf] = useState<AddHoldingSearchETF | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [targetPct, setTargetPct] = useState("");
   const [shares, setShares] = useState("");
   const [avgPrice, setAvgPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [status, setStatus] = useState("");
 
-  const parsedPrice = Number(price.replace(/[^0-9]/g, "")) || 0;
   const parsedTargetPct = Number(targetPct);
   const parsedShares = Number(shares.replace(/[^0-9]/g, "")) || 0;
   const parsedAvgPrice = Number(avgPrice.replace(/[^0-9]/g, "")) || 0;
   const totalCost = parsedShares * parsedAvgPrice;
+  const selectedCategory = selectedEtf ? inferPortfolioCategory(selectedEtf.category) : "주식";
   const canSubmit =
-    code.trim().length > 0 &&
-    name.trim().length > 0 &&
-    subCategory.trim().length > 0 &&
+    Boolean(selectedEtf) &&
     Number.isFinite(parsedTargetPct) &&
     parsedTargetPct >= 0 &&
     parsedTargetPct <= 100 &&
@@ -1354,29 +1387,55 @@ function AddHoldingForm({
     (parsedShares === 0 || parsedAvgPrice > 0) &&
     !isAdding;
 
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (query.length < 1) {
+      setSearchResults([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setIsSearching(true);
+      const params = new URLSearchParams({ q: query, sort: "volume" });
+      fetch(`/api/market/search?${params}`, { signal: controller.signal })
+        .then((res) => res.json())
+        .then((data) => setSearchResults((data.etfs ?? []).slice(0, 8)))
+        .catch((err) => {
+          if ((err as Error).name !== "AbortError") setSearchResults([]);
+        })
+        .finally(() => setIsSearching(false));
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [searchQuery]);
+
   async function submit() {
-    if (!canSubmit) return;
+    if (!canSubmit || !selectedEtf) return;
     setIsAdding(true);
     setStatus("");
     try {
       await onAddHolding({
-        code,
-        name,
-        category,
-        sub_category: subCategory,
-        current_price: parsedPrice,
+        code: selectedEtf.code,
+        name: selectedEtf.name,
+        category: selectedCategory,
+        sub_category: selectedEtf.category || "기타",
+        current_price: Math.max(0, Math.round(selectedEtf.price)),
         target_pct: parsedTargetPct,
         shares: parsedShares,
         avg_price: parsedAvgPrice,
       });
-      setCode("");
-      setName("");
-      setSubCategory("");
-      setPrice("");
+      setSelectedEtf(null);
+      setSearchQuery("");
+      setSearchResults([]);
       setTargetPct("");
       setShares("");
       setAvgPrice("");
-      setStatus("종목을 추가했습니다. 보유수량 0주 또는 설정비중 0%인 종목은 숨김 관리 영역에 표시됩니다.");
+      setStatus("종목을 추가했습니다.");
+      onClose?.();
     } catch (err) {
       setStatus((err as Error).message);
     } finally {
@@ -1387,81 +1446,77 @@ function AddHoldingForm({
   return (
     <div className="border border-indigo-100 bg-indigo-50/70 p-4 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/10">
       <div className="mb-3">
-        <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">새 종목 추가</p>
+        <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">종목 검색 후 추가</p>
         <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-          추가 후 보유수량과 설정비중이 모두 0보다 커야 테마별 종목 목록에 표시됩니다.
+          티커·종목명·현재가는 검색 결과에서 가져옵니다. 수기 입력은 보유수량, 평단가, 설정비중만 사용합니다.
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <Field label="종목코드">
+
+      <div className="space-y-2">
+        <Field label="종목 검색">
           <input
-            type="text"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="예: 069500"
-            className="h-9 w-full border border-zinc-200 bg-white px-2 text-sm font-semibold focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          />
-        </Field>
-        <Field label="종목명">
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="예: KODEX 200"
-            className="h-9 w-full border border-zinc-200 bg-white px-2 text-sm font-semibold focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          />
-        </Field>
-        <Field label="대분류">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value as (typeof CATEGORIES)[number])}
-            className="h-9 w-full border border-zinc-200 bg-white px-2 text-sm font-semibold focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="소분류">
-          <input
-            type="text"
-            value={subCategory}
-            onChange={(e) => setSubCategory(e.target.value)}
-            placeholder="예: 배당"
-            className="h-9 w-full border border-zinc-200 bg-white px-2 text-sm font-semibold focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          />
-        </Field>
-        <Field label="현재가">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={price}
+            type="search"
+            value={searchQuery}
             onChange={(e) => {
-              const value = e.target.value.replace(/[^0-9]/g, "");
-              setPrice(value ? Number(value).toLocaleString() : "");
+              setSearchQuery(e.target.value);
+              setSelectedEtf(null);
             }}
-            placeholder="0"
-            className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            placeholder="예: TIGER 미국S&P500, 360750, 나스닥"
+            className="h-10 w-full border border-zinc-200 bg-white px-3 text-sm font-semibold focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </Field>
-        <Field label="설정비중 (%)">
-          <input
-            type="number"
-            inputMode="decimal"
-            min="0"
-            max="100"
-            step="0.5"
-            value={targetPct}
-            onFocus={(e) => {
-              if (e.currentTarget.value === "0" || e.currentTarget.value === "0.0") setTargetPct("");
-            }}
-            onChange={(e) => setTargetPct(e.target.value)}
-            placeholder="0"
-            className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-          />
-        </Field>
+
+        {searchQuery && !selectedEtf && (
+          <div className="max-h-56 overflow-y-auto border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            {isSearching ? (
+              <p className="p-3 text-xs font-semibold text-zinc-500">검색 중...</p>
+            ) : searchResults.length === 0 ? (
+              <p className="p-3 text-xs font-semibold text-zinc-500">검색 결과가 없습니다.</p>
+            ) : (
+              searchResults.map((etf) => (
+                <button
+                  key={etf.code}
+                  type="button"
+                  onClick={() => {
+                    setSelectedEtf(etf);
+                    setSearchQuery(`${etf.code} ${etf.name}`);
+                    setSearchResults([]);
+                  }}
+                  className="flex w-full items-start justify-between gap-3 border-b border-zinc-100 px-3 py-2 text-left transition-colors hover:bg-indigo-50 dark:border-zinc-800 dark:hover:bg-indigo-500/10"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-xs font-black tabular-nums text-indigo-600 dark:text-indigo-300">{etf.code}</span>
+                    <span className="mt-0.5 block text-sm font-bold text-zinc-900 dark:text-zinc-100">{etf.name}</span>
+                    <span className="mt-0.5 block text-[11px] font-semibold text-zinc-400">{etf.category || "기타"}</span>
+                  </span>
+                  <span className="shrink-0 text-right text-xs font-black tabular-nums text-zinc-700 dark:text-zinc-200">
+                    {formatKRW(etf.price)}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        )}
+
+        {selectedEtf && (
+          <div className="grid gap-2 border border-zinc-200 bg-white p-3 text-xs dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-3">
+            <div>
+              <p className="font-bold text-zinc-400">티커</p>
+              <p className="mt-1 font-black tabular-nums text-zinc-900 dark:text-zinc-100">{selectedEtf.code}</p>
+            </div>
+            <div>
+              <p className="font-bold text-zinc-400">종목명</p>
+              <p className="mt-1 font-black text-zinc-900 dark:text-zinc-100">{selectedEtf.name}</p>
+            </div>
+            <div>
+              <p className="font-bold text-zinc-400">현재가</p>
+              <p className="mt-1 font-black tabular-nums text-zinc-900 dark:text-zinc-100">{formatKRW(selectedEtf.price)}</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
         <Field label="보유수량">
           <input
             type="text"
@@ -1488,7 +1543,21 @@ function AddHoldingForm({
             className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </Field>
+        <Field label="설정비중 (%)">
+          <input
+            type="number"
+            inputMode="decimal"
+            min="0"
+            max="100"
+            step="0.5"
+            value={targetPct}
+            onChange={(e) => setTargetPct(e.target.value)}
+            placeholder="0"
+            className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+          />
+        </Field>
       </div>
+
       <div className="mt-2 border border-indigo-100 bg-white/70 px-3 py-2 text-xs font-semibold text-zinc-600 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-950/40 dark:text-zinc-300">
         초기 보유원가: <span className="font-black tabular-nums text-zinc-900 dark:text-zinc-100">{parsedShares.toLocaleString()}주 × ₩{parsedAvgPrice.toLocaleString()} = ₩{totalCost.toLocaleString()}</span>
       </div>

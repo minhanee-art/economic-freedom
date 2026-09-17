@@ -58,6 +58,8 @@ type HoldingDetailsPatch = {
   name?: string;
   shares?: number;
   avg_price?: number;
+  category?: string;
+  sub_category?: string;
 };
 
 type ReturnPeriodKey = "day" | "week" | "month";

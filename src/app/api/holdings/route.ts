@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { inferHoldingClassification, normalizePortfolioCategory } from "@/lib/holding-classification";
 
 const INT_MAX = 2_147_483_647;
 
@@ -22,8 +23,11 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? "").trim();
   const name = String(body.name ?? "").trim();
-  const category = String(body.category ?? "").trim();
-  const subCategory = String(body.sub_category ?? "기타").trim() || "기타";
+  const inferred = inferHoldingClassification(name, String(body.sub_category ?? body.category ?? ""));
+  const category = body.category !== undefined
+    ? normalizePortfolioCategory(String(body.category).trim())
+    : inferred.category;
+  const subCategory = String(body.sub_category ?? inferred.subCategory).trim() || inferred.subCategory;
   const currentPrice = Number(body.current_price ?? 0);
   const targetPct = Number(body.target_pct ?? 0);
   const shares = Number(body.shares ?? 0);
@@ -100,7 +104,7 @@ export async function PATCH(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
-  const { id, current_price, target_pct, code, name, shares, avg_price } = await request.json().catch(() => ({}));
+  const { id, current_price, target_pct, code, name, shares, avg_price, category, sub_category } = await request.json().catch(() => ({}));
   if (!id) return NextResponse.json({ error: "id 필요" }, { status: 400 });
   if (current_price !== undefined) {
     const p = Number(current_price);
@@ -123,6 +127,14 @@ export async function PATCH(request: Request) {
     const nextName = String(name).trim();
     if (!nextName) return NextResponse.json({ error: "상품명을 입력해주세요." }, { status: 400 });
     await sql`UPDATE holdings SET name = ${nextName} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
+  }
+  if (category !== undefined) {
+    const nextCategory = normalizePortfolioCategory(String(category).trim());
+    await sql`UPDATE holdings SET category = ${nextCategory} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
+  }
+  if (sub_category !== undefined) {
+    const nextSubCategory = String(sub_category).trim() || "기타";
+    await sql`UPDATE holdings SET sub_category = ${nextSubCategory} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
   }
   if (shares !== undefined || avg_price !== undefined) {
     const [currentHolding] = await sql`

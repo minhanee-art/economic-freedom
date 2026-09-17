@@ -6,6 +6,7 @@ import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
 import { formatKRW } from "@/lib/utils";
 import { HoldingCard } from "@/components/portfolio/holding-card";
 import { CATEGORIES } from "@/lib/constants";
+import { inferHoldingClassification } from "@/lib/holding-classification";
 
 interface CategoryBalance {
   name: string;
@@ -36,6 +37,8 @@ type HoldingDetailsPatch = {
   name?: string;
   shares?: number;
   avg_price?: number;
+  category?: string;
+  sub_category?: string;
 };
 
 interface Props {
@@ -119,14 +122,6 @@ function inferHoldingCode(name: string): string {
 
 function holdingCodeForSort(holding: HoldingWithPnL): string {
   return holding.code || inferHoldingCode(holding.name) || holding.name;
-}
-
-function inferPortfolioCategory(theme: string): (typeof CATEGORIES)[number] {
-  if ((CATEGORIES as readonly string[]).includes(theme)) return theme as (typeof CATEGORIES)[number];
-  if (theme === "리츠") return "리츠";
-  if (["금", "원유", "은"].includes(theme)) return "원자재";
-  if (theme === "채권") return "채권";
-  return "주식";
 }
 
 function readStoredHiddenHoldingIds(): string[] {
@@ -1380,7 +1375,10 @@ function AddHoldingForm({
   const parsedShares = Number(shares.replace(/[^0-9]/g, "")) || 0;
   const parsedAvgPrice = Number(avgPrice.replace(/[^0-9]/g, "")) || 0;
   const totalCost = parsedShares * parsedAvgPrice;
-  const selectedCategory = selectedEtf ? inferPortfolioCategory(selectedEtf.category) : "주식";
+  const selectedClassification = selectedEtf
+    ? inferHoldingClassification(selectedEtf.name, selectedEtf.category)
+    : { category: "주식" as (typeof CATEGORIES)[number], subCategory: "기타" };
+  const selectedCategory = selectedClassification.category;
   const canSubmit =
     Boolean(selectedEtf) &&
     Number.isFinite(parsedTargetPct) &&
@@ -1426,7 +1424,7 @@ function AddHoldingForm({
         code: selectedEtf.code,
         name: selectedEtf.name,
         category: selectedCategory,
-        sub_category: selectedEtf.category || "기타",
+        sub_category: selectedClassification.subCategory,
         current_price: Math.max(0, Math.round(selectedEtf.price)),
         target_pct: parsedTargetPct,
         shares: parsedShares,
@@ -1515,6 +1513,12 @@ function AddHoldingForm({
             <div>
               <p className="font-bold text-zinc-400">현재가</p>
               <p className="mt-1 font-black tabular-nums text-zinc-900 dark:text-zinc-100">{formatKRW(selectedEtf.price)}</p>
+            </div>
+            <div className="sm:col-span-3">
+              <p className="font-bold text-zinc-400">자동 테마 분류</p>
+              <p className="mt-1 font-black text-zinc-900 dark:text-zinc-100">
+                {selectedClassification.category} · {selectedClassification.subCategory}
+              </p>
             </div>
           </div>
         )}

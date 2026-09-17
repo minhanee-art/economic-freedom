@@ -4,13 +4,15 @@ import { useState } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
 import { formatKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
+import { CATEGORIES } from "@/lib/constants";
+import { inferHoldingClassification } from "@/lib/holding-classification";
 
 interface HoldingCardProps {
   holding: HoldingWithPnL;
   portfolioTotalValue?: number;
   onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
   onTradeComplete?: (result: { holding: Holding; costBasis: CostBasis | null }) => void;
-  onHoldingDetailsChange?: (holdingId: string, patch: { code?: string; name?: string; shares?: number; avg_price?: number }) => Promise<void>;
+  onHoldingDetailsChange?: (holdingId: string, patch: { code?: string; name?: string; shares?: number; avg_price?: number; category?: string; sub_category?: string }) => Promise<void>;
   isSavingTargetPct?: boolean;
 }
 
@@ -78,6 +80,7 @@ export function HoldingCard({
   const [sharesDraft, setSharesDraft] = useState(String(h.shares));
   const [avgPriceDraft, setAvgPriceDraft] = useState(String(Math.round(h.avg_price || 0)));
   const [isSavingDetails, setIsSavingDetails] = useState(false);
+  const [isSavingCategory, setIsSavingCategory] = useState(false);
   const [detailsStatus, setDetailsStatus] = useState("");
   const [isTrading, setIsTrading] = useState(false);
   const [tradeStatus, setTradeStatus] = useState("");
@@ -182,6 +185,24 @@ export function HoldingCard({
     }
   }
 
+  async function saveCategory(nextCategory: string) {
+    if (!onHoldingDetailsChange || nextCategory === h.category) return;
+    setIsSavingCategory(true);
+    setDetailsStatus("");
+    try {
+      const inferred = inferHoldingClassification(h.name, nextCategory);
+      await onHoldingDetailsChange(h.id, {
+        category: nextCategory,
+        sub_category: inferred.category === nextCategory ? inferred.subCategory : nextCategory,
+      });
+      setDetailsStatus("테마 변경 완료");
+    } catch (err) {
+      setDetailsStatus((err as Error).message);
+    } finally {
+      setIsSavingCategory(false);
+    }
+  }
+
   async function executeTrade() {
     if (!tradeAction) return;
     const quantity = Number(tradeQuantity);
@@ -261,6 +282,23 @@ export function HoldingCard({
             <p className="mt-1 text-[11px] font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
               원문: {h.name}
             </p>
+            <div className="mt-2 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500">테마</span>
+              <select
+                value={h.category}
+                onChange={(e) => saveCategory(e.target.value)}
+                disabled={!onHoldingDetailsChange || isSavingCategory}
+                className="h-8 border border-zinc-200 bg-white px-2 text-xs font-black text-zinc-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                aria-label={`${h.name} 테마 변경`}
+              >
+                {CATEGORIES.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+              <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
+                {isSavingCategory ? "저장 중" : h.sub_category}
+              </span>
+            </div>
           </div>
           <div className="sm:text-right">
             <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>

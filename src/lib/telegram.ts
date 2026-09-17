@@ -2,6 +2,8 @@
 const TELEGRAM_API = "https://api.telegram.org";
 
 interface SendMessageOptions {
+  /** 기본 TELEGRAM_CHAT_ID 대신 보낼 대상 chat_id */
+  chatId?: string;
   /** 대시보드로 바로 이동하는 인라인 버튼 URL (선택) */
   buttonUrl?: string;
   buttonText?: string;
@@ -19,7 +21,7 @@ export async function sendTelegramMessage(
 ): Promise<void> {
   // 복붙 시 딸려오는 앞뒤 공백/줄바꿈 제거 (URL 404 방지)
   const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
-  const chatId = process.env.TELEGRAM_CHAT_ID?.trim();
+  const chatId = opts.chatId?.trim() || process.env.TELEGRAM_CHAT_ID?.trim();
   if (!token || !chatId) {
     throw new Error("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 환경변수가 없습니다");
   }

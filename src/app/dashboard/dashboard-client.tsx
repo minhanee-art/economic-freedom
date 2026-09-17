@@ -60,6 +60,27 @@ type HoldingDetailsPatch = {
   avg_price?: number;
 };
 
+type ReturnPeriodKey = "day" | "week" | "month";
+
+type PortfolioReturnPeriod = {
+  key: ReturnPeriodKey;
+  label: string;
+  snapshotDate: string | null;
+  returnAmount: number | null;
+  returnPct: number | null;
+};
+
+type PortfolioReturnSummary = {
+  accountName: string;
+  telegramChatId: string | null;
+  asOfDate: string;
+  totalValue: number;
+  totalCost: number;
+  totalPnL: number;
+  totalPnLPct: number;
+  periods: Record<ReturnPeriodKey, PortfolioReturnPeriod>;
+};
+
 export function DashboardClient({
   initialHoldings,
   initialCostBases,
@@ -75,6 +96,10 @@ export function DashboardClient({
   const [savingTargetPctId, setSavingTargetPctId] = useState<string | null>(null);
   const [savingCategoryTarget, setSavingCategoryTarget] = useState<string | null>(null);
   const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
+  const [returnSummary, setReturnSummary] = useState<PortfolioReturnSummary | null>(null);
+  const [returnStatus, setReturnStatus] = useState("");
+  const [telegramChatId, setTelegramChatId] = useState("");
+  const [isSendingReturnReport, setIsSendingReturnReport] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -86,6 +111,44 @@ export function DashboardClient({
     setCostBases(initialCostBases);
     setRefreshResult("");
   }, [initialHoldings, initialCostBases]);
+
+  const loadReturnSummary = useCallback(async () => {
+    try {
+      const res = await fetch("/api/portfolio-returns", { cache: "no-store" });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "수익률 조회 실패");
+      const summary = data.summary as PortfolioReturnSummary;
+      setReturnSummary(summary);
+      setTelegramChatId(summary.telegramChatId ?? "");
+    } catch (err) {
+      setReturnStatus(`수익률 조회 실패: ${(err as Error).message}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadReturnSummary();
+  }, [loadReturnSummary, holdings, costBases]);
+
+  const handleSendReturnReport = useCallback(async () => {
+    setIsSendingReturnReport(true);
+    setReturnStatus("");
+    try {
+      const res = await fetch("/api/portfolio-returns", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramChatId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? "텔레그램 전송 실패");
+      setReturnSummary(data.summary as PortfolioReturnSummary);
+      setReturnStatus("텔레그램 전송 완료");
+      setTimeout(() => setReturnStatus(""), 3000);
+    } catch (err) {
+      setReturnStatus(`텔레그램 전송 실패: ${(err as Error).message}`);
+    } finally {
+      setIsSendingReturnReport(false);
+    }
+  }, [telegramChatId]);
 
   // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
   useEffect(() => {
@@ -493,6 +556,15 @@ export function DashboardClient({
               <HomeStat label="월 적립금" value={formatKRW(monthlyBudget)} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
             </div>
 
+            <ReturnSummaryCard
+              summary={returnSummary}
+              telegramChatId={telegramChatId}
+              onTelegramChatIdChange={setTelegramChatId}
+              onSend={handleSendReturnReport}
+              isSending={isSendingReturnReport}
+              status={returnStatus}
+            />
+
             <div className="border border-zinc-200 bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
@@ -632,6 +704,104 @@ function HomeStat({
         {value}
       </p>
       {sub && <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-400">{sub}</p>}
+    </div>
+  );
+}
+
+function ReturnSummaryCard({
+  summary,
+  telegramChatId,
+  onTelegramChatIdChange,
+  onSend,
+  isSending,
+  status,
+}: {
+  summary: PortfolioReturnSummary | null;
+  telegramChatId: string;
+  onTelegramChatIdChange: (value: string) => void;
+  onSend: () => void;
+  isSending: boolean;
+  status: string;
+}) {
+  const periods: ReturnPeriodKey[] = ["day", "week", "month"];
+  return (
+    <div className="border border-zinc-200 bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
+      <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-base font-bold tracking-tight text-ink dark:text-white">기간별 수익률</h2>
+          <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+            일별·주간·월간 수익률을 계좌별 스냅샷 기준으로 계산합니다. 추가 매수/매도 원가 변동은 보정합니다.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={telegramChatId}
+            onChange={(e) => onTelegramChatIdChange(e.target.value.replace(/[^0-9-]/g, ""))}
+            placeholder="텔레그램 chat_id"
+            className="h-10 min-w-0 border border-zinc-200 bg-white px-3 text-sm font-semibold tabular-nums text-zinc-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 sm:w-44"
+          />
+          <button
+            type="button"
+            onClick={onSend}
+            disabled={isSending || !telegramChatId.trim()}
+            className="h-10 border border-indigo-600 bg-indigo-600 px-3 text-xs font-black text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+          >
+            {isSending ? "전송 중" : "텔레그램 전송"}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {periods.map((key) => (
+          <ReturnPeriodBox key={key} period={summary?.periods[key] ?? null} />
+        ))}
+      </div>
+
+      <div className="mt-3 flex flex-col gap-1 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+        <span>
+          {summary
+            ? `${summary.accountName} · 기준일 ${summary.asOfDate}`
+            : "수익률 스냅샷을 불러오는 중입니다."}
+        </span>
+        {status && (
+          <span className={status.includes("실패") ? "text-red-500" : "text-emerald-600 dark:text-emerald-300"}>
+            {status}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
+  const pct = period?.returnPct;
+  const amount = period?.returnAmount;
+  const tone = pct === null || pct === undefined ? "neutral" : pct >= 0 ? "up" : "down";
+  return (
+    <div className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/70">
+      <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">{period?.label ?? "수익률"}</p>
+      <p
+        className={cn(
+          "mt-1 text-xl font-black tabular-nums tracking-tight",
+          tone === "up" && "text-emerald-600 dark:text-emerald-300",
+          tone === "down" && "text-red-600 dark:text-red-300",
+          tone === "neutral" && "text-zinc-400 dark:text-zinc-500"
+        )}
+      >
+        {pct === null || pct === undefined ? "-" : `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`}
+      </p>
+      <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-400 dark:text-zinc-500">
+        {amount === null || amount === undefined
+          ? "기준 스냅샷 없음"
+          : `${amount >= 0 ? "+" : ""}${formatKRW(amount)}`}
+      </p>
+      {period?.snapshotDate && (
+        <p className="mt-1 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
+          비교 기준 {period.snapshotDate}
+        </p>
+      )}
     </div>
   );
 }

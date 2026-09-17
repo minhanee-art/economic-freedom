@@ -9,6 +9,7 @@ export type PortfolioAccount = {
   user_id: string;
   name: string;
   owner_type: "self" | "spouse" | "child" | "other";
+  telegram_chat_id: string | null;
   display_order: number;
   created_at: string;
 };
@@ -50,6 +51,7 @@ export async function ensurePortfolioAccountSchema(): Promise<void> {
     await sql`ALTER TABLE sell_items ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE`;
     await sql`ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE`;
     await sql`ALTER TABLE dividend_calendar ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE`;
+    await sql`ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT`;
 
     await sql`DROP INDEX IF EXISTS idx_holdings_user_code`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_holdings_user_account_code ON holdings(user_id, account_id, code)`;
@@ -68,7 +70,7 @@ export async function getPortfolioAccounts(userId: string): Promise<PortfolioAcc
   await ensurePortfolioAccountSchema();
   await ensureDefaultPortfolioAccount(userId);
   const rows = await sql`
-    SELECT id, user_id, name, owner_type, display_order, created_at::text
+    SELECT id, user_id, name, owner_type, telegram_chat_id, display_order, created_at::text
     FROM portfolio_accounts
     WHERE user_id = ${userId}
     ORDER BY display_order ASC, created_at ASC
@@ -133,7 +135,7 @@ export async function createPortfolioAccount(
   const [row] = await sql`
     INSERT INTO portfolio_accounts (user_id, name, owner_type, display_order)
     VALUES (${userId}, ${cleanName}, ${ownerType}, ${next_order})
-    RETURNING id, user_id, name, owner_type, display_order, created_at::text
+    RETURNING id, user_id, name, owner_type, telegram_chat_id, display_order, created_at::text
   `;
   return row as unknown as PortfolioAccount;
 }

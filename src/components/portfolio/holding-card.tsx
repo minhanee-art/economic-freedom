@@ -411,6 +411,9 @@ export function HoldingCard({
                     min="0"
                     step="1"
                     value={sharesDraft}
+                    onFocus={(e) => {
+                      if (e.currentTarget.value === "0") setSharesDraft("");
+                    }}
                     onChange={(e) => setSharesDraft(e.target.value)}
                     disabled={isSavingDetails}
                     className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
@@ -424,6 +427,9 @@ export function HoldingCard({
                     min="0"
                     step="1"
                     value={avgPriceDraft}
+                    onFocus={(e) => {
+                      if (e.currentTarget.value === "0") setAvgPriceDraft("");
+                    }}
                     onChange={(e) => setAvgPriceDraft(e.target.value)}
                     disabled={isSavingDetails}
                     className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"

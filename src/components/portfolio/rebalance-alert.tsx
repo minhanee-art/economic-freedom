@@ -1331,7 +1331,7 @@ function AddHoldingForm({
   const [category, setCategory] = useState<(typeof CATEGORIES)[number]>("주식");
   const [subCategory, setSubCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [targetPct, setTargetPct] = useState("0.0");
+  const [targetPct, setTargetPct] = useState("");
   const [shares, setShares] = useState("");
   const [avgPrice, setAvgPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
@@ -1373,7 +1373,7 @@ function AddHoldingForm({
       setName("");
       setSubCategory("");
       setPrice("");
-      setTargetPct("0.0");
+      setTargetPct("");
       setShares("");
       setAvgPrice("");
       setStatus("종목을 추가했습니다. 보유수량 0주 또는 설정비중 0%인 종목은 숨김 관리 영역에 표시됩니다.");
@@ -1454,7 +1454,11 @@ function AddHoldingForm({
             max="100"
             step="0.5"
             value={targetPct}
+            onFocus={(e) => {
+              if (e.currentTarget.value === "0" || e.currentTarget.value === "0.0") setTargetPct("");
+            }}
             onChange={(e) => setTargetPct(e.target.value)}
+            placeholder="0"
             className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </Field>

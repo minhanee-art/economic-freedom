@@ -305,63 +305,69 @@ export function RebalanceAlert({
 
   return (
     <div className="border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 px-5 py-4 space-y-4 shadow-card">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0">
           <p className="text-sm font-semibold">테마별 비중 현황</p>
           <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
             개별 종목 설정 비중의 합계가 테마 설정 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다.
           </p>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <div className="flex items-center gap-1 border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-950/60">
-            <span className="px-2 text-[11px] font-black text-zinc-400 dark:text-zinc-500">표시</span>
-            <button
-              type="button"
-              onClick={() => setShowThemeWeights((value) => !value)}
-              aria-pressed={showThemeWeights}
-              className={`inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-colors ${
-                showThemeWeights
-                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950"
-                  : "text-zinc-500 hover:bg-white hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-              }`}
-            >
-              <span className="text-[10px]">{showThemeWeights ? "●" : "○"}</span>
-              테마
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowHoldingsOnly((value) => !value)}
-              aria-pressed={showHoldingsOnly}
-              className={`inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-colors ${
-                showHoldingsOnly
-                  ? "bg-emerald-600 text-white dark:bg-emerald-400 dark:text-emerald-950"
-                  : "text-zinc-500 hover:bg-white hover:text-emerald-700 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-emerald-300"
-              }`}
-            >
-              <span className="text-[10px]">{showHoldingsOnly ? "●" : "○"}</span>
-              종목
-            </button>
-          </div>
+        <div className="grid w-full grid-cols-2 gap-1.5 sm:grid-cols-4 xl:w-auto xl:min-w-[520px]">
+          <button
+            type="button"
+            onClick={() => setShowThemeWeights((value) => !value)}
+            aria-pressed={showThemeWeights}
+            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors ${
+              showThemeWeights
+                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            }`}
+          >
+            <span className="text-[10px]">{showThemeWeights ? "●" : "○"}</span>
+            테마
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowHoldingsOnly((value) => !value)}
+            aria-pressed={showHoldingsOnly}
+            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors ${
+              showHoldingsOnly
+                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            }`}
+          >
+            <span className="text-[10px]">{showHoldingsOnly ? "●" : "○"}</span>
+            종목
+          </button>
           <button
             type="button"
             onClick={() => setShowAddHolding((value) => !value)}
             disabled={!onAddHolding}
-            className="inline-flex min-h-11 items-center justify-center border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-bold text-indigo-600 shadow-card transition-colors hover:bg-indigo-100 disabled:opacity-50 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25"
+            aria-pressed={showAddHolding}
+            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors disabled:opacity-50 ${
+              showAddHolding
+                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+            }`}
           >
-            {showAddHolding ? "종목 추가 닫기" : "+ 종목 추가"}
+            <span>{showAddHolding ? "−" : "+"}</span>
+            종목추가
           </button>
           <button
             type="button"
             onClick={() => setShowAdvice((value) => !value)}
-            className={`inline-flex min-h-11 items-center justify-center border px-4 py-2 text-sm font-bold shadow-card transition-colors ${
-              hasAdvice
-                ? "border-red-200 bg-red-50 text-red-600 hover:bg-red-100 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300"
-                : "border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
+            aria-pressed={showAdvice}
+            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors ${
+              showAdvice
+                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : hasAdvice
+                ? "border-zinc-200 bg-white text-red-600 hover:border-red-200 hover:bg-red-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-red-300 dark:hover:border-red-500/30 dark:hover:bg-red-500/10"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-emerald-500/30 dark:hover:bg-emerald-500/10 dark:hover:text-emerald-300"
             }`}
           >
-            {showAdvice ? "진단 접기" : "리밸런싱 진단 보기"}
+            진단
             {hasAdvice && (
-              <span className="ml-2 border border-current px-1.5 py-0.5 text-[11px] tabular-nums">
+              <span className="border border-current px-1.5 py-0.5 text-[10px] tabular-nums">
                 {categoryAlerts.length + holdingAlerts.length}
               </span>
             )}

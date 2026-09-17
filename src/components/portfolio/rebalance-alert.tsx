@@ -171,6 +171,8 @@ export function RebalanceAlert({
 }: Props) {
   const [showAdvice, setShowAdvice] = useState(false);
   const [showAddHolding, setShowAddHolding] = useState(false);
+  const [showThemeWeights, setShowThemeWeights] = useState(true);
+  const [showHoldingsOnly, setShowHoldingsOnly] = useState(false);
   const [expandedHiddenCategory, setExpandedHiddenCategory] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [categorySort, setCategorySort] = useState<CategorySort>("diff");
@@ -221,6 +223,10 @@ export function RebalanceAlert({
         })
         .sort((a, b) => compareHoldingBySort(a, b, holdingSort))
     : [];
+  const holdingsOnlyRows = useMemo(
+    () => [...holdings].sort((a, b) => compareHoldingBySort(a, b, holdingSort)),
+    [holdings, holdingSort]
+  );
 
   const hasAdvice = categoryAlerts.length > 0 || holdingAlerts.length > 0;
   const overCategories = categoryAlerts.filter((c) => c.diff > 0);
@@ -307,6 +313,20 @@ export function RebalanceAlert({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={() => setShowThemeWeights((value) => !value)}
+            className="inline-flex min-h-11 items-center justify-center border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-zinc-600 shadow-card transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+          >
+            {showThemeWeights ? "테마 비중 접기" : "테마 비중 펼치기"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowHoldingsOnly((value) => !value)}
+            className="inline-flex min-h-11 items-center justify-center border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-600 shadow-card transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25"
+          >
+            {showHoldingsOnly ? "종목만 보기 접기" : "종목만 보기"}
+          </button>
           <button
             type="button"
             onClick={() => setShowAddHolding((value) => !value)}
@@ -443,6 +463,22 @@ export function RebalanceAlert({
           </button>
         ))}
         <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
+        <span className="px-1.5 font-semibold text-zinc-500 dark:text-zinc-400">종목 정렬</span>
+        {HOLDING_SORT_OPTIONS.map((option) => (
+          <button
+            key={`holding-global-${option.value}`}
+            type="button"
+            onClick={() => setHoldingSort(option.value)}
+            className={`border px-2.5 py-1.5 font-bold transition-colors ${
+              holdingSort === option.value
+                ? "border-emerald-500 bg-emerald-500 text-white"
+                : "border-zinc-200 bg-white text-zinc-500 hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+        <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
         <span className="px-1.5 font-semibold text-zinc-500 dark:text-zinc-400">테마 정렬</span>
         {CATEGORY_SORT_OPTIONS.map((option) => (
           <button
@@ -460,7 +496,29 @@ export function RebalanceAlert({
         ))}
       </div>
 
-      <div className="space-y-2">
+      {showHoldingsOnly && (
+        <section className="space-y-3 border border-emerald-100 bg-emerald-50/60 p-3 shadow-card dark:border-emerald-500/20 dark:bg-emerald-500/10">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-emerald-700 dark:text-emerald-200">종목만 보기</p>
+              <p className="mt-1 text-xs leading-5 text-emerald-700/70 dark:text-emerald-200/70">
+                테마 묶음 없이 전체 보유종목 {holdingsOnlyRows.length}개를 선택한 보기·정렬 기준으로 확인합니다.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowHoldingsOnly(false)}
+              className="self-start border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-600 transition-colors hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-zinc-900 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+            >
+              종목만 보기 접기
+            </button>
+          </div>
+          {renderHoldingCollection(holdingsOnlyRows, "표시할 보유종목이 없습니다.", "all-holdings")}
+        </section>
+      )}
+
+      {showThemeWeights ? (
+        <div className="space-y-2">
         {categoryRows.map((c) => {
           const isOver = c.diff > 0;
           const isAlert = c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD;
@@ -604,7 +662,16 @@ export function RebalanceAlert({
             </div>
           );
         })}
-      </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowThemeWeights(true)}
+          className="w-full border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+        >
+          테마별 비중 현황 펼치기 · {categoryRows.length}개 테마
+        </button>
+      )}
 
       {showAdvice && (
         <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3">

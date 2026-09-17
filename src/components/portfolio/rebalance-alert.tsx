@@ -313,20 +313,35 @@ export function RebalanceAlert({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <button
-            type="button"
-            onClick={() => setShowThemeWeights((value) => !value)}
-            className="inline-flex min-h-11 items-center justify-center border border-zinc-200 bg-white px-4 py-2 text-sm font-bold text-zinc-600 shadow-card transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
-          >
-            {showThemeWeights ? "테마 비중 접기" : "테마 비중 펼치기"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowHoldingsOnly((value) => !value)}
-            className="inline-flex min-h-11 items-center justify-center border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-bold text-emerald-600 shadow-card transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25"
-          >
-            {showHoldingsOnly ? "종목만 보기 접기" : "종목만 보기"}
-          </button>
+          <div className="flex items-center gap-1 border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-950/60">
+            <span className="px-2 text-[11px] font-black text-zinc-400 dark:text-zinc-500">표시</span>
+            <button
+              type="button"
+              onClick={() => setShowThemeWeights((value) => !value)}
+              aria-pressed={showThemeWeights}
+              className={`inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-colors ${
+                showThemeWeights
+                  ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                  : "text-zinc-500 hover:bg-white hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+              }`}
+            >
+              <span className="text-[10px]">{showThemeWeights ? "●" : "○"}</span>
+              테마
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowHoldingsOnly((value) => !value)}
+              aria-pressed={showHoldingsOnly}
+              className={`inline-flex min-h-9 items-center gap-1.5 px-3 py-1.5 text-xs font-black transition-colors ${
+                showHoldingsOnly
+                  ? "bg-emerald-600 text-white dark:bg-emerald-400 dark:text-emerald-950"
+                  : "text-zinc-500 hover:bg-white hover:text-emerald-700 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-emerald-300"
+              }`}
+            >
+              <span className="text-[10px]">{showHoldingsOnly ? "●" : "○"}</span>
+              종목
+            </button>
+          </div>
           <button
             type="button"
             onClick={() => setShowAddHolding((value) => !value)}
@@ -497,21 +512,14 @@ export function RebalanceAlert({
       </div>
 
       {showHoldingsOnly && (
-        <section className="space-y-3 border border-emerald-100 bg-emerald-50/60 p-3 shadow-card dark:border-emerald-500/20 dark:bg-emerald-500/10">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <section className="space-y-3 border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="border-b border-zinc-100 pb-3 dark:border-zinc-800">
             <div>
-              <p className="text-sm font-black text-emerald-700 dark:text-emerald-200">종목만 보기</p>
-              <p className="mt-1 text-xs leading-5 text-emerald-700/70 dark:text-emerald-200/70">
+              <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">전체 종목</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
                 테마 묶음 없이 전체 보유종목 {holdingsOnlyRows.length}개를 선택한 보기·정렬 기준으로 확인합니다.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowHoldingsOnly(false)}
-              className="self-start border border-emerald-200 bg-white px-3 py-2 text-xs font-bold text-emerald-600 transition-colors hover:bg-emerald-50 dark:border-emerald-500/30 dark:bg-zinc-900 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-            >
-              종목만 보기 접기
-            </button>
           </div>
           {renderHoldingCollection(holdingsOnlyRows, "표시할 보유종목이 없습니다.", "all-holdings")}
         </section>
@@ -667,9 +675,9 @@ export function RebalanceAlert({
         <button
           type="button"
           onClick={() => setShowThemeWeights(true)}
-          className="w-full border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
+          className="w-full border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 transition-colors hover:border-zinc-400 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
         >
-          테마별 비중 현황 펼치기 · {categoryRows.length}개 테마
+          테마 비중 숨김 · 클릭해서 다시 보기 ({categoryRows.length}개)
         </button>
       )}
 

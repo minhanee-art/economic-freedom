@@ -46,6 +46,7 @@ interface Props {
 
 const CATEGORY_THRESHOLD = 3;
 const HOLDING_THRESHOLD = 5;
+const HIDDEN_HOLDING_IDS_STORAGE_KEY = "pension-manager:hidden-holding-ids";
 
 type CategorySort = "diff" | "target-desc" | "target-asc" | "current-desc" | "current-asc" | "name-asc" | "name-desc";
 type HoldingSort = "return-desc" | "code-asc" | "name-asc" | "name-desc" | "shares-desc" | "shares-asc";
@@ -113,6 +114,18 @@ function holdingCodeForSort(holding: HoldingWithPnL): string {
   return holding.code || inferHoldingCode(holding.name) || holding.name;
 }
 
+function readStoredHiddenHoldingIds(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = window.localStorage.getItem(HIDDEN_HOLDING_IDS_STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
 function compareHoldingBySort(a: HoldingWithPnL, b: HoldingWithPnL, sort: HoldingSort): number {
   if (sort === "code-asc") {
     return normalizeSortText(holdingCodeForSort(a)).localeCompare(
@@ -175,11 +188,35 @@ export function RebalanceAlert({
   const [showHoldingsOnly, setShowHoldingsOnly] = useState(false);
   const [expandedHiddenCategory, setExpandedHiddenCategory] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [manualHiddenHoldingIds, setManualHiddenHoldingIds] = useState<string[]>(readStoredHiddenHoldingIds);
+  const [showHiddenHoldings, setShowHiddenHoldings] = useState(false);
   const [categorySort, setCategorySort] = useState<CategorySort>("diff");
   const [holdingSort, setHoldingSort] = useState<HoldingSort>("return-desc");
   const [holdingSearch, setHoldingSearch] = useState("");
   const [holdingViewMode, setHoldingViewMode] = useState<HoldingViewMode>("wide");
   const totalValue = holdings.reduce((sum, h) => sum + h.current_value, 0);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HIDDEN_HOLDING_IDS_STORAGE_KEY, JSON.stringify(manualHiddenHoldingIds));
+    } catch {
+      // localStorage 저장 실패는 UI 표시만 유지합니다.
+    }
+  }, [manualHiddenHoldingIds]);
+
+  const manualHiddenHoldingIdSet = useMemo(
+    () => new Set(manualHiddenHoldingIds),
+    [manualHiddenHoldingIds]
+  );
+
+  function setHoldingManuallyHidden(holdingId: string, hidden: boolean) {
+    setManualHiddenHoldingIds((prev) => {
+      if (hidden) {
+        return prev.includes(holdingId) ? prev : [...prev, holdingId];
+      }
+      return prev.filter((id) => id !== holdingId);
+    });
+  }
 
   const categoryRows = useMemo(() => {
     const holdingCategoryNames = new Set(holdings.map((h) => h.category));
@@ -206,13 +243,14 @@ export function RebalanceAlert({
   );
 
   const holdingAlerts = holdings
-    .filter((h) => h.target_pct > 0 && Math.abs(h.actual_pct - h.target_pct) >= HOLDING_THRESHOLD)
+    .filter((h) => !manualHiddenHoldingIdSet.has(h.id) && h.target_pct > 0 && Math.abs(h.actual_pct - h.target_pct) >= HOLDING_THRESHOLD)
     .map((h) => ({ ...h, diff: +(h.actual_pct - h.target_pct).toFixed(1) }))
     .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
 
   const normalizedHoldingSearch = normalizeSortText(holdingSearch.trim());
   const searchedHoldings = normalizedHoldingSearch
     ? holdings
+        .filter((h) => !manualHiddenHoldingIdSet.has(h.id))
         .filter((h) => {
           const haystack = normalizeSortText(
             [h.code, inferHoldingCode(h.name), h.name, h.category, h.sub_category]
@@ -224,8 +262,16 @@ export function RebalanceAlert({
         .sort((a, b) => compareHoldingBySort(a, b, holdingSort))
     : [];
   const holdingsOnlyRows = useMemo(
-    () => [...holdings].sort((a, b) => compareHoldingBySort(a, b, holdingSort)),
-    [holdings, holdingSort]
+    () => [...holdings]
+      .filter((h) => !manualHiddenHoldingIdSet.has(h.id))
+      .sort((a, b) => compareHoldingBySort(a, b, holdingSort)),
+    [holdings, holdingSort, manualHiddenHoldingIdSet]
+  );
+  const manualHiddenHoldings = useMemo(
+    () => holdings
+      .filter((h) => manualHiddenHoldingIdSet.has(h.id))
+      .sort((a, b) => compareHoldingBySort(a, b, holdingSort)),
+    [holdings, holdingSort, manualHiddenHoldingIdSet]
   );
 
   const hasAdvice = categoryAlerts.length > 0 || holdingAlerts.length > 0;
@@ -234,6 +280,23 @@ export function RebalanceAlert({
   const topOver = overCategories[0];
   const topUnder = underCategories[0];
   const totalDrift = categoryAlerts.reduce((sum, c) => sum + Math.abs(c.diff), 0);
+
+  function renderHoldingVisibilityControl(holding: HoldingWithPnL, isHidden = false) {
+    return (
+      <label className="flex items-center justify-between gap-3 border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-400">
+        <span>{isHidden ? "숨김 목록에 있음" : "목록에서 숨기기"}</span>
+        <span className="inline-flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={manualHiddenHoldingIdSet.has(holding.id)}
+            onChange={(e) => setHoldingManuallyHidden(holding.id, e.target.checked)}
+            className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
+          />
+          <span>{isHidden ? "숨김" : "숨김"}</span>
+        </span>
+      </label>
+    );
+  }
 
   function renderHoldingCollection(items: HoldingWithPnL[], emptyText: string, keyPrefix = "holding") {
     if (items.length === 0) {
@@ -248,7 +311,10 @@ export function RebalanceAlert({
       return (
         <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3">
           {items.map((holding) => (
-            <HoldingMiniChart key={`${keyPrefix}-chart-${holding.id}`} holding={holding} />
+            <div key={`${keyPrefix}-chart-${holding.id}`} className="space-y-1.5">
+              {renderHoldingVisibilityControl(holding)}
+              <HoldingMiniChart holding={holding} />
+            </div>
           ))}
         </div>
       );
@@ -258,15 +324,17 @@ export function RebalanceAlert({
       <div className={holdingViewMode === "grid" ? "grid grid-cols-1 gap-2 xl:grid-cols-2" : "space-y-2"}>
         {items.map((holding) => {
           const card = (
-            <HoldingCard
-              key={`${keyPrefix}-${holding.id}`}
-              holding={holding}
-              portfolioTotalValue={totalValue}
-              onTargetPctChange={onTargetPctChange}
-              onTradeComplete={onTradeComplete}
-              onHoldingDetailsChange={onHoldingDetailsChange}
-              isSavingTargetPct={savingTargetPctId === holding.id}
-            />
+            <div key={`${keyPrefix}-${holding.id}`} className="space-y-1.5">
+              {renderHoldingVisibilityControl(holding)}
+              <HoldingCard
+                holding={holding}
+                portfolioTotalValue={totalValue}
+                onTargetPctChange={onTargetPctChange}
+                onTradeComplete={onTradeComplete}
+                onHoldingDetailsChange={onHoldingDetailsChange}
+                isSavingTargetPct={savingTargetPctId === holding.id}
+              />
+            </div>
           );
 
           if (holdingViewMode === "wide") {
@@ -377,6 +445,49 @@ export function RebalanceAlert({
 
       {showAddHolding && onAddHolding && (
         <AddHoldingForm onAddHolding={onAddHolding} />
+      )}
+
+      {showHiddenHoldings && (
+        <section className="space-y-3 border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">숨긴 종목</p>
+              <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+                체크로 숨긴 종목 {manualHiddenHoldings.length}개입니다. 체크를 해제하면 원래 목록에 다시 표시됩니다.
+              </p>
+            </div>
+            {manualHiddenHoldings.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setManualHiddenHoldingIds([])}
+                className="self-start border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-black text-zinc-500 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
+              >
+                전체 숨김 해제
+              </button>
+            )}
+          </div>
+          {manualHiddenHoldings.length === 0 ? (
+            <p className="border border-zinc-200 bg-zinc-50 p-3 text-xs font-semibold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+              체크해서 숨긴 종목이 없습니다.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {manualHiddenHoldings.map((holding) => (
+                <div key={`manual-hidden-${holding.id}`} className="space-y-1.5">
+                  {renderHoldingVisibilityControl(holding, true)}
+                  <HoldingCard
+                    holding={holding}
+                    portfolioTotalValue={totalValue}
+                    onTargetPctChange={onTargetPctChange}
+                    onTradeComplete={onTradeComplete}
+                    onHoldingDetailsChange={onHoldingDetailsChange}
+                    isSavingTargetPct={savingTargetPctId === holding.id}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       <div className="border border-zinc-100 bg-zinc-50 p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">
@@ -538,10 +649,10 @@ export function RebalanceAlert({
           const isAlert = c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD;
           const allCategoryHoldings = holdings.filter((h) => h.category === c.name);
           const categoryHoldings = allCategoryHoldings
-            .filter((h) => h.shares > 0 && h.target_pct > 0)
+            .filter((h) => h.shares > 0 && h.target_pct > 0 && !manualHiddenHoldingIdSet.has(h.id))
             .sort((a, b) => compareHoldingBySort(a, b, holdingSort));
           const hiddenCategoryHoldings = allCategoryHoldings
-            .filter((h) => h.shares <= 0 || h.target_pct <= 0)
+            .filter((h) => h.shares <= 0 || h.target_pct <= 0 || manualHiddenHoldingIdSet.has(h.id))
             .sort((a, b) => compareHoldingBySort(a, b, holdingSort));
           const isExpanded = expandedCategory === c.name;
           const isHiddenExpanded = expandedHiddenCategory === c.name;
@@ -659,6 +770,8 @@ export function RebalanceAlert({
                             <HiddenHoldingManager
                               key={h.id}
                               holding={h}
+                              isManuallyHidden={manualHiddenHoldingIdSet.has(h.id)}
+                              onManualHiddenChange={setHoldingManuallyHidden}
                               portfolioTotalValue={totalValue}
                               onTargetPctChange={onTargetPctChange}
                               onTradeComplete={onTradeComplete}
@@ -761,6 +874,31 @@ export function RebalanceAlert({
           )}
         </div>
       )}
+      <div className="fixed bottom-4 right-4 z-40 flex flex-col gap-2 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => setShowHiddenHoldings((value) => !value)}
+          className={`min-h-11 border px-4 py-2 text-sm font-black shadow-lg transition-colors ${
+            showHiddenHoldings
+              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
+          }`}
+        >
+          숨긴 종목 {manualHiddenHoldings.length}
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowAddHolding((value) => !value)}
+          disabled={!onAddHolding}
+          className={`min-h-11 border px-4 py-2 text-sm font-black shadow-lg transition-colors disabled:opacity-50 ${
+            showAddHolding
+              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+              : "border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-zinc-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
+          }`}
+        >
+          + 신규 추가
+        </button>
+      </div>
     </div>
   );
 }
@@ -1103,6 +1241,8 @@ function CategoryTargetEditor({
 
 function HiddenHoldingManager({
   holding,
+  isManuallyHidden,
+  onManualHiddenChange,
   portfolioTotalValue,
   onTargetPctChange,
   onTradeComplete,
@@ -1111,6 +1251,8 @@ function HiddenHoldingManager({
   isSavingTargetPct,
 }: {
   holding: HoldingWithPnL;
+  isManuallyHidden?: boolean;
+  onManualHiddenChange?: (holdingId: string, hidden: boolean) => void;
   portfolioTotalValue: number;
   onTargetPctChange?: (holdingId: string, targetPct: number) => Promise<void>;
   onTradeComplete?: (result: { holding: Holding; costBasis: CostBasis | null }) => void;
@@ -1121,6 +1263,7 @@ function HiddenHoldingManager({
   const [isDeleting, setIsDeleting] = useState(false);
   const [status, setStatus] = useState("");
   const hiddenReasons = [
+    isManuallyHidden ? "직접 숨김" : null,
     holding.shares <= 0 ? "보유수량 0주" : null,
     holding.target_pct <= 0 ? "설정비중 0%" : null,
   ].filter(Boolean).join(" · ");
@@ -1145,14 +1288,25 @@ function HiddenHoldingManager({
         <span className="font-bold text-zinc-500 dark:text-zinc-400">
           숨김 사유: {hiddenReasons}
         </span>
-        <button
-          type="button"
-          onClick={deleteHolding}
-          disabled={!onDeleteHolding || holding.shares > 0 || isDeleting}
-          className="border border-red-200 bg-red-50 px-2.5 py-1.5 font-black text-red-600 transition-colors hover:bg-red-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
-        >
-          {isDeleting ? "삭제 중" : holding.shares > 0 ? "보유중 삭제불가" : "DB 삭제"}
-        </button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {isManuallyHidden && (
+            <button
+              type="button"
+              onClick={() => onManualHiddenChange?.(holding.id, false)}
+              className="border border-zinc-200 bg-zinc-50 px-2.5 py-1.5 font-black text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+            >
+              숨김 해제
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={deleteHolding}
+            disabled={!onDeleteHolding || holding.shares > 0 || isDeleting}
+            className="border border-red-200 bg-red-50 px-2.5 py-1.5 font-black text-red-600 transition-colors hover:bg-red-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+          >
+            {isDeleting ? "삭제 중" : holding.shares > 0 ? "보유중 삭제불가" : "DB 삭제"}
+          </button>
+        </div>
       </div>
       <HoldingCard
         holding={holding}

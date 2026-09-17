@@ -47,6 +47,10 @@ export function HoldingCard({
   const diff = h.actual_pct - h.target_pct;
   const showDiff = h.target_pct > 0 && Math.abs(diff) >= 3;
   const hasPnL = h.total_cost > 0;
+  const avgPrice = Math.round(h.avg_price || 0);
+  const profitLossPctLabel = hasPnL
+    ? `${h.profit_loss_pct >= 0 ? "+" : ""}${h.profit_loss_pct.toFixed(1)}%`
+    : "-";
   const targetPct = Math.max(0, Math.min(100, h.target_pct));
   const actualPct = Math.max(0, Math.min(100, h.actual_pct));
   const displayName = formatHoldingName(h.name);
@@ -262,6 +266,45 @@ export function HoldingCard({
             <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>
             <p className="text-xs text-zinc-400 tabular-nums">
               {h.shares}주 × ₩{h.current_price.toLocaleString()}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+          <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
+            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">평단가</p>
+            <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
+              {avgPrice > 0 ? `₩${avgPrice.toLocaleString()}` : "-"}
+            </p>
+          </div>
+          <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
+            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">수익률</p>
+            <p className={`mt-0.5 text-xs font-black tabular-nums ${
+              !hasPnL
+                ? "text-zinc-400 dark:text-zinc-500"
+                : h.profit_loss_pct >= 0
+                ? "text-emerald-600 dark:text-emerald-300"
+                : "text-red-600 dark:text-red-300"
+            }`}>
+              {profitLossPctLabel}
+            </p>
+          </div>
+          <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
+            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">평가손익</p>
+            <p className={`mt-0.5 text-xs font-black tabular-nums ${
+              !hasPnL
+                ? "text-zinc-400 dark:text-zinc-500"
+                : h.profit_loss >= 0
+                ? "text-emerald-600 dark:text-emerald-300"
+                : "text-red-600 dark:text-red-300"
+            }`}>
+              {hasPnL ? `${h.profit_loss >= 0 ? "+" : ""}${formatKRW(h.profit_loss)}` : "-"}
+            </p>
+          </div>
+          <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
+            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">현재가</p>
+            <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
+              ₩{h.current_price.toLocaleString()}
             </p>
           </div>
         </div>

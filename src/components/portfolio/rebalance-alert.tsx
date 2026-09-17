@@ -944,6 +944,7 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
   const diff = holding.actual_pct - holding.target_pct;
   const isOver = diff > 0;
   const hasDiff = holding.target_pct > 0 && Math.abs(diff) >= 0.1;
+  const hasPnL = holding.total_cost > 0;
 
   return (
     <div className="border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
@@ -981,12 +982,15 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-3 gap-1 text-center text-[11px] font-bold tabular-nums">
+      <div className="mt-3 grid grid-cols-2 gap-1 text-center text-[11px] font-bold tabular-nums sm:grid-cols-4">
         <span className="border border-zinc-100 bg-zinc-50 px-1.5 py-1 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
           평단 ₩{Math.round(holding.avg_price || 0).toLocaleString()}
         </span>
-        <span className={`border px-1.5 py-1 ${holding.profit_loss >= 0 ? "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300" : "border-red-100 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"}`}>
-          {holding.profit_loss >= 0 ? "+" : ""}{formatKRW(holding.profit_loss)}
+        <span className={`border px-1.5 py-1 ${!hasPnL ? "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400" : holding.profit_loss_pct >= 0 ? "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300" : "border-red-100 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"}`}>
+          수익률 {hasPnL ? `${holding.profit_loss_pct >= 0 ? "+" : ""}${holding.profit_loss_pct.toFixed(1)}%` : "-"}
+        </span>
+        <span className={`border px-1.5 py-1 ${!hasPnL ? "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400" : holding.profit_loss >= 0 ? "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300" : "border-red-100 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"}`}>
+          {hasPnL ? `${holding.profit_loss >= 0 ? "+" : ""}${formatKRW(holding.profit_loss)}` : "-"}
         </span>
         <span className={`border px-1.5 py-1 ${hasDiff ? isOver ? "border-red-100 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300" : "border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-300" : "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"}`}>
           {diff > 0 ? "+" : ""}{diff.toFixed(1)}%p

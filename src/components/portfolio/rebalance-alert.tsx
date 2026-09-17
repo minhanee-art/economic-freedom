@@ -1522,6 +1522,9 @@ function AddHoldingForm({
             type="text"
             inputMode="numeric"
             value={shares}
+            onFocus={(e) => {
+              if (e.currentTarget.value === "0") setShares("");
+            }}
             onChange={(e) => {
               const value = e.target.value.replace(/[^0-9]/g, "");
               setShares(value ? Number(value).toLocaleString() : "");
@@ -1535,6 +1538,9 @@ function AddHoldingForm({
             type="text"
             inputMode="numeric"
             value={avgPrice}
+            onFocus={(e) => {
+              if (e.currentTarget.value === "0") setAvgPrice("");
+            }}
             onChange={(e) => {
               const value = e.target.value.replace(/[^0-9]/g, "");
               setAvgPrice(value ? Number(value).toLocaleString() : "");
@@ -1551,6 +1557,9 @@ function AddHoldingForm({
             max="100"
             step="0.5"
             value={targetPct}
+            onFocus={(e) => {
+              if (e.currentTarget.value === "0" || e.currentTarget.value === "0.0") setTargetPct("");
+            }}
             onChange={(e) => setTargetPct(e.target.value)}
             placeholder="0"
             className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"

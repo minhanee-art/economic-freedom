@@ -278,6 +278,15 @@ export function HoldingCard({
                 max="100"
                 step="0.5"
                 value={targetInput}
+                onFocus={(e) => {
+                  if (e.currentTarget.value === "0" || e.currentTarget.value === "0.0") {
+                    setTargetDraft({
+                      holdingId: h.id,
+                      targetPct: h.target_pct,
+                      value: "",
+                    });
+                  }
+                }}
                 onChange={(e) =>
                   setTargetDraft({
                     holdingId: h.id,

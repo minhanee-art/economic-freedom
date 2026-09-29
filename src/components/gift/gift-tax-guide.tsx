@@ -29,6 +29,15 @@ const INSTALLMENT_DOC_STEPS = [
   "엑셀 또는 계산 결과 파일을 PDF로 변환해 홈택스 첨부서류로 보관합니다.",
 ];
 
+const CHILD_INVESTMENT_RECORDS = [
+  "자녀 명의 계좌 입금 내역: 부모 계좌 → 자녀 계좌로 이동한 금액과 날짜를 증명합니다.",
+  "증여 신고 접수증과 첨부서류 PDF: 나중에 자금출처를 설명할 때 가장 먼저 보여줄 핵심 자료입니다.",
+  "정기 이체 이행표: 유기정기금 계약서의 월 납입액·날짜와 실제 입금 내역이 일치하는지 확인합니다.",
+  "투자 교육 기록: 자녀가 어떤 상품을 왜 선택했는지 가족회의·학습노트·퀴즈·대화 기록 형태로 남깁니다.",
+  "매수·매도 판단 기록: 부모가 대신 매매했다는 오해를 줄이기 위해 자녀의 의견, 리밸런싱 이유, 보유 목적을 짧게 기록합니다.",
+  "연 1회 결산 기록: 평가금액, 수익률, 배당금, 다음 해 목표를 저장해 장기 투자 흐름을 설명할 수 있게 합니다.",
+];
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden group" open>
@@ -207,6 +216,28 @@ export function GiftTaxGuide() {
           <li>장기 투자 목적이라면 자녀가 성인이 될 때까지 보유할 상품인지, 수수료와 환율·세금 부담은 어떤지 미리 확인하세요.</li>
           <li>이 앱에는 첫 입금일, 매월 이체액, 신고 완료 여부, 첨부서류 보관 상태를 함께 기록해 두는 것을 권장합니다.</li>
         </ul>
+      </Section>
+
+      <Section title="4. 자녀 투자 증빙 관리 — 우리 앱에 적용할 방식">
+        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+          참고 사이트의 장점은 단순히 증여세 신고 방법만 안내하는 것이 아니라, <b>자녀가 직접 배우고 투자했다는 과정 증빙</b>을 함께 남기도록 설계한 점입니다.
+          우리 앱에서는 증여 기록과 포트폴리오 기록을 연결해 “돈을 보냈다”에서 끝나지 않고, “신고했고, 계좌가 분리되어 있고, 장기 투자 과정을 관리했다”까지 확인할 수 있게 정리합니다.
+        </div>
+
+        <div>
+          <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">보관하면 좋은 증빙</p>
+          <Steps items={CHILD_INVESTMENT_RECORDS} />
+        </div>
+
+        <div>
+          <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">앱 기록 팁</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>증여 기록에는 <b>첫 입금일, 신고기한, 신고 완료일, 첨부서류 보관 여부</b>를 함께 남기세요.</li>
+            <li>자녀 보유자산 메모에는 <b>매수 이유, 목표 보유기간, 리밸런싱 기준</b>을 짧게 적어 두면 좋습니다.</li>
+            <li>월별 자동이체가 계약과 다르게 실행되면 누락·초과 입금 여부를 즉시 확인하고 별도 증여 신고가 필요한지 검토하세요.</li>
+            <li>부모 계좌로 다시 돈이 돌아오거나 생활비처럼 섞이면 증여 인정에 불리할 수 있으므로 자녀 계좌의 입출금 목적을 분리해 관리하세요.</li>
+          </ul>
+        </div>
       </Section>
 
       <Section title="⚠️ 공통 주의사항">

@@ -40,6 +40,15 @@ export async function getSessionFromRequest(req: NextRequest): Promise<{ userId:
   return userId ? { userId } : null;
 }
 
+/** 모바일 앱/API 클라이언트용 Bearer 토큰 세션 */
+export async function getBearerSession(request: Request): Promise<{ userId: string } | null> {
+  const auth = request.headers.get("authorization") ?? "";
+  const [scheme, token] = auth.split(" ");
+  if (scheme?.toLowerCase() !== "bearer" || !token) return null;
+  const userId = await verifyToken(token);
+  return userId ? { userId } : null;
+}
+
 export function setSessionCookie(res: NextResponse, token: string): void {
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,

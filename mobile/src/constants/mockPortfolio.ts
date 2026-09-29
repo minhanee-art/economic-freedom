@@ -1,0 +1,53 @@
+import type { PortfolioSummary } from "@/types";
+
+export const mockPortfolio: PortfolioSummary = {
+  totalValue: 128450320,
+  totalCost: 113200000,
+  totalDividend: 3184000,
+  monthlyBudget: 300000,
+  targetMonthlyCashflow: 3000000,
+  expectedAnnualDividend: 2430000,
+  holdings: [
+    {
+      id: "schd",
+      code: "SCHD",
+      name: "Schwab US Dividend Equity ETF",
+      category: "미국 배당",
+      currentValue: 31200000,
+      totalCost: 28600000,
+      profitLoss: 2600000,
+      profitLossPct: 9.09,
+      allocationPct: 24.3,
+    },
+    {
+      id: "tiger-us-tech",
+      code: "381170",
+      name: "TIGER 미국테크TOP10 INDXX",
+      category: "연금 ETF",
+      currentValue: 24800000,
+      totalCost: 21000000,
+      profitLoss: 3800000,
+      profitLossPct: 18.1,
+      allocationPct: 19.3,
+    },
+    {
+      id: "jepi",
+      code: "JEPI",
+      name: "JPMorgan Equity Premium Income ETF",
+      category: "월배당",
+      currentValue: 18600000,
+      totalCost: 19000000,
+      profitLoss: -400000,
+      profitLossPct: -2.11,
+      allocationPct: 14.5,
+    },
+  ],
+  dividends: [
+    { month: "1월", amount: 80000 },
+    { month: "2월", amount: 210000 },
+    { month: "3월", amount: 120000 },
+    { month: "4월", amount: 350000 },
+    { month: "5월", amount: 90000 },
+    { month: "6월", amount: 240000 },
+  ],
+};

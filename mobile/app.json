@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "경제적 자유",
+    "slug": "economic-freedom",
+    "version": "1.0.0",
+    "scheme": "economicfreedom",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "kr.kimvibe.economicfreedom",
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "backgroundColor": "#1c1e54",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a374e4aa-9940-449b-9271-2475deb44f6f"
+      }
+    },
+    "owner": "minhanee"
+  }
+}

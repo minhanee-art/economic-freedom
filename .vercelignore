@@ -1,0 +1,6 @@
+worktrees/
+mobile/node_modules/
+mobile/dist/
+mobile/builds/
+mobile/store-assets/
+mobile/scripts/

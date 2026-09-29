@@ -20,6 +20,12 @@
 # production
 /build
 
+# local workspaces and generated store assets
+worktrees/
+mobile/builds/
+mobile/store-assets/
+mobile/scripts/
+
 # misc
 .DS_Store
 *.pem

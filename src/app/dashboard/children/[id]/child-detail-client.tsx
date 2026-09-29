@@ -25,6 +25,48 @@ const GIFT_TYPE_LABEL: Record<string, string> = {
 
 const NON_GIFT_TYPES = new Set(["government_support"]);
 
+function parseMoney(value: string): number {
+  return Number(value.replace(/[^0-9]/g, "")) || 0;
+}
+
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function addMonths(date: Date, months: number): Date {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+}
+
+function buildInstallmentRows(startDate: string, monthlyAmount: number, months: number) {
+  if (!startDate || monthlyAmount <= 0 || months <= 0) return [];
+  const start = new Date(`${startDate}T00:00:00`);
+  const rows = new Map<number, { year: number; installmentYear: number; count: number; principal: number; pv: number }>();
+
+  for (let i = 0; i < months; i++) {
+    const paymentDate = addMonths(start, i);
+    const year = paymentDate.getFullYear();
+    const existing = rows.get(year) ?? {
+      year,
+      installmentYear: year - start.getFullYear() + 1,
+      count: 0,
+      principal: 0,
+      pv: 0,
+    };
+
+    existing.count += 1;
+    existing.principal += monthlyAmount;
+    existing.pv += monthlyAmount / Math.pow(1 + 0.03 / 12, i + 1);
+    rows.set(year, existing);
+  }
+
+  return Array.from(rows.values()).map((row) => ({ ...row, pv: Math.round(row.pv) }));
+}
+
 export function ChildDetailClient({ child, initialGifts, initialHoldings }: Props) {
   const [tab, setTab] = useState<Tab>("gifts");
   const [gifts, setGifts] = useState(initialGifts);
@@ -63,7 +105,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
         ))}
       </div>
 
-      {tab === "gifts" && <GiftsTab childId={child.id} gifts={gifts} setGifts={setGifts} />}
+      {tab === "gifts" && <GiftsTab childId={child.id} childName={child.name} gifts={gifts} setGifts={setGifts} />}
       {tab === "holdings" && <HoldingsTab childId={child.id} holdings={holdings} setHoldings={setHoldings} />}
       {tab === "guide" && <GiftTaxGuide />}
     </div>
@@ -72,10 +114,12 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
 
 function GiftsTab({
   childId,
+  childName,
   gifts,
   setGifts,
 }: {
   childId: string;
+  childName: string;
   gifts: ChildGiftRow[];
   setGifts: (g: ChildGiftRow[]) => void;
 }) {
@@ -91,8 +135,16 @@ function GiftsTab({
   const [installMonths, setInstallMonths] = useState("");
   const pv =
     installMonthly && installMonths
-      ? presentValueOfInstallments(Number(installMonthly.replace(/[^0-9]/g, "")), Number(installMonths))
+      ? presentValueOfInstallments(parseMoney(installMonthly), Number(installMonths))
       : 0;
+  const monthlyInstallmentAmount = parseMoney(installMonthly);
+  const installmentMonthCount = Number(installMonths) || 0;
+  const installmentRows = buildInstallmentRows(date, monthlyInstallmentAmount, installmentMonthCount);
+  const installmentPrincipal = monthlyInstallmentAmount * installmentMonthCount;
+  const installmentLastDate = date && installmentMonthCount > 0
+    ? toDateInputValue(addMonths(new Date(`${date}T00:00:00`), installmentMonthCount - 1))
+    : "";
+  const paymentDay = date ? new Date(`${date}T00:00:00`).getDate() : 1;
 
   const handleAdd = async () => {
     const amt = parseInt(amount.replace(/[^0-9]/g, ""), 10);
@@ -232,16 +284,19 @@ function GiftsTab({
         )}
 
         {giftType === "installment" && (
-          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-3 space-y-2">
+          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-3 space-y-3">
             <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
-              유기정기금 현재가치 계산기 (참고용 — 실제 신고는 홈택스 자동계산으로 확인)
+              유기정기금 계약서·평가명세서 미리보기 (참고용 — 실제 신고는 홈택스 자동계산으로 확인)
             </p>
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="text"
                 inputMode="numeric"
                 value={installMonthly}
-                onChange={(e) => setInstallMonthly(e.target.value.replace(/[^0-9]/g, ""))}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, "");
+                  setInstallMonthly(v ? parseInt(v).toLocaleString() : "");
+                }}
                 placeholder="월 납입액(원)"
                 className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
               />
@@ -254,11 +309,62 @@ function GiftsTab({
                 className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
               />
             </div>
+
             {pv > 0 && (
-              <p className="text-xs text-zinc-500">
-                현재가치(참고): <span className="font-semibold text-indigo-500">{formatFullKRW(pv)}</span>
-                {" "}(연 3% 할인율 적용 추정치)
-              </p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-[11px] text-zinc-400">정기금 시작일</p>
+                    <p className="text-xs font-semibold">{date}</p>
+                  </div>
+                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-[11px] text-zinc-400">정기금 마지막일</p>
+                    <p className="text-xs font-semibold">{installmentLastDate}</p>
+                  </div>
+                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-[11px] text-zinc-400">지급 시기</p>
+                    <p className="text-xs font-semibold">매월 {paymentDay}일</p>
+                  </div>
+                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-[11px] text-zinc-400">할인율</p>
+                    <p className="text-xs font-semibold">연 3%</p>
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30 p-3 text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                  <b>{childName}</b>에게 매월 <b>{formatFullKRW(monthlyInstallmentAmount)}</b>씩 {installmentMonthCount}개월 지급하는 계약입니다.
+                  원금 합계는 <b>{formatFullKRW(installmentPrincipal)}</b>, 연 3% 할인율 추정 평가액은 <b>{formatFullKRW(pv)}</b>입니다.
+                </div>
+
+                <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                  <table className="w-full text-[11px]">
+                    <thead className="text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
+                      <tr>
+                        <th className="text-left font-medium px-2 py-1.5">년도</th>
+                        <th className="text-right font-medium px-2 py-1.5">불입년도</th>
+                        <th className="text-right font-medium px-2 py-1.5">횟수</th>
+                        <th className="text-right font-medium px-2 py-1.5">불입원금</th>
+                        <th className="text-right font-medium px-2 py-1.5">할인평가액</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {installmentRows.map((row) => (
+                        <tr key={row.year} className="border-b border-zinc-100 dark:border-zinc-800 last:border-0">
+                          <td className="px-2 py-1.5">{row.year}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{row.installmentYear}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{row.count}개월</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRW(row.principal)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRW(row.pv)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <p className="text-[11px] text-zinc-400">
+                  참고 사이트처럼 계약서·평가명세서 생성에 필요한 핵심값을 한 화면에서 확인하도록 구성했습니다. 개인정보가 들어가는 실제 서류 출력 기능은 별도 동의/보안 설계 후 추가하는 것이 안전합니다.
+                </p>
+              </div>
             )}
           </div>
         )}

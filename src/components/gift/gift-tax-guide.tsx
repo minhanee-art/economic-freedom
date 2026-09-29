@@ -10,6 +10,25 @@ const BRACKET_ROWS = [
   { range: "30억원 초과", rate: "50%", deduction: "4억 6천만원" },
 ];
 
+const HOMETAX_STEPS = [
+  "자녀 명의 홈택스 계정을 준비합니다. 미성년자는 법정대리인 휴대폰 인증으로 가입·로그인할 수 있습니다.",
+  "홈택스에서 세금신고 → 증여세 신고 → 정기신고로 들어갑니다.",
+  "증여자(부모)와 수증자(자녀) 정보를 입력합니다. 신고 기준일은 최초 입금일입니다.",
+  "증여재산가액 입력 단계에서 유기정기금 평가명세서의 할인평가액을 기준으로 입력합니다.",
+  "증여재산명세를 확인하고, 공제 적용 후 납부세액이 0원인지 확인합니다. 공제한도를 넘으면 산출세액이 생길 수 있습니다.",
+  "신고서를 제출한 뒤 신고 부속서류 제출 메뉴에서 가족관계증명서, 통장 사본, 증여계약서, 유기정기금 평가명세서를 PDF로 첨부합니다.",
+  "신고 완료 화면과 접수증을 저장하고, 이 앱의 증여 기록에서 신고여부를 체크합니다.",
+];
+
+const INSTALLMENT_DOC_STEPS = [
+  "매월 같은 금액을 같은 날짜에 자녀 계좌로 자동이체하도록 설정합니다. 첫 입금일이 증여 시작일입니다.",
+  "증여계약서에는 앞으로 몇 년간 매월 얼마를 지급할지 명확히 적습니다.",
+  "유기정기금 평가명세서에서 월 증여액, 지급기간, 증여 시작일을 입력해 할인평가액을 계산합니다.",
+  "미성년 자녀는 최근 10년 공제한도 2,000만원에서 이미 증여한 금액을 뺀 잔여 한도 안으로 할인평가액을 맞춥니다.",
+  "월 19만원씩 10년은 원금 합계가 2,280만원이지만, 유기정기금 현재가치 할인평가로 공제한도 안에 맞추는 대표 예시입니다. 정확한 한도는 홈택스 또는 세무사 확인이 필요합니다.",
+  "엑셀 또는 계산 결과 파일을 PDF로 변환해 홈택스 첨부서류로 보관합니다.",
+];
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden group" open>
@@ -146,6 +165,48 @@ export function GiftTaxGuide() {
             ]}
           />
         </div>
+      </Section>
+
+      <Section title="2. 홈택스 신고 실전 순서 — 유기정기금 방식">
+        <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+          참고 자료의 핵심은 <b>자녀 계좌에 매월 같은 금액을 자동이체하고, 최초 입금 후 3개월 이내에 유기정기금으로 1회 신고</b>하는 방식입니다.
+          앱에서는 신고 전 준비물, 홈택스 입력 순서, 신고 후 증빙 보관까지 한 번에 확인할 수 있도록 정리했습니다.
+        </div>
+
+        <div>
+          <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">신고 전 준비물</p>
+          <ul className="list-disc list-inside space-y-0.5">
+            <li>부모 신분증, 부모 명의 휴대폰</li>
+            <li>자녀 명의 증권계좌 또는 입금계좌</li>
+            <li>자녀 계좌로 첫 입금한 내역과 앞으로의 자동이체 설정</li>
+            <li>증여자와 수증자 통장 사본</li>
+            <li>가족관계증명서 PDF</li>
+            <li>증여계약서, 유기정기금 평가명세서 PDF</li>
+          </ul>
+        </div>
+
+        <div>
+          <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">서류 만드는 순서</p>
+          <Steps items={INSTALLMENT_DOC_STEPS} />
+          <p className="text-xs text-zinc-400 mt-2">
+            외부 계산 도구를 사용할 때도 최종 신고 전 홈택스 자동계산 결과와 첨부서류 금액이 일치하는지 확인하세요.
+          </p>
+        </div>
+
+        <div>
+          <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">홈택스 신고 순서</p>
+          <Steps items={HOMETAX_STEPS} />
+        </div>
+      </Section>
+
+      <Section title="3. 자녀 계좌 투자 전 체크포인트">
+        <ul className="list-disc list-inside space-y-1">
+          <li>자녀 계좌에서 발생한 투자 수익은 원칙적으로 자녀 재산으로 관리되지만, 최초 증여와 계좌 지배관계가 명확해야 합니다.</li>
+          <li>자녀 명의 계좌라도 부모가 임의로 입출금하거나 본인 자금처럼 쓰면 증여 인정에 문제가 생길 수 있습니다.</li>
+          <li>미성년 자녀 계좌에서 매도 차익이 커지면 부양가족 공제 등 다른 세무 이슈가 생길 수 있으므로 매도 전 확인이 필요합니다.</li>
+          <li>장기 투자 목적이라면 자녀가 성인이 될 때까지 보유할 상품인지, 수수료와 환율·세금 부담은 어떤지 미리 확인하세요.</li>
+          <li>이 앱에는 첫 입금일, 매월 이체액, 신고 완료 여부, 첨부서류 보관 상태를 함께 기록해 두는 것을 권장합니다.</li>
+        </ul>
       </Section>
 
       <Section title="⚠️ 공통 주의사항">

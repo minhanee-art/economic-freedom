@@ -3,8 +3,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "Pension Manager - 연금 ETF 포트폴리오 관리",
-  description: "연금 ETF 포트폴리오를 효율적으로 관리하세요",
+  title: "경제적 자유 - 가족 자산 관리",
+  description: "연금 ETF, 배당 현금흐름, 자녀 증여 기록을 한곳에서 관리하세요",
 };
 
 export default function RootLayout({

@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "kr.kimvibe.economicfreedom",
-      "versionCode": 2,
+      "versionCode": 3,
       "adaptiveIcon": {
         "backgroundColor": "#1c1e54",
         "foregroundImage": "./assets/android-icon-foreground.png",

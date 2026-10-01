@@ -43,8 +43,13 @@ function memoryAllow(id: string): boolean {
 /** identifier(예: `login:${ip}:${email}`)가 허용 한도 내인지. true=허용, false=초과. */
 export async function authRateLimit(identifier: string): Promise<boolean> {
   if (upstash) {
-    const { success } = await upstash.limit(identifier);
-    return success;
+    try {
+      const { success } = await upstash.limit(identifier);
+      return success;
+    } catch (error) {
+      console.warn("Upstash rate limit unavailable; falling back to memory limiter", error);
+      return memoryAllow(identifier);
+    }
   }
   return memoryAllow(identifier);
 }

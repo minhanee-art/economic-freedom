@@ -34,7 +34,6 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const date = body?.date;
   const items = body?.items;
-  const totalSpent = body?.totalSpent;
 
   if (!date || !Array.isArray(items) || items.length === 0) {
     return NextResponse.json({ error: "date와 items가 필요합니다." }, { status: 400 });
@@ -47,6 +46,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "유효하지 않은 매수 항목이 있습니다." }, { status: 400 });
     }
   }
+  const totalSpent = items.reduce(
+    (sum: number, item: { cost: number }) => sum + Number(item.cost),
+    0
+  );
 
   const holdingIds = [...new Set(items.map((i: { holdingId: string }) => i.holdingId))];
   const owned = await sql`SELECT id FROM holdings WHERE user_id = ${session.userId} AND account_id = ${accountId} AND id = ANY(${holdingIds}::uuid[])`.catch(() => null);

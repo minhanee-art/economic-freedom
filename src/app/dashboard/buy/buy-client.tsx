@@ -35,6 +35,7 @@ export function BuyClient({
   const [inputValue, setInputValue] = useState(defaultBudget.toLocaleString());
   const [showConfirm, setShowConfirm] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [executingHoldingId, setExecutingHoldingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [priceStatus, setPriceStatus] = useState("");
   const [quantityOverrides, setQuantityOverrides] = useState<Record<string, number>>({});
@@ -176,6 +177,35 @@ export function BuyClient({
   const actualDifference = actualTotalSpent - totalWithFee;
   const actualRemaining = budget - actualTotalSpent;
 
+  async function savePurchaseRows(rows: typeof actualBuyItems) {
+    if (rows.length === 0) return false;
+    if (rows.some(({ item, executionPrice }) => item.quantity <= 0 || executionPrice <= 0)) {
+      alert("매수 수량과 단가는 0보다 커야 합니다.");
+      return false;
+    }
+
+    const date = new Date().toISOString().split("T")[0];
+    const items = rows.map(({ item, executionPrice, actualCost }) => ({
+      holdingId: item.holding.id,
+      code: item.holding.code,
+      name: item.holding.name,
+      quantity: item.quantity,
+      price: executionPrice,
+      cost: actualCost,
+    }));
+
+    const res = await fetch("/api/purchases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date, items }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.error ?? "매수 실행 실패");
+    }
+    return true;
+  }
+
   function handleQuantityChange(holdingId: string, qty: number) {
     setQuantityOverrides((prev) => ({ ...prev, [holdingId]: Math.max(0, qty) }));
   }
@@ -216,29 +246,11 @@ export function BuyClient({
 
   const handleExecute = async () => {
     if (buyItems.length === 0) return;
-    if (actualBuyItems.some(({ executionPrice }) => executionPrice <= 0)) {
-      alert("매수 단가는 0원보다 커야 합니다.");
-      return;
-    }
     setIsExecuting(true);
 
     try {
-      const date = new Date().toISOString().split("T")[0];
-      const items = actualBuyItems.map(({ item, executionPrice, actualCost }) => ({
-        holdingId: item.holding.id,
-        code: item.holding.code,
-        name: item.holding.name,
-        quantity: item.quantity,
-        price: executionPrice,
-        cost: actualCost,
-      }));
-
-      const res = await fetch("/api/purchases", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date, items, totalSpent: actualTotalSpent }),
-      });
-      if (!res.ok) throw new Error("매수 실행 실패");
+      const saved = await savePurchaseRows(actualBuyItems);
+      if (!saved) return;
 
       setSuccessMessage(
         `${sortedBuyItems.length}개 종목, 총 ${formatFullKRW(actualTotalSpent)} 매수 완료! (수수료 ${formatFullKRW(actualFeeAmount)} 포함)`
@@ -256,6 +268,29 @@ export function BuyClient({
       alert(`매수 실행 중 오류가 발생했습니다:\n${(err as Error).message}`);
     } finally {
       setIsExecuting(false);
+    }
+  };
+
+  const handleSingleExecute = async (holdingId: string) => {
+    const row = actualBuyItems.find(({ item }) => item.holding.id === holdingId);
+    if (!row) return;
+    setExecutingHoldingId(holdingId);
+
+    try {
+      const saved = await savePurchaseRows([row]);
+      if (!saved) return;
+
+      setSuccessMessage(
+        `${row.item.holding.name} ${row.item.quantity}주, ${formatFullKRW(row.actualCost)} 기록 저장 완료!`
+      );
+      setQuantityOverrides((prev) => ({ ...prev, [holdingId]: 0 }));
+      resetExecutionPrice(holdingId);
+      router.refresh();
+      setTimeout(() => setSuccessMessage(""), 2000);
+    } catch (err) {
+      alert(`매수 기록 저장 중 오류가 발생했습니다:\n${(err as Error).message}`);
+    } finally {
+      setExecutingHoldingId(null);
     }
   };
 
@@ -364,6 +399,9 @@ export function BuyClient({
                 onQuantityChange={(qty) => handleQuantityChange(item.holding.id, qty)}
                 onExecutionPriceChange={(value) => handleExecutionPriceChange(item.holding.id, value)}
                 onResetExecutionPrice={() => resetExecutionPrice(item.holding.id)}
+                onSaveRecord={() => handleSingleExecute(item.holding.id)}
+                isSavingRecord={executingHoldingId === item.holding.id}
+                isSaveDisabled={isExecuting || executingHoldingId !== null}
               />
             ))}
           </div>
@@ -411,7 +449,7 @@ export function BuyClient({
           <div className="w-full max-w-lg rounded-2xl border border-hairline bg-white dark:bg-zinc-900 dark:border-zinc-800 p-6 space-y-4 shadow-float">
             <h3 className="text-lg font-bold text-ink dark:text-zinc-100">매수를 확정하시겠습니까?</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              종목 카드에서 입력한 주문 단가로 매수 기록과 평균단가를 저장합니다.
+              종목 카드에서 입력한 주문 단가로 매수 기록과 평균단가를 저장합니다. 특정 종목만 먼저 체결됐다면 목록을 닫고 해당 카드의 &apos;이 종목만 기록 저장&apos;을 사용하세요.
             </p>
             <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1 text-sm">
               {actualBuyItems.map(({ item, executionPrice, actualCost }) => (
@@ -482,6 +520,9 @@ function BuyPlanCard({
   onQuantityChange,
   onExecutionPriceChange,
   onResetExecutionPrice,
+  onSaveRecord,
+  isSavingRecord,
+  isSaveDisabled,
 }: {
   item: BuyPlanItem;
   algorithmQty: number;
@@ -490,6 +531,9 @@ function BuyPlanCard({
   onQuantityChange: (qty: number) => void;
   onExecutionPriceChange: (value: string) => void;
   onResetExecutionPrice: () => void;
+  onSaveRecord: () => void;
+  isSavingRecord: boolean;
+  isSaveDisabled: boolean;
 }) {
   const h = item.holding;
   const isZero = item.quantity === 0;
@@ -580,6 +624,14 @@ function BuyPlanCard({
                 <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{formatFullKRW(orderCost)}</p>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={onSaveRecord}
+              disabled={isSaveDisabled}
+              className="mt-3 w-full h-9 rounded-full bg-indigo-600 text-white text-xs font-semibold transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
+            >
+              {isSavingRecord ? "저장 중..." : "이 종목만 기록 저장"}
+            </button>
           </div>
         )}
 

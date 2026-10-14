@@ -38,7 +38,7 @@ export function BuyClient({
   const [successMessage, setSuccessMessage] = useState("");
   const [priceStatus, setPriceStatus] = useState("");
   const [quantityOverrides, setQuantityOverrides] = useState<Record<string, number>>({});
-  const [actualCostOverrides, setActualCostOverrides] = useState<Record<string, number>>({});
+  const [executionPriceOverrides, setExecutionPriceOverrides] = useState<Record<string, number>>({});
   const [sortMode, setSortMode] = useState<SortMode>("recommended");
   // 증권사 수수료율 (%) — localStorage 유지
   const [feeRatePct, setFeeRatePct] = useState<number>(() => {
@@ -53,13 +53,13 @@ export function BuyClient({
   useEffect(() => {
     setHoldings(initialHoldings);
     setQuantityOverrides({});
-    setActualCostOverrides({});
+    setExecutionPriceOverrides({});
     setPriceStatus("");
   }, [initialHoldings]);
 
   useEffect(() => {
     setQuantityOverrides({});
-    setActualCostOverrides({});
+    setExecutionPriceOverrides({});
   }, [budget]);
 
   const refreshPrices = useCallback(async () => {
@@ -134,7 +134,6 @@ export function BuyClient({
   const effectiveTotalCost = effectiveItems.reduce((s, i) => s + i.cost, 0);
   const feeAmount = Math.round(effectiveTotalCost * feeRate);
   const totalWithFee = effectiveTotalCost + feeAmount;
-  const effectiveRemaining = budget - totalWithFee;
   const buyItems = effectiveItems.filter((item) => item.quantity > 0);
 
   const sortedEffectiveItems = useMemo(() => {
@@ -156,45 +155,45 @@ export function BuyClient({
     [sortedEffectiveItems]
   );
 
-  const calculatedItemCosts = useMemo(() => {
-    const costs: Record<string, number> = {};
-    sortedBuyItems.forEach((item) => {
-      costs[item.holding.id] = Math.round(item.cost * (1 + feeRate));
-    });
-    return costs;
-  }, [sortedBuyItems, feeRate]);
-
   const actualBuyItems = useMemo(
     () =>
-      sortedBuyItems.map((item) => ({
-        item,
-        calculatedCost: calculatedItemCosts[item.holding.id] ?? 0,
-        actualCost:
-          actualCostOverrides[item.holding.id] ??
-          calculatedItemCosts[item.holding.id] ??
-          0,
-      })),
-    [sortedBuyItems, calculatedItemCosts, actualCostOverrides]
+      sortedBuyItems.map((item) => {
+        const executionPrice = executionPriceOverrides[item.holding.id] ?? item.holding.current_price;
+        const netCost = item.quantity * executionPrice;
+        return {
+          item,
+          executionPrice,
+          netCost,
+          actualCost: Math.round(netCost * (1 + feeRate)),
+        };
+      }),
+    [sortedBuyItems, executionPriceOverrides, feeRate]
   );
 
+  const actualNetTotal = actualBuyItems.reduce((s, row) => s + row.netCost, 0);
   const actualTotalSpent = actualBuyItems.reduce((s, row) => s + row.actualCost, 0);
+  const actualFeeAmount = actualTotalSpent - actualNetTotal;
   const actualDifference = actualTotalSpent - totalWithFee;
+  const actualRemaining = budget - actualTotalSpent;
 
   function handleQuantityChange(holdingId: string, qty: number) {
     setQuantityOverrides((prev) => ({ ...prev, [holdingId]: Math.max(0, qty) }));
-    setActualCostOverrides((prev) => {
+  }
+
+  function handleExecutionPriceChange(holdingId: string, value: string) {
+    const cleaned = value.replace(/[^0-9]/g, "");
+    setExecutionPriceOverrides((prev) => ({
+      ...prev,
+      [holdingId]: parseInt(cleaned) || 0,
+    }));
+  }
+
+  function resetExecutionPrice(holdingId: string) {
+    setExecutionPriceOverrides((prev) => {
       const next = { ...prev };
       delete next[holdingId];
       return next;
     });
-  }
-
-  function handleActualCostChange(holdingId: string, value: string) {
-    const cleaned = value.replace(/[^0-9]/g, "");
-    setActualCostOverrides((prev) => ({
-      ...prev,
-      [holdingId]: parseInt(cleaned) || 0,
-    }));
   }
 
   const handleInputChange = (value: string) => {
@@ -217,16 +216,20 @@ export function BuyClient({
 
   const handleExecute = async () => {
     if (buyItems.length === 0) return;
+    if (actualBuyItems.some(({ executionPrice }) => executionPrice <= 0)) {
+      alert("매수 단가는 0원보다 커야 합니다.");
+      return;
+    }
     setIsExecuting(true);
 
     try {
       const date = new Date().toISOString().split("T")[0];
-      const items = actualBuyItems.map(({ item, actualCost }) => ({
+      const items = actualBuyItems.map(({ item, executionPrice, actualCost }) => ({
         holdingId: item.holding.id,
         code: item.holding.code,
         name: item.holding.name,
         quantity: item.quantity,
-        price: Math.round(actualCost / item.quantity),
+        price: executionPrice,
         cost: actualCost,
       }));
 
@@ -238,7 +241,7 @@ export function BuyClient({
       if (!res.ok) throw new Error("매수 실행 실패");
 
       setSuccessMessage(
-        `${sortedBuyItems.length}개 종목, 총 ${formatFullKRW(actualTotalSpent)} 매수 완료! (수수료 ${formatFullKRW(feeAmount)} 포함)`
+        `${sortedBuyItems.length}개 종목, 총 ${formatFullKRW(actualTotalSpent)} 매수 완료! (수수료 ${formatFullKRW(actualFeeAmount)} 포함)`
       );
       setShowConfirm(false);
 
@@ -247,7 +250,7 @@ export function BuyClient({
         setSuccessMessage("");
         setBudget(defaultBudget);
         setInputValue(defaultBudget.toLocaleString());
-        setActualCostOverrides({});
+        setExecutionPriceOverrides({});
       }, 2000);
     } catch (err) {
       alert(`매수 실행 중 오류가 발생했습니다:\n${(err as Error).message}`);
@@ -356,7 +359,11 @@ export function BuyClient({
                 key={item.holding.id}
                 item={item}
                 algorithmQty={algorithmQtyMap[item.holding.id] ?? 0}
+                executionPrice={executionPriceOverrides[item.holding.id] ?? item.holding.current_price}
+                isExecutionPriceOverridden={executionPriceOverrides[item.holding.id] !== undefined}
                 onQuantityChange={(qty) => handleQuantityChange(item.holding.id, qty)}
+                onExecutionPriceChange={(value) => handleExecutionPriceChange(item.holding.id, value)}
+                onResetExecutionPrice={() => resetExecutionPrice(item.holding.id)}
               />
             ))}
           </div>
@@ -371,22 +378,22 @@ export function BuyClient({
         >
           <div className="flex justify-between text-sm">
             <span className="text-indigo-200">순 매수금액</span>
-            <span className="tabular-nums">{formatFullKRW(effectiveTotalCost)}</span>
+            <span className="tabular-nums">{formatFullKRW(actualNetTotal)}</span>
           </div>
           {feeRatePct > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-indigo-200 tabular-nums">수수료 ({feeRatePct}%)</span>
-              <span className="text-indigo-100 tabular-nums">{formatFullKRW(feeAmount)}</span>
+              <span className="text-indigo-100 tabular-nums">{formatFullKRW(actualFeeAmount)}</span>
             </div>
           )}
           <div className="flex justify-between text-sm border-t border-white/15 pt-3">
-            <span className="text-white font-medium">총 지출 (수수료 포함)</span>
-            <span className="font-bold text-lg tabular-nums">{formatFullKRW(totalWithFee)}</span>
+            <span className="text-white font-medium">총 주문금액 (수수료 포함)</span>
+            <span className="font-bold text-lg tabular-nums">{formatFullKRW(actualTotalSpent)}</span>
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-indigo-200">잔여금액</span>
-            <span className={cn("text-indigo-100 tabular-nums", effectiveRemaining < 0 && "text-red-300")}>
-              {formatFullKRW(effectiveRemaining)}
+            <span className={cn("text-indigo-100 tabular-nums", actualRemaining < 0 && "text-red-300")}>
+              {formatFullKRW(actualRemaining)}
             </span>
           </div>
           <button
@@ -404,49 +411,28 @@ export function BuyClient({
           <div className="w-full max-w-lg rounded-2xl border border-hairline bg-white dark:bg-zinc-900 dark:border-zinc-800 p-6 space-y-4 shadow-float">
             <h3 className="text-lg font-bold text-ink dark:text-zinc-100">매수를 확정하시겠습니까?</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              실제 체결된 매수금액이 다르면 종목별 금액을 정정한 뒤 확정하세요. 정정 금액은 매수 기록과 평균단가에 그대로 반영됩니다.
+              종목 카드에서 입력한 주문 단가로 매수 기록과 평균단가를 저장합니다.
             </p>
             <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1 text-sm">
-              {actualBuyItems.map(({ item, calculatedCost, actualCost }) => (
+              {actualBuyItems.map(({ item, executionPrice, actualCost }) => (
                 <div
                   key={item.holding.id}
-                  className="rounded-2xl border border-hairline bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-800/60"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-hairline bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-800/60"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-ink dark:text-zinc-100">{item.holding.name}</p>
-                      <p className="text-xs text-zinc-400 tabular-nums">
-                        {item.quantity}주 · 계산금액 {formatFullKRW(calculatedCost)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleActualCostChange(item.holding.id, String(calculatedCost))}
-                      className="shrink-0 text-[11px] font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                    >
-                      계산값 복원
-                    </button>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-ink dark:text-zinc-100">{item.holding.name}</p>
+                    <p className="text-xs text-zinc-400 tabular-nums">
+                      {item.quantity}주 × {formatFullKRW(executionPrice)}
+                    </p>
                   </div>
-                  <label className="mt-2 block">
-                    <span className="mb-1 block text-[11px] text-zinc-500 dark:text-zinc-400">실제 매수금액</span>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">₩</span>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={actualCost > 0 ? actualCost.toLocaleString("ko-KR") : ""}
-                        onChange={(e) => handleActualCostChange(item.holding.id, e.target.value)}
-                        className="h-10 w-full rounded-xl border border-hairline bg-white pl-8 pr-3 text-right font-semibold tabular-nums text-ink focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-                      />
-                    </div>
-                  </label>
+                  <span className="shrink-0 font-semibold tabular-nums text-ink dark:text-zinc-100">{formatFullKRW(actualCost)}</span>
                 </div>
               ))}
               <div className="border-t border-hairline dark:border-zinc-700 pt-3 space-y-1">
                 {feeRatePct > 0 && (
                   <div className="flex justify-between text-xs text-zinc-400 tabular-nums">
                     <span>수수료 ({feeRatePct}%)</span>
-                    <span>{formatFullKRW(feeAmount)}</span>
+                    <span>{formatFullKRW(actualFeeAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xs text-zinc-400 tabular-nums">
@@ -491,15 +477,24 @@ export function BuyClient({
 function BuyPlanCard({
   item,
   algorithmQty,
+  executionPrice,
+  isExecutionPriceOverridden,
   onQuantityChange,
+  onExecutionPriceChange,
+  onResetExecutionPrice,
 }: {
   item: BuyPlanItem;
   algorithmQty: number;
+  executionPrice: number;
+  isExecutionPriceOverridden: boolean;
   onQuantityChange: (qty: number) => void;
+  onExecutionPriceChange: (value: string) => void;
+  onResetExecutionPrice: () => void;
 }) {
   const h = item.holding;
   const isZero = item.quantity === 0;
   const isOverridden = item.quantity !== algorithmQty;
+  const orderCost = item.quantity * executionPrice;
 
   return (
     <div
@@ -543,7 +538,7 @@ function BuyPlanCard({
                 +
               </button>
             </div>
-            <p className="text-xs text-zinc-500 mt-0.5 tabular-nums">{formatFullKRW(item.cost)}</p>
+            <p className="text-xs text-zinc-500 mt-0.5 tabular-nums">{formatFullKRW(orderCost)}</p>
             {isOverridden && (
               <button
                 onClick={() => onQuantityChange(algorithmQty)}
@@ -554,6 +549,39 @@ function BuyPlanCard({
             )}
           </div>
         </div>
+
+        {item.quantity > 0 && (
+          <div className="mt-3 rounded-2xl border border-hairline bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-800/60">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">주문 단가</span>
+              {isExecutionPriceOverridden && (
+                <button
+                  type="button"
+                  onClick={onResetExecutionPrice}
+                  className="text-[11px] font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                  현재가로 복원
+                </button>
+              )}
+            </div>
+            <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">₩</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={executionPrice > 0 ? executionPrice.toLocaleString("ko-KR") : ""}
+                  onChange={(e) => onExecutionPriceChange(e.target.value)}
+                  className="h-10 w-full rounded-xl border border-hairline bg-white pl-8 pr-3 text-right font-semibold tabular-nums text-ink focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] text-zinc-400">주문금액</p>
+                <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{formatFullKRW(orderCost)}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {item.isPriority && item.quantity > 0 && (
           <div className="mt-2">

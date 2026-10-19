@@ -13,6 +13,7 @@ interface Props {
   initialHoldings: Holding[];
   initialCostBases: CostBasis[];
   defaultBudget: number;
+  lastPurchaseDates: Record<string, string>;
   userId: string;
 }
 
@@ -26,10 +27,19 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
   { value: "quantity-asc", label: "수량 적은순" },
 ];
 
+// 적립 주기(2개월 이상) 상태 문구
+function cycleStatusLabel(item: BuyPlanItem): string {
+  if (item.isCycleBuy) return `${item.cycleMonths}개월 주기 · 이번 달 1주 편성`;
+  if (item.isCycleDue) return `${item.cycleMonths}개월 주기 · 도래(예산 부족)`;
+  const left = Math.max(1, item.cycleMonths - (item.monthsSinceLastBuy ?? 0));
+  return `${item.cycleMonths}개월 주기 · ${left}개월 뒤`;
+}
+
 export function BuyClient({
   initialHoldings,
   initialCostBases,
   defaultBudget,
+  lastPurchaseDates,
 }: Props) {
   const [holdings, setHoldings] = useState(initialHoldings);
   const [budget, setBudget] = useState(defaultBudget);
@@ -119,8 +129,8 @@ export function BuyClient({
   }, []);
 
   const plan = useMemo(
-    () => calculateBuyPlan(holdings, initialCostBases, budget),
-    [holdings, initialCostBases, budget]
+    () => calculateBuyPlan(holdings, initialCostBases, budget, { lastPurchaseDates }),
+    [holdings, initialCostBases, budget, lastPurchaseDates]
   );
 
   const effectiveItems = useMemo(() => {
@@ -135,6 +145,13 @@ export function BuyClient({
     plan.items.forEach((i) => { m[i.holding.id] = i.quantity; });
     return m;
   }, [plan.items]);
+
+  // 1주 가격이 월 배분보다 커서 매달 살 수 없는 종목(적립 주기 2개월 이상)
+  const cycleItems = useMemo(
+    () => plan.items.filter((i) => i.cycleMonths > 1),
+    [plan.items]
+  );
+  const dueCycleCount = cycleItems.filter((i) => i.isCycleDue).length;
 
   // 테마(자산군)별 목표 비중 합계
   const themeTotals = useMemo(() => {
@@ -550,6 +567,47 @@ export function BuyClient({
               ))}
             </div>
           </div>
+          {cycleItems.length > 0 && (
+            <div className="mb-3 rounded-2xl border border-amber-100 bg-amber-50/70 p-4 dark:border-amber-500/20 dark:bg-amber-500/10">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-300">
+                  적립 종목 <span className="tabular-nums">{cycleItems.length}</span>개
+                </p>
+                <p className="text-xs font-semibold tabular-nums text-amber-700 dark:text-amber-300">
+                  이번 달 도래 <span>{dueCycleCount}</span>개
+                </p>
+              </div>
+              <ul className="mt-2 space-y-1">
+                {cycleItems.map((item) => (
+                  <li
+                    key={item.holding.id}
+                    className="flex items-center justify-between gap-2 text-[11px] tabular-nums text-zinc-600 dark:text-zinc-400"
+                  >
+                    <span className="truncate">
+                      {item.holding.name}
+                      <span className="ml-1 text-zinc-400 dark:text-zinc-500">
+                        1주 {formatFullKRW(item.holding.current_price)}
+                      </span>
+                    </span>
+                    <span
+                      className={cn(
+                        "shrink-0 font-medium",
+                        item.isCycleBuy || item.isCycleDue
+                          ? "text-amber-700 dark:text-amber-300"
+                          : "text-zinc-400 dark:text-zinc-500"
+                      )}
+                    >
+                      {cycleStatusLabel(item)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] leading-relaxed text-amber-700/70 dark:text-amber-300/70">
+                월 투자금액 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
+                우선 편성하고, 나머지 달은 건너뜁니다.
+              </p>
+            </div>
+          )}
           <div className="space-y-2">
             {sortedEffectiveItems.map((item) => (
               <BuyPlanCard
@@ -805,12 +863,39 @@ function BuyPlanCard({
           </div>
         )}
 
-        {isZero && item.idealRatio > 0 && (
-          <div className="mt-2">
-            <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
-              이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 1주 매수하려면 최소 {formatFullKRW(Math.ceil(h.current_price / item.idealRatio))} 필요
+        {item.cycleMonths > 1 ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span
+              className={cn(
+                "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
+                item.isCycleDue || item.isCycleBuy
+                  ? "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                  : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+              )}
+            >
+              {item.isCycleBuy
+                ? `${item.cycleMonths}개월 주기 적립 도래 → 이번 달 1주 편성`
+                : item.isCycleDue
+                  ? `${item.cycleMonths}개월 주기 적립 도래 · 1주 ${formatFullKRW(h.current_price)} 필요`
+                  : `${item.cycleMonths}개월에 1주 적립 · ${Math.max(
+                      1,
+                      item.cycleMonths - (item.monthsSinceLastBuy ?? 0)
+                    )}개월 뒤`}
+            </span>
+            <span className="text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500">
+              이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 매달 사려면 월{" "}
+              {formatFullKRW(Math.ceil(item.minBudget))} 필요
             </span>
           </div>
+        ) : (
+          isZero &&
+          item.idealRatio > 0 && (
+            <div className="mt-2">
+              <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
+                이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 1주 매수하려면 최소 {formatFullKRW(Math.ceil(h.current_price / item.idealRatio))} 필요
+              </span>
+            </div>
+          )
         )}
       </div>
     </div>

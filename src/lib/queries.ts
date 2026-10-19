@@ -70,6 +70,26 @@ export async function getPurchaseRecordsCount(userId: string, accountId?: string
   return count;
 }
 
+/** 종목별 마지막 매수일 (적립 주기 판정용) */
+export async function getLastPurchaseDates(
+  userId: string,
+  accountId?: string
+): Promise<Record<string, string>> {
+  const activeAccountId = accountId ?? await getActivePortfolioAccountId(userId);
+  const rows = await sql`
+    SELECT pi.holding_id, MAX(pr.date)::text AS last_date
+    FROM purchase_items pi
+    JOIN purchase_records pr ON pr.id = pi.record_id
+    WHERE pr.user_id = ${userId} AND pr.account_id = ${activeAccountId}
+    GROUP BY pi.holding_id
+  `;
+  const map: Record<string, string> = {};
+  for (const row of rows) {
+    map[String(row.holding_id)] = String(row.last_date);
+  }
+  return map;
+}
+
 export async function getWatchlist(userId: string, accountId?: string): Promise<WatchlistRow[]> {
   const activeAccountId = accountId ?? await getActivePortfolioAccountId(userId);
   const rows = await sql`

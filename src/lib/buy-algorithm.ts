@@ -168,3 +168,80 @@ export function calculateBuyPlan(
     remaining,
   };
 }
+
+export interface AnnualPlanItem {
+  holding: Holding;
+  targetPct: number;
+  idealRatio: number;
+  annualAmount: number;   // 목표 비중대로 배분된 연간 금액
+  price: number;
+  quantity: number;       // 연간 주문 수량 (정수)
+  cost: number;
+  monthsPerShare: number | null; // 몇 개월에 1주인지 (0주면 null)
+  minBudget: number;      // 이 비중으로 매달 1주 사려면 필요한 월 예산
+}
+
+export interface AnnualPlanResult {
+  items: AnnualPlanItem[];
+  annualBudget: number;
+  totalCost: number;
+  leftover: number;
+}
+
+/**
+ * 월 투자금액 × 12를 연간 예산으로 보고, 종목별 연간 주문 수량(정수)을 계산한다.
+ * 소수점 주문이 불가능하므로 내림 배분 후 남는 금액으로 부족한 종목에 1주씩 추가한다.
+ */
+export function calculateAnnualPlan(
+  holdings: Holding[],
+  monthlyBudget: number
+): AnnualPlanResult {
+  const annualBudget = Math.max(0, monthlyBudget) * 12;
+  const targets = holdings.filter((h) => h.target_pct > 0 && h.current_price > 0);
+  if (annualBudget <= 0 || targets.length === 0) {
+    return { items: [], annualBudget, totalCost: 0, leftover: annualBudget };
+  }
+
+  const totalTargetPct = targets.reduce((s, h) => s + Number(h.target_pct), 0);
+
+  const items: AnnualPlanItem[] = targets.map((h) => {
+    const idealRatio = Number(h.target_pct) / totalTargetPct;
+    const annualAmount = annualBudget * idealRatio;
+    const quantity = Math.floor(annualAmount / h.current_price);
+    return {
+      holding: h,
+      targetPct: Number(h.target_pct),
+      idealRatio,
+      annualAmount,
+      price: h.current_price,
+      quantity,
+      cost: quantity * h.current_price,
+      monthsPerShare: quantity > 0 ? 12 / quantity : null,
+      minBudget: idealRatio > 0 ? h.current_price / idealRatio : 0,
+    };
+  });
+
+  let spent = items.reduce((s, i) => s + i.cost, 0);
+  let leftover = annualBudget - spent;
+
+  // 남은 금액으로 배분 대비 부족한 종목부터 1주씩 추가
+  let changed = true;
+  while (changed && leftover > 0) {
+    changed = false;
+    const sorted = [...items].sort(
+      (a, b) => b.annualAmount - b.cost - (a.annualAmount - a.cost)
+    );
+    for (const item of sorted) {
+      if (item.price <= leftover) {
+        item.quantity += 1;
+        item.cost += item.price;
+        item.monthsPerShare = 12 / item.quantity;
+        spent += item.price;
+        leftover -= item.price;
+        changed = true;
+      }
+    }
+  }
+
+  return { items, annualBudget, totalCost: spent, leftover };
+}

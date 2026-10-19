@@ -4,7 +4,12 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis } from "@/types";
-import { calculateBuyPlan, type BuyPlanItem } from "@/lib/buy-algorithm";
+import {
+  calculateBuyPlan,
+  calculateAnnualPlan,
+  type BuyPlanItem,
+  type AnnualPlanItem,
+} from "@/lib/buy-algorithm";
 import { formatKRW, formatFullKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
@@ -35,6 +40,17 @@ function cycleStatusLabel(item: BuyPlanItem): string {
   return `${item.cycleMonths}개월 주기 · ${left}개월 뒤`;
 }
 
+// 연간 계획의 주문 주기 문구
+function annualCadenceLabel(item: AnnualPlanItem): string {
+  if (item.quantity <= 0) return "주문 불가";
+  if (item.quantity >= 12) {
+    const perMonth = item.quantity / 12;
+    return `매달 ${Number.isInteger(perMonth) ? perMonth : perMonth.toFixed(1)}주`;
+  }
+  const months = 12 / item.quantity;
+  return Number.isInteger(months) ? `${months}개월에 1주` : `${months.toFixed(1)}개월에 1주`;
+}
+
 export function BuyClient({
   initialHoldings,
   initialCostBases,
@@ -54,6 +70,8 @@ export function BuyClient({
   const [sortMode, setSortMode] = useState<SortMode>("recommended");
   // 테마별 비중 조정 패널
   const [showThemeEditor, setShowThemeEditor] = useState(false);
+  // 연간 주문 계획 패널
+  const [showAnnualPlan, setShowAnnualPlan] = useState(true);
   const [themeDrafts, setThemeDrafts] = useState<Record<string, string>>({});
   const [savingTheme, setSavingTheme] = useState<string | null>(null);
   const [themeStatus, setThemeStatus] = useState("");
@@ -152,6 +170,12 @@ export function BuyClient({
     [plan.items]
   );
   const dueCycleCount = cycleItems.filter((i) => i.isCycleDue).length;
+
+  // 월 투자금액 × 12 기준 종목별 연간 주문 수량(정수)
+  const annualPlan = useMemo(
+    () => calculateAnnualPlan(holdings, budget),
+    [holdings, budget]
+  );
 
   // 테마(자산군)별 목표 비중 합계
   const themeTotals = useMemo(() => {
@@ -545,6 +569,101 @@ export function BuyClient({
       {/* 매수 계획 카드 리스트 */}
       {budget > 0 && (
         <div>
+          {/* 연간 주문 계획 */}
+          {annualPlan.items.length > 0 && (
+            <div className="mb-4 rounded-2xl border border-hairline bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-ink dark:text-zinc-100">연간 주문 계획</p>
+                  <p className="mt-0.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
+                    월 {formatFullKRW(budget)} × 12개월 = {formatFullKRW(annualPlan.annualBudget)} 기준 · 소수점 주문이 안 되므로 종목별 연간 수량을 정수로 확정
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowAnnualPlan((v) => !v)}
+                  className="shrink-0 rounded-full border border-hairline bg-canvas-soft px-3 py-1.5 text-xs font-medium text-zinc-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
+                >
+                  {showAnnualPlan ? "닫기" : "열기"}
+                </button>
+              </div>
+
+              {showAnnualPlan && (
+                <>
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="w-full min-w-[520px] border-collapse text-xs tabular-nums">
+                      <thead>
+                        <tr className="text-zinc-400 dark:text-zinc-500">
+                          <th className="pb-2 text-left font-medium">종목</th>
+                          <th className="pb-2 text-right font-medium">목표 비중</th>
+                          <th className="pb-2 text-right font-medium">1주 가격</th>
+                          <th className="pb-2 text-right font-medium">연 주문</th>
+                          <th className="pb-2 text-right font-medium">주문 주기</th>
+                          <th className="pb-2 text-right font-medium">연 금액</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {annualPlan.items.map((item) => (
+                          <tr
+                            key={item.holding.id}
+                            className="border-t border-hairline dark:border-zinc-800"
+                          >
+                            <td className="max-w-[190px] truncate py-1.5 pr-2 text-ink dark:text-zinc-200">
+                              <span
+                                className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle"
+                                style={{ background: getCategoryColor(item.holding.category) }}
+                              />
+                              {item.holding.name}
+                            </td>
+                            <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
+                              {item.idealRatio * 100 < 10
+                                ? (item.idealRatio * 100).toFixed(1)
+                                : (item.idealRatio * 100).toFixed(0)}
+                              %
+                            </td>
+                            <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
+                              {item.price.toLocaleString()}
+                            </td>
+                            <td
+                              className={cn(
+                                "py-1.5 text-right font-semibold",
+                                item.quantity === 0
+                                  ? "text-amber-600 dark:text-amber-400"
+                                  : "text-ink dark:text-zinc-100"
+                              )}
+                            >
+                              {item.quantity}주
+                            </td>
+                            <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
+                              {annualCadenceLabel(item)}
+                            </td>
+                            <td className="py-1.5 text-right text-zinc-600 dark:text-zinc-300">
+                              {formatFullKRW(item.cost)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-hairline pt-2 text-xs tabular-nums dark:border-zinc-800">
+                    <span className="text-zinc-500 dark:text-zinc-400">
+                      연 사용 <span className="font-semibold text-ink dark:text-zinc-100">{formatFullKRW(annualPlan.totalCost)}</span>
+                    </span>
+                    <span className="text-zinc-500 dark:text-zinc-400">
+                      잔여 <span className="font-semibold text-ink dark:text-zinc-100">{formatFullKRW(annualPlan.leftover)}</span>
+                    </span>
+                  </div>
+                  {annualPlan.items.some((i) => i.quantity === 0) && (
+                    <p className="mt-2 text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                      {annualPlan.items.filter((i) => i.quantity === 0).length}개 종목은 연간 배분액으로 1주도 살 수 없습니다. 비중을 올리거나
+                      월 투자금액을 늘려야 합니다.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
               매수 계획 (<span className="tabular-nums">{buyItems.length}</span>종목)

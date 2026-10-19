@@ -608,12 +608,17 @@ export function BuyClient({
                             key={item.holding.id}
                             className="border-t border-hairline dark:border-zinc-800"
                           >
-                            <td className="max-w-[190px] truncate py-1.5 pr-2 text-ink dark:text-zinc-200">
-                              <span
-                                className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle"
-                                style={{ background: getCategoryColor(item.holding.category) }}
-                              />
-                              {item.holding.name}
+                            <td className="max-w-[240px] py-1.5 pr-2 text-ink dark:text-zinc-200">
+                              <div className="flex min-w-0 items-center gap-1.5">
+                                <span
+                                  className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                                  style={{ background: getCategoryColor(item.holding.category) }}
+                                />
+                                <span className="shrink-0 text-[10px] font-medium tabular-nums text-zinc-400 dark:text-zinc-500">
+                                  {item.holding.code}
+                                </span>
+                                <span className="truncate">{item.holding.name}</span>
+                              </div>
                             </td>
                             <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
                               {item.idealRatio * 100 < 10

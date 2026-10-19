@@ -7,6 +7,7 @@ import type { Holding, CostBasis } from "@/types";
 import { calculateBuyPlan, type BuyPlanItem } from "@/lib/buy-algorithm";
 import { formatKRW, formatFullKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
+import { CATEGORIES } from "@/lib/constants";
 
 interface Props {
   initialHoldings: Holding[];
@@ -41,6 +42,11 @@ export function BuyClient({
   const [quantityOverrides, setQuantityOverrides] = useState<Record<string, number>>({});
   const [executionPriceOverrides, setExecutionPriceOverrides] = useState<Record<string, number>>({});
   const [sortMode, setSortMode] = useState<SortMode>("recommended");
+  // 테마별 비중 조정 패널
+  const [showThemeEditor, setShowThemeEditor] = useState(false);
+  const [themeDrafts, setThemeDrafts] = useState<Record<string, string>>({});
+  const [savingTheme, setSavingTheme] = useState<string | null>(null);
+  const [themeStatus, setThemeStatus] = useState("");
   // 증권사 수수료율 (%) — localStorage 유지
   const [feeRatePct, setFeeRatePct] = useState<number>(() => {
     if (typeof window !== "undefined") {
@@ -129,6 +135,91 @@ export function BuyClient({
     plan.items.forEach((i) => { m[i.holding.id] = i.quantity; });
     return m;
   }, [plan.items]);
+
+  // 테마(자산군)별 목표 비중 합계
+  const themeTotals = useMemo(() => {
+    const map = new Map<string, number>();
+    holdings.forEach((h) => {
+      map.set(h.category, (map.get(h.category) ?? 0) + Number(h.target_pct));
+    });
+    return map;
+  }, [holdings]);
+
+  const themeCategories = useMemo(
+    () => CATEGORIES.filter((c) => holdings.some((h) => h.category === c)),
+    [holdings]
+  );
+
+  const totalTargetPctSum = useMemo(
+    () => holdings.reduce((s, h) => s + Number(h.target_pct), 0),
+    [holdings]
+  );
+
+  const themeInputValue = (category: string) =>
+    themeDrafts[category] ?? (themeTotals.get(category) ?? 0).toFixed(1);
+
+  const handleThemeDraftChange = (category: string, value: string) => {
+    setThemeDrafts((prev) => ({ ...prev, [category]: value }));
+  };
+
+  const handleThemeSave = async (category: string) => {
+    const parsed = Number(themeDrafts[category]);
+    if (!Number.isFinite(parsed)) return;
+    const nextCategoryTargetPct = Math.max(0, Math.min(100, parsed));
+    const categoryHoldings = holdings.filter((h) => h.category === category);
+    if (categoryHoldings.length === 0) return;
+
+    const currentCategoryTargetPct = categoryHoldings.reduce(
+      (sum, h) => sum + Number(h.target_pct),
+      0
+    );
+    const nextTargets = new Map<string, number>();
+    let assigned = 0;
+    categoryHoldings.forEach((h, index) => {
+      const isLast = index === categoryHoldings.length - 1;
+      const nextTarget = isLast
+        ? Math.max(0, +(nextCategoryTargetPct - assigned).toFixed(1))
+        : currentCategoryTargetPct > 0
+          ? +((Number(h.target_pct) / currentCategoryTargetPct) * nextCategoryTargetPct).toFixed(1)
+          : +(nextCategoryTargetPct / categoryHoldings.length).toFixed(1);
+      assigned += nextTarget;
+      nextTargets.set(h.id, nextTarget);
+    });
+
+    setSavingTheme(category);
+    setThemeStatus("");
+    const previousHoldings = holdings;
+    setHoldings((current) =>
+      current.map((h) => (nextTargets.has(h.id) ? { ...h, target_pct: nextTargets.get(h.id)! } : h))
+    );
+
+    try {
+      await Promise.all(
+        categoryHoldings.map((h) =>
+          fetch("/api/holdings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ id: h.id, target_pct: nextTargets.get(h.id) ?? h.target_pct }),
+          }).then((res) => {
+            if (!res.ok) throw new Error(`${h.name} 비중 저장 실패`);
+          })
+        )
+      );
+      setThemeStatus(`${category} 테마 비중 저장 완료`);
+      setThemeDrafts((prev) => {
+        const next = { ...prev };
+        delete next[category];
+        return next;
+      });
+      router.refresh();
+    } catch (err) {
+      setHoldings(previousHoldings);
+      setThemeStatus(`${category} 테마 비중 저장 실패: ${(err as Error).message}`);
+    } finally {
+      setSavingTheme(null);
+      setTimeout(() => setThemeStatus(""), 3000);
+    }
+  };
 
   // 수수료 계산
   const feeRate = feeRatePct / 100;
@@ -361,6 +452,77 @@ export function BuyClient({
             (0.014% = IRP 일반 / 0% = 수수료 무료 증권사)
           </span>
         </div>
+      </div>
+
+      {/* 테마별 비중 조정 */}
+      <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-3 shadow-card transition-shadow hover:shadow-float">
+        <button
+          type="button"
+          onClick={() => setShowThemeEditor((v) => !v)}
+          className="flex w-full items-center justify-between"
+        >
+          <h2 className="text-lg font-bold text-ink dark:text-zinc-100">테마별 비중 조정</h2>
+          <span className="text-xs font-medium text-indigo-500">{showThemeEditor ? "닫기" : "열기"}</span>
+        </button>
+
+        {themeStatus && (
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">{themeStatus}</p>
+        )}
+
+        {showThemeEditor && (
+          <div className="space-y-3">
+            <div
+              className={cn(
+                "rounded-xl px-3 py-2 text-xs font-medium tabular-nums",
+                Math.abs(totalTargetPctSum - 100) < 0.01
+                  ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400"
+                  : "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400"
+              )}
+            >
+              전체 목표 비중 합계: {totalTargetPctSum.toFixed(1)}%
+              {Math.abs(totalTargetPctSum - 100) < 0.01 ? " (정상)" : " (100%가 아닙니다)"}
+            </div>
+            {themeCategories.map((category) => {
+              const totalPct = themeTotals.get(category) ?? 0;
+              const draftValue = themeInputValue(category);
+              const hasChange = Number(draftValue) !== totalPct;
+              return (
+                <div
+                  key={category}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-hairline dark:border-zinc-800 px-3 py-2"
+                >
+                  <span className="text-sm font-medium text-ink dark:text-zinc-100">{category}</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      max="100"
+                      step="0.5"
+                      value={draftValue}
+                      onChange={(e) => handleThemeDraftChange(category, e.target.value)}
+                      disabled={savingTheme !== null}
+                      aria-label={`${category} 테마 목표 비중`}
+                      className="h-8 w-20 rounded-lg border border-hairline bg-white px-2 text-right text-sm font-bold tabular-nums text-ink focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                    />
+                    <span className="text-xs font-medium text-zinc-500">%</span>
+                    <button
+                      type="button"
+                      onClick={() => handleThemeSave(category)}
+                      disabled={!hasChange || savingTheme !== null}
+                      className="h-8 rounded-full border border-indigo-100 bg-indigo-50 px-3 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                    >
+                      {savingTheme === category ? "저장중" : "저장"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            <p className="text-xs text-zinc-400 dark:text-zinc-500">
+              테마 비중을 조정하면 그 테마 안의 종목별 비중이 기존 비율대로 나뉘어 저장됩니다. 종목별 세부 비중은 설정 페이지에서 조정하세요.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* 매수 계획 카드 리스트 */}
@@ -639,6 +801,14 @@ function BuyPlanCard({
           <div className="mt-2">
             <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400 tabular-nums">
               비중 {item.gapPct.toFixed(1)}%p 부족 → 우선 매수
+            </span>
+          </div>
+        )}
+
+        {isZero && item.idealRatio > 0 && (
+          <div className="mt-2">
+            <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
+              이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 1주 매수하려면 최소 {formatFullKRW(Math.ceil(h.current_price / item.idealRatio))} 필요
             </span>
           </div>
         )}

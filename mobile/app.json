@@ -4,7 +4,7 @@
     "slug": "economic-freedom",
     "version": "1.0.0",
     "scheme": "economicfreedom",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "kr.kimvibe.economicfreedom",
-      "versionCode": 3,
+      "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#1c1e54",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -27,7 +27,16 @@
     "plugins": [
       "expo-router",
       "expo-status-bar",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

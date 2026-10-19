@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "specification": {
+    "path": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/candidate.json",
+    "sha256": "da29730b4e8fdbeff26e2bca21bbe59f2d5da6988df7efd9e5f94f3cac17c4e1",
+    "bytes": 4258
+  },
+  "artifact": {
+    "path": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+    "sha256": "e194b59b1b7e392ff2bb167bd447a5648e53b9e368cde46c179ea5f1024922b8",
+    "bytes": 832334
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.finalize.json",
+    "summaryReceipt": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.finalize-summary.json",
+    "browserCheckReceipt": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-19T01:09:54.367Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 6261,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "visualReviewRecommendation": {
+    "action": "inspect-route-readability",
+    "signals": {
+      "resolvedCrossovers": 1
+    },
+    "reason": "Automated gates passed, but crossings or detours still need perceptual review before claiming visual quality.",
+    "affectedRoutes": {
+      "crossings": [
+        {
+          "left": {
+            "id": "web-to-yahoo",
+            "from": "web",
+            "to": "yahoo",
+            "label": "해외 주가 조회",
+            "collectionIndex": 6,
+            "artifactIndex": 7
+          },
+          "right": {
+            "id": "web-to-telegram",
+            "from": "web",
+            "to": "telegram",
+            "label": "배당/알림 발송",
+            "collectionIndex": 7,
+            "artifactIndex": 8
+          },
+          "point": [
+            464.9999999999999,
+            368.00000000000006
+          ],
+          "sharedNode": "web"
+        }
+      ],
+      "detours": [],
+      "truncated": false
+    },
+    "hints": [
+      "web has 4 relationships facing its right side, which fits 3 ports: make that side at least 74px, or move some of those neighbours so they face another side of web.",
+      "web → yahoo and web → telegram cross next to web: move node yahoo or telegram so the two reach web from different sides (for example one level with it, one directly above or below it)."
+    ],
+    "repair": "Trace these relationships at the desktop viewport. For Architecture, use references/architecture-layout-repair.md: reflow a blocked main path or tangled connected scene, and repair an isolated defect locally only when the surrounding composition is accepted. Preserve all semantic content and user-fixed geometry. Rerun finalize once after the edit."
+  },
+  "layoutReviewRecommendation": {
+    "action": "inspect-leading-space",
+    "evidence": {
+      "measured": true,
+      "emptyTopPx": 150,
+      "emptyTopRatio": 0.223,
+      "occupiedTop": 150,
+      "viewBoxTop": 0,
+      "canvasHeight": 672,
+      "typicalNodeHeight": 64,
+      "reviewSuggested": true
+    },
+    "reason": "Measured content, including routes and labels, leaves a large empty area above the diagram. This is a composition suggestion, not a failed gate.",
+    "repair": "Check whether that leading space is intentional. If not, reposition the connected scene nearer the canvas origin while retaining room for its actual boundaries, labels and return routes. Preserve all meaning and user-fixed geometry, then rerun finalize. No screenshot is required."
+  }
+}

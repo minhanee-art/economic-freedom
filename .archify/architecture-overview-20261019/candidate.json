@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Pension-Manager System Overview",
+    "subtitle": "Next.js web app, Expo mobile app, Neon Postgres, external price/notification APIs",
+    "output": ".archify/architecture-overview-20261019/pension-manager-architecture.html",
+    "quality_profile": "showcase",
+    "locale": "ko",
+    "repository": {
+      "url": "https://github.com/minhanee-art/economic-freedom.git",
+      "revision": "6e395f75eb95bb6daa845105ec692ec5b3c179de"
+    }
+  },
+  "components": [
+    { "id": "user", "type": "external", "label": "사용자", "sublabel": "웹 브라우저", "pos": [40, 320], "size": [120, 64] },
+    { "id": "mobile", "type": "frontend", "label": "Expo 모바일 앱", "sublabel": "React Native (kr.kimvibe.economicfreedom)", "pos": [40, 150], "size": [170, 64], "sources": [{ "path": "mobile/package.json", "line": 1, "end_line": 5 }, { "path": "mobile/app.json", "line": 1, "end_line": 7 }] },
+    { "id": "mobile_api", "type": "backend", "label": "mobile API client", "sublabel": "모바일→웹 API 연동", "pos": [260, 150], "size": [170, 64], "sources": [{ "path": "mobile/src/api/client.ts", "line": 1, "end_line": 1 }, { "path": "mobile/src/api/auth.ts", "line": 1, "end_line": 1 }] },
+    { "id": "web", "type": "frontend", "label": "Next.js 웹앱", "sublabel": "App Router (Vercel)", "pos": [260, 320], "size": [170, 64], "sources": [{ "path": "src/app/dashboard/page.tsx", "line": 1, "end_line": 10 }, { "path": "package.json", "line": 1, "end_line": 10 }] },
+    { "id": "session", "type": "security", "label": "JWT 세션", "sublabel": "jose + HTTP-only 쿠키", "pos": [260, 490], "size": [170, 64], "sources": [{ "path": "src/lib/session.ts", "line": 1, "end_line": 15 }] },
+    { "id": "db", "type": "database", "label": "Neon Postgres", "sublabel": "서버리스 DB", "pos": [500, 150], "size": [150, 64], "sources": [{ "path": "src/lib/db.ts", "line": 1, "end_line": 4 }] },
+    { "id": "kis", "type": "external", "label": "KIS Open API", "sublabel": "한국투자증권 (토큰 캐시)", "pos": [500, 280], "size": [150, 64], "sources": [{ "path": "src/lib/kis.ts", "line": 1, "end_line": 20 }] },
+    { "id": "yahoo", "type": "external", "label": "Yahoo Finance", "sublabel": "해외 주가 조회", "pos": [500, 410], "size": [150, 64], "sources": [{ "path": "src/lib/yahoo.ts", "line": 1, "end_line": 15 }] },
+    { "id": "telegram", "type": "external", "label": "Telegram Bot API", "sublabel": "알림 전송", "pos": [500, 540], "size": [150, 64], "sources": [{ "path": "src/lib/telegram.ts", "line": 1, "end_line": 15 }] }
+  ],
+  "connections": [
+    { "id": "user-to-web", "from": "user", "to": "web", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "mobile-to-mobileapi", "from": "mobile", "to": "mobile_api", "label": "내부 호출" },
+    { "id": "mobileapi-to-web", "from": "mobile_api", "to": "web", "label": "REST (세션 쿠키)", "fromSide": "bottom", "toSide": "top" },
+    { "id": "web-to-session", "from": "web", "to": "session", "label": "인증/인가" },
+    { "id": "web-to-db", "from": "web", "to": "db", "label": "SQL", "fromSide": "right", "toSide": "left" },
+    { "id": "web-to-kis", "from": "web", "to": "kis", "label": "국내 주가 조회", "fromSide": "right", "toSide": "left" },
+    { "id": "web-to-yahoo", "from": "web", "to": "yahoo", "label": "해외 주가 조회", "fromSide": "right", "toSide": "left" },
+    { "id": "web-to-telegram", "from": "web", "to": "telegram", "label": "배당/알림 발송", "fromSide": "right", "toSide": "left" }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "클라이언트", "items": ["Next.js 웹 대시보드 + Expo 모바일 앱 (동일 백엔드 공유)", "모바일은 JWT 세션 쿠키 기반으로 웹 API 호출"] },
+    { "dot": "emerald", "title": "데이터", "items": ["Neon 서버리스 Postgres에 포트폴리오/배당 데이터 저장"] },
+    { "dot": "amber", "title": "외부 시세", "items": ["국내 주식: 한국투자증권 KIS Open API (토큰 캐시로 재발급 제한 회피)", "해외 주식: Yahoo Finance 비공식 API"] },
+    { "dot": "rose", "title": "알림", "items": ["Telegram Bot API로 배당/대시보드 알림 발송"] }
+  ]
+}

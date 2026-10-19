@@ -1,0 +1,1027 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "architecture",
+  "quality": "showcase",
+  "startedAt": "2026-10-19T01:22:00.862Z",
+  "specification": {
+    "path": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/candidate.json",
+    "sha256": "da29730b4e8fdbeff26e2bca21bbe59f2d5da6988df7efd9e5f94f3cac17c4e1",
+    "bytes": 4258
+  },
+  "artifact": {
+    "path": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+    "sha256": "e194b59b1b7e392ff2bb167bd447a5648e53b9e368cde46c179ea5f1024922b8",
+    "bytes": 832334
+  },
+  "stages": {
+    "validate": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": null,
+      "execution": "embedded-in-deliver",
+      "command": [
+        "/home/minhanee/.hermes/node/bin/node",
+        "/home/minhanee/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/candidate.json",
+        "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/home/minhanee/projects/pension-manager",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "validate",
+        "specification": {
+          "sha256": "da29730b4e8fdbeff26e2bca21bbe59f2d5da6988df7efd9e5f94f3cac17c4e1",
+          "bytes": 4258
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        }
+      }
+    },
+    "deliver": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 982,
+      "command": [
+        "/home/minhanee/.hermes/node/bin/node",
+        "/home/minhanee/.agents/skills/archify/bin/archify.mjs",
+        "deliver",
+        "architecture",
+        "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/candidate.json",
+        "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+        "--quality",
+        "showcase",
+        "--repo-root",
+        "/home/minhanee/projects/pension-manager",
+        "--json"
+      ],
+      "receipt": {
+        "schemaVersion": 1,
+        "receiptId": "8a0c2155-7f31-4967-a3be-9bfb3fb9c57a",
+        "ok": true,
+        "command": "deliver",
+        "type": "architecture",
+        "input": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/candidate.json",
+        "output": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+        "specification": {
+          "sha256": "da29730b4e8fdbeff26e2bca21bbe59f2d5da6988df7efd9e5f94f3cac17c4e1",
+          "bytes": 4258
+        },
+        "artifact": {
+          "sha256": "e194b59b1b7e392ff2bb167bd447a5648e53b9e368cde46c179ea5f1024922b8",
+          "bytes": 832334
+        },
+        "validation": {
+          "checksPassed": 9,
+          "checkCount": 9,
+          "compositionProfile": "showcase",
+          "compositionStatus": "pass",
+          "errors": 0,
+          "warnings": 0
+        },
+        "evidence": {
+          "verified": true,
+          "repository": "https://github.com/minhanee-art/economic-freedom",
+          "revision": "6e395f75eb95bb6daa845105ec692ec5b3c179de",
+          "references": 11
+        },
+        "update": {
+          "status": "unavailable",
+          "installedVersion": null,
+          "availableVersion": null,
+          "releaseNotes": null,
+          "checkedAt": null,
+          "source": null,
+          "noticeRequired": false,
+          "noticeText": null,
+          "reason": "disabled"
+        }
+      }
+    },
+    "check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 373,
+      "command": [
+        "/home/minhanee/.hermes/node/bin/node",
+        "/home/minhanee/.agents/skills/archify/bin/archify.mjs",
+        "check",
+        "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+        "--require-provenance"
+      ],
+      "receipt": {
+        "ok": true,
+        "file": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+        "artifact": {
+          "sha256": "e194b59b1b7e392ff2bb167bd447a5648e53b9e368cde46c179ea5f1024922b8",
+          "bytes": 832334
+        },
+        "checks": [
+          {
+            "name": "single_svg",
+            "ok": true,
+            "details": [
+              "found 1 <svg> block(s)"
+            ]
+          },
+          {
+            "name": "finite_svg",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "orthogonal_arrows",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "label_route_clearance",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_crossings",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "relationship_corridors",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "container_border_runs",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "route_rhythm",
+            "ok": true,
+            "details": []
+          },
+          {
+            "name": "legend_clearance",
+            "ok": true,
+            "details": []
+          }
+        ],
+        "composition": {
+          "schemaVersion": 1,
+          "profile": "showcase",
+          "status": "pass",
+          "summary": {
+            "errors": 0,
+            "warnings": 0
+          },
+          "metrics": {
+            "properCrossings": 0,
+            "resolvedCrossovers": 1,
+            "ambiguousCorridors": 0,
+            "arrowheadCollisions": 0,
+            "containerBorderRuns": 0,
+            "labelRouteClearanceIssues": 0,
+            "labelCanvasOverflowIssues": 0,
+            "minLabelRouteClearance": 6.7,
+            "desktopReadabilityIssues": 0,
+            "viewportHeightIssues": 0,
+            "minProjectedNodeTextPx": 6.5,
+            "maxBends": 2,
+            "routesOverSuggestedBends": 0,
+            "maxStretch": 1,
+            "routesOverSuggestedStretch": 0,
+            "minSegmentPx": 24,
+            "minInteriorSegmentPx": 34.7,
+            "shortSegmentCount": 0,
+            "shortEndpointSegmentCount": 0,
+            "shortInteriorSegmentCount": 0,
+            "microSegmentCount": 0
+          },
+          "suggestedLimits": {
+            "bendsPerRelationship": 2,
+            "stretch": 1.35,
+            "segmentPx": 16,
+            "microSegmentPx": 8
+          },
+          "routeReview": {
+            "crossings": [
+              {
+                "left": {
+                  "id": "web-to-yahoo",
+                  "from": "web",
+                  "to": "yahoo",
+                  "label": "해외 주가 조회",
+                  "collectionIndex": 6,
+                  "artifactIndex": 7
+                },
+                "right": {
+                  "id": "web-to-telegram",
+                  "from": "web",
+                  "to": "telegram",
+                  "label": "배당/알림 발송",
+                  "collectionIndex": 7,
+                  "artifactIndex": 8
+                },
+                "point": [
+                  464.9999999999999,
+                  368.00000000000006
+                ],
+                "sharedNode": "web"
+              }
+            ],
+            "crowdedSides": [
+              {
+                "node": "web",
+                "label": "Next.js 웹앱",
+                "side": "right",
+                "relationships": 4,
+                "sidePx": 64,
+                "neededPx": 74
+              }
+            ],
+            "detours": []
+          },
+          "leadingSpace": {
+            "measured": true,
+            "emptyTopPx": 150,
+            "emptyTopRatio": 0.223,
+            "occupiedTop": 150,
+            "viewBoxTop": 0,
+            "canvasHeight": 672,
+            "typicalNodeHeight": 64,
+            "reviewSuggested": true
+          },
+          "desktopReadability": {
+            "budgetBasis": "legacy-930",
+            "readerContract": "declared-wide-v1",
+            "availableDiagramWidth": 930,
+            "actualBudgetPx": 930,
+            "limit": "legacy",
+            "requestedTargetPx": 7.5,
+            "requestedTargetMet": false,
+            "hardFloorPx": 6,
+            "hardFloorMet": true,
+            "minimumOwner": {
+              "kind": "node",
+              "id": "mobile"
+            },
+            "minimumSourceTextPx": 6.5,
+            "minimumProjectedTextPx": 6.5,
+            "semanticTextCount": 26
+          },
+          "issues": []
+        },
+        "provenance": "current",
+        "deliveryReceiptId": "8a0c2155-7f31-4967-a3be-9bfb3fb9c57a"
+      }
+    },
+    "browser-check": {
+      "status": "pass",
+      "exitCode": 0,
+      "durationMs": 4599,
+      "command": [
+        "/home/minhanee/.hermes/node/bin/node",
+        "/home/minhanee/.agents/skills/archify/bin/archify.mjs",
+        "browser-check",
+        "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+        "--json",
+        "--require-provenance"
+      ],
+      "execution": "in-process",
+      "receipt": {
+        "schemaVersion": 1,
+        "ok": true,
+        "command": "browser-check",
+        "evidenceKind": "automated-browser",
+        "status": "pass",
+        "visualReview": "not-requested",
+        "provenance": "current",
+        "deliveryReceiptId": "8a0c2155-7f31-4967-a3be-9bfb3fb9c57a",
+        "artifact": {
+          "path": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+          "sha256": "e194b59b1b7e392ff2bb167bd447a5648e53b9e368cde46c179ea5f1024922b8",
+          "bytes": 832334
+        },
+        "state": {
+          "detail": "read",
+          "motion": "still"
+        },
+        "chrome": {
+          "status": "available",
+          "executable": "/home/minhanee/.local/bin/google-chrome"
+        },
+        "diagnostics": [],
+        "containment": {
+          "status": "pass",
+          "policy": "fit-or-reader-declared-readable-vertical-scroll",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 900,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 717,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 99,
+                "diagramChromePx": 78,
+                "svgPx": 698,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1000,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 752,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 107,
+                "diagramChromePx": 84,
+                "svgPx": 732,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 834,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 107,
+                "diagramChromePx": 84,
+                "svgPx": 812,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1180,
+              "diagramWidth": 1035,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 94,
+                "diagramChromePx": 142,
+                "svgPx": 1008,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 12.15625,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 0,
+              "viewerChromeActive": false,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "themeStates": {
+          "status": "pass",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "requestedTheme": "light",
+              "resolvedTheme": "light",
+              "ok": true
+            },
+            {
+              "width": 1440,
+              "height": 900,
+              "requestedTheme": "dark",
+              "resolvedTheme": "dark",
+              "ok": true
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "requestedTheme": "dark",
+              "resolvedTheme": "dark",
+              "ok": true
+            }
+          ]
+        },
+        "readability": {
+          "status": "pass",
+          "minimumProjectedNodeTextPx": 6,
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 900,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 717,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 99,
+                "diagramChromePx": 78,
+                "svgPx": 698,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1000,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 752,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 107,
+                "diagramChromePx": 84,
+                "svgPx": 732,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 834,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 107,
+                "diagramChromePx": 84,
+                "svgPx": 812,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1180,
+              "diagramWidth": 1035,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 94,
+                "diagramChromePx": 142,
+                "svgPx": 1008,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 12.15625,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 0,
+              "viewerChromeActive": false,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "viewerChrome": {
+          "status": "pass",
+          "viewports": [
+            {
+              "width": 1440,
+              "height": 900,
+              "theme": "light",
+              "innerWidth": 1440,
+              "innerHeight": 900,
+              "scrollWidth": 1440,
+              "scrollHeight": 900,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 717,
+              "pageComposition": {
+                "bodyPaddingPx": 12,
+                "headerPx": 99,
+                "diagramChromePx": 78,
+                "svgPx": 698,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1600,
+              "height": 1000,
+              "theme": "light",
+              "innerWidth": 1600,
+              "innerHeight": 1000,
+              "scrollWidth": 1600,
+              "scrollHeight": 1000,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 752,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 107,
+                "diagramChromePx": 84,
+                "svgPx": 732,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 1920,
+              "height": 1080,
+              "theme": "light",
+              "innerWidth": 1920,
+              "innerHeight": 1080,
+              "scrollWidth": 1920,
+              "scrollHeight": 1080,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 960,
+              "diagramWidth": 834,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 107,
+                "diagramChromePx": 84,
+                "svgPx": 812,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 10,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 54,
+              "viewerChromeActive": true,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            },
+            {
+              "width": 2048,
+              "height": 1320,
+              "theme": "light",
+              "innerWidth": 2048,
+              "innerHeight": 1320,
+              "scrollWidth": 2048,
+              "scrollHeight": 1320,
+              "overflowX": false,
+              "overflowY": false,
+              "verticalScrollAccepted": false,
+              "overflowDisposition": "contained",
+              "readerLayout": "adaptive",
+              "readerOverflow": null,
+              "readerFit": "intrinsic-height",
+              "ok": true,
+              "readerWidth": 1180,
+              "diagramWidth": 1035,
+              "pageComposition": {
+                "bodyPaddingPx": 64,
+                "headerPx": 94,
+                "diagramChromePx": 142,
+                "svgPx": 1008,
+                "cardsPx": 0,
+                "viewBoxHeight": 672
+              },
+              "viewBoxWidth": 690,
+              "minimumProjectedNodeTextPx": 6.5,
+              "minimumProjectedNonEdgeTextPx": 6.5,
+              "minimumProjectedEdgeTextPx": 8,
+              "minimumProjectedNodeText": "React Native (kr.kimvibe.economicfreedom)",
+              "minimumProjectedNodeTextDetail": "context",
+              "minimumProjectedNodeTextOwner": {
+                "kind": "node",
+                "id": "mobile"
+              },
+              "minimumRequiredNodeTextPx": 6,
+              "readabilityOk": true,
+              "hasLegend": true,
+              "hasNavigationDock": true,
+              "legendDockIntersectionArea": 0,
+              "dockStageIntersectionArea": 0,
+              "dockStageGap": 12.15625,
+              "requiredDockStageGap": 10,
+              "viewerChromeStageOk": true,
+              "viewerChromeReserve": 0,
+              "viewerChromeActive": false,
+              "viewerChromeOk": true,
+              "resolvedTheme": "light"
+            }
+          ]
+        },
+        "captures": {
+          "status": "not-requested",
+          "screenshots": [],
+          "contactSheet": null
+        },
+        "sidecars": {
+          "receipt": "pension-manager-architecture.browser-check.json",
+          "files": []
+        }
+      }
+    }
+  },
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  },
+  "diagnostics": [],
+  "evidence": {
+    "receipt": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.finalize.json",
+    "summaryReceipt": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.finalize-summary.json",
+    "browserCheckReceipt": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.browser-check.json"
+  },
+  "visualReview": "not-requested",
+  "finishedAt": "2026-10-19T01:22:07.124Z",
+  "durationMs": 6261,
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-19T01:09:54.367Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  }
+}

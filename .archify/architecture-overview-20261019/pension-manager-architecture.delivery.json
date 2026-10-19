@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8a0c2155-7f31-4967-a3be-9bfb3fb9c57a",
+  "status": "current",
+  "command": "deliver",
+  "type": "architecture",
+  "input": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/candidate.json",
+  "output": "/home/minhanee/projects/pension-manager/.archify/architecture-overview-20261019/pension-manager-architecture.html",
+  "specification": {
+    "sha256": "da29730b4e8fdbeff26e2bca21bbe59f2d5da6988df7efd9e5f94f3cac17c4e1",
+    "bytes": 4258
+  },
+  "artifact": {
+    "sha256": "e194b59b1b7e392ff2bb167bd447a5648e53b9e368cde46c179ea5f1024922b8",
+    "bytes": 832334
+  }
+}

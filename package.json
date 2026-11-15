@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:design": "eslint --config eslint.design.config.mjs src"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -24,10 +25,12 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@shadcn/lint": "0.2.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@typescript-eslint/parser": "8.58.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
     "tailwindcss": "^4",

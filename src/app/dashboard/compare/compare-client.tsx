@@ -825,7 +825,7 @@ function AxisTick({
         y={0}
         dy={12}
         textAnchor="middle"
-        fill="#3f3f46"
+        fill="var(--color-zinc-700)"
         fontSize={11}
         fontWeight={800}
       >

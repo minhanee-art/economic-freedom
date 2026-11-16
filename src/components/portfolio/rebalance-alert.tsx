@@ -1116,21 +1116,21 @@ function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithP
         >
           <defs>
             <linearGradient id={`candle-bg-${holding.id}`} x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#eef2ff" stopOpacity="0.75" />
-              <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--color-indigo-tint)" stopOpacity="0.75" />
+              <stop offset="100%" stopColor="var(--color-white)" stopOpacity="0" />
             </linearGradient>
           </defs>
           <rect x="0" y="0" width="320" height="228" fill={`url(#candle-bg-${holding.id})`} />
           {[high, mid, low].map((price) => (
             <g key={price}>
               <line x1="48" x2="304" y1={y(price)} y2={y(price)} stroke="currentColor" strokeDasharray="4 5" />
-              <text x="4" y={y(price) + 4} fill="#71717a" fontSize="10" fontWeight="700">
+              <text x="4" y={y(price) + 4} fill="var(--color-zinc-500)" fontSize="10" fontWeight="700">
                 {Math.round(price).toLocaleString()}
               </text>
             </g>
           ))}
-          <line x1="48" x2="304" y1={avgY} y2={avgY} stroke="#64748b" strokeDasharray="3 4" strokeWidth="1.5" />
-          <text x="244" y={avgY - 5} fill="#64748b" fontSize="10" fontWeight="800">평단</text>
+          <line x1="48" x2="304" y1={avgY} y2={avgY} stroke="var(--color-slate-500)" strokeDasharray="3 4" strokeWidth="1.5" />
+          <text x="244" y={avgY - 5} fill="var(--color-slate-500)" fontSize="10" fontWeight="800">평단</text>
           <line x1="48" x2="304" y1={currentY} y2={currentY} stroke={isPositive ? "#059669" : "#dc2626"} strokeDasharray="5 3" strokeWidth="1.5" />
           <text x="244" y={currentY + 12} fill={isPositive ? "#059669" : "#dc2626"} fontSize="10" fontWeight="800">종가</text>
           {candles.map((candle, index) => {
@@ -1147,13 +1147,13 @@ function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithP
                 <rect x={x - bodyWidth / 2} y={210 - volumeHeight} width={bodyWidth} height={volumeHeight} fill={color} opacity="0.22" />
                 <line x1={x} x2={x} y1={y(candle.high)} y2={y(candle.low)} stroke={color} strokeWidth="2" strokeLinecap="round" />
                 <rect x={x - bodyWidth / 2} y={top} width={bodyWidth} height={bodyHeight} fill={color} rx="1.5" />
-                <line x1={x - bodyWidth / 2} x2={x + bodyWidth / 2} y1={y(candle.open)} y2={y(candle.open)} stroke="#ffffff" strokeOpacity="0.45" />
+                <line x1={x - bodyWidth / 2} x2={x + bodyWidth / 2} y1={y(candle.open)} y2={y(candle.open)} stroke="var(--color-white)" strokeOpacity="0.45" />
               </g>
             );
           })}
           <line x1="48" x2="304" y1="212" y2="212" stroke="currentColor" />
-          <text x="48" y="225" fill="#71717a" fontSize="10" fontWeight="700">{formatCandleDate(candles[0]?.date)}</text>
-          <text x="258" y="225" fill="#71717a" fontSize="10" fontWeight="700">{formatCandleDate(lastCandle?.date)}</text>
+          <text x="48" y="225" fill="var(--color-zinc-500)" fontSize="10" fontWeight="700">{formatCandleDate(candles[0]?.date)}</text>
+          <text x="258" y="225" fill="var(--color-zinc-500)" fontSize="10" fontWeight="700">{formatCandleDate(lastCandle?.date)}</text>
         </svg>
 
         <div className="mt-2 grid grid-cols-2 gap-1.5 text-[11px] font-bold tabular-nums">

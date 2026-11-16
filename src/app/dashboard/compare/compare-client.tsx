@@ -2,7 +2,9 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
 import type { Holding } from "@/types";
+import { SERIES_COLORS } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
 import {
@@ -54,8 +56,6 @@ interface CompareItem extends SearchETF {
 interface Props {
   holdings: Holding[];
 }
-
-const COLORS = ["#533afd", "#F97316", "#22C55E", "#EF4444", "#EAB308"];
 
 const THEMES = [
   "전체", "코스피", "코스닥", "미국", "배당", "반도체",
@@ -299,21 +299,21 @@ export function CompareClient({ holdings }: Props) {
     name: s.name,
     code: codeLabel(s),
     현재가: s.price,
-    color: COLORS[i],
+    color: SERIES_COLORS[i],
   }));
 
   const returnBarData = selected.map((s, i) => ({
     name: s.name,
     code: codeLabel(s),
     수익률: getReturn(s),
-    color: COLORS[i],
+    color: SERIES_COLORS[i],
   }));
 
   const volumeBarData = selected.map((s, i) => ({
     name: s.name,
     code: codeLabel(s),
     거래량: s.volume,
-    color: COLORS[i],
+    color: SERIES_COLORS[i],
   }));
 
   // 레이더
@@ -374,8 +374,8 @@ export function CompareClient({ holdings }: Props) {
           {selected.map((s, i) => (
             <span
               key={s.code}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-card"
-              style={{ background: COLORS[i] }}
+              className="dot-bg inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-white shadow-card"
+              style={{ "--dot-bg": SERIES_COLORS[i] } as CSSProperties}
             >
               {s.name.length > 10 ? s.name.slice(0, 10) + "…" : s.name}
               <button
@@ -480,7 +480,7 @@ export function CompareClient({ holdings }: Props) {
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium truncate">{etf.name}</p>
                         {isMy && (
-                          <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                          <span className="shrink-0 px-2 py-0.5 rounded-full text-3xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
                             보유
                           </span>
                         )}
@@ -499,7 +499,7 @@ export function CompareClient({ holdings }: Props) {
                       type="button"
                       onClick={() => addToPortfolio(etf)}
                       disabled={isMy || addingCode === etf.code || Boolean(addingCode)}
-                      className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-[11px] font-black text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                      className="shrink-0 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-2xs font-black text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
                     >
                       {isMy ? "추가됨" : addingCode === etf.code ? "추가중" : "내 계좌 추가"}
                     </button>
@@ -542,9 +542,9 @@ export function CompareClient({ holdings }: Props) {
                     항목
                   </th>
                   {selected.map((s, i) => (
-                    <th key={s.code} className="px-3 py-3 text-right min-w-[140px]" style={{ color: COLORS[i] }}>
+                    <th key={s.code} className="series-fg px-3 py-3 text-right min-w-35" style={{ "--series-fg": SERIES_COLORS[i] } as CSSProperties}>
                       <span className="block text-sm font-extrabold tabular-nums">{s.code}</span>
-                      <span className="block text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 whitespace-normal break-keep">
+                      <span className="block text-2xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-normal break-keep">
                         {s.name}
                       </span>
                     </th>
@@ -620,10 +620,10 @@ export function CompareClient({ holdings }: Props) {
                   <div key={s.code} className="rounded-xl border border-zinc-100 bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-extrabold tabular-nums" style={{ color: COLORS[i] }}>{s.code}</p>
+                        <p className="series-fg text-sm font-extrabold tabular-nums" style={{ "--series-fg": SERIES_COLORS[i] } as CSSProperties}>{s.code}</p>
                         <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 truncate">{s.name}</p>
                       </div>
-                      <span className="shrink-0 rounded-full bg-white px-2 py-1 text-[11px] font-bold text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-300">
+                      <span className="shrink-0 rounded-full bg-white px-2 py-1 text-2xs font-bold text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-300">
                         표시합계 {(s.detail?.componentTotalWeight ?? 0).toFixed(2)}%
                       </span>
                     </div>
@@ -642,8 +642,8 @@ export function CompareClient({ holdings }: Props) {
                             </div>
                             <div className="h-1.5 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
                               <div
-                                className="h-full rounded-full"
-                                style={{ width: `${Math.min(component.weight * 5, 100)}%`, background: COLORS[i] }}
+                                className="bar-w dot-bg h-full rounded-full"
+                                style={{ "--bar-w": `${Math.min(component.weight * 5, 100)}%`, "--dot-bg": SERIES_COLORS[i] } as CSSProperties}
                               />
                             </div>
                           </div>
@@ -668,7 +668,7 @@ export function CompareClient({ holdings }: Props) {
                 {selected.map((s, i) => (
                   s.detail?.similarETFs?.length ? (
                     <div key={s.code} className="space-y-1.5">
-                      <p className="text-xs font-bold" style={{ color: COLORS[i] }}>
+                      <p className="series-fg text-xs font-bold" style={{ "--series-fg": SERIES_COLORS[i] } as CSSProperties}>
                         {s.name}
                       </p>
                       {s.detail.similarETFs.map((sim) => (
@@ -689,7 +689,7 @@ export function CompareClient({ holdings }: Props) {
             {/* 레이더 */}
             <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
               <h3 className="text-sm font-semibold text-ink mb-3">종합 비교</h3>
-              <div className="h-[260px]">
+              <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData}>
                     <PolarGrid stroke="#e3e8ee" />
@@ -700,8 +700,8 @@ export function CompareClient({ holdings }: Props) {
                         key={s.code}
                         name={s.name.length > 8 ? s.name.slice(0, 8) + "…" : s.name}
                         dataKey={`v${i}`}
-                        stroke={COLORS[i]}
-                        fill={COLORS[i]}
+                        stroke={SERIES_COLORS[i]}
+                        fill={SERIES_COLORS[i]}
                         fillOpacity={0.12}
                         strokeWidth={2}
                       />
@@ -717,7 +717,7 @@ export function CompareClient({ holdings }: Props) {
               <h3 className="text-sm font-semibold text-ink mb-3">
                 수익률 비교 ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
               </h3>
-              <div className="h-[300px]">
+              <div className="h-75">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={returnBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
                     <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
@@ -736,7 +736,7 @@ export function CompareClient({ holdings }: Props) {
             {/* 현재가 바 */}
             <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
               <h3 className="text-sm font-semibold text-ink mb-3">현재가 비교</h3>
-              <div className="h-[260px]">
+              <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
                     <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
@@ -753,7 +753,7 @@ export function CompareClient({ holdings }: Props) {
             {/* 거래량 바 */}
             <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
               <h3 className="text-sm font-semibold text-ink mb-3">거래량 비교</h3>
-              <div className="h-[260px]">
+              <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
                     <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
@@ -825,7 +825,7 @@ function AxisTick({
         y={0}
         dy={12}
         textAnchor="middle"
-        fill="#3f3f46"
+        fill="var(--color-zinc-700)"
         fontSize={11}
         fontWeight={800}
       >
@@ -839,10 +839,10 @@ function ChartLegend({ items }: { items: CompareItem[] }) {
   return (
     <div className="mt-2 flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
       {items.map((item, i) => (
-        <div key={item.code} className="flex min-w-0 items-center gap-1.5 text-[11px] text-zinc-600 dark:text-zinc-300">
-          <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: COLORS[i] }} />
+        <div key={item.code} className="flex min-w-0 items-center gap-1.5 text-2xs text-zinc-600 dark:text-zinc-300">
+          <span className="dot-bg h-2.5 w-2.5 shrink-0 rounded-full" style={{ "--dot-bg": SERIES_COLORS[i] } as CSSProperties} />
           <strong className="shrink-0 font-extrabold tabular-nums text-zinc-950 dark:text-white">{item.code}</strong>
-          <span className="max-w-[240px] whitespace-normal break-keep leading-snug">{item.name}</span>
+          <span className="max-w-60 whitespace-normal break-keep leading-snug">{item.name}</span>
         </div>
       ))}
     </div>

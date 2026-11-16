@@ -23,17 +23,17 @@ interface PnLAreaChartProps {
 
 export function PnLAreaChart({ data }: PnLAreaChartProps) {
   return (
-    <div className="h-[220px]">
+    <div className="h-55">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>
             <linearGradient id="colorInvested" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#b9b9f9" stopOpacity={0.35} />
-              <stop offset="95%" stopColor="#b9b9f9" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--color-indigo-200)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-indigo-200)" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#533afd" stopOpacity={0.35} />
-              <stop offset="95%" stopColor="#533afd" stopOpacity={0} />
+              <stop offset="5%" stopColor="var(--color-brand)" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="var(--color-brand)" stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis

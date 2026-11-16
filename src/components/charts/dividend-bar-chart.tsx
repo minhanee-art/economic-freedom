@@ -21,7 +21,7 @@ interface DividendBarChartProps {
 
 export function DividendBarChart({ data }: DividendBarChartProps) {
   return (
-    <div className="h-[200px]">
+    <div className="h-50">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <XAxis

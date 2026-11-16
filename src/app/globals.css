@@ -58,3 +58,99 @@ body {
 .dashboard-sharp * {
   border-radius: 0 !important;
 }
+
+/* 히어로 패널 그라디언트 (인라인 style 대신 클래스로 고정)
+   #1c1e54 = --color-dark-header, #2e2b8c = --color-indigo-700, #533afd = --color-brand */
+.hero-gradient {
+  background-image: linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%);
+}
+
+.hero-gradient-compact {
+  background-image: linear-gradient(135deg, #1c1e54 0%, #2e2b8c 100%);
+}
+
+/* 데이터에서 오는 동적 색/폭을 CSS 커스텀 프로퍼티로 주입할 때 쓰는 유틸리티 */
+.dot-bg {
+  background-color: var(--dot-bg);
+}
+
+.bar-w {
+  width: var(--bar-w);
+}
+
+.series-fg {
+  color: var(--series-fg);
+}
+
+/* pnl 종목 카드 좌측 색상 바 (이익/손실) */
+.pnl-bar-up {
+  background-color: #10b981;
+}
+
+.pnl-bar-down {
+  background-color: #ef4444;
+}
+
+/* 앱이 실제로 쓰는 기본 팔레트 단계 (값은 Tailwind 기본값과 동일) */
+@theme {
+  /* 12px 스케일 아래의 작은 캡션 크기 (기존 off-scale 11px/10px 값 유지) */
+  --text-2xs: 11px;
+  --text-3xs: 10px;
+  --color-white: #ffffff;
+  --color-slate-500: #64748b;
+  --color-indigo-tint: #eef2ff;
+  --color-amber-50: oklch(98.7% 0.022 95.277);
+  --color-amber-100: oklch(96.2% 0.059 95.617);
+  --color-amber-200: oklch(92.4% 0.12 95.746);
+  --color-amber-300: oklch(87.9% 0.169 91.605);
+  --color-amber-400: oklch(82.8% 0.189 84.429);
+  --color-amber-500: oklch(76.9% 0.188 70.08);
+  --color-amber-600: oklch(66.6% 0.179 58.318);
+  --color-amber-700: oklch(55.5% 0.163 48.998);
+  --color-amber-800: oklch(47.3% 0.137 46.201);
+  --color-amber-900: oklch(41.4% 0.112 45.904);
+  --color-blue-50: oklch(97% 0.014 254.604);
+  --color-blue-100: oklch(93.2% 0.032 255.585);
+  --color-blue-300: oklch(80.9% 0.105 251.813);
+  --color-blue-400: oklch(70.7% 0.165 254.624);
+  --color-blue-500: oklch(62.3% 0.214 259.815);
+  --color-blue-600: oklch(54.6% 0.245 262.881);
+  --color-emerald-50: oklch(97.9% 0.021 166.113);
+  --color-emerald-100: oklch(95% 0.052 163.051);
+  --color-emerald-200: oklch(90.5% 0.093 164.15);
+  --color-emerald-300: oklch(84.5% 0.143 164.978);
+  --color-emerald-400: oklch(76.5% 0.177 163.223);
+  --color-emerald-500: oklch(69.6% 0.17 162.48);
+  --color-emerald-600: oklch(59.6% 0.145 163.225);
+  --color-emerald-700: oklch(50.8% 0.118 165.612);
+  --color-emerald-800: oklch(43.2% 0.095 166.913);
+  --color-emerald-900: oklch(37.8% 0.077 168.94);
+  --color-emerald-950: oklch(26.2% 0.051 172.552);
+  --color-indigo-300: oklch(78.5% 0.115 274.713);
+  --color-red-50: oklch(97.1% 0.013 17.38);
+  --color-red-100: oklch(93.6% 0.032 17.717);
+  --color-red-200: oklch(88.5% 0.062 18.334);
+  --color-red-300: oklch(80.8% 0.114 19.571);
+  --color-red-400: oklch(70.4% 0.191 22.216);
+  --color-red-500: oklch(63.7% 0.237 25.331);
+  --color-red-600: oklch(57.7% 0.245 27.325);
+  --color-red-700: oklch(50.5% 0.213 27.518);
+  --color-red-800: oklch(44.4% 0.177 26.899);
+  --color-red-900: oklch(39.6% 0.141 25.723);
+  --color-red-950: oklch(25.8% 0.092 26.042);
+  --color-sky-50: oklch(97.7% 0.013 236.62);
+  --color-sky-400: oklch(74.6% 0.16 232.661);
+  --color-sky-600: oklch(58.8% 0.158 241.966);
+  --color-sky-900: oklch(39.1% 0.09 240.876);
+  --color-zinc-50: oklch(98.5% 0 0);
+  --color-zinc-100: oklch(96.7% 0.001 286.375);
+  --color-zinc-200: oklch(92% 0.004 286.32);
+  --color-zinc-300: oklch(87.1% 0.006 286.286);
+  --color-zinc-400: oklch(70.5% 0.015 286.067);
+  --color-zinc-500: oklch(55.2% 0.016 285.938);
+  --color-zinc-600: oklch(44.2% 0.017 285.786);
+  --color-zinc-700: oklch(37% 0.013 285.805);
+  --color-zinc-800: oklch(27.4% 0.006 286.033);
+  --color-zinc-900: oklch(21% 0.006 285.885);
+  --color-zinc-950: oklch(14.1% 0.005 285.823);
+}

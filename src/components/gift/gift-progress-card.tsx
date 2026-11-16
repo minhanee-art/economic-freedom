@@ -1,6 +1,7 @@
 "use client";
 
 import { formatKRW } from "@/lib/utils";
+import type { CSSProperties } from "react";
 import { getAge, isMinor, exemptionLimit, cumulativeGiftsWithin10Years } from "@/lib/gift-tax";
 
 interface Props {
@@ -29,8 +30,8 @@ export function GiftProgressCard({ birthDate, gifts }: Props) {
       </div>
       <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${over ? "bg-red-500" : "bg-indigo-500"}`}
-          style={{ width: `${pct}%` }}
+          className={`bar-w h-full rounded-full transition-all ${over ? "bg-red-500" : "bg-indigo-500"}`}
+          style={{ "--bar-w": `${pct}%` } as CSSProperties}
         />
       </div>
       <p className="text-xs text-zinc-400">

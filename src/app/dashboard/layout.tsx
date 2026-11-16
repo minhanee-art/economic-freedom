@@ -149,7 +149,7 @@ export default function DashboardLayout({
         <div className="fixed inset-x-0 top-0 z-[60] h-1 bg-indigo-500 shadow-[0_0_12px_rgba(83,58,253,0.45)]" />
       )}
       <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm shadow-indigo-950/20">
-        <div className="relative mx-auto flex min-h-16 max-w-[1120px] items-center gap-3 px-4 py-2 sm:px-6">
+        <div className="relative mx-auto flex min-h-16 max-w-280 items-center gap-3 px-4 py-2 sm:px-6">
           <Link href="/dashboard" prefetch onClick={() => handleRouteIntent("/dashboard")} onMouseEnter={() => prefetchRoute("/dashboard")} className="shrink-0 text-lg font-bold tracking-tight">
             Pension Manager
           </Link>
@@ -334,14 +334,14 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      <main className="flex-1 bg-[var(--color-canvas-soft)] dark:bg-zinc-950">
-        <div className="mx-auto max-w-[1120px] px-4 py-5 sm:px-6 md:py-7">
+      <main className="flex-1 bg-canvas-soft dark:bg-zinc-950">
+        <div className="mx-auto max-w-280 px-4 py-5 sm:px-6 md:py-7">
           {children}
         </div>
       </main>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200/80 bg-white/95 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/95 md:hidden">
-        <div className="mx-auto grid h-20 max-w-[560px] grid-cols-5 items-center px-2 pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto grid h-20 max-w-140 grid-cols-5 items-center px-2 pb-[env(safe-area-inset-bottom)]">
           {bottomNavItems.map((item) => {
             const isActive =
               item.href === "/dashboard"
@@ -357,7 +357,7 @@ export default function DashboardLayout({
                 onTouchStart={() => prefetchRoute(item.href)}
                 onMouseEnter={() => prefetchRoute(item.href)}
                 className={cn(
-                  "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-[11px] font-semibold transition-all active:scale-95",
+                  "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-2xs font-semibold transition-all active:scale-95",
                   isActive
                     ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
                     : "text-zinc-400 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-700 dark:hover:border-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"

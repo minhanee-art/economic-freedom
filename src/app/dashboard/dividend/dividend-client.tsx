@@ -113,11 +113,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
     <div className="space-y-5">
       {/* 요약 카드 */}
       <div
-        className="rounded-2xl px-6 py-6 text-white shadow-float"
-        style={{
-          background:
-            "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
-        }}
+        className="hero-gradient rounded-2xl px-6 py-6 text-white shadow-float"
       >
         <div className="grid grid-cols-3 gap-4">
           <div>
@@ -200,11 +196,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
         <button
           onClick={handleAdd}
           disabled={!holdingId || !amount || isAdding}
-          className="w-full h-11 rounded-xl text-white text-sm font-semibold shadow-card transition-shadow hover:shadow-float disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-          style={{
-            background:
-              "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
-          }}
+          className="hero-gradient w-full h-11 rounded-xl text-white text-sm font-semibold shadow-card transition-shadow hover:shadow-float disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {isAdding ? "추가 중..." : "배당금 추가"}
         </button>
@@ -347,7 +339,7 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
     <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">📥 분배금 자동조회</h3>
-        <span className="text-[11px] text-ink-mute">보유 종목 × 주당분배금</span>
+        <span className="text-2xs text-ink-mute">보유 종목 × 주당분배금</span>
       </div>
 
       {holdings.length === 0 ? (
@@ -364,10 +356,10 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{h.name}</p>
-                  <p className="text-[11px] text-zinc-400 font-mono tabular-nums">{h.code} · {h.shares.toLocaleString()}주</p>
+                  <p className="text-2xs text-zinc-400 font-mono tabular-nums">{h.code} · {h.shares.toLocaleString()}주</p>
                 </div>
                 {msg && (
-                  <span className={`text-[11px] tabular-nums ${statusColor[status]}`}>{msg}</span>
+                  <span className={`text-2xs tabular-nums ${statusColor[status]}`}>{msg}</span>
                 )}
                 <button
                   onClick={() => handleFetch(h)}

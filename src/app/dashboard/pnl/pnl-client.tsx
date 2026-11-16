@@ -1,6 +1,7 @@
 "use client";
 
 import type { Holding, CostBasis, PurchaseRecord } from "@/types";
+import type { CSSProperties } from "react";
 import { formatKRW, formatPercent, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { PnLAreaChart } from "@/components/charts/pnl-area-chart";
@@ -97,11 +98,7 @@ export function PnLClient({
     <div className="space-y-5">
       {/* 총 수익 현황 */}
       <div
-        className="rounded-2xl px-6 py-6 text-white shadow-float"
-        style={{
-          background:
-            "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
-        }}
+        className="hero-gradient rounded-2xl px-6 py-6 text-white shadow-float"
       >
         <div className="grid grid-cols-2 gap-5">
           <div>
@@ -139,7 +136,7 @@ export function PnLClient({
       </div>
 
       {isEmpty ? (
-        <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center shadow-card">
+        <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center shadow-card">
           <p className="text-sm text-ink-mute dark:text-zinc-400">
             보유 종목이 없습니다. 매수 후 손익이 표시됩니다.
           </p>
@@ -148,7 +145,7 @@ export function PnLClient({
         <>
           {/* 추이 차트 */}
           {chartData.length >= 2 && (
-            <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
+            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
               <h3 className="text-sm font-semibold text-ink mb-3">
                 투입 vs 평가 추이
               </h3>
@@ -157,7 +154,7 @@ export function PnLClient({
           )}
 
           {/* 자산군별 손익 요약 */}
-          <div className="rounded-2xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
+          <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
             <h3 className="text-sm font-semibold text-ink mb-3">자산군별 손익</h3>
             <div className="grid grid-cols-2 gap-3">
               {Array.from(categoryMap.entries()).map(([cat, data]) => {
@@ -166,13 +163,11 @@ export function PnLClient({
                 return (
                   <div
                     key={cat}
-                    className="flex items-start gap-2 rounded-xl border border-[var(--color-hairline)] dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800 px-3 py-2.5"
+                    className="flex items-start gap-2 rounded-xl border border-hairline dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800 px-3 py-2.5"
                   >
                     <span
-                      className="w-2.5 h-2.5 rounded-full mt-1 shrink-0"
-                      style={{
-                        background: getCategoryColor(cat),
-                      }}
+                      className="dot-bg w-2.5 h-2.5 rounded-full mt-1 shrink-0"
+                      style={{ "--dot-bg": getCategoryColor(cat) } as CSSProperties}
                     />
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-ink-mute">{cat}</p>
@@ -189,7 +184,7 @@ export function PnLClient({
                           ({formatPercent(pct)})
                         </span>
                       </p>
-                      <p className="text-[11px] text-zinc-400 tabular-nums">
+                      <p className="text-2xs text-zinc-400 tabular-nums">
                         {formatKRW(data.cost)} → {formatKRW(data.value)}
                       </p>
                     </div>
@@ -208,14 +203,10 @@ export function PnLClient({
               {pnlList.map((h) => (
                 <div
                   key={h.id}
-                  className="flex rounded-xl border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float"
+                  className="flex rounded-xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float"
                 >
                   <div
-                    className="w-1.5 shrink-0"
-                    style={{
-                      background:
-                        h.profitLoss >= 0 ? "#10b981" : "#ef4444",
-                    }}
+                    className={cn("w-1.5 shrink-0", h.profitLoss >= 0 ? "pnl-bar-up" : "pnl-bar-down")}
                   />
                   <div className="flex-1 px-4 py-3">
                     <div className="flex items-center justify-between">

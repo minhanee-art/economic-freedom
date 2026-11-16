@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
@@ -504,8 +505,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               {group.label && (
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ background: getCategoryColor(group.categoryKey) }}
+                    className="dot-bg w-2.5 h-2.5 rounded-full shrink-0"
+                    style={{ "--dot-bg": getCategoryColor(group.categoryKey) } as CSSProperties}
                   />
                   <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                     {group.label}
@@ -535,7 +536,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">📡 감정분석 종목 ({watchlist.length})</h3>
-          <span className="text-[11px] text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
+          <span className="text-2xs text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
         </div>
 
         {/* 추가 폼 */}
@@ -583,12 +584,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           <ul className="space-y-1.5">
             {watchlist.map((w) => (
               <li key={w.id} className="flex items-center gap-2 rounded-xl border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
-                <span className="text-[11px] font-semibold text-zinc-400 w-7 shrink-0">
+                <span className="text-2xs font-semibold text-zinc-400 w-7 shrink-0">
                   {w.market === "US" ? "🇺🇸" : "🇰🇷"}
                 </span>
                 <span className="flex-1 text-sm">{w.name}</span>
                 {w.code && (
-                  <span className="text-[11px] text-zinc-400 font-mono">{w.code}</span>
+                  <span className="text-2xs text-zinc-400 font-mono">{w.code}</span>
                 )}
                 <button
                   onClick={() => handleDeleteWatchlist(w.id)}
@@ -606,7 +607,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">📅 배당 캘린더 ({calendar.length})</h3>
-          <span className="text-[11px] text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
+          <span className="text-2xs text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
         </div>
 
         {/* 추가 폼 */}
@@ -669,10 +670,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               };
               return (
                 <li key={c.id} className="flex items-center gap-2 rounded-xl border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
-                  <span className="text-[11px] font-mono text-zinc-400 w-20 shrink-0">{c.date}</span>
-                  <span className="text-[11px] text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
+                  <span className="text-2xs font-mono text-zinc-400 w-20 shrink-0">{c.date}</span>
+                  <span className="text-2xs text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
                   <span className="flex-1 text-sm truncate">{c.stock}</span>
-                  {c.note && <span className="text-[11px] text-zinc-400 truncate max-w-[100px]">{c.note}</span>}
+                  {c.note && <span className="text-2xs text-zinc-400 truncate max-w-25">{c.note}</span>}
                   <button
                     onClick={() => handleDeleteCalendar(c.id)}
                     className="text-zinc-300 hover:text-red-500 transition-colors text-xs"
@@ -792,8 +793,8 @@ function HoldingSettingCard({
   return (
     <div className="flex rounded-xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
       <div
-        className="w-1.5 shrink-0"
-        style={{ background: getCategoryColor(h.category) }}
+        className="dot-bg w-1.5 shrink-0"
+        style={{ "--dot-bg": getCategoryColor(h.category) } as CSSProperties}
       />
       <div className="flex-1 px-4 py-3 space-y-2">
         <div className="flex items-center justify-between">
@@ -827,7 +828,7 @@ function HoldingSettingCard({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-[11px] text-zinc-400 mb-0.5">
+            <label className="block text-2xs text-zinc-400 mb-0.5">
               현재가 (원)
             </label>
             <input
@@ -842,7 +843,7 @@ function HoldingSettingCard({
             />
           </div>
           <div>
-            <label className="block text-[11px] text-zinc-400 mb-0.5">
+            <label className="block text-2xs text-zinc-400 mb-0.5">
               목표비중 (%)
             </label>
             <input

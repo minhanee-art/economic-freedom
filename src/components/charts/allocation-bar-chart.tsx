@@ -22,7 +22,7 @@ interface AllocationBarChartProps {
 
 export function AllocationBarChart({ data }: AllocationBarChartProps) {
   return (
-    <div className="h-[200px]">
+    <div className="h-50">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} layout="vertical" barGap={2} barSize={10}>
           <XAxis type="number" domain={[0, "auto"]} unit="%" tick={{ fontSize: 11 }} />

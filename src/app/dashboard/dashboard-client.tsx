@@ -593,7 +593,7 @@ export function DashboardClient({
         </div>
       </section>
 
-      <section className="border border-[var(--color-hairline)] bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
+      <section className="border border-hairline bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-bold tracking-tight">추가 메뉴</h2>
@@ -635,11 +635,11 @@ export function DashboardClient({
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
+          <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-3">자산군별 비중</h3>
             <CategoryPieChart data={pieData} />
           </div>
-          <div className="border border-[var(--color-hairline)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
+          <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
             <h3 className="text-sm font-semibold mb-3">현재 vs 목표 비중</h3>
             <AllocationBarChart data={barData} />
           </div>
@@ -761,7 +761,7 @@ function ReturnSummaryCard({
         ))}
       </div>
 
-      <div className="mt-3 flex flex-col gap-1 text-[11px] font-semibold text-zinc-400 dark:text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-1 text-2xs font-semibold text-zinc-400 dark:text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
         <span>
           {summary
             ? `${summary.accountName} · 기준일 ${summary.asOfDate}`
@@ -800,7 +800,7 @@ function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
           : `${amount >= 0 ? "+" : ""}${formatKRW(amount)}`}
       </p>
       {period?.snapshotDate && (
-        <p className="mt-1 text-[10px] font-semibold text-zinc-400 dark:text-zinc-500">
+        <p className="mt-1 text-3xs font-semibold text-zinc-400 dark:text-zinc-500">
           비교 기준 {period.snapshotDate}
         </p>
       )}
@@ -812,12 +812,12 @@ function EconomicEventCard({ event }: { event: EconomicEvent }) {
   return (
     <div className="border border-zinc-200 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-card dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-indigo-500/30">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-[11px] font-bold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-2xs font-bold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {formatEventDate(event.date)}
         </span>
         <span
           className={cn(
-            "border px-2.5 py-1 text-[11px] font-bold",
+            "border px-2.5 py-1 text-2xs font-bold",
             (event.type.includes("배당") || event.type.includes("실적")) &&
               "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
             !event.type.includes("배당") && !event.type.includes("실적") &&
@@ -829,7 +829,7 @@ function EconomicEventCard({ event }: { event: EconomicEvent }) {
       </div>
       <p className="text-sm font-bold text-zinc-950 dark:text-white">{event.title}</p>
       <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{event.note}</p>
-      <p className="mt-2 text-[11px] font-semibold text-zinc-400">{event.source}</p>
+      <p className="mt-2 text-2xs font-semibold text-zinc-400">{event.source}</p>
     </div>
   );
 }

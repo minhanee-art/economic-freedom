@@ -24,11 +24,7 @@ export function SummaryHeader({
 
   return (
     <div
-      className="px-5 py-5 text-white shadow-float sm:px-6 sm:py-6"
-      style={{
-        background:
-          "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
-      }}
+      className="hero-gradient px-5 py-5 text-white shadow-float sm:px-6 sm:py-6"
     >
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>

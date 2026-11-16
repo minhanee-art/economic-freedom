@@ -53,11 +53,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
     <div className="space-y-5">
       {/* 누적 통계 */}
       <div
-        className="rounded-2xl px-6 py-6 text-white shadow-float"
-        style={{
-          background:
-            "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
-        }}
+        className="hero-gradient rounded-2xl px-6 py-6 text-white shadow-float"
       >
         <div className="grid grid-cols-3 gap-4">
           <div>

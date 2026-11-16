@@ -1,6 +1,7 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import type { CSSProperties } from "react";
 import { getCategoryColor } from "@/lib/colors";
 import { formatKRW } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
 
   return (
     <div className="flex items-center gap-4">
-      <div className="w-[160px] h-[160px] shrink-0">
+      <div className="w-40 h-40 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -54,8 +55,8 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-2">
             <span
-              className="w-3 h-3 rounded-sm shrink-0"
-              style={{ background: getCategoryColor(d.name) }}
+              className="dot-bg w-3 h-3 rounded-sm shrink-0"
+              style={{ "--dot-bg": getCategoryColor(d.name) } as CSSProperties}
             />
             <span className="text-zinc-600 dark:text-zinc-400 w-10">{d.name}</span>
             <span className="font-medium">{d.pct.toFixed(1)}%</span>

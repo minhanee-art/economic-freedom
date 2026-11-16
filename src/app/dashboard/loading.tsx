@@ -3,11 +3,7 @@ export default function DashboardLoading() {
     <div className="space-y-5">
       {/* 요약 헤더 스켈레톤 */}
       <div
-        className="rounded-2xl px-6 py-6 shadow-float"
-        style={{
-          background:
-            "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%)",
-        }}
+        className="hero-gradient rounded-2xl px-6 py-6 shadow-float"
       >
         <div className="mb-5 flex items-start justify-between animate-pulse">
           <div className="space-y-2.5">

@@ -314,19 +314,19 @@ function GiftsTab({
               <div className="space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-[11px] text-zinc-400">정기금 시작일</p>
+                    <p className="text-2xs text-zinc-400">정기금 시작일</p>
                     <p className="text-xs font-semibold">{date}</p>
                   </div>
                   <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-[11px] text-zinc-400">정기금 마지막일</p>
+                    <p className="text-2xs text-zinc-400">정기금 마지막일</p>
                     <p className="text-xs font-semibold">{installmentLastDate}</p>
                   </div>
                   <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-[11px] text-zinc-400">지급 시기</p>
+                    <p className="text-2xs text-zinc-400">지급 시기</p>
                     <p className="text-xs font-semibold">매월 {paymentDay}일</p>
                   </div>
                   <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-[11px] text-zinc-400">할인율</p>
+                    <p className="text-2xs text-zinc-400">할인율</p>
                     <p className="text-xs font-semibold">연 3%</p>
                   </div>
                 </div>
@@ -337,7 +337,7 @@ function GiftsTab({
                 </div>
 
                 <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                  <table className="w-full text-[11px]">
+                  <table className="w-full text-2xs">
                     <thead className="text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                       <tr>
                         <th className="text-left font-medium px-2 py-1.5">년도</th>
@@ -361,7 +361,7 @@ function GiftsTab({
                   </table>
                 </div>
 
-                <p className="text-[11px] text-zinc-400">
+                <p className="text-2xs text-zinc-400">
                   참고 사이트처럼 계약서·평가명세서 생성에 필요한 핵심값을 한 화면에서 확인하도록 구성했습니다. 개인정보가 들어가는 실제 서류 출력 기능은 별도 동의/보안 설계 후 추가하는 것이 안전합니다.
                 </p>
               </div>
@@ -392,7 +392,7 @@ function GiftsTab({
                 <div className="flex items-center gap-1.5">
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+                      "inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium",
                       g.gift_type === "government_support"
                         ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
                         : g.gift_type === "installment"
@@ -403,12 +403,12 @@ function GiftsTab({
                     {GIFT_TYPE_LABEL[g.gift_type] ?? g.gift_type}
                   </span>
                   {NON_GIFT_TYPES.has(g.gift_type) && (
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
                       비증여
                     </span>
                   )}
                   {g.reported && (
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
                       신고완료
                     </span>
                   )}
@@ -423,14 +423,14 @@ function GiftsTab({
               </p>
               <div className="flex items-center gap-2 shrink-0">
                 {NON_GIFT_TYPES.has(g.gift_type) ? (
-                  <span className="text-[11px] px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
+                  <span className="text-2xs px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
                     신고제외
                   </span>
                 ) : (
                   <button
                     onClick={() => toggleReported(g)}
                     className={cn(
-                      "text-[11px] px-2 py-1 rounded-md border transition-colors",
+                      "text-2xs px-2 py-1 rounded-md border transition-colors",
                       g.reported
                         ? "border-zinc-200 dark:border-zinc-700 text-zinc-400"
                         : "border-indigo-200 dark:border-indigo-800 text-indigo-500"

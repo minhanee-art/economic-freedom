@@ -164,7 +164,7 @@ export function MarketClient() {
           <>
             {chartData.length > 0 && (
               <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 mb-3 shadow-card">
-                <div className="h-[260px]">
+                <div className="h-65">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={chartData}

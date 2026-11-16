@@ -59,8 +59,43 @@ body {
   border-radius: 0 !important;
 }
 
+/* 히어로 패널 그라디언트 (인라인 style 대신 클래스로 고정)
+   #1c1e54 = --color-dark-header, #2e2b8c = --color-indigo-700, #533afd = --color-brand */
+.hero-gradient {
+  background-image: linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%);
+}
+
+.hero-gradient-compact {
+  background-image: linear-gradient(135deg, #1c1e54 0%, #2e2b8c 100%);
+}
+
+/* 데이터에서 오는 동적 색/폭을 CSS 커스텀 프로퍼티로 주입할 때 쓰는 유틸리티 */
+.dot-bg {
+  background-color: var(--dot-bg);
+}
+
+.bar-w {
+  width: var(--bar-w);
+}
+
+.series-fg {
+  color: var(--series-fg);
+}
+
+/* pnl 종목 카드 좌측 색상 바 (이익/손실) */
+.pnl-bar-up {
+  background-color: #10b981;
+}
+
+.pnl-bar-down {
+  background-color: #ef4444;
+}
+
 /* 앱이 실제로 쓰는 기본 팔레트 단계 (값은 Tailwind 기본값과 동일) */
 @theme {
+  /* 12px 스케일 아래의 작은 캡션 크기 (기존 off-scale 11px/10px 값 유지) */
+  --text-2xs: 11px;
+  --text-3xs: 10px;
   --color-white: #ffffff;
   --color-slate-500: #64748b;
   --color-indigo-tint: #eef2ff;

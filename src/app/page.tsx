@@ -108,7 +108,7 @@ function PreviewCard() {
 
 export default function Home() {
   return (
-    <main className="min-h-[100dvh] bg-background text-foreground dark:bg-zinc-950">
+    <main className="min-h-dvh bg-background text-foreground dark:bg-zinc-950">
       <header className="sticky top-0 z-20 border-b border-white/70 bg-background/90 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/90">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-base font-black tracking-tight text-dark-header dark:text-white">
@@ -177,7 +177,7 @@ export default function Home() {
               key={item.title}
               href={item.href}
               className={[
-                "group rounded-[24px] border p-5 transition hover:-translate-y-1 hover:shadow-float active:scale-[0.99]",
+                "group rounded-3xl border p-5 transition hover:-translate-y-1 hover:shadow-float active:scale-[0.99]",
                 index === 0
                   ? "border-indigo-200 bg-indigo-600 text-white dark:border-indigo-700"
                   : "border-hairline bg-white text-ink dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100",
@@ -204,7 +204,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {familyTruths.map((item) => (
-              <article key={item.title} className="rounded-[24px] border border-hairline bg-canvas-soft p-5 dark:border-zinc-800 dark:bg-zinc-950">
+              <article key={item.title} className="rounded-3xl border border-hairline bg-canvas-soft p-5 dark:border-zinc-800 dark:bg-zinc-950">
                 <h3 className="text-lg font-black text-dark-header dark:text-white">{item.title}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-ink-mute dark:text-zinc-400">{item.body}</p>
               </article>
@@ -214,7 +214,7 @@ export default function Home() {
       </section>
 
       <section id="workflow" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="rounded-[32px] border border-indigo-100 bg-white p-6 shadow-card dark:border-indigo-900/40 dark:bg-zinc-900 sm:p-8 lg:p-10">
+        <div className="rounded-4xl border border-indigo-100 bg-white p-6 shadow-card dark:border-indigo-900/40 dark:bg-zinc-900 sm:p-8 lg:p-10">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <h2 className="text-3xl font-black tracking-tight text-dark-header dark:text-white sm:text-4xl">우리 페이지에 적용한 관리 흐름</h2>

@@ -23,7 +23,7 @@ interface PnLAreaChartProps {
 
 export function PnLAreaChart({ data }: PnLAreaChartProps) {
   return (
-    <div className="h-[220px]">
+    <div className="h-55">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>

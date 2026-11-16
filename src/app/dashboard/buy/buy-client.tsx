@@ -3,6 +3,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import type { CSSProperties } from "react";
 import type { Holding, CostBasis } from "@/types";
 import {
   calculateBuyPlan,
@@ -591,7 +592,7 @@ export function BuyClient({
               {showAnnualPlan && (
                 <>
                   <div className="mt-3 overflow-x-auto">
-                    <table className="w-full min-w-[520px] border-collapse text-xs tabular-nums">
+                    <table className="w-full min-w-130 border-collapse text-xs tabular-nums">
                       <thead>
                         <tr className="text-zinc-400 dark:text-zinc-500">
                           <th className="pb-2 text-left font-medium">종목</th>
@@ -608,13 +609,13 @@ export function BuyClient({
                             key={item.holding.id}
                             className="border-t border-hairline dark:border-zinc-800"
                           >
-                            <td className="max-w-[240px] py-1.5 pr-2 text-ink dark:text-zinc-200">
+                            <td className="max-w-60 py-1.5 pr-2 text-ink dark:text-zinc-200">
                               <div className="flex min-w-0 items-center gap-1.5">
                                 <span
-                                  className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                                  style={{ background: getCategoryColor(item.holding.category) }}
+                                  className="dot-bg inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                                  style={{ "--dot-bg": getCategoryColor(item.holding.category) } as CSSProperties}
                                 />
-                                <span className="shrink-0 text-[10px] font-medium tabular-nums text-zinc-400 dark:text-zinc-500">
+                                <span className="shrink-0 text-3xs font-medium tabular-nums text-zinc-400 dark:text-zinc-500">
                                   {item.holding.code}
                                 </span>
                                 <span className="truncate">{item.holding.name}</span>
@@ -659,7 +660,7 @@ export function BuyClient({
                     </span>
                   </div>
                   {annualPlan.items.some((i) => i.quantity === 0) && (
-                    <p className="mt-2 text-[11px] leading-relaxed text-amber-600 dark:text-amber-400">
+                    <p className="mt-2 text-2xs leading-relaxed text-amber-600 dark:text-amber-400">
                       {annualPlan.items.filter((i) => i.quantity === 0).length}개 종목은 연간 배분액으로 1주도 살 수 없습니다. 비중을 올리거나
                       월 투자금액을 늘려야 합니다.
                     </p>
@@ -705,7 +706,7 @@ export function BuyClient({
                 {cycleItems.map((item) => (
                   <li
                     key={item.holding.id}
-                    className="flex items-center justify-between gap-2 text-[11px] tabular-nums text-zinc-600 dark:text-zinc-400"
+                    className="flex items-center justify-between gap-2 text-2xs tabular-nums text-zinc-600 dark:text-zinc-400"
                   >
                     <span className="truncate">
                       {item.holding.name}
@@ -726,7 +727,7 @@ export function BuyClient({
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[11px] leading-relaxed text-amber-700/70 dark:text-amber-300/70">
+              <p className="mt-2 text-2xs leading-relaxed text-amber-700/70 dark:text-amber-300/70">
                 월 투자금액 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
                 우선 편성하고, 나머지 달은 건너뜁니다.
               </p>
@@ -755,8 +756,7 @@ export function BuyClient({
       {/* 하단 요약 + 확정 버튼 */}
       {buyItems.length > 0 && (
         <div
-          className="rounded-2xl px-6 py-5 text-white space-y-2 shadow-float"
-          style={{ background: "linear-gradient(135deg, #1c1e54 0%, #2e2b8c 100%)" }}
+          className="hero-gradient-compact rounded-2xl px-6 py-5 text-white space-y-2 shadow-float"
         >
           <div className="flex justify-between text-sm">
             <span className="text-indigo-200">순 매수금액</span>
@@ -894,8 +894,8 @@ function BuyPlanCard({
       )}
     >
       <div
-        className="w-1.5 shrink-0"
-        style={{ background: getCategoryColor(h.category) }}
+        className="dot-bg w-1.5 shrink-0"
+        style={{ "--dot-bg": getCategoryColor(h.category) } as CSSProperties}
       />
       <div className="flex-1 px-4 py-3">
         <div className="flex items-center justify-between gap-3">
@@ -930,7 +930,7 @@ function BuyPlanCard({
             {isOverridden && (
               <button
                 onClick={() => onQuantityChange(algorithmQty)}
-                className="text-[10px] text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors tabular-nums"
+                className="text-3xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors tabular-nums"
               >
                 추천 {algorithmQty}주 복원
               </button>
@@ -946,7 +946,7 @@ function BuyPlanCard({
                 <button
                   type="button"
                   onClick={onResetExecutionPrice}
-                  className="text-[11px] font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  className="text-2xs font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
                 >
                   현재가로 복원
                 </button>
@@ -964,7 +964,7 @@ function BuyPlanCard({
                 />
               </div>
               <div className="text-right">
-                <p className="text-[11px] text-zinc-400">주문금액</p>
+                <p className="text-2xs text-zinc-400">주문금액</p>
                 <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{formatFullKRW(orderCost)}</p>
               </div>
             </div>
@@ -1006,7 +1006,7 @@ function BuyPlanCard({
                       item.cycleMonths - (item.monthsSinceLastBuy ?? 0)
                     )}개월 뒤`}
             </span>
-            <span className="text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500">
+            <span className="text-2xs tabular-nums text-zinc-400 dark:text-zinc-500">
               이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 매달 사려면 월{" "}
               {formatFullKRW(Math.ceil(item.minBudget))} 필요
             </span>

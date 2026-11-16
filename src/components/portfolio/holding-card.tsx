@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
 import { formatKRW, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
@@ -248,11 +249,11 @@ export function HoldingCard({
   }
 
   return (
-    <div className="flex overflow-hidden border border-[var(--color-hairline)] bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
+    <div className="flex overflow-hidden border border-hairline bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
       {/* 카테고리 색상 바 */}
       <div
-        className="w-1.5 shrink-0"
-        style={{ background: getCategoryColor(h.category) }}
+        className="dot-bg w-1.5 shrink-0"
+        style={{ "--dot-bg": getCategoryColor(h.category) } as CSSProperties}
       />
 
       <div className="flex-1 space-y-3 px-4 py-3">
@@ -271,7 +272,7 @@ export function HoldingCard({
                 {displayCode ? `티커 ${displayCode}` : "티커 미등록"}
               </span>
               {isCodeInferred && (
-                <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-2xs font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
                   이름 기준 추정
                 </span>
               )}
@@ -279,11 +280,11 @@ export function HoldingCard({
             <p className="mt-2 break-keep text-base font-black leading-6 text-zinc-950 dark:text-white">
               {displayName}
             </p>
-            <p className="mt-1 text-[11px] font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
+            <p className="mt-1 text-2xs font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
               원문: {h.name}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <span className="text-[11px] font-bold text-zinc-400 dark:text-zinc-500">테마</span>
+              <span className="text-2xs font-bold text-zinc-400 dark:text-zinc-500">테마</span>
               <select
                 value={h.category}
                 onChange={(e) => saveCategory(e.target.value)}
@@ -295,7 +296,7 @@ export function HoldingCard({
                   <option key={category} value={category}>{category}</option>
                 ))}
               </select>
-              <span className="text-[11px] font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-2xs font-semibold text-zinc-400 dark:text-zinc-500">
                 {isSavingCategory ? "저장 중" : h.sub_category}
               </span>
             </div>
@@ -310,13 +311,13 @@ export function HoldingCard({
 
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">평단가</p>
+            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">평단가</p>
             <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
               {avgPrice > 0 ? `₩${avgPrice.toLocaleString()}` : "-"}
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">수익률</p>
+            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">수익률</p>
             <p className={`mt-0.5 text-xs font-black tabular-nums ${
               !hasPnL
                 ? "text-zinc-400 dark:text-zinc-500"
@@ -328,7 +329,7 @@ export function HoldingCard({
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">평가손익</p>
+            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">평가손익</p>
             <p className={`mt-0.5 text-xs font-black tabular-nums ${
               !hasPnL
                 ? "text-zinc-400 dark:text-zinc-500"
@@ -340,7 +341,7 @@ export function HoldingCard({
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500">현재가</p>
+            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">현재가</p>
             <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
               ₩{h.current_price.toLocaleString()}
             </p>
@@ -396,7 +397,7 @@ export function HoldingCard({
             </div>
           </div>
           <div className="h-2 overflow-hidden bg-zinc-200 dark:bg-zinc-800">
-            <div className="h-full bg-zinc-400 dark:bg-zinc-500" style={{ width: `${targetPct}%` }} />
+            <div className="bar-w h-full bg-zinc-400 dark:bg-zinc-500" style={{ "--bar-w": `${targetPct}%` } as CSSProperties} />
           </div>
 
           <div className="mb-2 mt-3 flex items-center justify-between gap-3 text-xs font-semibold">
@@ -404,7 +405,7 @@ export function HoldingCard({
             <span className="tabular-nums text-indigo-600 dark:text-indigo-300">{h.actual_pct.toFixed(1)}%</span>
           </div>
           <div className="h-2 overflow-hidden bg-indigo-100 dark:bg-indigo-950">
-            <div className="h-full bg-indigo-500" style={{ width: `${actualPct}%` }} />
+            <div className="bar-w h-full bg-indigo-500" style={{ "--bar-w": `${actualPct}%` } as CSSProperties} />
           </div>
         </div>
 
@@ -472,7 +473,7 @@ export function HoldingCard({
               <p className="mb-2 text-xs font-black text-amber-700 dark:text-amber-200">품번 / 상품명 / 수량 / 평단가 정정</p>
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-[120px_1fr_96px_120px_auto] lg:items-end">
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">품번/종목번호</span>
+                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">품번/종목번호</span>
                   <input
                     type="text"
                     value={codeDraft}
@@ -483,7 +484,7 @@ export function HoldingCard({
                   />
                 </label>
                 <label className="col-span-2 block lg:col-span-1">
-                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">상품명</span>
+                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">상품명</span>
                   <input
                     type="text"
                     value={nameDraft}
@@ -494,7 +495,7 @@ export function HoldingCard({
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">보유수량</span>
+                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">보유수량</span>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -510,7 +511,7 @@ export function HoldingCard({
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-[11px] font-semibold text-amber-700 dark:text-amber-200">평단가</span>
+                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">평단가</span>
                   <input
                     type="number"
                     inputMode="numeric"

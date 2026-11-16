@@ -246,7 +246,7 @@ export function ImportClient({ holdings, onClose }: Props) {
                       }
                     >
                       <td className="px-2 py-1.5 tabular-nums">{row.date}</td>
-                      <td className="px-2 py-1.5 truncate max-w-[120px]">
+                      <td className="px-2 py-1.5 truncate max-w-30">
                         {row.name}
                       </td>
                       <td className="px-2 py-1.5">{row.type}</td>

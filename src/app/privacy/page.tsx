@@ -64,7 +64,7 @@ const sections = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-[100dvh] bg-background px-4 py-12 text-foreground dark:bg-zinc-950 sm:px-6 lg:px-8">
+    <main className="min-h-dvh bg-background px-4 py-12 text-foreground dark:bg-zinc-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
         <Link href="/" className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
           경제적 자유

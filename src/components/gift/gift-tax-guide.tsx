@@ -57,7 +57,7 @@ function Steps({ items }: { items: string[] }) {
     <ol className="space-y-2">
       {items.map((s, i) => (
         <li key={i} className="flex gap-2.5">
-          <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold flex items-center justify-center mt-0.5">
+          <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-2xs font-bold flex items-center justify-center mt-0.5">
             {i + 1}
           </span>
           <span className="leading-relaxed">{s}</span>

@@ -11,11 +11,18 @@ export const ADULT_AGE = 19;
 export const ANNUITY_DISCOUNT_RATE = 0.03;
 
 export function getAge(birthDate: string, atDate: Date = new Date()): number {
-  const b = new Date(birthDate);
+  const b = parseLocalDate(birthDate);
   let age = atDate.getFullYear() - b.getFullYear();
   const m = atDate.getMonth() - b.getMonth();
   if (m < 0 || (m === 0 && atDate.getDate() < b.getDate())) age--;
   return age;
+}
+
+/** YYYY-MM-DD는 UTC가 아닌 로컬 자정으로 해석한다 (KST에서 하루 밀리는 문제 방지) */
+function parseLocalDate(value: string): Date {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!m) return new Date(value);
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 }
 
 export function isMinor(birthDate: string, atDate: Date = new Date()): boolean {
@@ -37,7 +44,7 @@ export function cumulativeGiftsWithin10Years(
   return gifts
     .filter((g) => {
       if (g.gift_type && g.gift_type !== "lump" && g.gift_type !== "installment") return false;
-      const d = new Date(g.date);
+      const d = parseLocalDate(g.date);
       return d > tenYearsAgo && d <= atDate;
     })
     .reduce((s, g) => s + g.amount, 0);
@@ -95,9 +102,7 @@ export function presentValueOfInstallments(
 
 /** 신고기한 = 증여일이 속하는 달의 말일부터 3개월 이내 */
 export function reportDeadline(giftDate: string): Date {
-  const d = new Date(giftDate);
-  const endOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0); // 해당 월 말일
-  const deadline = new Date(endOfMonth);
-  deadline.setMonth(deadline.getMonth() + 3);
-  return deadline;
+  const d = parseLocalDate(giftDate);
+  // 신고기한 = 증여일이 속한 달의 말일 + 3개월의 말일 (31일/2월에서 밀리지 않도록 0일 트릭 사용)
+  return new Date(d.getFullYear(), d.getMonth() + 4, 0);
 }

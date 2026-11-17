@@ -281,7 +281,8 @@ test("news: RSS에서 제목·링크·출처·날짜를 뽑는다", async () => 
   assert.equal(body.news[0].title, "ETF 시장 & 자금 유입");
   assert.equal(body.news[0].link, "https://news.example.com/a");
   assert.equal(body.news[0].source, "예시뉴스");
-  assert.match(body.news[0].date, /^11\/16 \d{2}:\d{2}$/);
+  // 시각은 로컬 시간대에 따라 달라지고, 라우트는 시(hour)를 0으로 채우지 않는다
+  assert.match(body.news[0].date, /^11\/16 \d{1,2}:\d{2}$/);
 });
 
 test("news: RSS가 실패하면 500과 빈 목록", async () => {

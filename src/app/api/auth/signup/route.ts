@@ -8,7 +8,7 @@ import { authRateLimit, clientIp } from "@/lib/rate-limit";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 export async function POST(request: Request) {
-  const { email, password } = await request.json();
+  const { email, password } = await request.json().catch(() => ({}));
   if (!email || !password || password.length < 6) {
     return NextResponse.json({ error: "이메일과 비밀번호(6자 이상)를 입력해주세요." }, { status: 400 });
   }

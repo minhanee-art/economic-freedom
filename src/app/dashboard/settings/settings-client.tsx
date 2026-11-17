@@ -87,6 +87,11 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   }, [holdings, holdingGroupBy]);
   const isTarget100 = Math.abs(totalTargetPct - 100) < 0.01;
 
+  const flash = (msg: string) => {
+    setSaveStatus(msg);
+    setTimeout(() => setSaveStatus(""), 2000);
+  };
+
   // 프로필 저장
   const saveProfile = async () => {
     try {
@@ -220,10 +225,6 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
     }
   };
 
-  const flash = (msg: string) => {
-    setSaveStatus(msg);
-    setTimeout(() => setSaveStatus(""), 2000);
-  };
 
   // 배당 캘린더
   const [calendar, setCalendar] = useState<CalendarItem[]>(initialCalendar);

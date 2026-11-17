@@ -15,7 +15,9 @@ export async function PATCH(
 
   const body = await request.json().catch(() => null);
   const reported = typeof body?.reported === "boolean" ? body.reported : undefined;
-  const reportDate = typeof body?.reportDate === "string" ? body.reportDate : undefined;
+  // 명시적 null은 신고일을 지우는 요청으로 본다(CASE 분기가 의도한 동작)
+  const reportDate =
+    typeof body?.reportDate === "string" ? body.reportDate : body?.reportDate === null ? null : undefined;
   const amount = body?.amount !== undefined ? Number(body.amount) : undefined;
   const memo = typeof body?.memo === "string" ? body.memo.slice(0, 200) : undefined;
 

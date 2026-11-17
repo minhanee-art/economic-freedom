@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { formatFullKRW } from "@/lib/utils";
 import type { Holding } from "@/types";
 
-interface ParsedRow {
+export interface ParsedRow {
   date: string;         // YYYY-MM-DD
   code: string;         // 종목코드 6자리
   name: string;         // 종목명
@@ -16,6 +16,8 @@ interface ParsedRow {
   fee: number;
   tax: number;
 }
+
+export type CellValue = string | number | boolean | Date | null;
 
 interface Props {
   holdings: Holding[];
@@ -317,12 +319,25 @@ function matchFundCode(name: string): string {
 }
 
 /** XLSX 파싱 — 미래에셋 거래내역 xlsx 형식 지원 */
-async function parseXLSX(buffer: ArrayBuffer): Promise<ParsedRow[]> {
-  const XLSX = await import("xlsx");
-  const wb = XLSX.read(new Uint8Array(buffer), { type: "array" });
-  const ws = wb.Sheets[wb.SheetNames[0]];
-  const raw = XLSX.utils.sheet_to_json<(string | number | null)[]>(ws, { header: 1, defval: null });
+export async function parseXLSX(buffer: ArrayBuffer): Promise<ParsedRow[]> {
+  const { readSheet } = await import("read-excel-file/browser");
+  const raw = (await readSheet(buffer)) as CellValue[][];
+  return parseTradingRows(raw);
+}
 
+/** 셀 값(문자열·날짜 객체)을 YYYY-MM-DD로 정규화한다 */
+function normalizeCellDate(value: CellValue): string {
+  if (value instanceof Date) {
+    const year = value.getFullYear();
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  return normalizeDate(String(value ?? ""));
+}
+
+/** 시트 행 배열에서 거래 내역을 뽑는다 — 헤더 위치·컬럼 순서는 미래에셋 양식 고정 */
+export function parseTradingRows(raw: CellValue[][]): ParsedRow[] {
   // 헤더 행 찾기 (거래일자 포함)
   const headerIdx = raw.findIndex((r) =>
     r.some((c) => typeof c === "string" && c.includes("거래일자"))
@@ -334,14 +349,13 @@ async function parseXLSX(buffer: ArrayBuffer): Promise<ParsedRow[]> {
     const r = raw[i];
     if (!r || r.every((c) => c === null)) continue;
 
-    const dateStr = String(r[0] ?? "");
+    const date = normalizeCellDate(r[0] ?? null);
     const tradeType = String(r[1] ?? "");
     const fundName = String(r[2] ?? "");
     const qty = Math.round(Number(r[3] ?? 0));
     const amount = Math.round(Number(r[4] ?? 0));
     const fee = Math.round(Number(r[6] ?? 0));
 
-    const date = normalizeDate(dateStr);
     if (!date) continue;
 
     // 거래 종류 변환 — 관심 없는 종류는 null 반환

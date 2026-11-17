@@ -6,7 +6,7 @@ import { signToken, setSessionCookie } from "@/lib/session";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
-  const { email, password } = await request.json();
+  const { email, password } = await request.json().catch(() => ({}));
   if (!email || !password) {
     return NextResponse.json({ error: "이메일과 비밀번호를 입력해주세요." }, { status: 400 });
   }

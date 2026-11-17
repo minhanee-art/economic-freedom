@@ -152,17 +152,6 @@ export function DashboardClient({
     }
   }, [telegramChatId]);
 
-  // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
-  useEffect(() => {
-    if (!lastPriceUpdate) return;
-    const lastUpdate = new Date(lastPriceUpdate).getTime();
-    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    if (lastUpdate < oneDayAgo) {
-      handleRefresh();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     setRefreshResult("");
@@ -222,6 +211,17 @@ export function DashboardClient({
       setTimeout(() => setRefreshResult(""), 4000);
     }
   }, [holdings, router]);
+
+  // 마지막 업데이트가 1일 이상 지났으면 자동 새로고침
+  useEffect(() => {
+    if (!lastPriceUpdate) return;
+    const lastUpdate = new Date(lastPriceUpdate).getTime();
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    if (lastUpdate < oneDayAgo) {
+      handleRefresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleTargetPctChange = useCallback(
     async (holdingId: string, targetPct: number) => {

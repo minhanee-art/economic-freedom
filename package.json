@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:design": "eslint --config eslint.design.config.mjs src",
-    "test": "tsx --test --experimental-test-module-mocks"
+    "test": "node scripts/test.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
@@ -28,12 +28,16 @@
   "devDependencies": {
     "@shadcn/lint": "0.2.5",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@types/jsdom": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@typescript-eslint/parser": "8.58.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.2",
+    "jsdom": "^27.4.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5"

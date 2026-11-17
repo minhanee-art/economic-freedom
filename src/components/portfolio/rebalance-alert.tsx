@@ -64,7 +64,7 @@ type HoldingSort = "return-desc" | "code-asc" | "name-asc" | "name-desc" | "shar
 type HoldingViewMode = "wide" | "grid" | "chart";
 type CandlePeriod = "day" | "week" | "month" | "year";
 
-interface CandlePoint {
+export interface CandlePoint {
   date: string;
   open: number;
   high: number;
@@ -1011,7 +1011,7 @@ function HoldingWideChartCard({
   );
 }
 
-function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithPnL; className?: string }) {
+export function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithPnL; className?: string }) {
   const [period, setPeriod] = useState<CandlePeriod>("day");
   const [remoteCandles, setRemoteCandles] = useState<CandlePoint[]>([]);
   const [chartError, setChartError] = useState("");
@@ -1065,6 +1065,12 @@ function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithP
   const maxVolume = Math.max(...candles.map((c) => c.volume), 1);
   const periodLabel = CANDLE_PERIOD_OPTIONS.find((option) => option.value === period)?.label ?? "일봉";
   const visibleChartError = code ? chartError : "종목번호 미등록";
+  const usingFallback = remoteCandles.length === 0 && Boolean(code);
+  const chartCaption = visibleChartError
+    ? `${visibleChartError} · 보유 데이터 기준 대체 차트를 표시 중입니다.`
+    : usingFallback
+      ? "시세 데이터가 없어 보유 데이터 기준 대체 차트를 표시 중입니다."
+      : `외부 시세 기준 ${periodLabel} 차트입니다. 평단선은 내 보유 평균단가입니다.`;
 
   return (
     <aside className={`overflow-hidden border border-zinc-200 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900 ${className}`}>
@@ -1172,16 +1178,14 @@ function HoldingCandlePanel({ holding, className = "" }: { holding: HoldingWithP
           </span>
         </div>
         <p className="mt-2 text-3xs font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
-          {visibleChartError
-            ? `${visibleChartError} · 보유 데이터 기준 대체 차트를 표시 중입니다.`
-            : `외부 시세 기준 ${periodLabel} 차트입니다. 평단선은 내 보유 평균단가입니다.`}
+          {chartCaption}
         </p>
       </div>
     </aside>
   );
 }
 
-function buildFallbackCandles(startPrice: number, endPrice: number, shares: number): CandlePoint[] {
+export function buildFallbackCandles(startPrice: number, endPrice: number, shares: number): CandlePoint[] {
   const safeStart = Math.max(1, startPrice || endPrice || 1);
   const safeEnd = Math.max(1, endPrice || safeStart);
   const changePct = safeStart > 0 ? ((safeEnd - safeStart) / safeStart) * 100 : 0;

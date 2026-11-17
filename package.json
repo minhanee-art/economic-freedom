@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "lint:design": "eslint --config eslint.design.config.mjs src",
-    "test": "tsx --test"
+    "test": "tsx --test --experimental-test-module-mocks"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

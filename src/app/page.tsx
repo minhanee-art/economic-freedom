@@ -21,7 +21,7 @@ const productPillars = [
   },
   {
     title: "ETF 비교와 리밸런싱",
-    body: "ETF 비교, 테마별 비중, 부족한 자산군을 확인해 다음 매수 결정을 돕습니다.",
+    body: "ETF 비교, 테마별 비중, 설정한 목표 비중 대비 차이를 계산해 보여줍니다.",
     href: "/dashboard/compare",
     cta: "ETF 비교",
   },

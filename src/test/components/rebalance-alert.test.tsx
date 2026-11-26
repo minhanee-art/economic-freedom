@@ -139,7 +139,7 @@ test("RebalanceAlert: 진단 뱃지 수와 조정안 문구를 계산한다", as
 
   fireEvent.click(diagnose);
 
-  assert.ok(await screen.findByText("목표 비중 기준 조정안"));
+  assert.ok(await screen.findByText("목표 비중 대비 차이 계산 결과"));
   const summary = screen.getByText(/총 이탈폭/).parentElement?.textContent ?? "";
   assert.match(summary, /주식/);
   assert.match(summary, /채권/);
@@ -147,7 +147,7 @@ test("RebalanceAlert: 진단 뱃지 수와 조정안 문구를 계산한다", as
   assert.match(summary, /총 이탈폭 24\.0%p/);
 });
 
-test("RebalanceAlert: 차이가 기준 이내면 급하지 않다고 알린다", async () => {
+test("RebalanceAlert: 차이가 기준 이내면 차이가 작다고 알린다", async () => {
   render(
     <RebalanceAlert
       holdings={[makeHolding({ target_pct: 50, actual_pct: 51 })]}
@@ -157,8 +157,8 @@ test("RebalanceAlert: 차이가 기준 이내면 급하지 않다고 알린다",
 
   fireEvent.click(screen.getByRole("button", { name: /진단/ }));
 
-  assert.ok(await screen.findByText(/지금은 리밸런싱이 급하지 않습니다/));
-  assert.equal(screen.queryByText("목표 비중 기준 조정안"), null);
+  assert.ok(await screen.findByText(/설정한 목표 비중 대비 차이가 작습니다/));
+  assert.equal(screen.queryByText("목표 비중 대비 차이 계산 결과"), null);
 });
 
 test("RebalanceAlert: 테마 설정 비중을 저장하고 0~100으로 자른다", async () => {

@@ -599,7 +599,7 @@ export function HoldingCard({
                     : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
                 }`}
               >
-                <p className="font-black">리밸런싱 자동계산</p>
+                <p className="font-black">목표 비중 계산 (사용자 설정 기준)</p>
                 {!validTradePrice ? (
                   <p className="mt-1">단가를 0보다 큰 숫자로 입력하면 계산 수량이 계산됩니다.</p>
                 ) : tradeAction === "buy" ? (
@@ -610,13 +610,13 @@ export function HoldingCard({
                   ) : targetBuyQuantity > 0 ? (
                     <>
                       <p className="mt-1 leading-5">
-                        현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 <b className="tabular-nums">{targetBuyQuantity}주</b> 매수가 필요합니다.
+                        현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetBuyQuantity}주</b>가 필요합니다(계산값).
                       </p>
                       <p className="mt-1 tabular-nums">
-                        매수 합계: {targetBuyQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetBuyCost)}</b>
+                        계산 금액: {targetBuyQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetBuyCost)}</b>
                       </p>
                       <p className="mt-1 tabular-nums">
-                        매수 후 예상 비중 약 {projectedPctAfterTargetBuy.toFixed(1)}%
+                        반영 시 예상 비중 약 {projectedPctAfterTargetBuy.toFixed(1)}%
                       </p>
                       <button
                         type="button"
@@ -628,7 +628,7 @@ export function HoldingCard({
                     </>
                   ) : (
                     <p className="mt-1">
-                      현재 보유 비중이 설정 비중 이상입니다. 매수보다 매도 또는 부족 종목 매수를 검토하세요.
+                      현재 보유 비중이 설정 비중 이상이라 계산상 필요한 수량이 없습니다.
                     </p>
                   )
                 ) : h.target_pct >= 100 ? (
@@ -636,13 +636,13 @@ export function HoldingCard({
                 ) : targetSellQuantity > 0 ? (
                   <>
                     <p className="mt-1 leading-5">
-                      현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 <b className="tabular-nums">{targetSellQuantity}주</b> 매도가 필요합니다.
+                      현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetSellQuantity}주</b>가 필요합니다(계산값).
                     </p>
                     <p className="mt-1 tabular-nums">
-                      매도 합계: {targetSellQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetSellAmount)}</b>
+                      계산 금액: {targetSellQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetSellAmount)}</b>
                     </p>
                     <p className="mt-1 tabular-nums">
-                      매도 후 예상 비중 약 {projectedPctAfterTargetSell.toFixed(1)}%
+                      반영 시 예상 비중 약 {projectedPctAfterTargetSell.toFixed(1)}%
                     </p>
                     <button
                       type="button"
@@ -654,7 +654,7 @@ export function HoldingCard({
                   </>
                 ) : (
                   <p className="mt-1">
-                    현재 보유 비중이 설정 비중 이하입니다. 매도보다 추가 매수를 검토하세요.
+                    현재 보유 비중이 설정 비중 이하라 계산상 필요한 수량이 없습니다.
                   </p>
                 )}
               </div>

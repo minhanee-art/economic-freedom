@@ -172,11 +172,11 @@ function buildReminderMessage(d: PortfolioData): string {
     `🔔 <b>이번 달 투자 알림</b>`,
     label,
     "",
-    `이번 달 적립 투자할 시점입니다.`,
+    `이번 달 적립일입니다.`,
     `💵 월 적립금: <b>${formatKRW(d.monthlyBudget)}</b>`,
     `💰 현재 총 평가금액: ${formatKRW(d.totalValue)}`,
     "",
-    `아래 버튼에서 매수 계획을 확인하세요. 👇`,
+    `아래 버튼에서 설정한 목표 비중에 따른 적립 배분 계산을 볼 수 있습니다. 👇`,
   ].join("\n");
 }
 
@@ -200,7 +200,7 @@ export async function sendReport(type: ReportType, d: PortfolioData): Promise<vo
   } else {
     await sendTelegramMessage(buildReminderMessage(d), {
       buttonUrl: `${APP_URL}/dashboard/buy`,
-      buttonText: "🛒 매수 계획 보기",
+      buttonText: "🧮 적립 배분 계산 보기",
     });
   }
 }

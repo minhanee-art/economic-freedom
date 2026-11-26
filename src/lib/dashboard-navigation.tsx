@@ -32,9 +32,9 @@ export const dashboardNavItems: DashboardNavItem[] = [
   },
   {
     href: "/dashboard/buy",
-    label: "매수 계획",
-    shortLabel: "매수",
-    description: "이번 달 ETF 매수 금액 계산",
+    label: "적립 배분 계산",
+    shortLabel: "배분",
+    description: "설정한 목표 비중에 따른 월 적립금 배분 계산",
     bottom: true,
     icon: (
       <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>

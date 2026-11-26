@@ -93,6 +93,6 @@ export function computeRebalance(holdings: HoldingWithPnL[]): RebalanceResult {
 
 /** 자산군 조언 문구 (RebalanceAlert getCategoryAdvice와 동일) */
 export function getCategoryAdvice(name: string, diff: number): string {
-  if (diff > 0) return `${name} 신규 매수 자제, 다른 자산군 우선 매수`;
-  return `${name} ETF 추가 매수 고려`;
+  if (diff > 0) return `${name} 비중이 설정한 목표 비중보다 높습니다 (계산 결과)`;
+  return `${name} 비중이 설정한 목표 비중보다 낮습니다 (계산 결과)`;
 }

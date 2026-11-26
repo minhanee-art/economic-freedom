@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
 import { updatePortfolioAccount } from "@/lib/portfolio-accounts";
+import { toPublicAccount } from "@/lib/account-public";
 import { isAccountType, type AccountType } from "@/lib/account-types";
 
 const OWNER_TYPES = ["self", "spouse", "child", "other"] as const;
@@ -47,7 +48,7 @@ export async function PATCH(
   try {
     const account = await updatePortfolioAccount(session.userId, id, changes);
     if (!account) return NextResponse.json({ error: "계좌를 찾을 수 없습니다." }, { status: 404 });
-    return NextResponse.json({ account });
+    return NextResponse.json({ account: toPublicAccount(account) });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 400 });
   }

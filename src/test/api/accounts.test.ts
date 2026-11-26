@@ -18,7 +18,52 @@ const accounts = createAccountsState([
 
 mock.module("@/lib/session", { namedExports: session.namedExports });
 mock.module("@/lib/db", { namedExports: { sql: db.sql } });
-mock.module("@/lib/portfolio-accounts", { namedExports: accounts.namedExports });
+// 실제 DB 행처럼 user_id·telegram_chat_id까지 들어 있는 전체 행을 돌려주는 스텁
+type FullRow = {
+  id: string;
+  user_id: string;
+  name: string;
+  owner_type: string;
+  account_type: string;
+  telegram_chat_id: string | null;
+  display_order: number;
+  created_at: string;
+};
+const fullRow = (id: string, name: string, ownerType: string, accountType = "general"): FullRow => ({
+  id,
+  user_id: "user-1",
+  name,
+  owner_type: ownerType,
+  account_type: accountType,
+  telegram_chat_id: "123456789",
+  display_order: 0,
+  created_at: "2026-01-01 00:00:00+00",
+});
+const rows: FullRow[] = [];
+const resetRows = () => {
+  rows.length = 0;
+  rows.push(fullRow("acc-1", "기본 계좌", "self"), fullRow("acc-2", "배우자 계좌", "spouse"));
+};
+resetRows();
+
+mock.module("@/lib/portfolio-accounts", {
+  namedExports: {
+    ...accounts.namedExports,
+    getPortfolioAccounts: async () => rows,
+    createPortfolioAccount: async (...args: [string, string, string, string?]) => {
+      const [, name, ownerType, accountType] = args;
+      if (accounts.state.failCreate) throw accounts.state.failCreate;
+      accounts.state.created.push({ id: "x", name, ownerType, accountType });
+      return fullRow(`acc-${accounts.state.created.length + 2}`, name, ownerType, accountType ?? "general");
+    },
+    updatePortfolioAccount: async (_u: string, id: string, changes: { accountType?: string }) => {
+      const row = rows.find((item) => item.id === id);
+      if (!row) return null;
+      if (changes.accountType) row.account_type = changes.accountType;
+      return row;
+    },
+  },
+});
 
 let route: typeof import("@/app/api/accounts/route");
 let itemRoute: typeof import("@/app/api/accounts/[id]/route");
@@ -35,19 +80,29 @@ beforeEach(() => {
   accounts.state.created.length = 0;
   accounts.state.failCreate = null;
   accounts.state.activeAccountId = "acc-1";
-  accounts.state.accounts = [
-    { id: "acc-1", name: "기본 계좌", ownerType: "self" },
-    { id: "acc-2", name: "배우자 계좌", ownerType: "spouse" },
-  ];
+  resetRows();
 });
 
 test("GET: 계좌 목록과 활성 계좌를 돌려준다", async () => {
   const response = await route.GET(jsonRequest("GET"));
   assert.equal(response.status, 200);
-  assert.deepEqual(await readJson(response), {
-    accounts: accounts.state.accounts,
-    activeAccountId: "acc-1",
-  });
+  const body = await readJson<{ accounts: Record<string, unknown>[]; activeAccountId: string }>(response);
+  assert.equal(body.activeAccountId, "acc-1");
+  assert.deepEqual(
+    body.accounts.map((item) => item.id),
+    ["acc-1", "acc-2"]
+  );
+  assert.deepEqual(Object.keys(body.accounts[0]).sort(), ["account_type", "display_order", "id", "name", "owner_type"]);
+});
+
+test("GET/POST/PATCH: 응답에 user_id·telegram_chat_id를 내리지 않는다", async () => {
+  const list = await route.GET(jsonRequest("GET"));
+  const created = await route.POST(jsonRequest("POST", { name: "새 계좌", ownerType: "self" }));
+  const updated = await itemRoute.PATCH(jsonRequest("PATCH", { accountType: "irp" }), ctx("acc-2"));
+  for (const response of [list, created, updated]) {
+    const text = JSON.stringify(await readJson(response));
+    assert.doesNotMatch(text, /user_id|telegram_chat_id|123456789|created_at/);
+  }
 });
 
 test("POST: 알 수 없는 명의 구분은 other로 저장한다", async () => {
@@ -114,9 +169,9 @@ test("POST: 세제 유형을 전달하고, 모르는 값은 general로 저장한
 test("PATCH /accounts/[id]: 세제 유형을 바꾼다", async () => {
   const response = await itemRoute.PATCH(jsonRequest("PATCH", { accountType: "irp" }), ctx("acc-2"));
   assert.equal(response.status, 200);
-  const body = await readJson<{ account: { id: string; accountType: string } }>(response);
+  const body = await readJson<{ account: { id: string; account_type: string } }>(response);
   assert.equal(body.account.id, "acc-2");
-  assert.equal(body.account.accountType, "irp");
+  assert.equal(body.account.account_type, "irp");
 });
 
 test("PATCH /accounts/[id]: 잘못된 유형·빈 이름·빈 본문은 400", async () => {

@@ -4,6 +4,7 @@ import { getRequestSession } from "@/lib/session";
 import { ACCOUNT_COOKIE, createPortfolioAccount, getPortfolioAccounts } from "@/lib/portfolio-accounts";
 import { selectRequestAccount } from "@/lib/account-selection";
 import { normalizeAccountType } from "@/lib/account-types";
+import { toPublicAccount } from "@/lib/account-public";
 
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
@@ -15,7 +16,7 @@ export async function GET(request: Request) {
   const selected = await selectRequestAccount(request, session.userId);
   if (!selected.ok) return selected.response;
 
-  return NextResponse.json({ accounts: selected.accounts, activeAccountId: selected.accountId });
+  return NextResponse.json({ accounts: selected.accounts.map(toPublicAccount), activeAccountId: selected.accountId });
 }
 
 export async function POST(request: Request) {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
   try {
     const account = await createPortfolioAccount(session.userId, name, ownerType, accountType);
-    const response = NextResponse.json({ account }, { status: 201 });
+    const response = NextResponse.json({ account: toPublicAccount(account) }, { status: 201 });
     response.cookies.set(ACCOUNT_COOKIE, account.id, {
       httpOnly: true,
       sameSite: "lax",

@@ -111,6 +111,16 @@ test("로그인: 비밀번호가 맞으면 세션 쿠키를 발급한다", async
   assert.ok(rateLimit.keys.some((key) => key.includes("a@b.com")));
 });
 
+test("로그인: 이메일은 소문자 기준으로 찾고, 입력과 정확히 같은 행을 우선한다", async () => {
+  const hash = await bcrypt.hash("right-password", 4);
+  db.setHandler(() => [{ id: "u1", password_hash: hash }]);
+
+  await login.POST(jsonRequest("POST", { email: " Mixed@B.com", password: "right-password" }));
+  const lookup = db.find("FROM users")[0];
+  assert.match(lookup.query, /lower\(email\)/);
+  assert.deepEqual(lookup.values, ["mixed@b.com", " Mixed@B.com"]);
+});
+
 // ── 회원가입 ─────────────────────────────────
 
 test("회원가입: 비밀번호가 6자 미만이면 400", async () => {

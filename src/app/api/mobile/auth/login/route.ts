@@ -3,10 +3,11 @@ import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
 import { signToken } from "@/lib/session";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
+import { normalizeEmail } from "@/lib/auth-account";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json().catch(() => ({ email: "", password: "" }));
-  const normalizedEmail = String(email ?? "").trim().toLowerCase();
+  const normalizedEmail = normalizeEmail(email);
 
   if (!normalizedEmail || !password) {
     return NextResponse.json({ error: "이메일과 비밀번호를 입력해주세요." }, { status: 400 });
@@ -20,7 +21,8 @@ export async function POST(request: Request) {
     SELECT u.id, u.password_hash, p.display_name
     FROM users u
     LEFT JOIN profiles p ON p.id = u.id
-    WHERE u.email = ${normalizedEmail}
+    WHERE lower(u.email) = ${normalizedEmail}
+    ORDER BY (u.email = ${normalizedEmail}) DESC
     LIMIT 1
   `;
 

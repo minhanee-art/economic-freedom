@@ -1,12 +1,12 @@
 // 설정 API — 프로필 업데이트, 포트폴리오 리셋
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const body = await request.json().catch(() => ({}));
   const { monthlyBudget, displayName } = body;
@@ -31,8 +31,8 @@ export async function PATCH(request: Request) {
 }
 
 /** 포트폴리오 리셋 — holdings/cost_basis 삭제 후 기본 종목 재생성 */
-export async function DELETE() {
-  const session = await getSession();
+export async function DELETE(request: Request) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   await sql`DELETE FROM cost_basis WHERE user_id = ${session.userId} AND account_id = ${accountId}`;

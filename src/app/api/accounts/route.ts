@@ -1,6 +1,6 @@
 // 가족/명의별 포트폴리오 계좌 API
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import {
   ACCOUNT_COOKIE,
   createPortfolioAccount,
@@ -10,8 +10,8 @@ import {
 
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(request: Request) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   const [accounts, activeAccountId] = await Promise.all([
@@ -23,7 +23,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   const { accountId } = await request.json().catch(() => ({}));

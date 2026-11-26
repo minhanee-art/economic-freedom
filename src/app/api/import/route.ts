@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
 interface ImportItem {
@@ -62,7 +62,7 @@ function matchFundCode(name: string): string {
 
 export async function POST(request: Request) {
   try {
-    const session = await getSession();
+    const session = await getRequestSession(request);
     if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     const userId = session.userId;
     const accountId = await getActivePortfolioAccountId(userId);

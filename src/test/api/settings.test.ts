@@ -73,7 +73,7 @@ test("PATCH: 표시 이름은 50자로 자른다", async () => {
 });
 
 test("DELETE: 원가·종목을 지우고 기본 종목을 다시 만든다", async () => {
-  const response = await settings.DELETE();
+  const response = await settings.DELETE(jsonRequest("DELETE"));
   assert.equal(response.status, 200);
 
   assert.equal(db.find("DELETE FROM cost_basis").length, 1);

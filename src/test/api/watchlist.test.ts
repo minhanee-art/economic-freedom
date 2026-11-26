@@ -35,7 +35,7 @@ test("GET: 현재 계좌 감시 종목을 조회한다", async () => {
   const rows = [{ id: "w1", name: "테슬라", code: "TSLA", market: "US" }];
   db.setHandler((query) => (query.includes("FROM watchlist") ? rows : []));
 
-  const response = await watchlist.GET();
+  const response = await watchlist.GET(jsonRequest("GET"));
   assert.equal(response.status, 200);
   assert.deepEqual(await readJson(response), rows);
 

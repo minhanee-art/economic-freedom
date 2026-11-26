@@ -1,13 +1,13 @@
 // 자녀 프로필 수정/삭제 API
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const { id } = await params;
 
@@ -34,10 +34,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const { id } = await params;
   // child_gifts/child_holdings는 FK ON DELETE CASCADE로 함께 삭제됨

@@ -31,7 +31,7 @@ test("GET: 현재 계좌 배당 내역을 조회한다", async () => {
   const rows = [{ id: "d1", amount: 10_000, date: "2026-01-15", holding_name: "ACE 코스피" }];
   db.setHandler((query) => (query.includes("FROM dividends d") ? rows : []));
 
-  const response = await dividends.GET();
+  const response = await dividends.GET(jsonRequest("GET"));
   assert.equal(response.status, 200);
   assert.deepEqual(await readJson(response), rows);
   assert.deepEqual(db.find("FROM dividends d")[0].values, ["user-1", "acc-1"]);

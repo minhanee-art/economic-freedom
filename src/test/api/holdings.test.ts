@@ -45,7 +45,7 @@ test("GET: 현재 계좌 종목만 조회한다", async () => {
   const rows = [{ id: "h1", name: "ACE 코스피" }];
   db.setHandler((query) => (query.includes("FROM holdings") ? rows : []));
 
-  const response = await route.GET();
+  const response = await route.GET(jsonRequest("GET"));
   assert.equal(response.status, 200);
   assert.deepEqual(await readJson(response), rows);
 

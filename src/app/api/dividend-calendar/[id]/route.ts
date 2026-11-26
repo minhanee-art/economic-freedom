@@ -1,11 +1,11 @@
 // 배당 캘린더 단건 삭제
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
-export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const { id } = await params;

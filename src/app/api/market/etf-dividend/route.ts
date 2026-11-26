@@ -1,6 +1,6 @@
 // Naver 모바일 API를 통해 ETF 분배금 이력을 조회하는 프록시 라우트
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 
 export interface Distribution {
   date: string;        // YYYY-MM-DD
@@ -8,7 +8,7 @@ export interface Distribution {
 }
 
 export async function GET(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   const { searchParams } = new URL(request.url);

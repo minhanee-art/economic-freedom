@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
 import { signToken, setSessionCookie } from "@/lib/session";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
+import { normalizeEmail } from "@/lib/auth-account";
 
 export async function POST(request: Request) {
   const { email, password } = await request.json().catch(() => ({}));
@@ -16,7 +17,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." }, { status: 429 });
   }
 
-  const [user] = await sql`SELECT id, password_hash FROM users WHERE email = ${email} LIMIT 1`;
+  // 가입 시 이메일을 소문자로 저장한다. 예전에 대소문자 섞어 가입한 계정은 입력과 정확히 같은 행을 우선한다.
+  const [user] = await sql`
+    SELECT id, password_hash FROM users
+    WHERE lower(email) = ${normalizeEmail(email)}
+    ORDER BY (email = ${String(email)}) DESC
+    LIMIT 1
+  `;
   if (!user) {
     return NextResponse.json({ error: "이메일 또는 비밀번호가 올바르지 않습니다." }, { status: 401 });
   }

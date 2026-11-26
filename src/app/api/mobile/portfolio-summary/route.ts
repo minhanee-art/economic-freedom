@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getBearerSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { getCostBases, getDividendCalendar, getDividends, getHoldings, getProfile } from "@/lib/queries";
 import { getPortfolioAccounts } from "@/lib/portfolio-accounts";
 import { computeCategoryBalances, computeHoldingsWithPnL } from "@/lib/portfolio";
 
 export async function GET(request: Request) {
-  const session = await getBearerSession(request);
+  const session = await getRequestSession(request);
   if (!session) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }

@@ -1,7 +1,7 @@
 // 자녀 계좌 입금/증여 기록 개별 수정(신고여부 등)/삭제 API
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 
 const INT_MAX = 2_147_483_647;
 
@@ -9,7 +9,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; gid: string }> }
 ) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const { id: childId, gid } = await params;
 
@@ -42,10 +42,10 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string; gid: string }> }
 ) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const { id: childId, gid } = await params;
   await sql`DELETE FROM child_gifts WHERE id = ${gid} AND child_id = ${childId} AND user_id = ${session.userId}`;

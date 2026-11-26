@@ -47,7 +47,7 @@ export function createSessionState(userId: string | null = "user-1") {
     namedExports: {
       getSession: async () => (state.userId ? { userId: state.userId } : null),
       getBearerSession: async () => (state.userId ? { userId: state.userId } : null),
-      getSessionFromRequest: async () => (state.userId ? { userId: state.userId } : null),
+      getRequestSession: async () => (state.userId ? { userId: state.userId, source: "cookie" as const } : null),
     },
   };
 }
@@ -101,4 +101,26 @@ export function rawRequest(method: string, body: string): Request {
 
 export async function readJson<T = Record<string, unknown>>(response: Response): Promise<T> {
   return (await response.json()) as T;
+}
+
+export type AuthOptions = {
+  body?: unknown;
+  /** 세션 쿠키 토큰 (pension-session) */
+  cookie?: string;
+  /** Authorization: Bearer 토큰 */
+  bearer?: string;
+  url?: string;
+};
+
+/** 쿠키 또는 Bearer 인증 헤더를 붙인 요청 */
+export function authRequest(method: string, options: AuthOptions = {}): Request {
+  const headers: Record<string, string> = {};
+  if (options.cookie) headers.cookie = `pension-session=${options.cookie}`;
+  if (options.bearer) headers.authorization = `Bearer ${options.bearer}`;
+  const init: RequestInit = { method, headers };
+  if (options.body !== undefined) {
+    headers["content-type"] = "application/json";
+    init.body = JSON.stringify(options.body);
+  }
+  return new Request(options.url ?? "https://pension.test/api/route", init);
 }

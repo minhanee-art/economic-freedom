@@ -115,3 +115,66 @@ test("SummaryHeader: 새로고침 버튼은 갱신 중에 잠긴다", async () =
   fireEvent.click(button);
   assert.equal(clicked, 1);
 });
+
+const baseProps = {
+  totalValue: 1_100_000,
+  totalCost: 1_000_000,
+  totalDividend: 0,
+  monthlyBudget: 0,
+  onRefresh: () => {},
+  isRefreshing: false,
+};
+
+const yields = {
+  trailing12mTotal: 30_000,
+  costYieldPct: 3,
+  marketYieldPct: 2.7272,
+  isPartialYear: false,
+  coveredMonths: 12,
+  hasRecords: true,
+};
+
+test("SummaryHeader: 투자·시가 배당률을 표시한다", () => {
+  render(<SummaryHeader {...baseProps} dividendYields={yields} />);
+  assert.ok(screen.getByText("투자 배당률"));
+  assert.ok(screen.getByText("3.00%"));
+  assert.ok(screen.getByText("시가 배당률"));
+  assert.ok(screen.getByText("2.73%"));
+  assert.equal(screen.queryByText(/12개월 미만/), null);
+});
+
+test("SummaryHeader: 배당 기록이 12개월 미만이면 안내를 보여준다", () => {
+  render(<SummaryHeader {...baseProps} dividendYields={{ ...yields, isPartialYear: true, coveredMonths: 3 }} />);
+  assert.ok(screen.getByText(/12개월 미만\(3개월\)/));
+});
+
+test("SummaryHeader: 분모가 0인 배당률은 숨긴다", () => {
+  render(
+    <SummaryHeader
+      {...baseProps}
+      dividendYields={{ ...yields, costYieldPct: null, marketYieldPct: null }}
+    />
+  );
+  assert.equal(screen.queryByText("투자 배당률"), null);
+  assert.equal(screen.queryByText("시가 배당률"), null);
+});
+
+test("SummaryHeader: 전일 대비 금액과 비율, 기준이 없으면 안내", () => {
+  render(
+    <SummaryHeader
+      {...baseProps}
+      dailyChange={{ amount: -10_000, pct: -0.9, baseDate: "2026-06-14", includesContribution: true }}
+    />
+  );
+  const el = screen.getByTestId("daily-change");
+  assert.match(el.textContent ?? "", /전일 대비 -1만 \(-0\.90%\)/);
+  assert.match(el.textContent ?? "", /매수·입출금 포함/);
+
+  cleanup();
+  render(<SummaryHeader {...baseProps} dailyChange={null} />);
+  assert.match(screen.getByTestId("daily-change").textContent ?? "", /기준 스냅샷 없음/);
+
+  cleanup();
+  render(<SummaryHeader {...baseProps} />);
+  assert.equal(screen.queryByTestId("daily-change"), null);
+});

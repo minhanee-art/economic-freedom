@@ -20,18 +20,21 @@ export function webUrl(path: string): string | null {
 type RequestOptions = {
   method?: "GET" | "POST" | "DELETE";
   token?: string;
+  /** 계좌 범위 API에서 사용할 계좌 id — X-Portfolio-Account-Id 헤더로 보낸다. */
+  accountId?: string;
   body?: unknown;
   fallbackError?: string;
 };
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", token, body, fallbackError = "요청을 처리하지 못했습니다." } = options;
+  const { method = "GET", token, accountId, body, fallbackError = "요청을 처리하지 못했습니다." } = options;
   if (!API_BASE_URL) {
     throw new ApiError(CONNECTION_ERROR, 0);
   }
 
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (accountId) headers["X-Portfolio-Account-Id"] = accountId;
   if (body !== undefined) headers["Content-Type"] = "application/json";
 
   let response: Response;
@@ -53,6 +56,6 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   return data as T;
 }
 
-export function apiGet<T>(path: string, token?: string): Promise<T> {
-  return apiRequest<T>(path, { token, fallbackError: "데이터를 불러오지 못했습니다." });
+export function apiGet<T>(path: string, token?: string, accountId?: string): Promise<T> {
+  return apiRequest<T>(path, { token, accountId, fallbackError: "데이터를 불러오지 못했습니다." });
 }

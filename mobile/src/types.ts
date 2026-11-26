@@ -2,6 +2,8 @@ export type AccountSummary = {
   id: string;
   name: string;
   ownerType: string;
+  /** 세제 유형(pension_savings, irp, dc, isa, general, child). GET /api/accounts 응답에서만 온다. */
+  accountType?: string;
 };
 
 export type Holding = {
@@ -68,4 +70,39 @@ export type AuthUser = {
 export type AuthSession = {
   token: string;
   user: AuthUser;
+};
+
+export type ContributionRecord = {
+  accountId: string;
+  year: number;
+  amount: number;
+  memo: string | null;
+};
+
+export type RetirementGoal = {
+  targetMonthly: number | null;
+  retirementAge: number | null;
+  birthYear: number | null;
+  spouseBirthYear: number | null;
+  expectedReturnPct: number | null;
+  salaryBracket: "low" | "high" | null;
+};
+
+export type IncomeSource = {
+  id: string;
+  member: string;
+  sourceType: string;
+  label: string | null;
+  monthlyAmount: number;
+  startAge: number;
+  endAge: number | null;
+  memo: string | null;
+};
+
+export type RetirementPlan = {
+  year: number;
+  accounts: AccountSummary[];
+  contributions: ContributionRecord[];
+  goal: RetirementGoal;
+  sources: IncomeSource[];
 };

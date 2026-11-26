@@ -233,12 +233,19 @@ test("직전 평가금액이 0이면 수익률은 null, 금액은 계산한다",
   assert.equal(day.returnPct, null);
 });
 
-test("텔레그램 chat_id가 있으면 요약에 담는다", { skip }, async () => {
+test("소유 확인된 텔레그램 chat_id만 요약에 담는다(미확인은 다시 연결 필요)", { skip }, async () => {
   await seedPortfolio();
   await db.sql`UPDATE portfolio_accounts SET telegram_chat_id = ${"-1001234567890"} WHERE id = ${ACCOUNT}`;
 
+  const unverified = await lib.getPortfolioReturnSummary(USER, ACCOUNT);
+  assert.equal(unverified.telegramChatId, null);
+  assert.equal(unverified.telegramNeedsRelink, true);
+
+  await db.sql`UPDATE portfolio_accounts SET telegram_chat_verified_at = NOW() WHERE id = ${ACCOUNT}`;
   const summary = await lib.getPortfolioReturnSummary(USER, ACCOUNT);
   assert.equal(summary.telegramChatId, "-1001234567890");
+  assert.equal(summary.telegramChatIdMasked, "…7890");
+  assert.equal(summary.telegramNeedsRelink, false);
 
   const report = lib.formatReturnReport(summary);
   assert.match(report, /📊 내 계좌 수익률 리포트/);

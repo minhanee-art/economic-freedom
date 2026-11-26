@@ -50,6 +50,7 @@ npm run dev                  # http://localhost:3000
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | 인증 레이트리밋 분산 저장소 | 선택 |
 | `CRON_SECRET` | Cron 호출 인증 (미설정 시 cron이 401로 차단) | Cron 사용 시 |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` | 텔레그램 리포트·봇 | 선택 |
+| `TELEGRAM_BOT_USERNAME` | 봇 사용자명(@ 제외). 설정 > 텔레그램 연결에서 `t.me` 딥링크를 만든다. 없으면 코드만 보여 준다 | 선택 |
 | `REPORT_USER_EMAIL` 또는 `REPORT_USER_ID` | 리포트 대상 사용자 | 리포트 사용 시 |
 | `KIS_APP_KEY`, `KIS_APP_SECRET` | 한국투자증권 시세 | 선택 |
 | `OPENAI_API_KEY` | 뉴스 감정분석·봇 답변 | 선택 |

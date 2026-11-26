@@ -9,6 +9,8 @@ function summary(over: Partial<PortfolioReturnSummary> = {}): PortfolioReturnSum
     accountId: "acc-1",
     accountName: "내 계좌",
     telegramChatId: null,
+    telegramChatIdMasked: null,
+    telegramNeedsRelink: false,
     asOfDate: "2026-11-17",
     totalValue: 3217000,
     totalCost: 2935000,

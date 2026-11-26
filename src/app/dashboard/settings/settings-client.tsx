@@ -9,6 +9,7 @@ import { CATEGORIES } from "@/lib/constants";
 import type { Profile, Holding } from "@/types";
 import { useTheme, type Theme } from "@/lib/theme";
 import { useMemo } from "react";
+import { AccountDeleteSection } from "@/components/settings/account-delete-section";
 
 type HoldingGroupBy = "none" | "category" | "sub_category";
 
@@ -778,6 +779,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           </div>
         </div>
       )}
+
+      <AccountDeleteSection />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 // 가족/명의별 포트폴리오 계좌 선택 헬퍼
 import { cookies } from "next/headers";
 import { sql } from "@/lib/db";
+import { DEFAULT_ACCOUNT_TYPE, type AccountType } from "@/lib/account-types";
 
 export const ACCOUNT_COOKIE = "portfolio-account-id";
 
@@ -9,6 +10,8 @@ export type PortfolioAccount = {
   user_id: string;
   name: string;
   owner_type: "self" | "spouse" | "child" | "other";
+  /** 세제 유형 (연금저축·IRP·DC·ISA·일반·자녀) — 기존 계좌는 'general' */
+  account_type: AccountType;
   telegram_chat_id: string | null;
   display_order: number;
   created_at: string;
@@ -52,6 +55,7 @@ export async function ensurePortfolioAccountSchema(): Promise<void> {
     await sql`ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE`;
     await sql`ALTER TABLE dividend_calendar ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE`;
     await sql`ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT`;
+    await sql`ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS account_type TEXT NOT NULL DEFAULT 'general'`;
 
     await sql`DROP INDEX IF EXISTS idx_holdings_user_code`;
     await sql`CREATE UNIQUE INDEX IF NOT EXISTS idx_holdings_user_account_code ON holdings(user_id, account_id, code)`;
@@ -70,7 +74,7 @@ export async function getPortfolioAccounts(userId: string): Promise<PortfolioAcc
   await ensurePortfolioAccountSchema();
   await ensureDefaultPortfolioAccount(userId);
   const rows = await sql`
-    SELECT id, user_id, name, owner_type, telegram_chat_id, display_order, created_at::text
+    SELECT id, user_id, name, owner_type, account_type, telegram_chat_id, display_order, created_at::text
     FROM portfolio_accounts
     WHERE user_id = ${userId}
     ORDER BY display_order ASC, created_at ASC
@@ -122,7 +126,8 @@ export async function getActivePortfolioAccountId(userId: string): Promise<strin
 export async function createPortfolioAccount(
   userId: string,
   name: string,
-  ownerType: PortfolioAccount["owner_type"] = "other"
+  ownerType: PortfolioAccount["owner_type"] = "other",
+  accountType: AccountType = DEFAULT_ACCOUNT_TYPE
 ): Promise<PortfolioAccount> {
   await ensurePortfolioAccountSchema();
   const cleanName = name.trim().slice(0, 30);
@@ -133,9 +138,29 @@ export async function createPortfolioAccount(
     WHERE user_id = ${userId}
   `;
   const [row] = await sql`
-    INSERT INTO portfolio_accounts (user_id, name, owner_type, display_order)
-    VALUES (${userId}, ${cleanName}, ${ownerType}, ${next_order})
-    RETURNING id, user_id, name, owner_type, telegram_chat_id, display_order, created_at::text
+    INSERT INTO portfolio_accounts (user_id, name, owner_type, account_type, display_order)
+    VALUES (${userId}, ${cleanName}, ${ownerType}, ${accountType}, ${next_order})
+    RETURNING id, user_id, name, owner_type, account_type, telegram_chat_id, display_order, created_at::text
   `;
   return row as unknown as PortfolioAccount;
+}
+
+/** 계좌 이름·명의·세제 유형 수정. 본인 소유 계좌가 아니면 null. */
+export async function updatePortfolioAccount(
+  userId: string,
+  accountId: string,
+  changes: { name?: string; ownerType?: PortfolioAccount["owner_type"]; accountType?: AccountType }
+): Promise<PortfolioAccount | null> {
+  await ensurePortfolioAccountSchema();
+  const cleanName = changes.name === undefined ? null : changes.name.trim().slice(0, 30);
+  if (cleanName === "") throw new Error("계좌 이름이 필요합니다.");
+  const [row] = await sql`
+    UPDATE portfolio_accounts
+    SET name = COALESCE(${cleanName}, name),
+        owner_type = COALESCE(${changes.ownerType ?? null}, owner_type),
+        account_type = COALESCE(${changes.accountType ?? null}, account_type)
+    WHERE id = ${accountId} AND user_id = ${userId}
+    RETURNING id, user_id, name, owner_type, account_type, telegram_chat_id, display_order, created_at::text
+  `;
+  return (row ?? null) as unknown as PortfolioAccount | null;
 }

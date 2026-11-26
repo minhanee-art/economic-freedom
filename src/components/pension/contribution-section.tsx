@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ACCOUNT_TYPE_LABELS, isPensionAccountType } from "@/lib/account-types";
-import { computeTaxCreditProgress } from "@/lib/pension-planning";
+import { ACCOUNT_OWNER_LABELS, computeFamilyTaxCredit, normalizeAccountOwner } from "@/lib/pension-planning";
 import type { PensionRuleSet, SalaryBracket } from "@/lib/pension-rules";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PlanningAccount } from "./account-type-section";
@@ -44,15 +44,25 @@ export function ContributionSection({
   const [error, setError] = useState("");
 
   const bracket: SalaryBracket = salaryBracket ?? "high";
-  const progress = useMemo(
+  // 한도·공제율은 명의자 개인 기준 — 본인·배우자를 따로 계산해 더하고, 자녀·기타 명의는 뺀다.
+  // 배우자 소득 구간은 입력란이 없어 낮은 공제율로 가정한다.
+  const family = useMemo(
     () =>
-      computeTaxCreditProgress(
-        targetAccounts.map((a) => ({ accountType: a.account_type, amount: contributions[a.id] ?? 0 })),
-        bracket,
+      computeFamilyTaxCredit(
+        targetAccounts.map((a) => ({
+          accountId: a.id,
+          ownerType: a.owner_type,
+          accountType: a.account_type,
+          amount: contributions[a.id] ?? 0,
+        })),
+        { self: salaryBracket, spouse: null },
         rules
       ),
-    [targetAccounts, contributions, bracket, rules]
+    [targetAccounts, contributions, salaryBracket, rules]
   );
+  const progress = family.total;
+  const totalLimit = rules.taxCredit.combinedLimit * family.byOwner.length;
+  const excludedIds = new Set(family.excluded.map((e) => e.accountId));
 
   const save = async (accountId: string) => {
     const raw = drafts[accountId];
@@ -89,7 +99,7 @@ export function ContributionSection({
       )}까지 세액공제 대상입니다.`}
     >
       <fieldset className="space-y-1">
-        <legend className="text-xs text-zinc-500 mb-1">총급여 구간</legend>
+        <legend className="text-xs text-zinc-500 mb-1">본인 총급여 구간</legend>
         {(["low", "high"] as SalaryBracket[]).map((b) => (
           <label key={b} className="flex items-center gap-2 text-sm">
             <input type="radio" name="salary-bracket" checked={bracket === b} onChange={() => onSalaryBracketChange(b)} />
@@ -111,8 +121,9 @@ export function ContributionSection({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium">{account.name}</p>
                   <p className="text-xs text-zinc-400">
-                    {ACCOUNT_TYPE_LABELS[account.account_type]} · 저장된 {year}년 납입 {formatFullKRW(saved)}
+                    {ACCOUNT_OWNER_LABELS[normalizeAccountOwner(account.owner_type)]} · {ACCOUNT_TYPE_LABELS[account.account_type]} · 저장된 {year}년 납입 {formatFullKRW(saved)}
                     {account.account_type === "dc" && " (본인 추가납입분만 입력)"}
+                    {excludedIds.has(account.id) && " · 세액공제 계산 제외"}
                   </p>
                 </div>
                 <input
@@ -139,7 +150,7 @@ export function ContributionSection({
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-zinc-500">
           <span>
-            공제 대상 {formatKRW(progress.creditableTotal)} / {formatKRW(rules.taxCredit.combinedLimit)}
+            {family.byOwner.length > 1 ? "가족 합계 " : ""}공제 대상 {formatKRW(progress.creditableTotal)} / {formatKRW(totalLimit)}
           </span>
           <span>{progress.progressPct.toFixed(0)}%</span>
         </div>
@@ -152,6 +163,26 @@ export function ContributionSection({
         <Stat label="연금저축 납입" value={formatKRW(progress.pensionSavingsPaid)} hint={`공제 대상 ${formatKRW(progress.creditablePensionSavings)}`} />
         <Stat label="IRP·DC 납입" value={formatKRW(progress.retirementPaid)} hint={`ISA ${formatKRW(progress.isaPaid)}`} />
       </div>
+
+      {family.byOwner.length > 1 && (
+        <ul className="space-y-1 text-xs text-zinc-500">
+          {family.byOwner.map((o) => (
+            <li key={o.ownerType}>
+              {ACCOUNT_OWNER_LABELS[o.ownerType]}: 공제 대상 {formatKRW(o.progress.creditableTotal)} /{" "}
+              {formatKRW(rules.taxCredit.combinedLimit)} · 예상 공제액 {formatFullKRW(o.progress.estimatedCredit)} · 공제율{" "}
+              {(o.progress.rate * 100).toFixed(1)}%{o.salaryBracketAssumed && " (소득 구간 미입력 — 낮은 공제율로 가정)"}
+            </li>
+          ))}
+        </ul>
+      )}
+      {family.byOwner.length === 1 && family.byOwner[0].ownerType === "spouse" && (
+        <p className="text-xs text-zinc-500">배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 배우자 소득 구간은 낮은 공제율로 가정했습니다.</p>
+      )}
+      {family.excluded.length > 0 && (
+        <p className="text-xs text-zinc-500">
+          자녀·기타 명의 계좌 {family.excluded.length}개는 명의자의 소득 정보가 없어 세액공제 계산에서 뺐습니다.
+        </p>
+      )}
 
       {progress.nonCreditablePaid > 0 && (
         <p className="text-xs text-zinc-500">

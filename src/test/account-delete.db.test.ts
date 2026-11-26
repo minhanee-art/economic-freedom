@@ -38,6 +38,8 @@ const USER_TABLES = [
   "child_gifts",
   "child_holdings",
   "portfolio_value_snapshots",
+  "pension_contributions",
+  "pension_income_sources",
 ];
 const ALL_TABLES = ["users", ...USER_TABLES, "purchase_items"].sort();
 
@@ -69,6 +71,8 @@ before(async () => {
   const returns = await import("@/lib/portfolio-returns");
   await accounts.ensurePortfolioAccountSchema();
   await returns.ensurePortfolioReturnSchema();
+  const pension = await import("@/lib/pension-data");
+  await pension.ensurePensionSchema();
 
   me = await import("@/app/api/me/route");
 });
@@ -110,6 +114,8 @@ async function seedUser(userId: string, email: string, passwordHash: string | nu
   await db.sql`INSERT INTO child_gifts (child_id, user_id, date, amount) VALUES (${child.id}, ${userId}, ${"2026-01-01"}, ${1000000})`;
   await db.sql`INSERT INTO child_holdings (child_id, user_id, code, name, shares) VALUES (${child.id}, ${userId}, ${"069500"}, ${"KODEX 200"}, ${3})`;
   await db.sql`INSERT INTO portfolio_value_snapshots (user_id, account_id, snapshot_date, total_value, total_cost) VALUES (${userId}, ${acc.id}, ${"2026-11-25"}, ${110000}, ${100000})`;
+  await db.sql`INSERT INTO pension_contributions (user_id, account_id, year, amount) VALUES (${userId}, ${acc.id}, ${2026}, ${3000000})`;
+  await db.sql`INSERT INTO pension_income_sources (user_id, member, source_type, monthly_amount, start_age) VALUES (${userId}, ${"self"}, ${"national_pension"}, ${1000000}, ${65})`;
 }
 
 /** 한 사용자 소유 행 수를 테이블별로 센다 (purchase_items는 record 경유). */

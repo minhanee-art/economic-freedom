@@ -1,19 +1,22 @@
 import { StyleSheet, Text, View } from "react-native";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
+import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { colors, radius, spacing } from "@/styles/theme";
 import { formatKRW, formatPercent } from "@/utils/format";
 
 export default function HoldingsScreen() {
-  const { summary, isLoading, refresh } = usePortfolioSummary();
+  const { summary, isLoading, error, refresh } = usePortfolioSummary();
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
       <Text style={styles.title}>보유자산</Text>
       <Text style={styles.subtitle}>평가금액, 손익, 비중을 한 화면에서 확인합니다.</Text>
 
-      {summary.holdings.map((holding) => {
+      {summary ? null : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
+
+      {(summary?.holdings ?? []).map((holding) => {
         const isPositive = holding.profitLoss >= 0;
         return (
           <Card key={holding.id}>

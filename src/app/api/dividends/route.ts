@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
 import { selectRequestAccount } from "@/lib/account-selection";
+import { checkRecordDate, isUuid, MAX_MEMO_LENGTH, toPositiveInt } from "@/lib/record-validation";
 
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
@@ -27,9 +28,27 @@ export async function POST(request: Request) {
   const selected = await selectRequestAccount(request, session.userId);
   if (!selected.ok) return selected.response;
   const accountId = selected.accountId;
-  const { holdingId, amount, date, memo } = await request.json().catch(() => ({}));
-  if (!holdingId || !Number.isFinite(Number(amount)) || !date) {
+  const { holdingId, amount: rawAmount, date: rawDate, memo: rawMemo } = await request.json().catch(() => ({}));
+  if (!holdingId || rawAmount === undefined || rawAmount === null || rawAmount === "" || !rawDate) {
     return NextResponse.json({ error: "holdingId, amount, date 필요" }, { status: 400 });
+  }
+  // 금액은 1 이상 정수(INTEGER 컬럼), 날짜는 형식·실존·미래(KST) 검증
+  const amount = toPositiveInt(rawAmount);
+  if (amount === null) {
+    return NextResponse.json({ error: "배당금은 1원 이상의 정수여야 합니다." }, { status: 400 });
+  }
+  const dateCheck = checkRecordDate(rawDate);
+  if (!dateCheck.ok) return NextResponse.json({ error: dateCheck.error }, { status: 400 });
+  const date = dateCheck.date;
+  if (rawMemo !== undefined && rawMemo !== null && typeof rawMemo !== "string") {
+    return NextResponse.json({ error: "메모는 문자열이어야 합니다." }, { status: 400 });
+  }
+  const memo = typeof rawMemo === "string" && rawMemo.trim() ? rawMemo : null;
+  if (memo && memo.length > MAX_MEMO_LENGTH) {
+    return NextResponse.json({ error: `메모는 ${MAX_MEMO_LENGTH}자 이하여야 합니다.` }, { status: 400 });
+  }
+  if (!isUuid(holdingId)) {
+    return NextResponse.json({ error: "현재 계좌 보유 종목이 아닙니다." }, { status: 400 });
   }
   const [owned] = await sql`SELECT id FROM holdings WHERE id = ${holdingId} AND user_id = ${session.userId} AND account_id = ${accountId}`;
   if (!owned) return NextResponse.json({ error: "현재 계좌 보유 종목이 아닙니다." }, { status: 400 });
@@ -37,7 +56,7 @@ export async function POST(request: Request) {
   const [row] = await sql`
     WITH ins AS (
       INSERT INTO dividends (user_id, account_id, holding_id, amount, date, memo)
-      VALUES (${session.userId}, ${accountId}, ${holdingId}, ${amount}, ${date}, ${memo ?? null})
+      VALUES (${session.userId}, ${accountId}, ${holdingId}, ${amount}, ${date}, ${memo})
       ON CONFLICT (holding_id, date) DO UPDATE SET amount = EXCLUDED.amount, memo = EXCLUDED.memo, account_id = EXCLUDED.account_id
       RETURNING *
     )

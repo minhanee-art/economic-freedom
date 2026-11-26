@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const result = await signupWithPassword(request, body ?? {});
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
 
-  const token = await signToken(result.user.id);
+  const token = await signToken(result.user.id, result.user.sessionVersion);
   const res = NextResponse.json({ ok: true }, { status: 201 });
   setSessionCookie(res, token);
   return res;

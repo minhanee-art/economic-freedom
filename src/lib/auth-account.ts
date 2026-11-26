@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { ensureSessionVersionSchema, toSessionVersion } from "@/lib/session-version";
 
 export const MIN_PASSWORD_LENGTH = 6;
 /** bcrypt는 72바이트 이후를 무시하므로 그보다 긴 비밀번호는 받지 않는다. */
@@ -35,7 +36,7 @@ export function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, BCRYPT_COST);
 }
 
-export type SignupResult = { ok: true; user: { id: string; email: string } } | AuthFailure;
+export type SignupResult = { ok: true; user: { id: string; email: string; sessionVersion: number } } | AuthFailure;
 
 /**
  * 이메일/비밀번호 가입 — 검증 → IP 레이트리밋 → 중복 확인 → users·기본 종목·프로필 생성.
@@ -60,12 +61,13 @@ export async function signupWithPassword(request: Request, input: { email?: unkn
   if (existing.length > 0) return { ok: false, status: 409, error: "이미 가입된 이메일입니다." };
 
   const passwordHash = await hashPassword(password);
+  await ensureSessionVersionSchema();
   // 동시 가입 레이스 — 위 SELECT를 통과한 두 요청이 동시에 INSERT하면 UNIQUE(email) 위반.
   // 미처리 500 대신 409로 변환한다.
   const insertedUsers = await sql`
     INSERT INTO users (email, password_hash)
     VALUES (${email}, ${passwordHash})
-    RETURNING id
+    RETURNING id, session_version
   `.catch((err: { code?: string }) => {
     if (err?.code === "23505") return null;
     throw err;
@@ -73,6 +75,7 @@ export async function signupWithPassword(request: Request, input: { email?: unkn
   if (!insertedUsers) return { ok: false, status: 409, error: "이미 가입된 이메일입니다." };
 
   const userId = String(insertedUsers[0].id);
+  const sessionVersion = toSessionVersion(insertedUsers[0].session_version);
   const accountId = await getActivePortfolioAccountId(userId);
 
   // 기본 종목 자동 생성
@@ -91,5 +94,5 @@ export async function signupWithPassword(request: Request, input: { email?: unkn
     ON CONFLICT DO NOTHING
   `;
 
-  return { ok: true, user: { id: userId, email } };
+  return { ok: true, user: { id: userId, email, sessionVersion } };
 }

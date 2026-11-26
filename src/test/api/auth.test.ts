@@ -98,7 +98,7 @@ test("로그인: 비밀번호가 틀리면 401", async () => {
 
 test("로그인: 비밀번호가 맞으면 세션 쿠키를 발급한다", async () => {
   const hash = await bcrypt.hash("right-password", 4);
-  db.setHandler(() => [{ id: "u1", password_hash: hash }]);
+  db.setHandler(() => [{ id: "u1", password_hash: hash, session_version: 4 }]);
 
   const response = await login.POST(jsonRequest("POST", { email: "A@B.com", password: "right-password" }));
   assert.equal(response.status, 200);
@@ -109,11 +109,16 @@ test("로그인: 비밀번호가 맞으면 세션 쿠키를 발급한다", async
   assert.match(cookie, /HttpOnly/i);
   // 레이트리밋 키는 소문자 이메일 기준
   assert.ok(rateLimit.keys.some((key) => key.includes("a@b.com")));
+  // 발급 토큰에는 DB의 현재 세션 버전이 들어간다(이전 버전 토큰과 구분)
+  const { decodeJwt } = await import("jose");
+  const token = decodeURIComponent(/pension-session=([^;]+)/.exec(cookie)?.[1] ?? "");
+  assert.equal(decodeJwt(token).sv, 4);
+  assert.match(db.find("FROM users")[0].query, /session_version/);
 });
 
 test("로그인: 이메일은 소문자 기준으로 찾고, 입력과 정확히 같은 행을 우선한다", async () => {
   const hash = await bcrypt.hash("right-password", 4);
-  db.setHandler(() => [{ id: "u1", password_hash: hash }]);
+  db.setHandler(() => [{ id: "u1", password_hash: hash, session_version: 0 }]);
 
   await login.POST(jsonRequest("POST", { email: " Mixed@B.com", password: "right-password" }));
   const lookup = db.find("FROM users")[0];
@@ -160,7 +165,7 @@ test("회원가입: 성공하면 기본 종목·프로필을 만들고 쿠키를
   const { DEFAULT_HOLDINGS } = await import("@/lib/constants");
   db.setHandler((query) => {
     if (query.includes("SELECT id FROM users")) return [];
-    if (query.includes("INSERT INTO users")) return [{ id: "user-new" }];
+    if (query.includes("INSERT INTO users")) return [{ id: "user-new", session_version: 0 }];
     return [];
   });
 
@@ -184,7 +189,7 @@ test("회원가입: 비밀번호는 평문으로 저장하지 않는다", async 
   db.setHandler((query, values) => {
     if (query.includes("INSERT INTO users")) {
       stored = values[1];
-      return [{ id: "user-new" }];
+      return [{ id: "user-new", session_version: 0 }];
     }
     return [];
   });

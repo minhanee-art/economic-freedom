@@ -1,162 +1,116 @@
-# Pension Manager
+# 가족연금계획 (pension-manager)
 
-연금 ETF 포트폴리오 관리 웹 서비스
+가족의 연금·ETF·배당 자산을 직접 기록하고 계산해 보는 웹 서비스입니다. 사용자가 입력한 기록을 계산해 보여주는 도구이며, 투자 자문이나 매매 권유를 하지 않습니다. 웹(Next.js)과 모바일 앱(`mobile/`, Expo)이 같은 서버 API를 씁니다.
 
 ## 주요 기능
 
-- 포트폴리오 대시보드 (자산배분 차트, 리밸런싱 알림)
-- 목표 비중 기반 자동 매수 계획 & 실행
-- 종목별 손익 추적 (평균단가, 수익률)
-- 배당금 기록 관리 (월별 차트)
-- 매수 기록 히스토리
-- 네이버 금융 연동 실시간 시세 조회
-- 모바일 반응형 UI
+- 포트폴리오 대시보드: 자산배분, 목표 비중 대비 현재 비중, 종목 히트맵
+- 매수 계획과 매수 기록, 평균단가·손익 추적
+- 배당 기록과 배당 캘린더
+- 여러 포트폴리오 계좌(가족/명의별) 관리
+- 자녀 증여 관리
+- ETF 비교, 시장 정보(지수·거래대금·캔들·구성종목 등)
+- 엑셀 가져오기
+- 계정 삭제(설정 화면), 개인정보처리방침(`/privacy`)·계정 삭제 안내(`/account-deletion`) 페이지
+- 텔레그램 리포트·알림 (Vercel Cron)
 
 ## 기술 스택
 
-- **프레임워크**: Next.js 16 (App Router)
-- **언어**: TypeScript
-- **스타일**: Tailwind CSS v4
-- **차트**: Recharts
-- **인증/DB**: Supabase
-- **상태관리**: Zustand
-- **배포**: Vercel
+| 영역 | 사용 기술 |
+|------|-----------|
+| 웹 | Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4, Recharts, Zustand |
+| DB | Neon Postgres (`@neondatabase/serverless`) — 스키마는 `neon-schema.sql` |
+| 인증 | 자체 JWT(`jose`) + 비밀번호(`bcryptjs`), Google OAuth. 웹은 HTTP-only 쿠키, 모바일은 `Authorization: Bearer` |
+| 로그인 시도 제한 | Upstash Redis 슬라이딩 윈도우 (미설정 시 인스턴스 메모리 폴백) |
+| 시세 | 네이버 금융, Yahoo Finance, 한국투자증권 Open API(선택) |
+| 배포 | Vercel (`main` 병합 시 자동 배포), Vercel Cron |
+| 모바일 | Expo(React Native) + expo-router, EAS Build — `mobile/` |
 
----
+> Next.js 16은 기존 버전과 규칙이 다릅니다. 코드를 고치기 전에 `node_modules/next/dist/docs/`의 관련 가이드를 확인하세요 (`AGENTS.md`). 보호 경로 검사는 `middleware.ts`가 아니라 `src/proxy.ts`에 있습니다.
 
-## 배포 가이드 (비개발자용)
+## 로컬 개발
 
-### 1단계: Supabase 프로젝트 만들기
+```bash
+npm ci
+cp .env.example .env.local   # 값을 채운다
+npm run dev                  # http://localhost:3000
+```
 
-1. https://supabase.com 접속 → **Start your project** 클릭
-2. GitHub 계정으로 로그인
-3. **New project** 클릭
-4. 설정 입력:
-   - **Name**: pension-manager (아무 이름)
-   - **Database Password**: 안전한 비밀번호 입력 (메모해두기)
-   - **Region**: Northeast Asia (Tokyo) 선택
-5. **Create new project** 클릭 → 2분 정도 기다림
+데이터베이스는 Neon 프로젝트를 만들고 `neon-schema.sql`을 실행해 준비합니다. 운영 DB에는 연결하지 말고 개발용 DB를 쓰세요.
 
-### 2단계: 데이터베이스 테이블 만들기
+## 환경변수
 
-1. Supabase 대시보드 왼쪽 메뉴에서 **SQL Editor** 클릭 (번개 아이콘)
-2. **New query** 클릭
-3. 아래 3개 파일의 내용을 **순서대로** 복사/붙여넣기하고 각각 **Run** 클릭:
+`.env.example`에 전체 목록과 설명이 있습니다.
 
-| 순서 | 파일 | 설명 |
+| 변수 | 설명 | 필수 |
 |------|------|------|
-| 1 | `supabase/migrations/20260407000001_create_tables.sql` | 테이블 생성 |
-| 2 | `supabase/migrations/20260407000002_rls_policies.sql` | 보안 정책 |
-| 3 | `supabase/migrations/20260407000003_default_holdings_trigger.sql` | 기본 종목 자동 생성 |
+| `DATABASE_URL` | Neon Postgres 연결 문자열 | O |
+| `JWT_SECRET` | 세션 JWT 서명 키 (32바이트 이상) | O |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google 로그인 | 선택 |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | 인증 레이트리밋 분산 저장소 | 선택 |
+| `CRON_SECRET` | Cron 호출 인증 (미설정 시 cron이 401로 차단) | Cron 사용 시 |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` | 텔레그램 리포트·봇 | 선택 |
+| `REPORT_USER_EMAIL` 또는 `REPORT_USER_ID` | 리포트 대상 사용자 | 리포트 사용 시 |
+| `KIS_APP_KEY`, `KIS_APP_SECRET` | 한국투자증권 시세 | 선택 |
+| `OPENAI_API_KEY` | 뉴스 감정분석·봇 답변 | 선택 |
+| `APP_URL` | 리포트 링크 기준 주소 (기본 `https://economic-freedom.vercel.app`) | 선택 |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | 개인정보·계정 삭제 안내에 표시할 문의 이메일 | 선택 |
 
-4. 추가로 아래 SQL도 실행:
-```sql
-alter table profiles add column if not exists last_price_update timestamptz;
-```
-
-5. 각 쿼리 실행 후 **Success** 메시지가 나오면 정상
-
-### 3단계: Supabase API 키 확인
-
-1. 왼쪽 하단 **톱니바퀴** 아이콘 (Project Settings) 클릭
-2. **Data API** 탭 클릭
-3. 두 가지 값을 복사해서 메모장에 붙여넣기:
-   - **Project URL**: `https://xxxxxxxx.supabase.co` 형태
-   - **anon public** (Project API keys 섹션): `eyJhbGci...` 형태의 긴 문자열
-
-### 4단계: GitHub에 코드 올리기
-
-1. https://github.com 접속 → 로그인
-2. 오른쪽 상단 **+** → **New repository** 클릭
-3. Repository name: `pension-manager` 입력
-4. **Private** 선택 (공개하고 싶으면 Public)
-5. **Create repository** 클릭
-6. 컴퓨터 터미널에서 프로젝트 폴더로 이동 후 아래 명령어 실행:
+## 스크립트와 검증
 
 ```bash
-cd pension-manager
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/당신의아이디/pension-manager.git
-git push -u origin main
+npx tsc --noEmit        # 타입 검사
+npm run lint            # ESLint
+npm run lint:design     # 디자인 규칙 린트
+npm test                # node:test 기반 단위/API/컴포넌트 테스트 (src/**/*.test.ts(x))
+npm run build           # 프로덕션 빌드
 ```
 
-### 5단계: Vercel에 배포하기
-
-1. https://vercel.com 접속 → **Sign Up** → GitHub으로 로그인
-2. **Add New...** → **Project** 클릭
-3. **Import Git Repository** 에서 `pension-manager` 찾기 → **Import** 클릭
-4. **Environment Variables** 섹션에서 2개 추가:
-
-| Key | Value |
-|-----|-------|
-| `NEXT_PUBLIC_SUPABASE_URL` | 3단계에서 복사한 Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | 3단계에서 복사한 anon public 키 |
-
-   각각 입력 후 **Add** 클릭
-
-5. **Deploy** 클릭 → 1~2분 기다림
-6. 초록색 **Congratulations!** 가 나오면 배포 완료
-7. 표시된 URL (예: `pension-manager-xxxx.vercel.app`)로 접속
-
-### 6단계: Supabase 인증 URL 설정 (중요!)
-
-배포 후 반드시 해야 합니다. 안 하면 회원가입 이메일 인증이 작동하지 않습니다.
-
-1. Supabase 대시보드 → **Authentication** (왼쪽 메뉴 사람 아이콘)
-2. **URL Configuration** 클릭
-3. **Site URL** 에 Vercel 배포 URL 입력:
-   - 예: `https://pension-manager-xxxx.vercel.app`
-4. **Redirect URLs** 에 추가:
-   - `https://pension-manager-xxxx.vercel.app/auth/callback`
-5. **Save** 클릭
-
----
-
-## 로컬 개발 환경
+DB 통합 테스트(`src/test/*.db.test.ts`)는 `npm test`에 포함되지 않고, 일회용 Docker Postgres를 띄우는 스크립트로 따로 실행합니다. Docker가 필요합니다.
 
 ```bash
-# 의존성 설치
-npm install
-
-# 환경변수 설정
-cp .env.example .env.local
-# .env.local 파일을 열어서 실제 Supabase 값으로 수정
-
-# 개발 서버 실행
-npm run dev
+./scripts/verify-snapshot-db.sh
 ```
 
-http://localhost:3000 에서 확인
+CI(`.github/workflows/ci.yml`)는 PR과 `main` push에서 타입 검사 → lint → design lint → test → build를 순서대로 실행합니다.
+
+## Cron
+
+`vercel.json`에 등록된 경로: `/api/cron/report`, `sentiment`, `market-close`, `portfolio`, `dividend-news`, `dividend-calendar`, `technical`. 모두 `CRON_SECRET`으로 인증하며 결과를 텔레그램으로 보냅니다.
+
+## 모바일 앱 (`mobile/`)
+
+Expo SDK 57 / expo-router 기반 앱입니다. 홈·자산·배당·설정 탭이 있고, 로그인 토큰은 SecureStore에 저장합니다. 서버 주소는 `EXPO_PUBLIC_API_BASE_URL`로 지정하며, `mobile/eas.json`의 `preview`·`production` 프로필에 운영 주소가 들어 있습니다.
+
+```bash
+cd mobile
+npm ci --legacy-peer-deps   # npm 10에서 peer 의존성 충돌(react-native-reanimated)이 나면 필요
+npm run typecheck
+npm run lint
+npx expo-doctor
+EXPO_PUBLIC_API_BASE_URL=http://<개발 서버 주소> npm start
+```
 
 ## 프로젝트 구조
 
 ```
 src/
 ├── app/
-│   ├── api/prices/          # 시세 조회 API
-│   ├── auth/callback/       # OAuth 콜백
-│   ├── dashboard/           # 대시보드 (메인/매수/손익/배당/기록/설정)
-│   ├── login/               # 로그인
-│   └── signup/              # 회원가입
-├── components/
-│   ├── charts/              # Recharts 차트 컴포넌트
-│   ├── portfolio/           # 포트폴리오 컴포넌트
-│   └── ui/                  # 공통 UI
-├── lib/
-│   ├── supabase/            # Supabase 클라이언트
-│   ├── buy-algorithm.ts     # 매수 배분 알고리즘
-│   ├── colors.ts            # 자산군별 색상
-│   ├── constants.ts         # 기본 종목 데이터
-│   └── utils.ts             # 유틸리티
-├── stores/                  # Zustand 상태관리
-└── types/                   # TypeScript 타입
+│   ├── api/                 # accounts, auth, children, cron, danger, dividend-calendar,
+│   │                        # dividends, holdings, import, market, me, mobile, portfolio-returns,
+│   │                        # prices, purchases, settings, telegram-bot, trades, watchlist
+│   ├── dashboard/           # 메인, buy, pnl, dividend, history, market, compare, children, settings
+│   ├── login/  signup/      # 인증 화면
+│   ├── privacy/             # 개인정보처리방침
+│   └── account-deletion/    # 계정 삭제 안내
+├── components/              # charts, gift, portfolio, settings, ui
+├── lib/                     # db, session, rate-limit, portfolio*, buy-algorithm, gift-tax, reports …
+├── proxy.ts                 # 보호 경로 JWT 검증 (Next 16 proxy)
+├── test/                    # API·컴포넌트·DB 통합 테스트
+└── types/
+mobile/                      # Expo 앱 (app.json, eas.json, src/)
+scripts/                     # test.mjs, verify-snapshot-db.sh
+neon-schema.sql              # 현재 DB 스키마
+supabase/migrations/         # 예전 Supabase 시절의 마이그레이션 기록(현재 런타임은 사용하지 않음)
+docs/                        # 모바일 앱·Play Store 계획서
 ```
-
-## 환경변수
-
-| 변수 | 설명 | 필수 |
-|------|------|------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL | O |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon 공개 키 | O |

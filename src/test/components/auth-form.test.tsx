@@ -125,3 +125,8 @@ test("AuthForm 회원가입: 성공하면 가입 완료 화면을 보여준다",
   assert.equal(fetchCalls[0].url, "/api/auth/signup");
   assert.deepEqual(router.push, [], "가입은 바로 이동하지 않는다");
 });
+
+test("AuthForm 로그인: initialError가 있으면 처음부터 안내 문구를 보여준다", () => {
+  render(<AuthForm mode="login" initialError="이 이메일은 이미 다른 Google 계정에 연결되어 있습니다." />);
+  assert.ok(screen.getByText("이 이메일은 이미 다른 Google 계정에 연결되어 있습니다."));
+});

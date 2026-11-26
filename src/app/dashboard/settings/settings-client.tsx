@@ -215,9 +215,6 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         if (!res.ok) throw new Error("초기화 실패");
         flash("종목 초기화 완료");
         router.refresh();
-      } else if (dangerModal === "account") {
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/");
       }
     } catch (err) {
       alert(`실패: ${(err as Error).message}`);
@@ -759,8 +756,6 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 "모든 매수 기록, 보유수량, 원가 데이터가 초기화됩니다. 이 작업은 되돌릴 수 없습니다."}
               {dangerModal === "dividends" &&
                 "모든 배당금 수령 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다."}
-              {dangerModal === "account" &&
-                "현재 세션에서 로그아웃됩니다. 계정과 데이터를 완전히 삭제하려면 설정 맨 아래의 '계정 삭제'를 이용해주세요."}
             </p>
             <div className="flex gap-2">
               <button

@@ -20,12 +20,16 @@ export function normalizeEmail(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
 }
 
-/** 새 비밀번호 검증. 문제가 없으면 null, 있으면 오류 문구. */
-export function validateNewPassword(password: unknown): string | null {
-  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) return SIGNUP_INPUT_ERROR;
-  if (new TextEncoder().encode(password).length > MAX_PASSWORD_BYTES) return PASSWORD_TOO_LONG_ERROR;
+export type PasswordProblem = "too_short" | "too_long";
+
+/** 새 비밀번호 검증(가입·변경 공통). 문제가 없으면 null. */
+export function validateNewPassword(password: unknown): PasswordProblem | null {
+  if (typeof password !== "string" || password.length < MIN_PASSWORD_LENGTH) return "too_short";
+  if (new TextEncoder().encode(password).length > MAX_PASSWORD_BYTES) return "too_long";
   return null;
 }
+
+export const PASSWORD_TOO_LONG_MESSAGE = PASSWORD_TOO_LONG_ERROR;
 
 export function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, BCRYPT_COST);
@@ -40,8 +44,10 @@ export type SignupResult = { ok: true; user: { id: string; email: string } } | A
 export async function signupWithPassword(request: Request, input: { email?: unknown; password?: unknown }): Promise<SignupResult> {
   const email = normalizeEmail(input.email);
   if (!email) return { ok: false, status: 400, error: SIGNUP_INPUT_ERROR };
-  const passwordError = validateNewPassword(input.password);
-  if (passwordError) return { ok: false, status: 400, error: passwordError };
+  const passwordProblem = validateNewPassword(input.password);
+  if (passwordProblem) {
+    return { ok: false, status: 400, error: passwordProblem === "too_long" ? PASSWORD_TOO_LONG_ERROR : SIGNUP_INPUT_ERROR };
+  }
   const password = input.password as string;
 
   // 무차별 대입/스팸 가입 방어 — IP 기준, 웹·모바일이 같은 버킷을 쓴다

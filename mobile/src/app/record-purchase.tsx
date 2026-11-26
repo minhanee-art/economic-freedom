@@ -1,8 +1,8 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
 import { ApiError } from "@/api/client";
-import { createPurchase, listPurchases } from "@/api/records";
+import { createPurchase, deletePurchase, listPurchases, PurchaseNotFoundError } from "@/api/records";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
@@ -13,7 +13,7 @@ import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { PurchaseRecord } from "@/types";
 import { formatKRW } from "@/utils/format";
-import { parsePositiveInt, todayString, validateDate } from "@/utils/records";
+import { INT_MAX, parsePositiveInt, todayString, validateDate } from "@/utils/records";
 
 export default function RecordPurchaseScreen() {
   const { summary, session, accounts, selectedAccountId, isLoading, error: loadError, refresh } = usePortfolioSummary();
@@ -22,6 +22,7 @@ export default function RecordPurchaseScreen() {
   const [price, setPrice] = useState("");
   const [date, setDate] = useState(todayString());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
   const [loaded, setLoaded] = useState<{ accountId: string; list: PurchaseRecord[] } | null>(null);
@@ -74,6 +75,7 @@ export default function RecordPurchaseScreen() {
     if (qty === null) return setError("수량은 1 이상의 정수로 입력해주세요.");
     if (unitPrice === null) return setError("단가는 1원 이상의 정수로 입력해주세요.");
     if (dateError) return setError(dateError);
+    if (qty * unitPrice > INT_MAX) return setError("기록 금액(수량 × 단가)이 너무 큽니다.");
 
     submitLock.current = true;
     setIsSubmitting(true);
@@ -102,8 +104,47 @@ export default function RecordPurchaseScreen() {
     }
   };
 
+  const performDelete = async (record: PurchaseRecord) => {
+    if (submitLock.current || !session || !selectedAccountId) return;
+    submitLock.current = true;
+    setDeletingId(record.id);
+    setError("");
+    setDone("");
+    try {
+      await deletePurchase(session.token, selectedAccountId, record.id);
+      setDone(`${record.date} 매수 기록을 삭제했습니다.`);
+      notifyPortfolioChanged();
+      await loadRecords();
+    } catch (err) {
+      if (err instanceof PurchaseNotFoundError) {
+        // 기록이 이미 없다(다른 기기·웹에서 삭제 등). 계좌 선택은 건드리지 않고 목록만 새로고침한다.
+        setError("이미 삭제되었거나 없는 기록입니다. 목록을 새로 불러왔습니다.");
+        notifyPortfolioChanged();
+        await loadRecords();
+        return;
+      }
+      if (await handleAuthErrors(err)) return;
+      // 409는 서버 문구(보유 종목 편집에서 수정하라는 안내 포함)를 그대로 보여준다.
+      setError(err instanceof Error ? err.message : "매수 기록을 삭제하지 못했습니다.");
+    } finally {
+      submitLock.current = false;
+      setDeletingId(null);
+    }
+  };
+
+  const confirmDelete = (record: PurchaseRecord) => {
+    Alert.alert(
+      "기록 삭제",
+      `${record.date} ${formatKRW(record.totalSpent)} 매수 기록을 삭제할까요? 보유 수량과 원가가 이 기록 입력 전 상태로 되돌아갑니다.`,
+      [
+        { text: "취소", style: "cancel" },
+        { text: "삭제", style: "destructive", onPress: () => void performDelete(record) },
+      ],
+    );
+  };
+
   const total = (parsePositiveInt(quantity) ?? 0) * (parsePositiveInt(price) ?? 0);
-  const disabled = isSubmitting || !holding || !quantity || !price || !date;
+  const disabled = isSubmitting || deletingId !== null || !holding || !quantity || !price || !date;
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
@@ -148,18 +189,27 @@ export default function RecordPurchaseScreen() {
         {recordsError ? <Text style={styles.error}>{recordsError}</Text> : null}
         {records.length === 0 && !recordsError ? <Text style={styles.helper}>아직 기록이 없습니다.</Text> : null}
         {records.map((record) => (
-          <View key={record.id} style={{ gap: 2 }}>
-            <Text style={styles.label}>
-              {record.date} · {formatKRW(record.totalSpent)}
-            </Text>
-            {record.items.map((item, index) => (
-              <Text key={`${record.id}-${index}`} style={styles.helper}>
-                {item.name} {item.quantity.toLocaleString("ko-KR")}주 × {formatKRW(item.price)}
+          <View key={record.id} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <View style={{ flex: 1, gap: 2 }}>
+              <Text style={styles.label}>
+                {record.date} · {formatKRW(record.totalSpent)}
               </Text>
-            ))}
+              {record.items.map((item, index) => (
+                <Text key={`${record.id}-${index}`} style={styles.helper}>
+                  {item.name} {item.quantity.toLocaleString("ko-KR")}주 × {formatKRW(item.price)}
+                </Text>
+              ))}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              disabled={deletingId !== null || isSubmitting}
+              onPress={() => confirmDelete(record)}
+              hitSlop={8}
+            >
+              <Text style={[styles.linkText, { color: colors.negative }]}>{deletingId === record.id ? "삭제 중" : "삭제"}</Text>
+            </Pressable>
           </View>
         ))}
-        <Text style={styles.helper}>매수 기록 삭제는 아직 지원하지 않습니다. 잘못 입력했다면 웹에서 확인해주세요.</Text>
       </Card>
     </AppShell>
   );

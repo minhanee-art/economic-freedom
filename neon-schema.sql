@@ -190,3 +190,60 @@ CREATE OR REPLACE TRIGGER trg_cost_basis_updated_at
 CREATE OR REPLACE TRIGGER trg_child_holdings_updated_at
   BEFORE UPDATE ON child_holdings
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ── 연금 설계 (가족 단위) ──────────────────────────────────────────────
+-- 코드(src/lib/pension-data.ts ensurePensionSchema, src/lib/portfolio-accounts.ts)에서도
+-- 같은 정의를 CREATE/ALTER IF NOT EXISTS로 보장한다. 여기서는 새 테이블의 FK 대상인
+-- portfolio_accounts도 함께 정의한다(기존에는 코드에서만 생성).
+
+-- 12. portfolio_accounts (가족/명의별 계좌) + 세제 유형
+CREATE TABLE IF NOT EXISTS portfolio_accounts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  owner_type TEXT NOT NULL DEFAULT 'self',
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, name)
+);
+ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
+-- 'pension_savings'(연금저축) | 'irp' | 'dc' | 'isa' | 'general'(일반, 기존 계좌 기본값) | 'child'(자녀)
+ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS account_type TEXT NOT NULL DEFAULT 'general';
+
+-- 13. pension_contributions (계좌별 연간 납입액 — 세액공제 진행률 계산용)
+CREATE TABLE IF NOT EXISTS pension_contributions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id UUID NOT NULL REFERENCES portfolio_accounts(id) ON DELETE CASCADE,
+  year INTEGER NOT NULL,
+  amount BIGINT NOT NULL DEFAULT 0 CHECK (amount >= 0),
+  memo TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (account_id, year)
+);
+CREATE INDEX IF NOT EXISTS idx_pension_contributions_user_year ON pension_contributions(user_id, year);
+
+-- 14. pension_income_sources (국민연금·퇴직연금·연금보험 수동 입력, 본인/배우자 구분)
+CREATE TABLE IF NOT EXISTS pension_income_sources (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  member TEXT NOT NULL DEFAULT 'self' CHECK (member IN ('self', 'spouse')),
+  source_type TEXT NOT NULL CHECK (source_type IN ('national_pension', 'retirement_pension', 'pension_insurance')),
+  label TEXT,
+  monthly_amount BIGINT NOT NULL DEFAULT 0 CHECK (monthly_amount >= 0),
+  start_age INTEGER NOT NULL,
+  end_age INTEGER, -- NULL = 종신
+  memo TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_pension_income_sources_user ON pension_income_sources(user_id);
+
+-- profiles: 은퇴 목표·총급여 구간
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS retirement_target_monthly BIGINT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS retirement_age INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_year INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_birth_year INTEGER;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS expected_return_pct NUMERIC(5,2);
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS salary_bracket TEXT; -- 'low'(총급여 5,500만원 이하) | 'high'

@@ -52,7 +52,7 @@ export function createSessionState(userId: string | null = "user-1") {
   };
 }
 
-export type FakeAccount = { id: string; name: string; ownerType: string };
+export type FakeAccount = { id: string; name: string; ownerType: string; accountType?: string };
 
 export function createAccountsState(
   accounts: FakeAccount[] = [{ id: "acc-1", name: "기본 계좌", ownerType: "self" }],
@@ -72,10 +72,25 @@ export function createAccountsState(
       ACCOUNT_MAX_AGE: 60,
       getActivePortfolioAccountId: async () => state.activeAccountId,
       getPortfolioAccounts: async () => state.accounts,
-      createPortfolioAccount: async (_userId: string, name: string, ownerType: string) => {
+      createPortfolioAccount: async (_userId: string, name: string, ownerType: string, accountType?: string) => {
         if (state.failCreate) throw state.failCreate;
-        const account = { id: `acc-${state.created.length + 2}`, name, ownerType };
+        const account = { id: `acc-${state.created.length + 2}`, name, ownerType, accountType };
         state.created.push(account);
+        return account;
+      },
+      updatePortfolioAccount: async (
+        _userId: string,
+        accountId: string,
+        changes: { name?: string; ownerType?: string; accountType?: string }
+      ) => {
+        const account = state.accounts.find((item) => item.id === accountId);
+        if (!account) return null;
+        if (changes.name !== undefined && !changes.name.trim()) throw new Error("계좌 이름이 필요합니다.");
+        Object.assign(account, {
+          ...(changes.name !== undefined ? { name: changes.name.trim() } : {}),
+          ...(changes.ownerType ? { ownerType: changes.ownerType } : {}),
+          ...(changes.accountType ? { accountType: changes.accountType } : {}),
+        });
         return account;
       },
     },

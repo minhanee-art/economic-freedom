@@ -1,4 +1,4 @@
-# 경제적 자유 모바일 앱 / Play Store 출시 계획서
+# 가족연금계획 모바일 앱 / Play Store 출시 계획서
 
 ## 1. 목표
 
@@ -8,7 +8,7 @@
 
 ## 2. 포지셔닝
 
-- 앱 이름 후보: 경제적 자유, 연금 포트폴리오, 은퇴 배당노트
+- 앱 이름: 가족연금계획 (확정)
 - 핵심 사용자: 연금저축/IRP/ISA/ETF/배당주를 직접 관리하는 개인 투자자
 - 핵심 차별점:
   - 일반 주식 커뮤니티가 아니라 **은퇴 목표와 월 현금흐름 중심**
@@ -170,7 +170,7 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 완료 기준:
 
 - 이 문서 승인
-- 앱 패키지명 결정 예: `kr.kimvibe.economicfreedom`
+- 앱 패키지명 결정: `kr.kimvibe.economicfreedom` (확정, 변경 불가)
 
 ### Phase 1. 모바일 앱 골격
 
@@ -286,8 +286,8 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 
 ## 11. 우선 결정할 것
 
-1. 앱 이름
-2. Android package name
+1. ~~앱 이름~~ — 가족연금계획으로 확정
+2. ~~Android package name~~ — `kr.kimvibe.economicfreedom`으로 확정
 3. 1차 버전 로그인 필수 여부
 4. 데이터 저장 방식: 서버 동기화 우선 vs 로컬 우선
 5. Play Store 개발자 계정 준비 상태
@@ -296,7 +296,7 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 
 현재 상황에서는 아래로 진행하는 것이 가장 안전하다.
 
-- 앱 이름: `경제적 자유`
+- 앱 이름: `가족연금계획`
 - package name: `kr.kimvibe.economicfreedom`
 - 기술: Expo React Native + EAS Build
 - 데이터: 기존 서버 DB/API 연동
@@ -306,11 +306,11 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 
 ## 13. 다음 작업 순서
 
-1. 이 문서 기준으로 앱 이름/package name 확정
-2. `mobile/` Expo 프로젝트 생성
-3. 기존 API 인증 구조 분석 후 모바일 세션 방식 구현
-4. 모바일 홈/로그인/보유자산 화면부터 구현
-5. 개인정보처리방침/계정삭제 페이지 추가
+1. ~~앱 이름/package name 확정~~ (완료)
+2. ~~`mobile/` Expo 프로젝트 생성~~ (완료)
+3. ~~모바일 토큰 로그인 구현~~ (완료: `/api/mobile/auth`, Bearer 세션)
+4. ~~모바일 홈/로그인/보유자산 화면~~ (완료: 홈·자산·배당·설정 탭)
+5. ~~개인정보처리방침/계정삭제 페이지 추가~~ (완료: `/privacy`, `/account-deletion`, 설정의 계정 삭제)
 6. lint/build/export 검증
 7. EAS production AAB 빌드
 8. Play Console 내부 테스트 업로드

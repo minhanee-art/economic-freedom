@@ -3,6 +3,10 @@ import { getRequestSession } from "@/lib/session";
 import { getCostBases, getDividendCalendar, getDividends, getHoldings, getProfile } from "@/lib/queries";
 import { selectRequestAccount } from "@/lib/account-selection";
 import { computeCategoryBalances, computeHoldingsWithPnL } from "@/lib/portfolio";
+import { getRetirementGoal } from "@/lib/pension-data";
+
+/** 은퇴 목표를 아직 저장하지 않은 사용자에게 보여줄 기본 목표 월 현금흐름 (기존 앱 화면 유지용) */
+const DEFAULT_TARGET_MONTHLY_CASHFLOW = 3_000_000;
 
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
@@ -15,12 +19,13 @@ export async function GET(request: Request) {
   if (!selected.ok) return selected.response;
   const { account, accounts } = selected;
 
-  const [holdings, costBases, profile, dividends, dividendCalendar] = await Promise.all([
+  const [holdings, costBases, profile, dividends, dividendCalendar, retirementGoal] = await Promise.all([
     getHoldings(session.userId, account.id),
     getCostBases(session.userId, account.id),
     getProfile(session.userId),
     getDividends(session.userId, account.id),
     getDividendCalendar(session.userId, account.id).catch(() => []),
+    getRetirementGoal(session.userId).catch(() => null),
   ]);
 
   const holdingsWithPnL = computeHoldingsWithPnL(holdings, costBases);
@@ -30,7 +35,8 @@ export async function GET(request: Request) {
   const totalPnL = totalValue - totalCost;
   const totalPnLPct = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
   const expectedAnnualDividend = estimateAnnualDividend(dividends);
-  const targetMonthlyCashflow = 3_000_000;
+  const savedTarget = retirementGoal?.targetMonthly ?? null;
+  const targetMonthlyCashflow = savedTarget ?? DEFAULT_TARGET_MONTHLY_CASHFLOW;
 
   return NextResponse.json({
     account: {
@@ -47,6 +53,8 @@ export async function GET(request: Request) {
     totalDividend,
     monthlyBudget: profile?.monthly_budget ?? 300000,
     targetMonthlyCashflow,
+    /** true면 사용자가 저장한 목표가 없어 기본값을 보낸 것 */
+    targetMonthlyCashflowIsDefault: savedTarget === null,
     expectedAnnualDividend,
     categories: computeCategoryBalances(holdingsWithPnL).map((item) => ({
       name: item.name,

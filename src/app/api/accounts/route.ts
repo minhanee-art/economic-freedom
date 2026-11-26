@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
 import { ACCOUNT_COOKIE, createPortfolioAccount, getPortfolioAccounts } from "@/lib/portfolio-accounts";
 import { selectRequestAccount } from "@/lib/account-selection";
+import { normalizeAccountType } from "@/lib/account-types";
 
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
@@ -26,9 +27,11 @@ export async function POST(request: Request) {
   const ownerType = ["self", "spouse", "child", "other"].includes(body.ownerType)
     ? body.ownerType
     : "other";
+  // 알 수 없는 세제 유형은 '일반'으로 저장
+  const accountType = normalizeAccountType(body.accountType);
 
   try {
-    const account = await createPortfolioAccount(session.userId, name, ownerType);
+    const account = await createPortfolioAccount(session.userId, name, ownerType, accountType);
     const response = NextResponse.json({ account }, { status: 201 });
     response.cookies.set(ACCOUNT_COOKIE, account.id, {
       httpOnly: true,

@@ -760,7 +760,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               {dangerModal === "dividends" &&
                 "모든 배당금 수령 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다."}
               {dangerModal === "account" &&
-                "계정이 로그아웃되며, 완전한 삭제는 Supabase 대시보드에서 진행해주세요."}
+                "현재 세션에서 로그아웃됩니다. 계정과 데이터를 완전히 삭제하려면 설정 맨 아래의 '계정 삭제'를 이용해주세요."}
             </p>
             <div className="flex gap-2">
               <button

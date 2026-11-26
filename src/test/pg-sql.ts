@@ -78,6 +78,7 @@ export async function ensureSnapshotTestSchema(sql: PgSql): Promise<void> {
       owner_type TEXT NOT NULL DEFAULT 'self',
       display_order INTEGER NOT NULL DEFAULT 0,
       telegram_chat_id TEXT,
+      account_type TEXT NOT NULL DEFAULT 'general',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       UNIQUE (user_id, name)
     )

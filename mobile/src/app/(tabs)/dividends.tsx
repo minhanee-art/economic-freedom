@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
@@ -8,12 +9,14 @@ import type { PortfolioSummary } from "@/types";
 import { formatKRW } from "@/utils/format";
 
 export default function DividendsScreen() {
-  const { summary, isLoading, error, refresh } = usePortfolioSummary();
+  const { summary, accounts, selectedAccountId, selectAccount, isLoading, error, refresh } = usePortfolioSummary();
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
       <Text style={styles.title}>배당</Text>
       <Text style={styles.subtitle}>받은 배당과 앞으로 받을 현금흐름을 월 단위로 봅니다.</Text>
+
+      <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
 
       {summary ? <DividendContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
     </AppShell>

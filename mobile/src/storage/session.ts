@@ -1,5 +1,6 @@
 import * as SecureStore from "expo-secure-store";
 import type { AuthSession } from "@/types";
+import { clearSelectedAccountId } from "./account";
 
 const SESSION_KEY = "economic-freedom-session";
 
@@ -20,4 +21,5 @@ export async function loadSession(): Promise<AuthSession | null> {
 
 export async function clearSession(): Promise<void> {
   await SecureStore.deleteItemAsync(SESSION_KEY);
+  await clearSelectedAccountId();
 }

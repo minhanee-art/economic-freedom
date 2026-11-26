@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { MetricCard } from "@/components/MetricCard";
@@ -9,7 +10,7 @@ import type { PortfolioSummary } from "@/types";
 import { formatKRW, formatPercent } from "@/utils/format";
 
 export default function HomeScreen() {
-  const { summary, isLoading, error, refresh } = usePortfolioSummary();
+  const { summary, accounts, selectedAccountId, selectAccount, isLoading, error, refresh } = usePortfolioSummary();
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
@@ -19,6 +20,8 @@ export default function HomeScreen() {
           <Text style={styles.accountName}>{summary?.account?.name ?? "내 포트폴리오"}</Text>
         </View>
       </View>
+
+      <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
 
       {summary ? <HomeContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
     </AppShell>

@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
+import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
@@ -7,12 +8,14 @@ import { colors, radius, spacing } from "@/styles/theme";
 import { formatKRW, formatPercent } from "@/utils/format";
 
 export default function HoldingsScreen() {
-  const { summary, isLoading, error, refresh } = usePortfolioSummary();
+  const { summary, accounts, selectedAccountId, selectAccount, isLoading, error, refresh } = usePortfolioSummary();
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
       <Text style={styles.title}>보유자산</Text>
       <Text style={styles.subtitle}>평가금액, 손익, 비중을 한 화면에서 확인합니다.</Text>
+
+      <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
 
       {summary ? null : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
 

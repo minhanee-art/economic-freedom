@@ -17,6 +17,7 @@ export default function TabLayout() {
       <Tabs.Screen name="index" options={{ title: "홈" }} />
       <Tabs.Screen name="holdings" options={{ title: "자산" }} />
       <Tabs.Screen name="dividends" options={{ title: "배당" }} />
+      <Tabs.Screen name="retirement" options={{ title: "연금" }} />
       <Tabs.Screen name="settings" options={{ title: "설정" }} />
     </Tabs>
   );

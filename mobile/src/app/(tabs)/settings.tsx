@@ -5,6 +5,7 @@ import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
+import { PasswordCard } from "@/components/PasswordCard";
 import { clearSession, loadSession } from "@/storage/session";
 import { colors, radius, spacing } from "@/styles/theme";
 import type { AuthSession } from "@/types";
@@ -48,6 +49,8 @@ export default function SettingsScreen() {
           </Link>
         )}
       </Card>
+
+      {session ? <PasswordCard session={session} onSessionChange={setSession} /> : null}
 
       <Card title="앱 정보">
         <InfoRow label="앱 이름" value="가족연금계획" />

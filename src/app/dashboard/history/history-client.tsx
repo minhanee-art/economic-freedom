@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
 import { ImportClient } from "./import-client";
@@ -22,6 +23,8 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   const [records, setRecords] = useState(initialRecords);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const router = useRouter();
   const hasMore = records.length < totalCount;
 
   useEffect(() => {
@@ -46,6 +49,26 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       alert("기록을 더 불러오지 못했습니다. 다시 시도해주세요.");
     } finally {
       setIsLoadingMore(false);
+    }
+  };
+
+  // 매수 기록 한 건 삭제 — 서버가 보유 수량·원가를 함께 되돌린다
+  const deleteRecord = async (record: RecordWithItems) => {
+    const summary = (record.purchase_items ?? []).map((item) => `${item.name} ${item.quantity}주`).join(", ");
+    if (!confirm(`${record.date} 매수 기록을 삭제할까요?\n${summary}\n\n보유 수량과 원가에서도 이 매수분이 빠집니다.`)) return;
+    setDeletingId(record.id);
+    try {
+      const res = await fetch(`/api/purchases/${record.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "삭제 실패");
+      }
+      setRecords((prev) => prev.filter((r) => r.id !== record.id));
+      router.refresh();
+    } catch (err) {
+      alert(`삭제하지 못했습니다.\n${(err as Error).message}`);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -110,7 +133,12 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       ) : (
         <div className="space-y-3">
           {records.map((record) => (
-            <RecordCard key={record.id} record={record} />
+            <RecordCard
+              key={record.id}
+              record={record}
+              isDeleting={deletingId === record.id}
+              onDelete={() => deleteRecord(record)}
+            />
           ))}
 
           {hasMore && (
@@ -128,7 +156,15 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   );
 }
 
-function RecordCard({ record }: { record: RecordWithItems }) {
+function RecordCard({
+  record,
+  isDeleting,
+  onDelete,
+}: {
+  record: RecordWithItems;
+  isDeleting: boolean;
+  onDelete: () => void;
+}) {
   const items = record.purchase_items ?? [];
 
   return (
@@ -136,9 +172,20 @@ function RecordCard({ record }: { record: RecordWithItems }) {
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 bg-canvas-soft dark:bg-zinc-800/50 border-b border-hairline dark:border-zinc-800">
         <span className="text-sm font-semibold text-ink dark:text-zinc-100 tabular-nums">{record.date}</span>
-        <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
-          {formatFullKRW(record.total_spent)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+            {formatFullKRW(record.total_spent)}
+          </span>
+          <button
+            type="button"
+            onClick={onDelete}
+            disabled={isDeleting}
+            aria-label={`${record.date} 매수 기록 삭제`}
+            className="text-xs font-medium text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50"
+          >
+            {isDeleting ? "삭제 중" : "삭제"}
+          </button>
+        </div>
       </div>
 
       {/* 종목별 상세 */}

@@ -15,14 +15,31 @@ export async function createPgTestDb(connectionString: string): Promise<PgTestDb
   const { Pool } = await import("pg");
   const pool = new Pool({ connectionString, max: 4 });
 
-  const sql = (async (strings: TemplateStringsArray, ...values: unknown[]) => {
+  type Rows = Record<string, unknown>[];
+  type QueryClient = { query: (text: string, values?: unknown[]) => Promise<{ rows: Rows }> };
+  type LazyQuery = PromiseLike<Rows> & {
+    catch: Promise<Rows>["catch"];
+    finally: Promise<Rows>["finally"];
+    runOn: (client: QueryClient) => Promise<Rows>;
+  };
+
+  // Neon의 sql``처럼 await(then) 될 때 실행되는 지연 쿼리 — transaction([...])이 같은 연결에서 순서대로,
+  // BEGIN/COMMIT 안에서 실행할 수 있게 한다 (즉시 실행하면 풀의 다른 연결에서 병렬로 돌아 원자성이 깨진다).
+  const sql = ((strings: TemplateStringsArray, ...values: unknown[]) => {
     const text = strings.reduce(
       (acc, chunk, index) => `${acc}${chunk}${index < values.length ? `$${index + 1}` : ""}`,
       ""
     );
-    const result = await pool.query(text, values);
-    return result.rows;
-  }) as PgSql;
+    let started: Promise<Rows> | null = null;
+    const run = () => (started ??= pool.query(text, values).then((result) => result.rows));
+    const query: LazyQuery = {
+      runOn: (client) => client.query(text, values).then((result) => result.rows),
+      then: (onFulfilled, onRejected) => run().then(onFulfilled, onRejected),
+      catch: (onRejected) => run().catch(onRejected),
+      finally: (onFinally) => run().finally(onFinally),
+    };
+    return query;
+  }) as unknown as PgSql;
 
   sql.transaction = async (queries: unknown[]) => {
     const client = await pool.connect();
@@ -30,7 +47,9 @@ export async function createPgTestDb(connectionString: string): Promise<PgTestDb
       await client.query("BEGIN");
       const results: unknown[] = [];
       for (const query of queries) {
-        if (typeof query === "function") {
+        if (query && typeof (query as LazyQuery).runOn === "function") {
+          results.push(await (query as LazyQuery).runOn(client));
+        } else if (typeof query === "function") {
           results.push(await (query as (tx: unknown) => Promise<unknown>)(sql));
         }
       }

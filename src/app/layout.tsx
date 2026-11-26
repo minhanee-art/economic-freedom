@@ -3,7 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "경제적 자유 - 가족 자산 관리",
+  title: "가족연금계획 - 가족 자산 관리",
   description: "연금 ETF, 배당 현금흐름, 자녀 증여 기록을 한곳에서 관리하세요",
 };
 

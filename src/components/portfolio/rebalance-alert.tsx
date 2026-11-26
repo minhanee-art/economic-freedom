@@ -834,7 +834,7 @@ export function RebalanceAlert({
         <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3">
           {hasAdvice ? (
             <div className="border-2 border-red-200 bg-red-50 p-4 shadow-card dark:border-red-500/30 dark:bg-red-500/10">
-              <p className="text-sm font-black text-red-700 dark:text-red-300">리밸런싱 추천 행동</p>
+              <p className="text-sm font-black text-red-700 dark:text-red-300">목표 비중 기준 조정안</p>
               <p className="mt-2 text-sm leading-6 text-red-700 dark:text-red-200">
                 {topOver && topUnder ? (
                   <>
@@ -849,7 +849,7 @@ export function RebalanceAlert({
                     <b>{topUnder.name}</b>이 설정 {topUnder.target.toFixed(1)}%보다 현재 {topUnder.current.toFixed(1)}%로 <b>{Math.abs(topUnder.diff).toFixed(1)}%p 부족</b>입니다. 다음 매수 계획에서 이 자산군을 우선 매수하세요.
                   </>
                 ) : (
-                  <>종목별 비중 변동이 큽니다. 아래 종목별 조언을 확인하세요.</>
+                  <>종목별 비중 변동이 큽니다. 아래 종목별 조정안을 확인하세요.</>
                 )}
               </p>
               <p className="mt-2 text-xs font-semibold text-red-500 dark:text-red-300">

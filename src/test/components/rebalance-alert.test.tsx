@@ -131,7 +131,7 @@ test("RebalanceAlert: 테마별 설정·현재 비중과 초과/부족을 표시
   assert.ok(screen.getByText("52.0%"));
 });
 
-test("RebalanceAlert: 진단 뱃지 수와 추천 행동 문구를 계산한다", async () => {
+test("RebalanceAlert: 진단 뱃지 수와 조정안 문구를 계산한다", async () => {
   render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} />);
 
   const diagnose = screen.getByRole("button", { name: /진단/ });
@@ -139,7 +139,7 @@ test("RebalanceAlert: 진단 뱃지 수와 추천 행동 문구를 계산한다"
 
   fireEvent.click(diagnose);
 
-  assert.ok(await screen.findByText("리밸런싱 추천 행동"));
+  assert.ok(await screen.findByText("목표 비중 기준 조정안"));
   const summary = screen.getByText(/총 이탈폭/).parentElement?.textContent ?? "";
   assert.match(summary, /주식/);
   assert.match(summary, /채권/);
@@ -158,7 +158,7 @@ test("RebalanceAlert: 차이가 기준 이내면 급하지 않다고 알린다",
   fireEvent.click(screen.getByRole("button", { name: /진단/ }));
 
   assert.ok(await screen.findByText(/지금은 리밸런싱이 급하지 않습니다/));
-  assert.equal(screen.queryByText("리밸런싱 추천 행동"), null);
+  assert.equal(screen.queryByText("목표 비중 기준 조정안"), null);
 });
 
 test("RebalanceAlert: 테마 설정 비중을 저장하고 0~100으로 자른다", async () => {

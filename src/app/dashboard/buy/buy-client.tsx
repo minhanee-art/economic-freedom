@@ -28,7 +28,7 @@ const QUICK_AMOUNTS = [100000, 200000, 300000, 500000, 1000000];
 type SortMode = "recommended" | "quantity-desc" | "quantity-asc";
 
 const SORT_OPTIONS: { value: SortMode; label: string }[] = [
-  { value: "recommended", label: "추천순" },
+  { value: "recommended", label: "계산 기본순" },
   { value: "quantity-desc", label: "수량 많은순" },
   { value: "quantity-asc", label: "수량 적은순" },
 ];
@@ -932,7 +932,7 @@ function BuyPlanCard({
                 onClick={() => onQuantityChange(algorithmQty)}
                 className="text-3xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors tabular-nums"
               >
-                추천 {algorithmQty}주 복원
+                계산 {algorithmQty}주로 복원
               </button>
             )}
           </div>

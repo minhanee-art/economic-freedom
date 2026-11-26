@@ -66,7 +66,7 @@ async function handle(request: NextRequest) {
   if (!openaiKey) throw new Error("OPENAI_API_KEY 환경변수 없음");
 
   const prompt =
-    "너는 한국 배당투자 전문 애널리스트야. 아래 종목별 최신 뉴스 헤드라인을 분석해서 각 종목의 감정 점수(1~10)를 매기고, 상위 5개 오늘의 주목 종목을 추천해줘. 형식: 1. 종목명 - 감정점수/10 - 한줄 이유. 이모지 써서 보기 좋게.\n\n뉴스: " +
+    "너는 한국 배당투자 전문 애널리스트야. 아래 종목별 최신 뉴스 헤드라인을 분석해서 각 종목의 감정 점수(1~10)를 매기고, 상위 5개 오늘의 주목 종목을 정리해줘. 형식: 1. 종목명 - 감정점수/10 - 한줄 이유. 이모지 써서 보기 좋게.\n\n뉴스: " +
     newsText;
 
   const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -93,7 +93,7 @@ async function handle(request: NextRequest) {
     day: "2-digit",
     weekday: "short",
   });
-  const finalMessage = `🧠 AI 감정분석 종목 추천\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n${analysisResult}\n\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.`;
+  const finalMessage = `🧠 AI 감정분석 주목 종목 정리\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n${analysisResult}\n\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.`;
 
   await sendTelegramMessage(finalMessage, { html: false });
   return NextResponse.json({ success: true, stocks: stocks.length });

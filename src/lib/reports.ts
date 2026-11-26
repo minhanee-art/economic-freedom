@@ -114,7 +114,7 @@ function buildMonthlyMessage(d: PortfolioData): string {
   }
 
   if (categoryAlerts.length > 0 || holdingAlerts.length > 0) {
-    lines.push("", `<b>⚠️ 리밸런싱 조언</b>`);
+    lines.push("", `<b>⚠️ 목표 비중 기준 조정안</b>`);
     for (const c of categoryAlerts) {
       lines.push(`• ${esc(getCategoryAdvice(c.name, c.diff))}`);
     }

@@ -264,7 +264,7 @@ test("HoldingCard: API가 실패하면 서버 메시지를 보여준다", async 
   assert.ok(await screen.findByText("보유 수량이 부족합니다."));
 });
 
-test("HoldingCard: 리밸런싱 추천 수량을 계산해 보여준다", async () => {
+test("HoldingCard: 리밸런싱 계산 수량을 계산해 보여준다", async () => {
   render(<HoldingCard holding={makeHolding({ target_pct: 60, actual_pct: 40 })} portfolioTotalValue={250_000} />);
 
   fireEvent.click(screen.getByRole("button", { name: "바로 매수" }));
@@ -272,8 +272,8 @@ test("HoldingCard: 리밸런싱 추천 수량을 계산해 보여준다", async 
   // (0.6 × 250,000 - 100,000) / (10,000 × 0.4) = 12.5 → 13주
   const advice = await screen.findByText(/매수가 필요합니다/);
   assert.match(advice.textContent ?? "", /13주/);
-  assert.ok(screen.getByRole("button", { name: "추천 13주 적용" }));
+  assert.ok(screen.getByRole("button", { name: "계산 13주 적용" }));
 
-  fireEvent.click(screen.getByRole("button", { name: "추천 13주 적용" }));
+  fireEvent.click(screen.getByRole("button", { name: "계산 13주 적용" }));
   assert.equal((screen.getByLabelText("KODEX 200 거래 수량") as HTMLInputElement).value, "13");
 });

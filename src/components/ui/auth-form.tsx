@@ -90,7 +90,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         <div className="text-center space-y-2">
           <Link href="/" className="inline-block">
             <h1 className="text-2xl font-bold text-dark-header dark:text-white">
-              Pension Manager
+              가족연금계획
             </h1>
           </Link>
           <p className="text-sm text-ink-mute dark:text-zinc-400">

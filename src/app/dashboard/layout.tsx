@@ -151,7 +151,7 @@ export default function DashboardLayout({
       <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm shadow-indigo-950/20">
         <div className="relative mx-auto flex min-h-16 max-w-280 items-center gap-3 px-4 py-2 sm:px-6">
           <Link href="/dashboard" prefetch onClick={() => handleRouteIntent("/dashboard")} onMouseEnter={() => prefetchRoute("/dashboard")} className="shrink-0 text-lg font-bold tracking-tight">
-            Pension Manager
+            가족연금계획
           </Link>
 
           <nav
@@ -339,6 +339,12 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+
+      <footer className="border-t border-hairline bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:px-6">
+        <p className="mx-auto max-w-280 text-xs text-ink-mute dark:text-zinc-400">
+          가족연금계획은 사용자가 입력한 기록을 계산해 보여주는 도구이며 투자 자문이나 매매 권유를 하지 않습니다. 세금·수익 계산은 참고용입니다.
+        </p>
+      </footer>
 
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200/80 bg-white/95 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/95 md:hidden">
         <div className="mx-auto grid h-20 max-w-140 grid-cols-5 items-center px-2 pb-[env(safe-area-inset-bottom)]">

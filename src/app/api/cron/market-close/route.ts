@@ -4,6 +4,7 @@ import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getKisToken, getKisPrice } from "@/lib/kis";
 import { getYahooPrice } from "@/lib/yahoo";
+import { MARKET_CLOSE_SYSTEM_PROMPT, asDataBlock, callOpenAIChat, withAiDisclaimer } from "@/lib/ai-text";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -84,29 +85,27 @@ async function handle(request: NextRequest) {
     if (usLines.length) msg += `\n🇺🇸 미국 주식 현황\n━━━━━━━━━━━━━━━━\n${usLines.join("\n")}\n`;
   }
 
-  msg += "\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
-
-  // GPT 배당투자 관점 코멘트
+  // AI 시세 요약 코멘트 (정보 정리용 — 매매 권유·전망 없음)
   const openaiKey = process.env.OPENAI_API_KEY;
+  let hasAiText = false;
   if (openaiKey) {
     try {
-      const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [{ role: "user", content: `너는 배당투자 전문 애널리스트야. 아래 주식 데이터를 배당투자 관점에서 2-3문장으로 코멘트해줘. 데이터:\n${msg}` }],
-          max_tokens: 300,
-        }),
-        signal: AbortSignal.timeout(20000),
+      const comment = await callOpenAIChat({
+        apiKey: openaiKey,
+        system: MARKET_CLOSE_SYSTEM_PROMPT,
+        user: `아래 관심종목 시세를 요약해줘.\n${asDataBlock("market-data", msg)}`,
+        model: "gpt-4o",
+        maxTokens: 300,
+        timeoutMs: 20000,
       });
-      if (gptRes.ok) {
-        const gptData = await gptRes.json() as { choices: { message: { content: string } }[] };
-        const comment = gptData.choices[0]?.message?.content?.trim();
-        if (comment) msg += `\n\n💡 AI 코멘트\n${comment}`;
+      if (comment) {
+        msg += `\n\n💡 AI 시세 요약\n${comment}`;
+        hasAiText = true;
       }
     } catch { /* GPT 실패해도 리포트 발송 */ }
   }
+
+  msg = hasAiText ? withAiDisclaimer(msg) : `${msg}\n\nℹ️ 공개 시세를 정리한 정보이며 투자 권유가 아닙니다.`;
 
   await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true });

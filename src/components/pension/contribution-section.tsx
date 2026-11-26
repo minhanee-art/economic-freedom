@@ -1,0 +1,180 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { ACCOUNT_TYPE_LABELS, isPensionAccountType } from "@/lib/account-types";
+import { computeTaxCreditProgress } from "@/lib/pension-planning";
+import type { PensionRuleSet, SalaryBracket } from "@/lib/pension-rules";
+import { formatFullKRW, formatKRW } from "@/lib/utils";
+import type { PlanningAccount } from "./account-type-section";
+import {
+  ProgressBar,
+  SectionCard,
+  Stat,
+  TaxDisclaimer,
+  inputClass,
+  parseNumberInput,
+  secondaryButtonClass,
+  sendJson,
+} from "./ui";
+
+export type ContributionMap = Record<string, number>;
+
+interface Props {
+  year: number;
+  rules: PensionRuleSet & { exact: boolean };
+  accounts: PlanningAccount[];
+  contributions: ContributionMap;
+  onContributionsChange: (next: ContributionMap) => void;
+  salaryBracket: SalaryBracket | null;
+  onSalaryBracketChange: (next: SalaryBracket) => void;
+}
+
+export function ContributionSection({
+  year,
+  rules,
+  accounts,
+  contributions,
+  onContributionsChange,
+  salaryBracket,
+  onSalaryBracketChange,
+}: Props) {
+  const targetAccounts = accounts.filter((a) => isPensionAccountType(a.account_type) || a.account_type === "isa");
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [error, setError] = useState("");
+
+  const bracket: SalaryBracket = salaryBracket ?? "high";
+  const progress = useMemo(
+    () =>
+      computeTaxCreditProgress(
+        targetAccounts.map((a) => ({ accountType: a.account_type, amount: contributions[a.id] ?? 0 })),
+        bracket,
+        rules
+      ),
+    [targetAccounts, contributions, bracket, rules]
+  );
+
+  const save = async (accountId: string) => {
+    const raw = drafts[accountId];
+    const amount = parseNumberInput(raw ?? "");
+    if (amount === null || !Number.isInteger(amount) || amount < 0) {
+      setError("납입액은 0 이상의 숫자(원)로 입력해주세요.");
+      return;
+    }
+    setSavingId(accountId);
+    setError("");
+    try {
+      await sendJson("/api/pension/contributions", "PUT", { accountId, year, amount });
+      onContributionsChange({ ...contributions, [accountId]: amount });
+      setDrafts((d) => {
+        const next = { ...d };
+        delete next[accountId];
+        return next;
+      });
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const rateLabel = (b: SalaryBracket) =>
+    `${rules.taxCredit.rates[b].label} · 공제율 ${(rules.taxCredit.rates[b].rate * 100).toFixed(1)}%`;
+
+  return (
+    <SectionCard
+      title={`${year}년 연금계좌 세액공제 진행률`}
+      description={`연금저축 ${formatKRW(rules.taxCredit.pensionSavingsLimit)}, 연금저축+IRP·DC 본인 납입 합산 ${formatKRW(
+        rules.taxCredit.combinedLimit
+      )}까지 세액공제 대상입니다.`}
+    >
+      <fieldset className="space-y-1">
+        <legend className="text-xs text-zinc-500 mb-1">총급여 구간</legend>
+        {(["low", "high"] as SalaryBracket[]).map((b) => (
+          <label key={b} className="flex items-center gap-2 text-sm">
+            <input type="radio" name="salary-bracket" checked={bracket === b} onChange={() => onSalaryBracketChange(b)} />
+            {rateLabel(b)}
+          </label>
+        ))}
+        {salaryBracket === null && <p className="text-xs text-zinc-400">구간을 고르지 않으면 낮은 공제율로 계산합니다.</p>}
+      </fieldset>
+
+      {targetAccounts.length === 0 ? (
+        <p className="text-sm text-zinc-400">연금저축·IRP·DC·ISA 유형 계좌가 없습니다. 아래 계좌 세제 유형에서 지정하세요.</p>
+      ) : (
+        <ul className="space-y-2">
+          {targetAccounts.map((account) => {
+            const saved = contributions[account.id] ?? 0;
+            const draft = drafts[account.id];
+            return (
+              <li key={account.id} className="flex flex-wrap items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{account.name}</p>
+                  <p className="text-xs text-zinc-400">
+                    {ACCOUNT_TYPE_LABELS[account.account_type]} · 저장된 {year}년 납입 {formatFullKRW(saved)}
+                    {account.account_type === "dc" && " (본인 추가납입분만 입력)"}
+                  </p>
+                </div>
+                <input
+                  inputMode="numeric"
+                  aria-label={`${account.name} ${year}년 납입액`}
+                  value={draft ?? String(saved)}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [account.id]: e.target.value }))}
+                  className={`${inputClass} sm:w-40`}
+                />
+                <button
+                  onClick={() => save(account.id)}
+                  disabled={draft === undefined || savingId === account.id}
+                  className={secondaryButtonClass}
+                >
+                  {savingId === account.id ? "저장 중" : "저장"}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-xs text-zinc-500">
+          <span>
+            공제 대상 {formatKRW(progress.creditableTotal)} / {formatKRW(rules.taxCredit.combinedLimit)}
+          </span>
+          <span>{progress.progressPct.toFixed(0)}%</span>
+        </div>
+        <ProgressBar pct={progress.progressPct} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Stat label="예상 세액공제액" value={formatFullKRW(progress.estimatedCredit)} hint={`한도 채우면 ${formatKRW(progress.maxCredit)}`} />
+        <Stat label="남은 공제 한도" value={formatKRW(progress.remainingCreditRoom)} hint={`연금저축으로는 ${formatKRW(progress.remainingPensionSavingsRoom)}까지`} />
+        <Stat label="연금저축 납입" value={formatKRW(progress.pensionSavingsPaid)} hint={`공제 대상 ${formatKRW(progress.creditablePensionSavings)}`} />
+        <Stat label="IRP·DC 납입" value={formatKRW(progress.retirementPaid)} hint={`ISA ${formatKRW(progress.isaPaid)}`} />
+      </div>
+
+      {progress.nonCreditablePaid > 0 && (
+        <p className="text-xs text-zinc-500">
+          공제 한도를 넘은 {formatKRW(progress.nonCreditablePaid)}은 올해 세액공제 대상이 아닙니다.
+        </p>
+      )}
+      {progress.overAnnualContributionLimit && (
+        <p className="text-xs text-red-500">
+          연금계좌 납입 합계가 연 납입 한도 {formatKRW(rules.annualContributionLimit)}를 넘었습니다. 금융회사 납입 내역을 확인하세요.
+        </p>
+      )}
+      {progress.overIsaAnnualLimit && (
+        <p className="text-xs text-red-500">ISA 납입이 연 {formatKRW(rules.isa.annualLimit)}를 넘었습니다. 이월 한도를 포함한 실제 한도는 금융회사에서 확인하세요.</p>
+      )}
+
+      <TaxDisclaimer
+        extra={
+          <>
+            예상 세액공제액은 결정세액보다 클 수 없고, 다른 공제·감면에 따라 실제 환급액은 달라집니다. 공제율은 지방소득세를 포함한 값입니다.
+            {!rules.exact && ` ${year}년 수치가 등록되지 않아 ${rules.year}년 기준으로 계산했습니다.`}
+          </>
+        }
+      />
+    </SectionCard>
+  );
+}

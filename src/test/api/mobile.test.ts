@@ -79,6 +79,12 @@ mock.module("@/lib/portfolio-accounts", {
     getActivePortfolioAccountId: async () => accounts[0]?.id ?? null,
   },
 });
+const retirement = { goal: null as { targetMonthly: number | null } | null };
+mock.module("@/lib/pension-data", {
+  namedExports: {
+    getRetirementGoal: async () => retirement.goal,
+  },
+});
 mock.module("@/lib/queries", {
   namedExports: {
     getHoldings: async (userId: string, accountId: string) => {
@@ -128,6 +134,7 @@ beforeEach(() => {
   rateLimit.allow = true;
   rateLimit.keys.length = 0;
   queriesCalls.length = 0;
+  retirement.goal = null;
 });
 
 // ── mobile 로그인 ────────────────────────────
@@ -261,4 +268,26 @@ test("summary: accountId 쿼리로 다른 계좌를 지정한다", async () => {
   } finally {
     accounts.pop();
   }
+});
+
+test("summary: 저장한 은퇴 목표 월 생활비를 targetMonthlyCashflow로 보낸다", async () => {
+  const token = await signToken("user-1");
+  const request = () =>
+    new Request("https://pension.test/api/mobile/portfolio-summary", {
+      headers: { authorization: `Bearer ${token}` },
+    });
+
+  retirement.goal = { targetMonthly: 4_200_000 };
+  const saved = await readJson<{ targetMonthlyCashflow: number; targetMonthlyCashflowIsDefault: boolean }>(
+    await summary.GET(request())
+  );
+  assert.equal(saved.targetMonthlyCashflow, 4_200_000);
+  assert.equal(saved.targetMonthlyCashflowIsDefault, false);
+
+  retirement.goal = { targetMonthly: null };
+  const unset = await readJson<{ targetMonthlyCashflow: number; targetMonthlyCashflowIsDefault: boolean }>(
+    await summary.GET(request())
+  );
+  assert.equal(unset.targetMonthlyCashflow, 3_000_000, "미설정이면 기존 기본값");
+  assert.equal(unset.targetMonthlyCashflowIsDefault, true);
 });

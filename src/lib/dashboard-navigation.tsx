@@ -68,6 +68,19 @@ export const dashboardNavItems: DashboardNavItem[] = [
     ),
   },
   {
+    href: "/dashboard/retirement",
+    label: "연금 설계",
+    shortLabel: "연금",
+    description: "세액공제 진행률과 은퇴 현금흐름",
+    bottom: false,
+    icon: (
+      <svg className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 20h16M6 20v-6m4 6V10m4 10v-8m4 8V6" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 9.5 10 6l4 2.5L19 4" />
+      </svg>
+    ),
+  },
+  {
     href: "/dashboard/settings",
     label: "설정",
     shortLabel: "설정",
@@ -160,9 +173,9 @@ export const dashboardNavGroups: DashboardNavGroup[] = [
   },
   {
     label: "가족·설정",
-    description: "자녀 계좌와 환경 설정",
+    description: "연금 설계, 자녀 계좌와 환경 설정",
     items: dashboardNavItems.filter((item) =>
-      ["/dashboard/children", "/dashboard/settings"].includes(item.href)
+      ["/dashboard/retirement", "/dashboard/children", "/dashboard/settings"].includes(item.href)
     ),
   },
 ];

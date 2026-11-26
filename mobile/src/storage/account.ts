@@ -37,3 +37,8 @@ export function subscribeAccountSelection(listener: () => void): () => void {
 export function notifyAccountSelection(): void {
   listeners.forEach((listener) => listener());
 }
+
+/** 기록을 저장·삭제한 뒤 호출한다. 이 훅을 쓰는 모든 탭이 요약을 다시 불러온다. */
+export function notifyPortfolioChanged(): void {
+  notifyAccountSelection();
+}

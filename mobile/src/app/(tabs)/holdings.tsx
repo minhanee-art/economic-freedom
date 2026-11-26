@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
@@ -16,6 +17,10 @@ export default function HoldingsScreen() {
       <Text style={styles.subtitle}>평가금액, 손익, 비중을 한 화면에서 확인합니다.</Text>
 
       <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
+
+      <Pressable accessibilityRole="button" onPress={() => router.push("/record-purchase")} style={styles.recordButton}>
+        <Text style={styles.recordButtonText}>매수 기록 추가</Text>
+      </Pressable>
 
       {summary ? null : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
 
@@ -54,6 +59,18 @@ export default function HoldingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  recordButton: {
+    marginBottom: spacing.lg,
+    borderRadius: radius.pill,
+    backgroundColor: colors.ink,
+    padding: spacing.md,
+  },
+  recordButtonText: {
+    color: colors.surface,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "900",
+  },
   title: {
     color: colors.ink,
     fontSize: 28,

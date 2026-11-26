@@ -1,6 +1,6 @@
-import type { ContributionRecord, IncomeSource, RetirementGoal, RetirementPlan } from "@/types";
+import type { ContributionRecord, IncomeSource, PensionSummary, RetirementGoal, RetirementPlan } from "@/types";
 import { getAccounts } from "./accounts";
-import { apiGet } from "./client";
+import { ApiError, apiGet } from "./client";
 
 type ContributionRow = { account_id: string; year: number; amount: number; memo: string | null };
 type IncomeSourceRow = {
@@ -62,4 +62,18 @@ export async function getRetirementPlan(token: string): Promise<RetirementPlan> 
       })
     ),
   };
+}
+
+/**
+ * 연금 설계 요약(서버 계산값). 사용자 전체(가족 계좌 합산) 기준이라 계좌 지정 헤더를 보내지 않는다.
+ * 서버가 아직 이 API를 배포하지 않아 404가 오면 null 을 돌려준다 — '계좌 없음' 404와 달리
+ * 이 요청은 계좌 id 를 보내지 않으므로 계좌 선택은 건드리지 않고 기존 화면만 보이게 한다.
+ */
+export async function getPensionSummary(token: string): Promise<PensionSummary | null> {
+  try {
+    return await apiGet<PensionSummary>("/api/pension/summary", token);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return null;
+    throw err;
+  }
 }

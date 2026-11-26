@@ -1,7 +1,7 @@
 // 은퇴 목표 API (profiles에 저장) — 보낸 항목만 바꾼다
 import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
-import { getRetirementGoal, saveRetirementGoal, type RetirementGoalRow } from "@/lib/pension-data";
+import { getRetirementGoal, patchRetirementGoal, type RetirementGoalRow } from "@/lib/pension-data";
 import { parseRetirementGoalBody } from "@/lib/pension-validation";
 
 const EMPTY_GOAL: RetirementGoalRow = {
@@ -25,9 +25,8 @@ export async function PATCH(request: Request) {
   const parsed = parseRetirementGoalBody(await request.json().catch(() => null));
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400 });
 
-  const current = (await getRetirementGoal(session.userId)) ?? EMPTY_GOAL;
-  const next: RetirementGoalRow = { ...current, ...parsed.value };
-  const saved = await saveRetirementGoal(session.userId, next);
+  // 보낸 항목만 한 UPDATE로 바꾼다 — 읽고 병합해 전체를 쓰면 동시에 다른 항목을 고친 요청을 옛 값으로 되돌린다
+  const saved = await patchRetirementGoal(session.userId, parsed.value);
   if (!saved) return NextResponse.json({ error: "프로필을 찾을 수 없습니다." }, { status: 404 });
-  return NextResponse.json({ goal: next });
+  return NextResponse.json({ goal: saved });
 }

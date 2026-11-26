@@ -50,11 +50,11 @@ mock.module("@/lib/pension-data", {
       return true;
     },
     getRetirementGoal: async () => store.goal,
-    saveRetirementGoal: async (_u: string, goal: Goal) => {
-      if (!store.goal) return false;
-      store.goal = goal;
-      store.saved.push(goal);
-      return true;
+    patchRetirementGoal: async (_u: string, patch: Goal) => {
+      if (!store.goal) return null;
+      store.goal = { ...store.goal, ...patch };
+      store.saved.push(patch);
+      return store.goal;
     },
   },
 });
@@ -170,6 +170,16 @@ test("은퇴 목표: 보낸 항목만 바꾸고 나머지는 유지한다", asyn
   assert.equal(body.goal.salaryBracket, "low");
   assert.equal(body.goal.targetMonthly, 3_000_000);
   assert.equal(body.goal.retirementAge, 60);
+});
+
+test("은퇴 목표: 저장 함수에는 보낸 키만 넘긴다 — null은 지우기, 키 없음은 유지 (읽고 병합해 전체를 쓰지 않는다)", async () => {
+  const response = await goal.PATCH(jsonRequest("PATCH", { retirementAge: 65, expectedReturnPct: null }));
+  assert.equal(response.status, 200);
+  assert.deepEqual(store.saved, [{ retirementAge: 65, expectedReturnPct: null }]);
+  const body = await readJson<{ goal: Goal }>(response);
+  assert.equal(body.goal.retirementAge, 65);
+  assert.equal(body.goal.expectedReturnPct, null);
+  assert.equal(body.goal.targetMonthly, 3_000_000, "보내지 않은 항목은 그대로");
 });
 
 test("은퇴 목표: 프로필이 없으면 GET은 빈 목표, PATCH는 404", async () => {

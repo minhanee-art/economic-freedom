@@ -1,6 +1,6 @@
 // 계좌별 기간 수익률 조회/텔레그램 전송 API
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 import {
   formatReturnReport,
@@ -11,8 +11,8 @@ import { sendTelegramMessage } from "@/lib/telegram";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(request: Request) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   try {
@@ -25,7 +25,7 @@ export async function GET() {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));
@@ -42,7 +42,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

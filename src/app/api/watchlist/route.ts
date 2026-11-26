@@ -1,11 +1,11 @@
 // 감정분석 대상 종목 watchlist CRUD API
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(request: Request) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const rows = await sql`
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const { name, code, market } = await request.json() as { name: string; code?: string; market: string };

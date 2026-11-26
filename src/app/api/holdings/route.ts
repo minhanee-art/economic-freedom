@@ -2,14 +2,14 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getRequestSession } from "@/lib/session";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 import { inferHoldingClassification, normalizePortfolioCategory } from "@/lib/holding-classification";
 
 const INT_MAX = 2_147_483_647;
 
-export async function GET() {
-  const session = await getSession();
+export async function GET(request: Request) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const rows = await sql`SELECT * FROM holdings WHERE user_id = ${session.userId} AND account_id = ${accountId} ORDER BY target_pct DESC`;
@@ -17,7 +17,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const body = await request.json().catch(() => ({}));
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const { id, current_price, target_pct, code, name, shares, avg_price, category, sub_category } = await request.json().catch(() => ({}));
@@ -185,7 +185,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await getSession();
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const accountId = await getActivePortfolioAccountId(session.userId);
   const { id } = await request.json();

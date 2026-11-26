@@ -42,7 +42,7 @@ beforeEach(() => {
 test("children GET: 본인 자녀로 범위를 제한한다", async () => {
   db.setHandler(() => [{ id: "c1", name: "첫째", birth_date: "2019-03-01", created_at: "" }]);
 
-  const rows = await readJson<{ id: string }[]>(await children.GET());
+  const rows = await readJson<{ id: string }[]>(await children.GET(jsonRequest("GET")));
   assert.equal(rows.length, 1);
   assert.equal(db.find("WHERE user_id = ?")[0].values[0], "user-1");
 });

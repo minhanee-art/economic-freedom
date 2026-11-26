@@ -38,7 +38,7 @@ beforeEach(() => {
 });
 
 test("GET: 계좌 목록과 활성 계좌를 돌려준다", async () => {
-  const response = await route.GET();
+  const response = await route.GET(jsonRequest("GET"));
   assert.equal(response.status, 200);
   assert.deepEqual(await readJson(response), {
     accounts: accounts.state.accounts,

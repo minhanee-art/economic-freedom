@@ -1,12 +1,8 @@
 // 가족/명의별 포트폴리오 계좌 API
 import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
-import {
-  ACCOUNT_COOKIE,
-  createPortfolioAccount,
-  getActivePortfolioAccountId,
-  getPortfolioAccounts,
-} from "@/lib/portfolio-accounts";
+import { ACCOUNT_COOKIE, createPortfolioAccount, getPortfolioAccounts } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 const COOKIE_MAX_AGE = 365 * 24 * 60 * 60;
 
@@ -14,12 +10,11 @@ export async function GET(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
-  const [accounts, activeAccountId] = await Promise.all([
-    getPortfolioAccounts(session.userId),
-    getActivePortfolioAccountId(session.userId),
-  ]);
+  // 활성 계좌 — 헤더/쿼리로 지정하면(소유 계좌만) 그것, 아니면 쿠키 → 첫 계좌
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
 
-  return NextResponse.json({ accounts, activeAccountId });
+  return NextResponse.json({ accounts: selected.accounts, activeAccountId: selected.accountId });
 }
 
 export async function POST(request: Request) {

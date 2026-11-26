@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 const INT_MAX = 2_147_483_647;
 
@@ -12,7 +12,9 @@ type TradeAction = "buy" | "sell";
 export async function POST(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
 
   const body = await request.json().catch(() => null) as {
     holdingId?: string;

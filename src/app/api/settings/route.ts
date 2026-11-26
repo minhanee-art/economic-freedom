@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
 import { DEFAULT_HOLDINGS } from "@/lib/constants";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 export async function PATCH(request: Request) {
   const session = await getRequestSession(request);
@@ -34,7 +34,9 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   await sql`DELETE FROM cost_basis WHERE user_id = ${session.userId} AND account_id = ${accountId}`;
   await sql`DELETE FROM holdings WHERE user_id = ${session.userId} AND account_id = ${accountId}`;
   for (const h of DEFAULT_HOLDINGS) {

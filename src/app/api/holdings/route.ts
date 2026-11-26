@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 import { inferHoldingClassification, normalizePortfolioCategory } from "@/lib/holding-classification";
 
 const INT_MAX = 2_147_483_647;
@@ -11,7 +11,9 @@ const INT_MAX = 2_147_483_647;
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const rows = await sql`SELECT * FROM holdings WHERE user_id = ${session.userId} AND account_id = ${accountId} ORDER BY target_pct DESC`;
   return NextResponse.json(rows);
 }
@@ -19,7 +21,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? "").trim();
   const name = String(body.name ?? "").trim();
@@ -103,7 +107,9 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const { id, current_price, target_pct, code, name, shares, avg_price, category, sub_category } = await request.json().catch(() => ({}));
   if (!id) return NextResponse.json({ error: "id 필요" }, { status: 400 });
   if (current_price !== undefined) {
@@ -187,7 +193,9 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const { id } = await request.json();
   await sql`DELETE FROM holdings WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
   return NextResponse.json({ ok: true });

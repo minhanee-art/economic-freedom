@@ -1,7 +1,7 @@
 // 계좌별 기간 수익률 조회/텔레그램 전송 API
 import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 import {
   formatReturnReport,
   getPortfolioReturnSummary,
@@ -16,7 +16,9 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
 
   try {
-    const accountId = await getActivePortfolioAccountId(session.userId);
+    const selected = await selectRequestAccount(request, session.userId);
+    if (!selected.ok) return selected.response;
+    const accountId = selected.accountId;
     const summary = await getPortfolioReturnSummary(session.userId, accountId);
     return NextResponse.json({ summary });
   } catch (err) {
@@ -32,7 +34,9 @@ export async function PATCH(request: Request) {
   const chatId = typeof body.telegramChatId === "string" ? body.telegramChatId : "";
 
   try {
-    const accountId = await getActivePortfolioAccountId(session.userId);
+    const selected = await selectRequestAccount(request, session.userId);
+    if (!selected.ok) return selected.response;
+    const accountId = selected.accountId;
     await updatePortfolioTelegramChatId(session.userId, accountId, chatId || null);
     const summary = await getPortfolioReturnSummary(session.userId, accountId);
     return NextResponse.json({ ok: true, summary });
@@ -49,7 +53,9 @@ export async function POST(request: Request) {
   const chatId = typeof body.telegramChatId === "string" ? body.telegramChatId.trim() : "";
 
   try {
-    const accountId = await getActivePortfolioAccountId(session.userId);
+    const selected = await selectRequestAccount(request, session.userId);
+    if (!selected.ok) return selected.response;
+    const accountId = selected.accountId;
     if (chatId) {
       await updatePortfolioTelegramChatId(session.userId, accountId, chatId);
     }

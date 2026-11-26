@@ -25,6 +25,7 @@ export default async function DashboardPage() {
       initialCostBases={costBases}
       monthlyBudget={profile?.monthly_budget ?? 300000}
       totalDividend={totalDividend}
+      dividendRecords={dividends.map((d) => ({ date: d.date, amount: Number(d.amount) }))}
       lastPriceUpdate={profile?.last_price_update ?? null}
       dividendCalendar={dividendCalendar}
     />

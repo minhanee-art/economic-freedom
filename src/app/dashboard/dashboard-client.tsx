@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import type { Holding, CostBasis } from "@/types";
 import { computeHoldingsWithPnL } from "@/lib/portfolio";
 import { SummaryHeader } from "@/components/portfolio/summary-header";
+import { HoldingsHeatmap } from "@/components/portfolio/holdings-heatmap";
+import { computeDailyChange, computeDividendYields, type DividendRecordLite } from "@/lib/dashboard-insights";
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
 import { CategoryPieChart } from "@/components/charts/category-pie-chart";
 import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
@@ -20,6 +22,7 @@ interface Props {
   initialCostBases: CostBasis[];
   monthlyBudget: number;
   totalDividend: number;
+  dividendRecords: DividendRecordLite[];
   lastPriceUpdate: string | null;
   dividendCalendar: DividendCalendarRow[];
 }
@@ -88,6 +91,7 @@ export function DashboardClient({
   initialCostBases,
   monthlyBudget,
   totalDividend,
+  dividendRecords,
   lastPriceUpdate,
   dividendCalendar,
 }: Props) {
@@ -466,6 +470,12 @@ export function DashboardClient({
   const totalPnL = totalValue - totalCost;
   const totalPnLPct = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 
+  const dividendYields = computeDividendYields(dividendRecords, totalCost, totalValue);
+  // undefined = 스냅샷 응답을 아직 못 받음(표시 안 함), null = 전일 기준 없음
+  const dailyChange = returnSummary
+    ? computeDailyChange(returnSummary.periods.day, returnSummary.totalValue)
+    : undefined;
+
   const activeHoldings = holdingsWithPnL.filter(
     (h) => h.shares > 0 || h.target_pct > 0
   );
@@ -631,7 +641,11 @@ export function DashboardClient({
         monthlyBudget={monthlyBudget}
         onRefresh={handleRefresh}
         isRefreshing={isRefreshing}
+        dividendYields={dividendYields}
+        dailyChange={dailyChange}
       />
+
+      <HoldingsHeatmap holdings={holdingsWithPnL} />
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

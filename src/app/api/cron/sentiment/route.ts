@@ -1,7 +1,8 @@
-// 매일 08:30 KST DB watchlist 종목 뉴스 수집 → GPT 감정분석 → 텔레그램 전송 cron
+// 매일 08:30 KST DB watchlist 종목 뉴스 수집 → AI 헤드라인 정리 → 텔레그램 전송 cron
 import { NextResponse, type NextRequest } from "next/server";
 import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { NEWS_DIGEST_SYSTEM_PROMPT, asDataBlock, callOpenAIChat, withAiDisclaimer } from "@/lib/ai-text";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -49,7 +50,7 @@ async function handle(request: NextRequest) {
   }
   const stocks = await sql`SELECT name, market FROM watchlist WHERE user_id = ${userId}`;
   if (!stocks.length) {
-    return NextResponse.json({ error: "감정분석 종목 없음 (설정 > 감정분석 종목에서 추가)" }, { status: 400 });
+    return NextResponse.json({ error: "관심종목 없음 (설정 > 관심종목에서 추가)" }, { status: 400 });
   }
 
   // 2. 종목별 뉴스 수집 (병렬)
@@ -61,29 +62,17 @@ async function handle(request: NextRequest) {
   });
   if (!newsText) throw new Error("수집된 뉴스 없음");
 
-  // 3. GPT 감정분석
+  // 3. AI 헤드라인 정리 (기사 논조 요약 — 점수·순위·매매 권유 없음)
   const openaiKey = process.env.OPENAI_API_KEY;
   if (!openaiKey) throw new Error("OPENAI_API_KEY 환경변수 없음");
 
-  const prompt =
-    "너는 한국 배당투자 전문 애널리스트야. 아래 종목별 최신 뉴스 헤드라인을 분석해서 각 종목의 감정 점수(1~10)를 매기고, 상위 5개 오늘의 주목 종목을 정리해줘. 형식: 1. 종목명 - 감정점수/10 - 한줄 이유. 이모지 써서 보기 좋게.\n\n뉴스: " +
-    newsText;
-
-  const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${openaiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 2048,
-    }),
-  });
-  if (!gptRes.ok) throw new Error(`OpenAI 오류: ${await gptRes.text()}`);
-  const gptData = (await gptRes.json()) as { choices: { message: { content: string } }[] };
-  const analysisResult = gptData.choices[0]?.message?.content ?? "분석 결과 없음";
+  const analysisResult =
+    (await callOpenAIChat({
+      apiKey: openaiKey,
+      system: NEWS_DIGEST_SYSTEM_PROMPT,
+      user: `아래 관심종목별 뉴스 헤드라인을 정리해줘.\n${asDataBlock("news", newsText)}`,
+      maxTokens: 1200,
+    })) || "정리 결과 없음";
 
   // 4. 메시지 포맷팅 + 텔레그램 전송
   const today = new Date().toLocaleDateString("ko-KR", {
@@ -93,7 +82,9 @@ async function handle(request: NextRequest) {
     day: "2-digit",
     weekday: "short",
   });
-  const finalMessage = `🧠 AI 감정분석 주목 종목 정리\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n${analysisResult}\n\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.`;
+  const finalMessage = withAiDisclaimer(
+    `📰 관심종목 뉴스 헤드라인 정리\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n${analysisResult}`
+  );
 
   await sendTelegramMessage(finalMessage, { html: false });
   return NextResponse.json({ success: true, stocks: stocks.length });

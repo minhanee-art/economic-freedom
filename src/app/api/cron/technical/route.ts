@@ -66,19 +66,19 @@ async function fetchAndAnalyze(symbol: string, name: string, market: string): Pr
     // RSI
     const rsi = calcRsi(closes);
     let rsiSignal: string, rsiEmoji: string;
-    if (rsi <= 30) { rsiSignal = "과매도 (매수 기회)"; rsiEmoji = "🟢"; }
-    else if (rsi >= 70) { rsiSignal = "과매수 (매도 고려)"; rsiEmoji = "🔴"; }
+    if (rsi <= 30) { rsiSignal = "RSI 30 이하"; rsiEmoji = "🟢"; }
+    else if (rsi >= 70) { rsiSignal = "RSI 70 이상"; rsiEmoji = "🔴"; }
     else { rsiSignal = "중립"; rsiEmoji = "⚪"; }
 
     // MACD (12, 26)
     const macdLine = ema(closes.slice(-30), 12) - ema(closes.slice(-40), 26);
     const prevMacd = ema(closes.slice(-31, -1), 12) - ema(closes.slice(-41, -1), 26);
     let macdSignal: string, macdEmoji: string;
-    if (prevMacd < 0 && macdLine > 0) { macdSignal = "골든크로스 (매수)"; macdEmoji = "🟢"; }
-    else if (prevMacd > 0 && macdLine < 0) { macdSignal = "데드크로스 (매도)"; macdEmoji = "🔴"; }
+    if (prevMacd < 0 && macdLine > 0) { macdSignal = "MACD 0선 상향 교차"; macdEmoji = "🟢"; }
+    else if (prevMacd > 0 && macdLine < 0) { macdSignal = "MACD 0선 하향 교차"; macdEmoji = "🔴"; }
     else { macdSignal = "횡보 중"; macdEmoji = "⚪"; }
 
-    // 강한 시그널: RSI 극단 OR MACD 크로스
+    // 기준선 통과: RSI 30 이하·70 이상 OR MACD 0선 교차
     const hasStrongSignal =
       rsiEmoji !== "⚪" ||
       (prevMacd < 0 && macdLine > 0) ||
@@ -153,7 +153,7 @@ async function handle(request: NextRequest) {
 
   let msg = `📉 기술적 분석 리포트\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n`;
 
-  msg += "🚨 주요 시그널\n\n";
+  msg += "🔎 지표가 기준선을 넘은 종목\n\n";
   for (const s of strong) {
     msg += `${s.flag} ${s.name} (${s.price}, ${s.priceChange})\n`;
     msg += `   RSI: ${s.rsi} ${s.rsiEmoji} ${s.rsiSignal}\n`;
@@ -165,7 +165,7 @@ async function handle(request: NextRequest) {
     msg += `${s.flag} ${s.name}: RSI ${s.rsi} ${s.rsiEmoji} | MACD ${s.macdEmoji} ${s.macdSignal}\n`;
   }
 
-  msg += "\n⚠️ 투자 참고용이며 매매 권유가 아닙니다.";
+  msg += "\nℹ️ 공개 시세로 계산한 지표를 정리한 정보이며 투자 권유가 아닙니다.";
 
   await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true, strongCount: strong.length });

@@ -1,6 +1,7 @@
-// 매일 09:00, 18:00 KST 배당 관련 뉴스 수집 후 GPT 분석 → 텔레그램 전송
+// 매일 09:00, 18:00 KST 배당 관련 뉴스 수집 후 AI 헤드라인 정리 → 텔레그램 전송
 import { NextResponse, type NextRequest } from "next/server";
 import { sendTelegramMessage } from "@/lib/telegram";
+import { NEWS_DIGEST_SYSTEM_PROMPT, asDataBlock, callOpenAIChat, withAiDisclaimer } from "@/lib/ai-text";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -95,35 +96,17 @@ async function handle(request: NextRequest) {
 
   const newsList = allNews.map((n) => `- ${n.title} (${n.date})`).join("\n");
 
-  // GPT-4o-mini 분석
+  // AI 헤드라인 정리 (기사 논조 요약 — 점수·순위·매매 권유 없음)
   const openaiKey = process.env.OPENAI_API_KEY;
-  let analysis = "(AI 분석 불가)";
+  let analysis = "";
   if (openaiKey) {
     try {
-      const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${openaiKey}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "user",
-              content:
-                "너는 한국 배당투자 전문 애널리스트야. 아래 최신 뉴스 헤드라인들을 분석해서 배당 투자 관점에서 상위 5개 오늘의 주목 종목을 정리해줘. 형식: 1. 종목명 - 감정점수/10 - 한줄 이유. 이모지 써서 보기 좋게.\n\n[오늘의 뉴스]\n" +
-                newsList,
-            },
-          ],
-          max_tokens: 2048,
-        }),
-        signal: AbortSignal.timeout(25000),
+      analysis = await callOpenAIChat({
+        apiKey: openaiKey,
+        system: NEWS_DIGEST_SYSTEM_PROMPT,
+        user: `아래 배당 관련 뉴스 헤드라인을 정리해줘.\n${asDataBlock("news", newsList)}`,
+        maxTokens: 1200,
       });
-      if (gptRes.ok) {
-        const gptData = await gptRes.json() as { choices: { message: { content: string } }[] };
-        analysis = gptData.choices[0]?.message?.content?.trim() ?? analysis;
-      }
     } catch { /* GPT 실패해도 계속 */ }
   }
 
@@ -135,12 +118,12 @@ async function handle(request: NextRequest) {
     weekday: "short",
   });
 
-  const msg =
+  const header =
     `🍀 배당 뉴스 알림\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n` +
-    `📰 오늘의 배당 뉴스 (${allNews.length}건)\n${newsList}\n\n` +
-    `━━━━━━━━━━━━━━━━\n` +
-    `💡 AI 배당 주목 종목 정리\n${analysis}\n\n` +
-    `⚠️ 투자 참고용이며 매매 권유가 아닙니다.`;
+    `📰 오늘의 배당 뉴스 (${allNews.length}건)\n${newsList}`;
+  const msg = analysis
+    ? withAiDisclaimer(`${header}\n\n━━━━━━━━━━━━━━━━\n💡 AI 헤드라인 정리\n${analysis}`)
+    : `${header}\n\nℹ️ 공개 뉴스 제목을 모은 것이며 투자 권유가 아닙니다.`;
 
   await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true, newsCount: allNews.length });

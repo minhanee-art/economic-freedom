@@ -72,7 +72,7 @@ async function handle(request: NextRequest) {
 
   let msg = `📅 이번 주 배당 일정\n${todayStr}\n━━━━━━━━━━━━━━━━\n\n`;
   for (const u of upcoming) msg += `${u.text}\n\n`;
-  msg += "💡 배당락일 전일까지 매수해야 배당 수령!";
+  msg += "ℹ️ 배당은 배당락일 전 거래일까지 보유한 주식에 지급됩니다. 일정은 입력·공개 정보 기준이며 변경될 수 있습니다.";
 
   await sendTelegramMessage(msg, { html: false });
   return NextResponse.json({ success: true, eventCount: upcoming.length });

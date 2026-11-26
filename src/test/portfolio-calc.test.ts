@@ -166,8 +166,8 @@ test("computeRebalance — 임계치 미만이면 알림이 비어 있다", () =
   assert.equal(result.categories.length, 1);
 });
 
-test("getCategoryAdvice — 초과/부족에 따라 매수 방향 문구가 다르다", () => {
-  assert.equal(getCategoryAdvice("주식", 5), "주식 신규 매수 자제, 다른 자산군 우선 매수");
-  assert.equal(getCategoryAdvice("채권", -5), "채권 ETF 추가 매수 고려");
-  assert.equal(getCategoryAdvice("금", 0), "금 ETF 추가 매수 고려");
+test("getCategoryAdvice — 초과/부족을 목표 비중 대비 계산 결과로만 표현한다", () => {
+  assert.equal(getCategoryAdvice("주식", 5), "주식 비중이 설정한 목표 비중보다 높습니다 (계산 결과)");
+  assert.equal(getCategoryAdvice("채권", -5), "채권 비중이 설정한 목표 비중보다 낮습니다 (계산 결과)");
+  assert.equal(getCategoryAdvice("금", 0), "금 비중이 설정한 목표 비중보다 낮습니다 (계산 결과)");
 });

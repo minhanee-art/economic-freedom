@@ -8,7 +8,7 @@ import { Card } from "@/components/Card";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { clearSelectedAccountId, notifyPortfolioChanged } from "@/storage/account";
-import { clearSession } from "@/storage/session";
+import { handleUnauthorized } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { PurchaseRecord } from "@/types";
@@ -36,10 +36,10 @@ export default function RecordPurchaseScreen() {
   const records = loaded && loaded.accountId === selectedAccountId ? loaded.list : [];
   const account = accounts.find((item) => item.id === selectedAccountId);
 
-  const handleAuthErrors = useCallback(async (err: unknown): Promise<boolean> => {
+  const handleAuthErrors = useCallback(async (err: unknown, sentToken: string): Promise<boolean> => {
     if (err instanceof ApiError && err.status === 401) {
-      await clearSession();
-      router.replace("/login");
+      // 토큰이 바뀐 뒤 늦게 온 이전 토큰의 401이면 세션을 유지하고 오류만 조용히 넘긴다.
+      if (await handleUnauthorized(sentToken)) router.replace("/login");
       return true;
     }
     if (err instanceof ApiError && err.status === 404) {
@@ -58,7 +58,7 @@ export default function RecordPurchaseScreen() {
       setLoaded({ accountId: selectedAccountId, list: await listPurchases(session.token, selectedAccountId) });
       setRecordsError("");
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setRecordsError(err instanceof Error ? err.message : "매수 기록을 불러오지 못했습니다.");
     }
   }, [session, selectedAccountId, handleAuthErrors]);
@@ -96,7 +96,7 @@ export default function RecordPurchaseScreen() {
       notifyPortfolioChanged();
       await loadRecords();
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setError(err instanceof Error ? err.message : "매수 기록을 저장하지 못했습니다.");
     } finally {
       submitLock.current = false;
@@ -123,7 +123,7 @@ export default function RecordPurchaseScreen() {
         await loadRecords();
         return;
       }
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       // 409는 서버 문구(보유 종목 편집에서 수정하라는 안내 포함)를 그대로 보여준다.
       setError(err instanceof Error ? err.message : "매수 기록을 삭제하지 못했습니다.");
     } finally {

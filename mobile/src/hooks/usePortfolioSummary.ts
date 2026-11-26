@@ -10,7 +10,7 @@ import {
   saveSelectedAccountId,
   subscribeAccountSelection,
 } from "@/storage/account";
-import { clearSession, loadSession } from "@/storage/session";
+import { handleUnauthorized, loadSession } from "@/storage/session";
 import type { AccountSummary, AuthSession, PortfolioSummary } from "@/types";
 
 type PortfolioState = {
@@ -40,8 +40,10 @@ export function usePortfolioSummary(): PortfolioState {
     const current = ++requestId.current;
     setIsLoading(true);
     setError(null);
+    let sentToken: string | null = null;
     try {
       const storedSession = await loadSession();
+      sentToken = storedSession?.token ?? null;
       if (current !== requestId.current) return;
       setSession(storedSession);
       if (!storedSession) {
@@ -88,8 +90,8 @@ export function usePortfolioSummary(): PortfolioState {
     } catch (err) {
       if (current !== requestId.current) return;
       if (err instanceof ApiError && err.status === 401) {
-        // 만료되었거나 폐기된 토큰: 세션을 지우고 다시 로그인하게 한다.
-        await clearSession();
+        // 만료되었거나 폐기된 토큰: 같은 토큰일 때만 세션을 지우고 다시 로그인하게 한다.
+        if (!sentToken || !(await handleUnauthorized(sentToken))) return;
         setSession(null);
         setSummary(null);
         setAccounts([]);

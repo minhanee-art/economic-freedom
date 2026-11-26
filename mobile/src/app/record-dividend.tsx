@@ -8,7 +8,7 @@ import { Card } from "@/components/Card";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { clearSelectedAccountId, notifyPortfolioChanged } from "@/storage/account";
-import { clearSession } from "@/storage/session";
+import { handleUnauthorized } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { DividendRecord } from "@/types";
@@ -34,10 +34,10 @@ export default function RecordDividendScreen() {
   const records = loaded && loaded.accountId === selectedAccountId ? loaded.list : [];
   const account = accounts.find((item) => item.id === selectedAccountId);
 
-  const handleAuthErrors = useCallback(async (err: unknown): Promise<boolean> => {
+  const handleAuthErrors = useCallback(async (err: unknown, sentToken: string): Promise<boolean> => {
     if (err instanceof ApiError && err.status === 401) {
-      await clearSession();
-      router.replace("/login");
+      // 토큰이 바뀐 뒤 늦게 온 이전 토큰의 401이면 세션을 유지하고 오류만 조용히 넘긴다.
+      if (await handleUnauthorized(sentToken)) router.replace("/login");
       return true;
     }
     if (err instanceof ApiError && err.status === 404) {
@@ -55,7 +55,7 @@ export default function RecordDividendScreen() {
       setLoaded({ accountId: selectedAccountId, list: (await listDividends(session.token, selectedAccountId)).slice(0, 10) });
       setRecordsError("");
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setRecordsError(err instanceof Error ? err.message : "배당 수령 기록을 불러오지 못했습니다.");
     }
   }, [session, selectedAccountId, handleAuthErrors]);
@@ -82,7 +82,7 @@ export default function RecordDividendScreen() {
       notifyPortfolioChanged();
       await loadRecords();
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setError(err instanceof Error ? err.message : "배당 수령 기록을 저장하지 못했습니다.");
     } finally {
       submitLock.current = false;
@@ -101,7 +101,7 @@ export default function RecordDividendScreen() {
       notifyPortfolioChanged();
       await loadRecords();
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setError(err instanceof Error ? err.message : "배당 수령 기록을 삭제하지 못했습니다.");
     } finally {
       submitLock.current = false;

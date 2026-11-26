@@ -4,7 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { changePassword, getPasswordStatus } from "@/api/auth";
 import { ApiError } from "@/api/client";
 import { Card } from "@/components/Card";
-import { clearSession, saveSession } from "@/storage/session";
+import { handleUnauthorized, saveSession } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { AuthSession } from "@/types";
@@ -20,9 +20,8 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
 
-  const handleUnauthorized = async () => {
-    await clearSession();
-    router.replace("/login");
+  const onUnauthorized = async (sentToken: string) => {
+    if (await handleUnauthorized(sentToken)) router.replace("/login");
   };
 
   useEffect(() => {
@@ -33,7 +32,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
       })
       .catch(async (err) => {
         if (cancelled) return;
-        if (err instanceof ApiError && err.status === 401) await handleUnauthorized();
+        if (err instanceof ApiError && err.status === 401) await onUnauthorized(session.token);
         else setError((err as Error).message);
       });
     return () => {
@@ -69,7 +68,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
       setDone("비밀번호를 변경했습니다.");
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        await handleUnauthorized();
+        await onUnauthorized(session.token);
         return;
       }
       setError((err as Error).message);

@@ -1,5 +1,6 @@
 // 매일 16:10 KST (평일) 포트폴리오 수익률 트래킹 → 텔레그램 전송
 import { NextResponse, type NextRequest } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { getKisToken, getKisPrice } from "@/lib/kis";
@@ -23,10 +24,7 @@ function detectMarket(code: string): "KR" | "US" {
 }
 
 async function handle(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  const qs = request.nextUrl.searchParams.get("secret");
-  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

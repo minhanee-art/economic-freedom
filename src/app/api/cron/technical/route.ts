@@ -1,5 +1,6 @@
 // 매일 09:00, 13:00 KST 기술적 분석 (RSI/MACD) → 텔레그램 전송
 import { NextResponse, type NextRequest } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 
@@ -108,10 +109,7 @@ async function fetchAndAnalyze(symbol: string, name: string, market: string): Pr
 }
 
 async function handle(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  const qs = request.nextUrl.searchParams.get("secret");
-  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

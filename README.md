@@ -76,7 +76,7 @@ CI(`.github/workflows/ci.yml`)는 PR과 `main` push에서 타입 검사 → lint
 
 ## Cron
 
-`vercel.json`에 등록된 경로: `/api/cron/report`, `sentiment`, `market-close`, `portfolio`, `dividend-news`, `dividend-calendar`, `technical`. 모두 `CRON_SECRET`으로 인증하며 결과를 텔레그램으로 보냅니다.
+`vercel.json`에 등록된 경로: `/api/cron/report`, `sentiment`, `market-close`, `portfolio`, `dividend-news`, `dividend-calendar`, `technical`. 모두 `Authorization: Bearer <CRON_SECRET>` 헤더로만 인증하며(쿼리 `?secret=`는 받지 않음, 상수 시간 비교) 결과를 운영자 채팅(`TELEGRAM_CHAT_ID`)으로 보냅니다. 수동 실행: `curl -H "Authorization: Bearer $CRON_SECRET" https://<도메인>/api/cron/report?type=all`
 
 ## 모바일 앱 (`mobile/`)
 

@@ -1,13 +1,16 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/api/client";
-import { getRetirementPlan } from "@/api/pension";
+import { getPensionSummary, getRetirementPlan } from "@/api/pension";
 import { clearSession, loadSession } from "@/storage/session";
-import type { RetirementPlan } from "@/types";
+import type { PensionSummary, RetirementPlan } from "@/types";
 
 export function useRetirementPlan() {
   const [plan, setPlan] = useState<RetirementPlan | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // 요약은 서버 배포 전(404)이거나 실패해도 기존 화면을 막지 않는다. 실패 여부만 따로 알린다.
+  const [summary, setSummary] = useState<PensionSummary | null>(null);
+  const [summaryFailed, setSummaryFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
@@ -17,18 +20,33 @@ export function useRetirementPlan() {
       const session = await loadSession();
       if (!session) {
         setPlan(null);
+        setSummary(null);
         router.replace("/login");
         return;
       }
-      setPlan(await getRetirementPlan(session.token));
+      const [nextPlan, nextSummary] = await Promise.all([
+        getRetirementPlan(session.token),
+        getPensionSummary(session.token).then(
+          (value) => ({ value, failed: false }),
+          (err: unknown) => {
+            if (err instanceof ApiError && err.status === 401) throw err;
+            return { value: null, failed: true };
+          }
+        ),
+      ]);
+      setPlan(nextPlan);
+      setSummary(nextSummary.value);
+      setSummaryFailed(nextSummary.failed);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         await clearSession();
         setPlan(null);
+        setSummary(null);
         router.replace("/login");
         return;
       }
       setPlan(null);
+      setSummary(null);
       setError(err instanceof Error ? err.message : "데이터를 불러오지 못했습니다.");
     } finally {
       setIsLoading(false);
@@ -39,5 +57,5 @@ export function useRetirementPlan() {
     refresh();
   }, [refresh]);
 
-  return { plan, isLoading, error, refresh };
+  return { plan, summary, summaryFailed, isLoading, error, refresh };
 }

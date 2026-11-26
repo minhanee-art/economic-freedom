@@ -107,6 +107,39 @@ export type RetirementPlan = {
   sources: IncomeSource[];
 };
 
+/** GET /api/pension/summary 응답(필요한 필드만). 금액은 원·세전·현재 가치 기준 참고용 추정치. 사용자 전체(가족 계좌 합산) 기준. */
+export type PensionLayers = { public: number; retirement: number; private: number; dividend: number };
+
+export type PensionSummary = {
+  year: number;
+  rules: {
+    year: number;
+    exact: boolean;
+    unverifiedTopics: string[];
+  };
+  taxCredit: {
+    salaryBracketAssumed: boolean;
+    contributionsRecorded: boolean;
+    progress: {
+      progressPct: number;
+      remainingCreditRoom: number;
+      estimatedCredit: number;
+      maxCredit: number;
+    };
+  } | null;
+  taxCreditUnavailableReason: string | null;
+  retirement: {
+    cashflow: {
+      atRetirement: { age: number; layers: PensionLayers; total: number; shortfall: number };
+      coveragePctAtRetirement: number;
+      expectedReturnAssumed: boolean;
+    } | null;
+    unavailableReason: string | null;
+    missingFields: string[];
+  };
+  disclaimer: string;
+};
+
 /** GET /api/purchases 의 매수 기록 한 건(항목 포함). 삭제 API는 서버에 없다. */
 export type PurchaseItem = {
   code: string;

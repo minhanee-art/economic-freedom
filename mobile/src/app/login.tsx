@@ -1,11 +1,12 @@
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { loginWithEmail } from "@/api/auth";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { saveSession } from "@/storage/session";
-import { colors, radius, spacing } from "@/styles/theme";
+import { formStyles as styles } from "@/styles/forms";
+import { colors } from "@/styles/theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function LoginScreen() {
     setIsSubmitting(true);
     setError("");
     try {
-      const session = await loginWithEmail(email, password);
+      const session = await loginWithEmail(email.trim(), password);
       await saveSession(session);
       router.replace("/(tabs)");
     } catch (err) {
@@ -31,14 +32,15 @@ export default function LoginScreen() {
 
   return (
     <AppShell>
-      <Text style={styles.title}>계정 연결</Text>
-      <Text style={styles.subtitle}>기존 웹 계정으로 로그인하면 실제 포트폴리오 데이터를 불러옵니다.</Text>
+      <Text style={styles.title}>가족연금계획</Text>
+      <Text style={styles.subtitle}>로그인하면 내 포트폴리오와 배당 현금흐름을 확인할 수 있습니다.</Text>
 
       <Card title="로그인">
         <View style={styles.field}>
           <Text style={styles.label}>이메일</Text>
           <TextInput
             autoCapitalize="none"
+            autoComplete="email"
             autoCorrect={false}
             keyboardType="email-address"
             onChangeText={setEmail}
@@ -51,6 +53,7 @@ export default function LoginScreen() {
         <View style={styles.field}>
           <Text style={styles.label}>비밀번호</Text>
           <TextInput
+            autoComplete="current-password"
             onChangeText={setPassword}
             placeholder="비밀번호"
             placeholderTextColor={colors.inkSubtle}
@@ -65,68 +68,11 @@ export default function LoginScreen() {
         </Pressable>
       </Card>
 
-      <Text style={styles.helper}>API 주소는 `EXPO_PUBLIC_API_BASE_URL` 환경변수로 설정합니다.</Text>
+      <Link href="/signup" asChild>
+        <Pressable style={styles.linkButton}>
+          <Text style={styles.linkText}>계정이 없으신가요? 회원가입</Text>
+        </Pressable>
+      </Link>
     </AppShell>
   );
 }
-
-const styles = StyleSheet.create({
-  title: {
-    color: colors.ink,
-    fontSize: 28,
-    fontWeight: "900",
-  },
-  subtitle: {
-    marginBottom: spacing.lg,
-    color: colors.inkMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  field: {
-    gap: spacing.sm,
-  },
-  label: {
-    color: colors.ink,
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  input: {
-    borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: colors.line,
-    backgroundColor: colors.canvas,
-    color: colors.ink,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    fontSize: 16,
-  },
-  error: {
-    borderRadius: radius.md,
-    backgroundColor: colors.negativeSoft,
-    color: colors.negative,
-    padding: spacing.md,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  button: {
-    marginTop: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.ink,
-    padding: spacing.lg,
-  },
-  buttonDisabled: {
-    backgroundColor: colors.inkSubtle,
-  },
-  buttonText: {
-    color: colors.surface,
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "900",
-  },
-  helper: {
-    marginTop: spacing.lg,
-    color: colors.inkMuted,
-    fontSize: 12,
-    lineHeight: 18,
-  },
-});

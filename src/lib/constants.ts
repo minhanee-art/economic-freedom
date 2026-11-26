@@ -1,4 +1,4 @@
-export const APP_NAME = "Pension Manager";
+export const APP_NAME = "가족연금계획";
 export const MAX_WIDTH = "max-w-[860px]";
 
 export const CATEGORIES = ["주식", "리츠", "원자재", "채권"] as const;

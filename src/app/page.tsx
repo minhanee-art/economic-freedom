@@ -68,7 +68,7 @@ function PreviewCard() {
       <div className="rounded-[22px] bg-canvas-soft p-4 dark:bg-zinc-900">
         <div className="flex items-center justify-between border-b border-hairline pb-3 dark:border-zinc-800">
           <div>
-            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">경제적 자유</p>
+            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">가족연금계획</p>
             <p className="mt-1 text-lg font-bold text-dark-header dark:text-white">가족 자산 현황</p>
           </div>
           <div className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white">실행 중</div>
@@ -112,7 +112,7 @@ export default function Home() {
       <header className="sticky top-0 z-20 border-b border-white/70 bg-background/90 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/90">
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="text-base font-black tracking-tight text-dark-header dark:text-white">
-            경제적 자유
+            가족연금계획
           </Link>
           <div className="hidden items-center gap-6 text-sm font-medium text-ink-mute dark:text-zinc-400 md:flex">
             <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400">기능</a>
@@ -237,7 +237,7 @@ export default function Home() {
       <section className="bg-indigo-950 px-4 py-16 text-white sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <h2 className="text-3xl font-black tracking-tight">경제적 자유를 가족 단위로 관리하세요</h2>
+            <h2 className="text-3xl font-black tracking-tight">가족연금계획를 가족 단위로 관리하세요</h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-indigo-100">
               웹 대시보드와 모바일 앱을 함께 준비 중입니다. 먼저 웹에서 자산과 증여 기록을 정리해두세요.
             </p>

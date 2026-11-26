@@ -1,20 +1,31 @@
 import { StyleSheet, Text, View } from "react-native";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
+import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { colors, radius, spacing } from "@/styles/theme";
+import type { PortfolioSummary } from "@/types";
 import { formatKRW } from "@/utils/format";
 
 export default function DividendsScreen() {
-  const { summary, isLoading, refresh } = usePortfolioSummary();
-  const maxDividend = Math.max(...summary.dividends.map((item) => item.amount), 1);
-  const monthlyAverage = summary.expectedAnnualDividend / 12;
+  const { summary, isLoading, error, refresh } = usePortfolioSummary();
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
       <Text style={styles.title}>배당</Text>
       <Text style={styles.subtitle}>받은 배당과 앞으로 받을 현금흐름을 월 단위로 봅니다.</Text>
 
+      {summary ? <DividendContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
+    </AppShell>
+  );
+}
+
+function DividendContent({ summary }: { summary: PortfolioSummary }) {
+  const maxDividend = Math.max(...summary.dividends.map((item) => item.amount), 1);
+  const monthlyAverage = summary.expectedAnnualDividend / 12;
+
+  return (
+    <>
       <Card title="예상 연 배당">
         <Text style={styles.bigNumber}>{formatKRW(summary.expectedAnnualDividend)}</Text>
         <Text style={styles.caption}>월 평균 {formatKRW(monthlyAverage)}</Text>
@@ -45,7 +56,7 @@ export default function DividendsScreen() {
         ))}
         {(summary.dividendCalendar ?? []).length === 0 ? <Text style={styles.bodyText}>예정된 배당 일정이 없습니다.</Text> : null}
       </Card>
-    </AppShell>
+    </>
   );
 }
 

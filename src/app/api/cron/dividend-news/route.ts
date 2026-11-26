@@ -112,7 +112,7 @@ async function handle(request: NextRequest) {
             {
               role: "user",
               content:
-                "너는 한국 배당투자 전문 애널리스트야. 아래 최신 뉴스 헤드라인들을 분석해서 배당 투자 관점에서 상위 5개 오늘의 주목 종목을 추천해줘. 형식: 1. 종목명 - 감정점수/10 - 한줄 이유. 이모지 써서 보기 좋게.\n\n[오늘의 뉴스]\n" +
+                "너는 한국 배당투자 전문 애널리스트야. 아래 최신 뉴스 헤드라인들을 분석해서 배당 투자 관점에서 상위 5개 오늘의 주목 종목을 정리해줘. 형식: 1. 종목명 - 감정점수/10 - 한줄 이유. 이모지 써서 보기 좋게.\n\n[오늘의 뉴스]\n" +
                 newsList,
             },
           ],
@@ -139,7 +139,7 @@ async function handle(request: NextRequest) {
     `🍀 배당 뉴스 알림\n📅 ${today}\n━━━━━━━━━━━━━━━━\n\n` +
     `📰 오늘의 배당 뉴스 (${allNews.length}건)\n${newsList}\n\n` +
     `━━━━━━━━━━━━━━━━\n` +
-    `💡 AI 배당 종목 추천\n${analysis}\n\n` +
+    `💡 AI 배당 주목 종목 정리\n${analysis}\n\n` +
     `⚠️ 투자 참고용이며 매매 권유가 아닙니다.`;
 
   await sendTelegramMessage(msg, { html: false });

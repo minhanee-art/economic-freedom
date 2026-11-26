@@ -16,6 +16,8 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ title: "로그인" }} />
+        <Stack.Screen name="signup" options={{ title: "회원가입" }} />
+        <Stack.Screen name="delete-account" options={{ title: "계정 삭제" }} />
       </Stack>
     </>
   );

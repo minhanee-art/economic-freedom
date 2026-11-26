@@ -1,22 +1,35 @@
 import type { AuthSession } from "@/types";
+import { apiRequest } from "./client";
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
+type AuthResponse = { ok: boolean; token: string; user: AuthSession["user"] };
+
+function toSession(body: AuthResponse): AuthSession {
+  return { token: body.token, user: body.user };
+}
 
 export async function loginWithEmail(email: string, password: string): Promise<AuthSession> {
-  if (!API_BASE_URL) {
-    throw new Error("앱 설정에 API 주소가 없습니다. EXPO_PUBLIC_API_BASE_URL을 설정해주세요.");
-  }
-
-  const response = await fetch(`${API_BASE_URL}/api/mobile/auth/login`, {
+  const body = await apiRequest<AuthResponse>("/api/mobile/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: { email, password },
+    fallbackError: "로그인하지 못했습니다.",
   });
+  return toSession(body);
+}
 
-  const body = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(body?.error ?? "로그인 실패");
-  }
+export async function signupWithEmail(email: string, password: string): Promise<AuthSession> {
+  const body = await apiRequest<AuthResponse>("/api/mobile/auth/signup", {
+    method: "POST",
+    body: { email, password },
+    fallbackError: "회원가입하지 못했습니다.",
+  });
+  return toSession(body);
+}
 
-  return { token: body.token, user: body.user } as AuthSession;
+export async function deleteAccount(token: string, password: string): Promise<void> {
+  await apiRequest<unknown>("/api/me", {
+    method: "DELETE",
+    token,
+    body: { password },
+    fallbackError: "계정을 삭제하지 못했습니다.",
+  });
 }

@@ -601,10 +601,10 @@ export function HoldingCard({
               >
                 <p className="font-black">리밸런싱 자동계산</p>
                 {!validTradePrice ? (
-                  <p className="mt-1">단가를 0보다 큰 숫자로 입력하면 추천 수량이 계산됩니다.</p>
+                  <p className="mt-1">단가를 0보다 큰 숫자로 입력하면 계산 수량이 계산됩니다.</p>
                 ) : tradeAction === "buy" ? (
                   h.target_pct <= 0 ? (
-                    <p className="mt-1">설정 비중이 0%라 추천 매수 수량이 없습니다.</p>
+                    <p className="mt-1">설정 비중이 0%라 계산 매수 수량이 없습니다.</p>
                   ) : h.target_pct >= 100 ? (
                     <p className="mt-1">설정 비중 100%는 전체 포트폴리오 기준으로 자동 계산할 수 없습니다.</p>
                   ) : targetBuyQuantity > 0 ? (
@@ -623,7 +623,7 @@ export function HoldingCard({
                         onClick={() => setTradeQuantity(String(targetBuyQuantity))}
                         className="mt-2 border border-emerald-300 bg-white px-2.5 py-1.5 font-bold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200"
                       >
-                        추천 {targetBuyQuantity}주 적용
+                        계산 {targetBuyQuantity}주 적용
                       </button>
                     </>
                   ) : (
@@ -632,7 +632,7 @@ export function HoldingCard({
                     </p>
                   )
                 ) : h.target_pct >= 100 ? (
-                  <p className="mt-1">설정 비중이 100%라 추천 매도 수량이 없습니다.</p>
+                  <p className="mt-1">설정 비중이 100%라 계산 매도 수량이 없습니다.</p>
                 ) : targetSellQuantity > 0 ? (
                   <>
                     <p className="mt-1 leading-5">
@@ -649,7 +649,7 @@ export function HoldingCard({
                       onClick={() => setTradeQuantity(String(targetSellQuantity))}
                       className="mt-2 border border-red-300 bg-white px-2.5 py-1.5 font-bold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
                     >
-                      추천 {targetSellQuantity}주 적용
+                      계산 {targetSellQuantity}주 적용
                     </button>
                   </>
                 ) : (

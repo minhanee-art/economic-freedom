@@ -11,6 +11,7 @@ import { useTheme, type Theme } from "@/lib/theme";
 import { useMemo } from "react";
 import { PasswordSection } from "@/components/settings/password-section";
 import { AccountDeleteSection } from "@/components/settings/account-delete-section";
+import { TelegramLinkSection } from "@/components/settings/telegram-link-section";
 
 type HoldingGroupBy = "none" | "category" | "sub_category";
 
@@ -365,6 +366,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       </section>
 
       <PasswordSection />
+      <TelegramLinkSection />
       {/* 목표 비중 합계 */}
       <div
         className={cn(

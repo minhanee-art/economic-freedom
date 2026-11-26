@@ -77,7 +77,8 @@ type PortfolioReturnPeriod = {
 
 type PortfolioReturnSummary = {
   accountName: string;
-  telegramChatId: string | null;
+  telegramChatIdMasked: string | null;
+  telegramNeedsRelink: boolean;
   asOfDate: string;
   totalValue: number;
   totalCost: number;
@@ -104,7 +105,6 @@ export function DashboardClient({
   const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
   const [returnSummary, setReturnSummary] = useState<PortfolioReturnSummary | null>(null);
   const [returnStatus, setReturnStatus] = useState("");
-  const [telegramChatId, setTelegramChatId] = useState("");
   const [isSendingReturnReport, setIsSendingReturnReport] = useState(false);
   const router = useRouter();
 
@@ -125,7 +125,6 @@ export function DashboardClient({
       if (!res.ok) throw new Error(data?.error ?? "수익률 조회 실패");
       const summary = data.summary as PortfolioReturnSummary;
       setReturnSummary(summary);
-      setTelegramChatId(summary.telegramChatId ?? "");
     } catch (err) {
       setReturnStatus(`수익률 조회 실패: ${(err as Error).message}`);
     }
@@ -139,11 +138,8 @@ export function DashboardClient({
     setIsSendingReturnReport(true);
     setReturnStatus("");
     try {
-      const res = await fetch("/api/portfolio-returns", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ telegramChatId }),
-      });
+      // 받는 채팅은 서버가 정한다(설정에서 연결 코드로 확인한 채팅만)
+      const res = await fetch("/api/portfolio-returns", { method: "POST" });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.error ?? "텔레그램 전송 실패");
       setReturnSummary(data.summary as PortfolioReturnSummary);
@@ -154,7 +150,7 @@ export function DashboardClient({
     } finally {
       setIsSendingReturnReport(false);
     }
-  }, [telegramChatId]);
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -570,8 +566,6 @@ export function DashboardClient({
 
             <ReturnSummaryCard
               summary={returnSummary}
-              telegramChatId={telegramChatId}
-              onTelegramChatIdChange={setTelegramChatId}
               onSend={handleSendReturnReport}
               isSending={isSendingReturnReport}
               status={returnStatus}
@@ -726,15 +720,11 @@ function HomeStat({
 
 function ReturnSummaryCard({
   summary,
-  telegramChatId,
-  onTelegramChatIdChange,
   onSend,
   isSending,
   status,
 }: {
   summary: PortfolioReturnSummary | null;
-  telegramChatId: string;
-  onTelegramChatIdChange: (value: string) => void;
   onSend: () => void;
   isSending: boolean;
   status: string;
@@ -750,18 +740,22 @@ function ReturnSummaryCard({
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <input
-            type="text"
-            inputMode="numeric"
-            value={telegramChatId}
-            onChange={(e) => onTelegramChatIdChange(e.target.value.replace(/[^0-9-]/g, ""))}
-            placeholder="텔레그램 chat_id"
-            className="h-10 min-w-0 border border-zinc-200 bg-white px-3 text-sm font-semibold tabular-nums text-zinc-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 sm:w-44"
-          />
+          {summary?.telegramChatIdMasked ? (
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+              텔레그램 {summary.telegramChatIdMasked}
+            </span>
+          ) : (
+            <Link
+              href="/dashboard/settings"
+              className="text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300"
+            >
+              {summary?.telegramNeedsRelink ? "텔레그램 다시 연결 필요 · 설정" : "텔레그램 연결 · 설정"}
+            </Link>
+          )}
           <button
             type="button"
             onClick={onSend}
-            disabled={isSending || !telegramChatId.trim()}
+            disabled={isSending || !summary?.telegramChatIdMasked}
             className="h-10 border border-indigo-600 bg-indigo-600 px-3 text-xs font-black text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
           >
             {isSending ? "전송 중" : "텔레그램 전송"}

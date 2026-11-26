@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
@@ -17,6 +18,10 @@ export default function DividendsScreen() {
       <Text style={styles.subtitle}>받은 배당과 앞으로 받을 현금흐름을 월 단위로 봅니다.</Text>
 
       <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
+
+      <Pressable accessibilityRole="button" onPress={() => router.push("/record-dividend")} style={styles.recordButton}>
+        <Text style={styles.recordButtonText}>배당 수령 기록 추가</Text>
+      </Pressable>
 
       {summary ? <DividendContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
     </AppShell>
@@ -64,6 +69,18 @@ function DividendContent({ summary }: { summary: PortfolioSummary }) {
 }
 
 const styles = StyleSheet.create({
+  recordButton: {
+    marginBottom: spacing.lg,
+    borderRadius: radius.pill,
+    backgroundColor: colors.ink,
+    padding: spacing.md,
+  },
+  recordButtonText: {
+    color: colors.surface,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "900",
+  },
   title: {
     color: colors.ink,
     fontSize: 28,

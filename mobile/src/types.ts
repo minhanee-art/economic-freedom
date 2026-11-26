@@ -106,3 +106,29 @@ export type RetirementPlan = {
   goal: RetirementGoal;
   sources: IncomeSource[];
 };
+
+/** GET /api/purchases 의 매수 기록 한 건(항목 포함). 삭제 API는 서버에 없다. */
+export type PurchaseItem = {
+  code: string;
+  name: string;
+  quantity: number;
+  price: number;
+  cost: number;
+};
+
+export type PurchaseRecord = {
+  id: string;
+  date: string;
+  totalSpent: number;
+  items: PurchaseItem[];
+};
+
+export type DividendRecord = {
+  id: string;
+  holdingId: string;
+  holdingName: string | null;
+  holdingCode: string | null;
+  amount: number;
+  date: string;
+  memo: string | null;
+};

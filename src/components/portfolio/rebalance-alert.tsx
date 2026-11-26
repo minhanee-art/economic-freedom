@@ -177,8 +177,8 @@ function compareHoldingBySort(a: HoldingWithPnL, b: HoldingWithPnL, sort: Holdin
 }
 
 function getCategoryAdvice(name: string, diff: number): string {
-  if (diff > 0) return `${name} 신규 매수 자제, 다른 자산군 우선 매수`;
-  return `${name} ETF 추가 매수 고려`;
+  if (diff > 0) return `${name} 비중이 설정한 목표 비중보다 높습니다 (계산 결과)`;
+  return `${name} 비중이 설정한 목표 비중보다 낮습니다 (계산 결과)`;
 }
 
 export function RebalanceAlert({
@@ -525,7 +525,7 @@ export function RebalanceAlert({
           <div>
             <p className="text-xs font-black text-zinc-700 dark:text-zinc-200">보유종목 검색</p>
             <p className="mt-0.5 text-2xs text-zinc-500 dark:text-zinc-400">
-              종목명·종목번호·테마로 검색해서 바로 설정비중 조정, 매수, 매도할 수 있습니다.
+              종목명·종목번호·테마로 검색해서 바로 설정비중 조정과 매수·매도 기록을 할 수 있습니다.
             </p>
           </div>
           {holdingSearch && (
@@ -834,22 +834,22 @@ export function RebalanceAlert({
         <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3">
           {hasAdvice ? (
             <div className="border-2 border-red-200 bg-red-50 p-4 shadow-card dark:border-red-500/30 dark:bg-red-500/10">
-              <p className="text-sm font-black text-red-700 dark:text-red-300">목표 비중 기준 조정안</p>
+              <p className="text-sm font-black text-red-700 dark:text-red-300">목표 비중 대비 차이 계산 결과</p>
               <p className="mt-2 text-sm leading-6 text-red-700 dark:text-red-200">
                 {topOver && topUnder ? (
                   <>
-                    <b>{topOver.name}</b>이 설정 {topOver.target.toFixed(1)}%보다 현재 {topOver.current.toFixed(1)}%로 <b>{topOver.diff.toFixed(1)}%p 초과</b>입니다. 약 {formatKRW(totalValue * (topOver.diff / 100))} 또는 {topOver.diff.toFixed(1)}%p만큼 줄이고, <b>{topUnder.name}</b>처럼 부족한 자산군을 우선 매수하세요.
+                    <b>{topOver.name}</b>이 설정 {topOver.target.toFixed(1)}%보다 현재 {topOver.current.toFixed(1)}%로 <b>{topOver.diff.toFixed(1)}%p 초과</b>입니다. 설정한 목표 비중에 맞추려면 약 {formatKRW(totalValue * (topOver.diff / 100))}({topOver.diff.toFixed(1)}%p)의 차이가 있고, <b>{topUnder.name}</b>은 목표 비중보다 낮습니다(계산값).
                   </>
                 ) : topOver ? (
                   <>
-                    <b>{topOver.name}</b>이 설정 {topOver.target.toFixed(1)}%보다 현재 {topOver.current.toFixed(1)}%로 <b>{topOver.diff.toFixed(1)}%p 초과</b>입니다. 초과분 매도를 검토하고 신규 매수는 잠시 줄이세요.
+                    <b>{topOver.name}</b>이 설정 {topOver.target.toFixed(1)}%보다 현재 {topOver.current.toFixed(1)}%로 <b>{topOver.diff.toFixed(1)}%p 초과</b>입니다. 설정한 목표 비중에 맞추려면 초과분만큼의 차이가 있습니다(계산값).
                   </>
                 ) : topUnder ? (
                   <>
-                    <b>{topUnder.name}</b>이 설정 {topUnder.target.toFixed(1)}%보다 현재 {topUnder.current.toFixed(1)}%로 <b>{Math.abs(topUnder.diff).toFixed(1)}%p 부족</b>입니다. 다음 매수 계획에서 이 자산군을 우선 매수하세요.
+                    <b>{topUnder.name}</b>이 설정 {topUnder.target.toFixed(1)}%보다 현재 {topUnder.current.toFixed(1)}%로 <b>{Math.abs(topUnder.diff).toFixed(1)}%p 부족</b>입니다. 설정한 목표 비중에 맞추려면 이만큼의 차이가 있습니다(계산값). 적립 배분 계산 화면에서 설정에 따른 배분액을 볼 수 있습니다.
                   </>
                 ) : (
-                  <>종목별 비중 변동이 큽니다. 아래 종목별 조정안을 확인하세요.</>
+                  <>종목별 비중 변동이 큽니다. 아래 종목별 목표 비중 대비 차이를 확인하세요.</>
                 )}
               </p>
               <p className="mt-2 text-xs font-semibold text-red-500 dark:text-red-300">
@@ -858,7 +858,7 @@ export function RebalanceAlert({
             </div>
           ) : (
             <div className="border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300">
-              현재 설정 비중과 보유 비중 차이가 기준 이내입니다. 지금은 리밸런싱이 급하지 않습니다.
+              현재 설정 비중과 보유 비중 차이가 기준 이내입니다. 설정한 목표 비중 대비 차이가 작습니다.
             </div>
           )}
 
@@ -895,8 +895,8 @@ export function RebalanceAlert({
                   </span>
                   <span className="ml-1">
                     {h.diff > 0
-                      ? `${Math.abs(h.diff).toFixed(1)}%p 줄이고 부족한 종목 매수 검토`
-                      : `${Math.abs(h.diff).toFixed(1)}%p 추가 매수 우선 검토`}
+                      ? `${Math.abs(h.diff).toFixed(1)}%p 높음 (설정한 목표 비중 대비, 계산값)`
+                      : `${Math.abs(h.diff).toFixed(1)}%p 낮음 (설정한 목표 비중 대비, 계산값)`}
                   </span>
                 </div>
               ))}

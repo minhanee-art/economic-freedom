@@ -1,4 +1,4 @@
-// 매수 계획 클라이언트 — 알고리즘 자동 계산 + 종목별 수량 수동 조절 + 수수료 포함 계산
+// 적립 배분 계산 클라이언트 (매수 계획 화면) — 알고리즘 자동 계산 + 종목별 수량 수동 조절 + 수수료 포함 계산
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
@@ -429,6 +429,13 @@ export function BuyClient({
 
   return (
     <div className="space-y-5">
+      <div className="rounded-2xl border border-hairline bg-canvas-soft px-4 py-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+        <h1 className="text-base font-bold text-ink dark:text-zinc-100">적립 배분 계산</h1>
+        <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+          사용자가 설정한 목표 비중에 따른 계산 결과이며 투자 권유가 아닙니다.
+        </p>
+      </div>
+
       {successMessage && (
         <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400 font-medium shadow-card">
           {successMessage}
@@ -672,9 +679,9 @@ export function BuyClient({
 
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
-              매수 계획 (<span className="tabular-nums">{buyItems.length}</span>종목)
+              적립 배분 계산 (<span className="tabular-nums">{buyItems.length}</span>종목)
             </h3>
-            <div className="flex flex-wrap gap-1.5" aria-label="매수 계획 정렬">
+            <div className="flex flex-wrap gap-1.5" aria-label="적립 배분 계산 정렬">
               {SORT_OPTIONS.map((option) => (
                 <button
                   key={option.value}
@@ -759,7 +766,7 @@ export function BuyClient({
           className="hero-gradient-compact rounded-2xl px-6 py-5 text-white space-y-2 shadow-float"
         >
           <div className="flex justify-between text-sm">
-            <span className="text-indigo-200">순 매수금액</span>
+            <span className="text-indigo-200">순 배분금액</span>
             <span className="tabular-nums">{formatFullKRW(actualNetTotal)}</span>
           </div>
           {feeRatePct > 0 && (
@@ -982,7 +989,7 @@ function BuyPlanCard({
         {item.isPriority && item.quantity > 0 && (
           <div className="mt-2">
             <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400 tabular-nums">
-              비중 {item.gapPct.toFixed(1)}%p 부족 → 우선 매수
+              목표 비중 대비 {item.gapPct.toFixed(1)}%p 부족 (계산상 우선 배분)
             </span>
           </div>
         )}
@@ -1016,7 +1023,7 @@ function BuyPlanCard({
           item.idealRatio > 0 && (
             <div className="mt-2">
               <span className="inline-flex items-center rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-500 dark:text-zinc-400 tabular-nums">
-                이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 1주 매수하려면 최소 {formatFullKRW(Math.ceil(h.current_price / item.idealRatio))} 필요
+                이 비중({(item.idealRatio * 100).toFixed(1)}%)으로 1주를 배분하려면 최소 {formatFullKRW(Math.ceil(h.current_price / item.idealRatio))} 필요
               </span>
             </div>
           )

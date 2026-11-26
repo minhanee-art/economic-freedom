@@ -902,7 +902,7 @@ function buildEconomicEvents(
       date: toDateKey(nextMonthStart),
       title: "월 적립-리밸런싱 점검",
       type: "연금 관리",
-      note: "정해진 예산과 목표 비중을 다시 확인하고 다음 매수 계획을 준비합니다.",
+      note: "정해진 예산과 목표 비중을 다시 확인하고 다음 적립 배분 계산에 반영합니다.",
       source: "개인 연금 루틴",
     },
   ];

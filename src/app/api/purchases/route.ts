@@ -3,12 +3,14 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const { searchParams } = new URL(request.url);
   const offset = Number(searchParams.get("offset") ?? 0);
   const limit = Number(searchParams.get("limit") ?? 20);
@@ -29,7 +31,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
 
   const body = await request.json().catch(() => null);
   const date = body?.date;

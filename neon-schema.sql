@@ -2,13 +2,17 @@
 
 -- 1. users (인증용 — Supabase auth.users 대체)
 --    password_hash는 Google OAuth 전용 계정을 위해 NULL 허용.
+--    session_version은 JWT 폐기용 — 토큰의 sv 클레임과 다르면 무효. 비밀번호 설정·변경, Google 첫 연결 시 +1.
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT NOT NULL UNIQUE,
   password_hash TEXT,
   google_id TEXT UNIQUE,
+  session_version INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+-- 기존 DB용 (src/lib/session-version.ts의 ensureSessionVersionSchema와 같은 문장)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS session_version INTEGER NOT NULL DEFAULT 0;
 
 -- 2. profiles (사용자 프로필)
 CREATE TABLE IF NOT EXISTS profiles (

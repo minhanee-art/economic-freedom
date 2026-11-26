@@ -1,7 +1,14 @@
-import test, { before } from "node:test";
+import test, { before, beforeEach, mock } from "node:test";
 import assert from "node:assert/strict";
 
+import { answerSessionVersion, createFakeSql } from "@/test/api-helpers";
+
 process.env.JWT_SECRET ||= "test-only-secret-for-pension-manager";
+
+// 토큰 폐기 확인용 가짜 users.session_version
+const versions = new Map<string, number>();
+const db = createFakeSql((query, values) => answerSessionVersion(query, values, versions) ?? []);
+mock.module("@/lib/db", { namedExports: { sql: db.sql } });
 
 let proxy: typeof import("@/proxy").proxy;
 let signToken: typeof import("@/lib/session").signToken;
@@ -16,6 +23,12 @@ before(async () => {
   proxy = proxyModule.proxy;
   signToken = sessionModule.signToken;
   NextRequest = server.NextRequest;
+});
+
+beforeEach(() => {
+  db.reset();
+  versions.clear();
+  versions.set("user-1", 0);
 });
 
 function request(path: string, cookie?: string, authorization?: string): Request {
@@ -41,19 +54,19 @@ test("세션이 없으면 대시보드 페이지는 로그인으로 보낸다", 
 });
 
 test("유효한 세션 쿠키가 있으면 통과시킨다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
   const response = await proxy(request("/api/prices", `pension-session=${token}`) as never);
   assert.equal(response.headers.get("x-middleware-next"), "1");
 });
 
 test("변조된 세션 쿠키는 통과시키지 않는다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
   const response = await proxy(request("/api/prices", `pension-session=${token}x`) as never);
   assert.equal(response.status, 401);
 });
 
 test("유효한 Bearer 토큰이 있으면 프록시 대상 API를 통과시킨다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
   for (const path of ["/api/prices", "/api/market/search", "/api/market/indices"]) {
     const response = await proxy(request(path, undefined, `Bearer ${token}`) as never);
     assert.equal(response.headers.get("x-middleware-next"), "1", path);
@@ -61,7 +74,7 @@ test("유효한 Bearer 토큰이 있으면 프록시 대상 API를 통과시킨�
 });
 
 test("변조된 Bearer 토큰은 401이며 리다이렉트하지 않는다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
   const response = await proxy(request("/api/market/search", undefined, `Bearer ${token}x`) as never);
   assert.equal(response.status, 401);
   assert.equal(response.headers.get("location"), null);
@@ -71,4 +84,36 @@ test("변조된 Bearer 토큰은 401이며 리다이렉트하지 않는다", asy
 test("프록시 대상 경로가 의도한 목록과 일치한다", async () => {
   const { config } = await import("@/proxy");
   assert.deepEqual(config.matcher, ["/dashboard/:path*", "/api/market/:path*", "/api/prices"]);
+});
+
+// ── 토큰 폐기: 페이지는 낙관적(DB 조회 없음), API는 폐기 여부까지 확인 ─────────
+
+test("API 경로: 폐기된(세션 버전이 바뀐) 토큰은 쿠키든 Bearer든 401", async () => {
+  const token = await signToken("user-1", 0);
+  versions.set("user-1", 1);
+  for (const path of ["/api/prices", "/api/market/search"]) {
+    assert.equal((await proxy(request(path, `pension-session=${token}`) as never)).status, 401, path);
+    assert.equal((await proxy(request(path, undefined, `Bearer ${token}`) as never)).status, 401, path);
+  }
+});
+
+test("API 경로: 삭제된 사용자의 토큰은 401", async () => {
+  const token = await signToken("user-1", 0);
+  versions.delete("user-1");
+  const response = await proxy(request("/api/market/indices", undefined, `Bearer ${token}`) as never);
+  assert.equal(response.status, 401);
+});
+
+test("API 경로: 요청당 세션 버전 PK 조회는 한 번", async () => {
+  const token = await signToken("user-1", 0);
+  await proxy(request("/api/prices", undefined, `Bearer ${token}`) as never);
+  assert.equal(db.find("SELECT session_version FROM users").length, 1);
+});
+
+test("대시보드 페이지: 서명만 확인하고 DB를 조회하지 않는다(폐기 판정은 페이지의 getSession)", async () => {
+  const token = await signToken("user-1", 0);
+  versions.set("user-1", 1);
+  const response = await proxy(request("/dashboard", `pension-session=${token}`) as never);
+  assert.equal(response.headers.get("x-middleware-next"), "1");
+  assert.equal(db.calls.length, 0);
 });

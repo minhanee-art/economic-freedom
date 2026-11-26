@@ -3,7 +3,7 @@
 import test, { before, beforeEach, mock } from "node:test";
 import assert from "node:assert/strict";
 
-import { authRequest, createFakeSql, readJson, type AuthOptions } from "@/test/api-helpers";
+import { answerSessionVersion, authRequest, createFakeSql, readJson, type AuthOptions } from "@/test/api-helpers";
 
 process.env.JWT_SECRET ||= "test-only-secret-for-pension-manager";
 
@@ -13,7 +13,11 @@ const USER_B = "user-b";
 // ── 스텁: DB와 계좌 모듈만 바꾼다(세션은 실제 구현) ─────────────
 // 사용자 A만 데이터를 가진 가짜 DB — 쿼리 값에 A의 id가 있을 때만 행을 돌려준다.
 const db = createFakeSql();
+// 토큰 폐기 확인용 users.session_version — 표에 없는 사용자는 삭제된 사용자
+const versions = new Map<string, number>();
 function ownerAwareHandler(query: string, values: unknown[]) {
+  const version = answerSessionVersion(query, values, versions);
+  if (version) return version;
   if (query.includes("COUNT(*)")) return [{ count: values.includes(USER_A) ? 1 : 0 }];
   if (query.includes("FROM portfolio_accounts")) {
     // 계좌 id와 소유자가 맞을 때만 돌려준다
@@ -71,8 +75,8 @@ const routes: RouteCase[] = [];
 before(async () => {
   const session = await import("@/lib/session");
   signToken = session.signToken;
-  tokenA = await signToken(USER_A);
-  tokenB = await signToken(USER_B);
+  tokenA = await signToken(USER_A, 0);
+  tokenB = await signToken(USER_B, 0);
 
   const [
     holdings,
@@ -131,7 +135,7 @@ before(async () => {
   const giftId = { params: Promise.resolve({ id: "child-a", gid: "gift-1" }) };
   const holdingId = { params: Promise.resolve({ id: "child-a", hid: "ch-1" }) };
   const req = (method: string, auth: AuthOptions, body?: unknown, url?: string) =>
-    authRequest(method, { ...auth, body, url });
+    authRequest(method, { ...auth, body, url: url ?? auth.url });
 
   routes.push(
     { name: "GET /holdings", run: (a) => holdings.GET(req("GET", a)) },
@@ -168,6 +172,9 @@ beforeEach(() => {
   db.reset();
   db.setHandler(ownerAwareHandler);
   accountLookups.length = 0;
+  versions.clear();
+  versions.set(USER_A, 0);
+  versions.set(USER_B, 0);
 });
 
 /** 이 요청 처리 중 라우트가 참조한 사용자 id 집합(SQL 값 + 계좌 조회) */
@@ -255,15 +262,13 @@ test("Bearer: 사용자 B가 A의 자녀를 수정하면 404", async () => {
   assert.equal(asA.status, 200);
 });
 
-test("Bearer: 모바일 요약에서 남의 accountId를 지정해도 자기 계좌만 본다", async () => {
+test("Bearer: 모바일 요약에서 남의 accountId를 지정하면 404이고 A의 데이터를 조회하지 않는다", async () => {
   const summary = await import("@/app/api/mobile/portfolio-summary/route");
   const response = await summary.GET(
     authRequest("GET", { bearer: tokenB, url: "https://pension.test/api/mobile/portfolio-summary?accountId=acc-a" })
   );
-  assert.equal(response.status, 200);
-  const body = await readJson<{ account: { id: string }; accounts: { id: string }[] }>(response);
-  assert.equal(body.account.id, "acc-b");
-  assert.deepEqual(body.accounts.map((item) => item.id), ["acc-b"]);
+  assert.equal(response.status, 404);
+  assert.ok(!referencedUsers().has(USER_A));
 });
 
 test("쿠키와 Bearer가 함께 오면 쿠키 사용자로 처리한다", async () => {
@@ -271,4 +276,123 @@ test("쿠키와 Bearer가 함께 오면 쿠키 사용자로 처리한다", async
   const response = await watchlist.GET(authRequest("GET", { cookie: tokenA, bearer: tokenB }));
   assert.equal((await readJson<unknown[]>(response)).length, 1);
   assert.deepEqual([...referencedUsers()], [USER_A]);
+});
+
+// ── 토큰 폐기: 모든 사용자 API ─────────────────────────
+
+test("세션 버전이 바뀐(비밀번호 변경·Google 연결로 폐기된) 토큰은 모든 사용자 API에서 401", async (t) => {
+  for (const route of routes) {
+    await t.test(route.name, async () => {
+      versions.set(USER_B, 1);
+      for (const mode of ["cookie", "bearer"] as const) {
+        const response = await route.run({ [mode]: tokenB });
+        assert.equal(response.status, 401, mode);
+      }
+      // 세션 버전 조회 외에는 아무 쿼리도 실행하지 않는다
+      assert.ok(db.calls.length > 0);
+      assert.ok(db.calls.every((call) => call.query.startsWith("SELECT session_version FROM users")));
+    });
+  }
+});
+
+test("삭제된 사용자의 토큰은 모든 사용자 API에서 401", async (t) => {
+  for (const route of routes) {
+    await t.test(route.name, async () => {
+      versions.delete(USER_B);
+      assert.equal((await route.run({ bearer: tokenB })).status, 401);
+      assert.ok(db.calls.every((call) => call.query.startsWith("SELECT session_version FROM users")));
+    });
+  }
+});
+
+// ── Bearer 클라이언트의 계좌 지정(헤더/쿼리) — 소유권 검증 ─────────────
+
+const ACCOUNT_SCOPED = new Set([
+  "GET /holdings",
+  "DELETE /holdings",
+  "GET /watchlist",
+  "GET /accounts",
+  "DELETE /danger/purchases",
+  "DELETE /danger/dividends",
+  "GET /dividends",
+  "DELETE /dividends",
+  "POST /dividends/batch",
+  "GET /dividend-calendar",
+  "DELETE /dividend-calendar/[id]",
+  "POST /trades",
+  "GET /purchases",
+  "POST /import",
+  "GET /portfolio-returns",
+  "GET /mobile/portfolio-summary",
+]);
+
+/** SQL 값에 특정 계좌 id가 쓰였는지 */
+function usedAccount(accountId: string): boolean {
+  return db.calls.some((call) => call.query !== "<transaction>" && call.values.includes(accountId));
+}
+
+for (const via of ["header", "query"] as const) {
+  const withAccount = (auth: AuthOptions, accountId: string): AuthOptions =>
+    via === "header"
+      ? { ...auth, headers: { "x-portfolio-account-id": accountId } }
+      : { ...auth, url: `https://pension.test/api/route?accountId=${accountId}` };
+
+  test(`계좌 지정(${via}): 남의 계좌 id면 계좌 범위 API가 404이고 그 계좌로 쿼리하지 않는다`, async (t) => {
+    const scoped = routes.filter((route) => ACCOUNT_SCOPED.has(route.name));
+    assert.equal(scoped.length, ACCOUNT_SCOPED.size, "목록의 라우트가 모두 있어야 한다");
+    for (const route of scoped) {
+      await t.test(route.name, async () => {
+        db.reset();
+        db.setHandler(ownerAwareHandler);
+        accountLookups.length = 0;
+        const response = await route.run(withAccount({ bearer: tokenB }, "acc-a"));
+        assert.equal(response.status, 404, `${route.name} 상태 ${response.status}`);
+        assert.ok(!usedAccount("acc-a"), "남의 계좌 id로 쿼리하면 안 된다");
+        assert.ok(!referencedUsers().has(USER_A));
+      });
+    }
+  });
+
+  test(`계좌 지정(${via}): 자기 계좌 id면 그 계좌로 동작한다`, async (t) => {
+    for (const route of routes.filter((item) => ACCOUNT_SCOPED.has(item.name))) {
+      await t.test(route.name, async () => {
+        db.reset();
+        db.setHandler(ownerAwareHandler);
+        const response = await route.run(withAccount({ bearer: tokenB }, "acc-b"));
+        assert.notEqual(response.status, 401);
+        assert.ok(response.status < 500, `${route.name} 상태 ${response.status}`);
+        const body = await readJson<{ error?: string }>(response.clone());
+        assert.doesNotMatch(String(body?.error ?? ""), /^(계좌를 찾을 수 없습니다|포트폴리오 계좌가 없습니다)/, "계좌 선택에서 거절되면 안 된다");
+        if (db.calls.some((call) => call.query.includes("account_id"))) assert.ok(usedAccount("acc-b"), "지정한 계좌로 쿼리");
+      });
+    }
+  });
+}
+
+test("계좌 지정: 헤더와 쿼리가 다르면 400", async () => {
+  const holdings = await import("@/app/api/holdings/route");
+  const response = await holdings.GET(
+    authRequest("GET", {
+      bearer: tokenB,
+      url: "https://pension.test/api/holdings?accountId=acc-b",
+      headers: { "x-portfolio-account-id": "acc-a" },
+    })
+  );
+  assert.equal(response.status, 400);
+  assert.ok(!usedAccount("acc-a"));
+});
+
+test("계좌 지정: GET /accounts는 지정한 계좌를 activeAccountId로 돌려준다", async () => {
+  accountsByUser[USER_B].push({ id: "acc-b2", name: "B 자녀", owner_type: "child" });
+  try {
+    const accounts = await import("@/app/api/accounts/route");
+    const response = await accounts.GET(
+      authRequest("GET", { bearer: tokenB, headers: { "x-portfolio-account-id": "acc-b2" } })
+    );
+    const body = await readJson<{ activeAccountId: string; accounts: { id: string }[] }>(response);
+    assert.equal(body.activeAccountId, "acc-b2");
+    assert.deepEqual(body.accounts.map((item) => item.id), ["acc-b", "acc-b2"]);
+  } finally {
+    accountsByUser[USER_B].pop();
+  }
 });

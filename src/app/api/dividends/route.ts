@@ -2,12 +2,14 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const rows = await sql`
     SELECT d.id, d.user_id, d.account_id, d.holding_id, d.amount, d.date::text AS date, d.memo, d.created_at,
            h.name AS holding_name, h.code AS holding_code
@@ -22,7 +24,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const { holdingId, amount, date, memo } = await request.json().catch(() => ({}));
   if (!holdingId || !Number.isFinite(Number(amount)) || !date) {
     return NextResponse.json({ error: "holdingId, amount, date 필요" }, { status: 400 });
@@ -47,7 +51,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const { id } = await request.json();
   await sql`DELETE FROM dividends WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
   return NextResponse.json({ ok: true });

@@ -10,10 +10,16 @@ process.env.JWT_SECRET ||= "test-only-secret-for-pension-manager";
 const USER_A = "user-a";
 const USER_B = "user-b";
 
-// 가짜 users 테이블 — id → password_hash
+// 가짜 users 테이블 — id → password_hash, id → session_version
 const users = new Map<string, string | null>();
+const versions = new Map<string, number>();
 const db = createFakeSql();
 function usersHandler(query: string, values: unknown[]) {
+  if (query.startsWith("SELECT session_version FROM users")) {
+    const id = values[0] as string;
+    return users.has(id) ? [{ session_version: versions.get(id) ?? 0 }] : [];
+  }
+  if (query.startsWith("ALTER TABLE users")) return [];
   if (query.startsWith("SELECT")) {
     const id = values[0] as string;
     if (!users.has(id)) return [];
@@ -27,7 +33,8 @@ function usersHandler(query: string, values: unknown[]) {
     const matches = query.includes("IS NULL") ? current === null : current === expected;
     if (!matches) return [];
     users.set(id, nextHash);
-    return [{ id }];
+    if (query.includes("session_version = session_version + 1")) versions.set(id, (versions.get(id) ?? 0) + 1);
+    return [{ id, session_version: versions.get(id) ?? 0 }];
   }
   return [];
 }
@@ -48,13 +55,15 @@ mock.module("@/lib/portfolio-accounts", {
 });
 
 let route: typeof import("@/app/api/auth/password/route");
+let signToken: typeof import("@/lib/session").signToken;
 let tokenA = "";
 let tokenB = "";
 
 before(async () => {
   const session = await import("@/lib/session");
-  tokenA = await session.signToken(USER_A);
-  tokenB = await session.signToken(USER_B);
+  signToken = session.signToken;
+  tokenA = await session.signToken(USER_A, 0);
+  tokenB = await session.signToken(USER_B, 0);
   route = await import("@/app/api/auth/password/route");
 });
 
@@ -62,6 +71,9 @@ beforeEach(async () => {
   db.reset();
   db.setHandler(usersHandler);
   users.clear();
+  versions.clear();
+  versions.set(USER_A, 0);
+  versions.set(USER_B, 0);
   users.set(USER_A, await bcrypt.hash("old-password", 4));
   users.set(USER_B, null); // Google 전용 계정
   rateLimit.allow = true;
@@ -98,9 +110,13 @@ for (const mode of ["cookie", "bearer"] as const) {
   test(`${mode}: 현재 비밀번호가 맞으면 변경한다`, async () => {
     const response = await post({ [mode]: tokenA }, { currentPassword: "old-password", newPassword: "new-password" });
     assert.equal(response.status, 200);
-    assert.deepEqual(await readJson(response), { ok: true, hasPassword: true });
+    const body = await readJson<{ ok: boolean; hasPassword: boolean; token?: string }>(response);
+    assert.equal(body.ok, true);
+    assert.equal(body.hasPassword, true);
     assert.ok(await bcrypt.compare("new-password", users.get(USER_A) ?? ""));
-    assert.equal(response.headers.get("set-cookie"), null);
+    // 새 토큰은 요청 방식대로 — 쿠키 세션은 Set-Cookie, Bearer는 본문 token (아래 토큰 폐기 테스트 참고)
+    assert.equal(Boolean(response.headers.get("set-cookie")), mode === "cookie");
+    assert.equal(typeof body.token === "string", mode === "bearer");
   });
 }
 
@@ -152,8 +168,9 @@ test("Google 전용 계정: 그 사이 비밀번호가 생겼다면 덮어쓰지
 });
 
 test("Google 전용 계정으로 비밀번호를 설정한 뒤에는 현재 비밀번호가 필요하다", async () => {
-  await post({ bearer: tokenB }, { newPassword: "first-password" });
-  const again = await post({ bearer: tokenB }, { newPassword: "second-password" });
+  const first = await post({ bearer: tokenB }, { newPassword: "first-password" });
+  const { token } = await readJson<{ token: string }>(first);
+  const again = await post({ bearer: token }, { newPassword: "second-password" });
   assert.equal(again.status, 400);
 });
 
@@ -206,5 +223,62 @@ test("레이트리밋은 사용자 기준이며 초과하면 429, 비밀번호 �
   db.setHandler(usersHandler);
   const response = await post({ cookie: tokenA }, { currentPassword: "old-password", newPassword: "new-password" });
   assert.equal(response.status, 429);
-  assert.equal(db.calls.length, 0);
+  // 토큰 폐기 확인(세션 버전 조회)만 하고 비밀번호 해시는 읽지 않는다
+  assert.deepEqual(db.calls.map((call) => call.query), ["SELECT session_version FROM users WHERE id = ?"]);
+});
+
+// ── 토큰 폐기: 비밀번호 설정·변경 시 기존 토큰 무효화 ─────────────
+
+const getAs = (auth: { cookie?: string; bearer?: string }) => route.GET(authRequest("GET", auth));
+const cookieToken = (response: Response) =>
+  decodeURIComponent(/pension-session=([^;]+)/.exec(response.headers.get("set-cookie") ?? "")?.[1] ?? "");
+
+test("쿠키로 변경: 세션 버전을 올리고, 이 브라우저에는 새 쿠키를 준다 — 다른 기기의 기존 토큰은 401", async () => {
+  const otherDevice = await signToken(USER_A, 0); // 같은 사용자의 다른 기기(모바일 등)
+  const response = await post({ cookie: tokenA }, { currentPassword: "old-password", newPassword: "new-password" });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await readJson(response), { ok: true, hasPassword: true });
+  assert.equal(versions.get(USER_A), 1);
+  assert.match(db.find("UPDATE users")[0].query, /session_version = session_version \+ 1/);
+
+  const fresh = cookieToken(response);
+  assert.ok(fresh, "새 세션 쿠키");
+  assert.match(response.headers.get("set-cookie") ?? "", /HttpOnly/i);
+  assert.equal((await getAs({ cookie: fresh })).status, 200);
+  assert.equal((await getAs({ cookie: tokenA })).status, 401);
+  assert.equal((await getAs({ bearer: otherDevice })).status, 401);
+});
+
+test("Bearer로 변경: 새 토큰을 본문으로 주고 쿠키는 쓰지 않는다 — 이전 토큰은 401", async () => {
+  const response = await post({ bearer: tokenA }, { currentPassword: "old-password", newPassword: "new-password" });
+  assert.equal(response.status, 200);
+  const body = await readJson<{ ok: boolean; hasPassword: boolean; token: string }>(response);
+  assert.equal(body.ok, true);
+  assert.equal(response.headers.get("set-cookie"), null);
+  assert.equal((await getAs({ bearer: body.token })).status, 200);
+  assert.equal((await getAs({ bearer: tokenA })).status, 401);
+});
+
+test("Google 전용 계정의 첫 비밀번호 설정도 기존 토큰을 폐기한다", async () => {
+  const response = await post({ bearer: tokenB }, { newPassword: "first-password" });
+  assert.equal(response.status, 200);
+  assert.equal(versions.get(USER_B), 1);
+  assert.equal((await getAs({ bearer: tokenB })).status, 401);
+});
+
+test("현재 비밀번호가 틀리거나 동시 변경(409)이면 세션 버전을 올리지 않는다", async () => {
+  assert.equal((await post({ cookie: tokenA }, { currentPassword: "wrong", newPassword: "new-password" })).status, 403);
+  db.setHandler((query, values) => {
+    if (query.startsWith("UPDATE users")) users.set(USER_A, "changed-elsewhere");
+    return usersHandler(query, values);
+  });
+  assert.equal((await post({ cookie: tokenA }, { currentPassword: "old-password", newPassword: "new-password" })).status, 409);
+  assert.equal(versions.get(USER_A), 0);
+});
+
+test("폐기된 토큰으로는 비밀번호를 바꿀 수 없다(401, 해시 조회 없음)", async () => {
+  versions.set(USER_A, 3);
+  const response = await post({ cookie: tokenA }, { currentPassword: "old-password", newPassword: "new-password" });
+  assert.equal(response.status, 401);
+  assert.equal(db.find("SELECT password_hash").length, 0);
 });

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 interface ImportItem {
   date: string;
@@ -65,7 +65,9 @@ export async function POST(request: Request) {
     const session = await getRequestSession(request);
     if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
     const userId = session.userId;
-    const accountId = await getActivePortfolioAccountId(userId);
+    const selected = await selectRequestAccount(request, userId);
+    if (!selected.ok) return selected.response;
+    const accountId = selected.accountId;
 
     const body = (await request.json().catch(() => null)) as { items?: ImportItem[]; skipDuplicates?: boolean } | null;
     const items = body?.items;

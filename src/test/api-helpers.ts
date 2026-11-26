@@ -125,11 +125,13 @@ export type AuthOptions = {
   /** Authorization: Bearer 토큰 */
   bearer?: string;
   url?: string;
+  /** 추가 헤더 (예: X-Portfolio-Account-Id) */
+  headers?: Record<string, string>;
 };
 
 /** 쿠키 또는 Bearer 인증 헤더를 붙인 요청 */
 export function authRequest(method: string, options: AuthOptions = {}): Request {
-  const headers: Record<string, string> = {};
+  const headers: Record<string, string> = { ...options.headers };
   if (options.cookie) headers.cookie = `pension-session=${options.cookie}`;
   if (options.bearer) headers.authorization = `Bearer ${options.bearer}`;
   const init: RequestInit = { method, headers };
@@ -138,4 +140,20 @@ export function authRequest(method: string, options: AuthOptions = {}): Request 
     init.body = JSON.stringify(options.body);
   }
   return new Request(options.url ?? "https://pension.test/api/route", init);
+}
+
+/**
+ * 실제 세션 모듈(@/lib/session)을 쓰는 테스트용 — 토큰 검증 때 나가는
+ * `SELECT session_version FROM users WHERE id = ?`에 가짜 버전 표로 답한다.
+ * 그 쿼리가 아니면 undefined를 돌려주므로 핸들러 맨 앞에서 `?? 나머지 처리`로 쓴다.
+ * 표에 없는 사용자는 삭제된 사용자로 본다(빈 결과).
+ */
+export function answerSessionVersion(
+  query: string,
+  values: unknown[],
+  versions: Map<string, number>
+): unknown[] | undefined {
+  if (!query.startsWith("SELECT session_version FROM users WHERE id =")) return undefined;
+  const version = versions.get(values[0] as string);
+  return version === undefined ? [] : [{ session_version: version }];
 }

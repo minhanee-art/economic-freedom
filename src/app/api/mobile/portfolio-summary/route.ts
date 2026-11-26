@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
 import { getCostBases, getDividendCalendar, getDividends, getHoldings, getProfile } from "@/lib/queries";
-import { getPortfolioAccounts } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 import { computeCategoryBalances, computeHoldingsWithPnL } from "@/lib/portfolio";
 import { getRetirementGoal } from "@/lib/pension-data";
 
@@ -14,12 +14,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
   }
 
-  const accounts = await getPortfolioAccounts(session.userId);
-  const accountId = new URL(request.url).searchParams.get("accountId") ?? accounts[0]?.id;
-  const account = accounts.find((item) => item.id === accountId) ?? accounts[0];
-  if (!account) {
-    return NextResponse.json({ error: "포트폴리오 계좌가 없습니다." }, { status: 404 });
-  }
+  // ?accountId= 또는 X-Portfolio-Account-Id — 소유하지 않은 계좌면 첫 계좌로 바꾸지 않고 404
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const { account, accounts } = selected;
 
   const [holdings, costBases, profile, dividends, dividendCalendar, retirementGoal] = await Promise.all([
     getHoldings(session.userId, account.id),

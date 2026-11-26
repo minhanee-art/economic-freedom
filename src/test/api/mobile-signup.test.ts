@@ -2,7 +2,7 @@
 import test, { before, beforeEach, mock } from "node:test";
 import assert from "node:assert/strict";
 
-import { createFakeSql, jsonRequest, rawRequest, readJson } from "@/test/api-helpers";
+import { answerSessionVersion, createFakeSql, jsonRequest, rawRequest, readJson } from "@/test/api-helpers";
 
 process.env.JWT_SECRET ||= "test-only-secret-for-pension-manager";
 
@@ -42,9 +42,13 @@ before(async () => {
   ]);
 });
 
-function newUserHandler(query: string) {
+// 새 사용자는 session_version 0으로 생긴다 — 발급 토큰 검증 때 이 표로 답한다
+const versions = new Map([["user-new", 0]]);
+function newUserHandler(query: string, values: unknown[]) {
+  const version = answerSessionVersion(query, values, versions);
+  if (version) return version;
   if (query.includes("SELECT id FROM users")) return [];
-  if (query.includes("INSERT INTO users")) return [{ id: "user-new" }];
+  if (query.includes("INSERT INTO users")) return [{ id: "user-new", session_version: 0 }];
   return [];
 }
 
@@ -149,3 +153,11 @@ for (const [name, route] of [
     assert.equal(response.status, 409);
   });
 }
+
+test("가입: users에 session_version을 RETURNING 받아 토큰 sv에 넣는다", async () => {
+  const { decodeJwt } = await import("jose");
+  const response = await mobileSignup.POST(jsonRequest("POST", { email: "new@b.com", password: "secret123" }));
+  const { token } = await readJson<{ token: string }>(response);
+  assert.equal(decodeJwt(token).sv, 0);
+  assert.match(db.find("INSERT INTO users")[0].query, /RETURNING id, session_version/);
+});

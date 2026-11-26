@@ -2,13 +2,15 @@ import test, { before, beforeEach, mock } from "node:test";
 import assert from "node:assert/strict";
 import bcrypt from "bcryptjs";
 
-import { createFakeSql, jsonRequest, readJson } from "@/test/api-helpers";
+import { answerSessionVersion, createFakeSql, jsonRequest, readJson } from "@/test/api-helpers";
 import type { CostBasis, Dividend, Holding } from "@/types";
 
 process.env.JWT_SECRET ||= "test-only-secret-for-pension-manager";
 
 // ── 스텁 ─────────────────────────────────────
-const db = createFakeSql();
+// 토큰 검증 때 나가는 session_version 조회에 답한다(user-1은 버전 0)
+const versions = new Map<string, number>();
+const db = createFakeSql((query, values) => answerSessionVersion(query, values, versions) ?? []);
 const rateLimit = { allow: true, keys: [] as string[] };
 
 const accounts = [{ id: "acc-1", name: "기본 계좌", owner_type: "self" }];
@@ -131,6 +133,8 @@ before(async () => {
 
 beforeEach(() => {
   db.reset();
+  versions.clear();
+  versions.set("user-1", 0);
   rateLimit.allow = true;
   rateLimit.keys.length = 0;
   queriesCalls.length = 0;
@@ -158,7 +162,7 @@ test("mobile 로그인: 없는 계정이나 비밀번호 불일치는 401", asyn
   );
 
   const hash = await bcrypt.hash("right-password", 4);
-  db.setHandler(() => [{ id: "user-1", password_hash: hash, display_name: "민한" }]);
+  db.setHandler(() => [{ id: "user-1", password_hash: hash, session_version: 0, display_name: "민한" }]);
   assert.equal(
     (await login.POST(jsonRequest("POST", { email: "a@b.com", password: "wrong" }))).status,
     401
@@ -167,7 +171,7 @@ test("mobile 로그인: 없는 계정이나 비밀번호 불일치는 401", asyn
 
 test("mobile 로그인: 성공하면 토큰을 본문으로 돌려준다", async () => {
   const hash = await bcrypt.hash("right-password", 4);
-  db.setHandler(() => [{ id: "user-1", password_hash: hash, display_name: "민한" }]);
+  db.setHandler(() => [{ id: "user-1", password_hash: hash, session_version: 2, display_name: "민한" }]);
 
   const response = await login.POST(
     jsonRequest("POST", { email: " A@B.com ", password: "right-password" })
@@ -181,6 +185,9 @@ test("mobile 로그인: 성공하면 토큰을 본문으로 돌려준다", async
   assert.equal(body.user.displayName, "민한");
   assert.equal(response.headers.get("set-cookie"), null, "앱 로그인은 쿠키를 쓰지 않는다");
   assert.ok(rateLimit.keys[0]?.includes("mobile-login:"));
+  // 토큰에 현재 세션 버전을 담는다
+  const { decodeJwt } = await import("jose");
+  assert.equal(decodeJwt(body.token).sv, 2);
 });
 
 // ── mobile 포트폴리오 요약 ───────────────────
@@ -191,7 +198,7 @@ test("summary: Bearer 토큰이 없으면 401", async () => {
 
 test("summary: 계좌가 없으면 404", async () => {
   accounts.length = 0;
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
 
   try {
     const response = await summary.GET(
@@ -206,7 +213,7 @@ test("summary: 계좌가 없으면 404", async () => {
 });
 
 test("summary: 합계·손익·카테고리·배당을 계산한다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
 
   const response = await summary.GET(
     new Request("https://pension.test/api/mobile/portfolio-summary", {
@@ -252,7 +259,7 @@ test("summary: 합계·손익·카테고리·배당을 계산한다", async () =
 });
 
 test("summary: accountId 쿼리로 다른 계좌를 지정한다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
   accounts.push({ id: "acc-2", name: "자녀 계좌", owner_type: "child" });
 
   try {
@@ -270,8 +277,55 @@ test("summary: accountId 쿼리로 다른 계좌를 지정한다", async () => {
   }
 });
 
+const summaryRequest = (token: string, url = "https://pension.test/api/mobile/portfolio-summary", headers: Record<string, string> = {}) =>
+  new Request(url, { headers: { authorization: `Bearer ${token}`, ...headers } });
+
+test("summary: X-Portfolio-Account-Id 헤더로 계좌를 지정한다", async () => {
+  const token = await signToken("user-1", 0);
+  accounts.push({ id: "acc-2", name: "자녀 계좌", owner_type: "child" });
+  try {
+    const response = await summary.GET(summaryRequest(token, undefined, { "x-portfolio-account-id": "acc-2" }));
+    assert.equal((await readJson<{ account: { id: string } }>(response)).account.id, "acc-2");
+    assert.deepEqual(queriesCalls.find((call) => call.fn === "getHoldings")?.args, ["user-1", "acc-2"]);
+  } finally {
+    accounts.pop();
+  }
+});
+
+test("summary: 소유하지 않은 계좌를 지정하면 첫 계좌로 바꾸지 않고 404", async () => {
+  const token = await signToken("user-1", 0);
+  for (const request of [
+    summaryRequest(token, "https://pension.test/api/mobile/portfolio-summary?accountId=acc-other"),
+    summaryRequest(token, undefined, { "x-portfolio-account-id": "acc-other" }),
+  ]) {
+    const response = await summary.GET(request);
+    assert.equal(response.status, 404);
+    assert.match((await readJson<{ error: string }>(response)).error, /계좌를 찾을 수 없습니다/);
+  }
+  assert.equal(queriesCalls.filter((call) => call.fn === "getHoldings").length, 0, "데이터 조회 없음");
+});
+
+test("summary: 헤더와 쿼리가 서로 다른 계좌면 400", async () => {
+  const token = await signToken("user-1", 0);
+  const response = await summary.GET(
+    summaryRequest(token, "https://pension.test/api/mobile/portfolio-summary?accountId=acc-1", {
+      "x-portfolio-account-id": "acc-2",
+    })
+  );
+  assert.equal(response.status, 400);
+});
+
+test("summary: 폐기된 토큰(세션 버전 변경)이나 삭제된 사용자의 토큰은 401", async () => {
+  const token = await signToken("user-1", 0);
+  versions.set("user-1", 1);
+  assert.equal((await summary.GET(summaryRequest(token))).status, 401);
+  versions.delete("user-1");
+  assert.equal((await summary.GET(summaryRequest(token))).status, 401);
+  assert.equal(queriesCalls.length, 0);
+});
+
 test("summary: 저장한 은퇴 목표 월 생활비를 targetMonthlyCashflow로 보낸다", async () => {
-  const token = await signToken("user-1");
+  const token = await signToken("user-1", 0);
   const request = () =>
     new Request("https://pension.test/api/mobile/portfolio-summary", {
       headers: { authorization: `Bearer ${token}` },

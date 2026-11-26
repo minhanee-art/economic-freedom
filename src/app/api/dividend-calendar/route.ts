@@ -2,12 +2,14 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+import { selectRequestAccount } from "@/lib/account-selection";
 
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const rows = await sql`
     SELECT id, date::text, stock, type, note
     FROM dividend_calendar WHERE user_id = ${session.userId} AND account_id = ${accountId} ORDER BY date ASC
@@ -18,7 +20,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const accountId = await getActivePortfolioAccountId(session.userId);
+  const selected = await selectRequestAccount(request, session.userId);
+  if (!selected.ok) return selected.response;
+  const accountId = selected.accountId;
   const { date, stock, type, note } = await request.json() as {
     date: string; stock: string; type: string; note?: string;
   };

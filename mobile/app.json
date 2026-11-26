@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "경제적 자유",
+    "name": "가족연금계획",
     "slug": "economic-freedom",
     "version": "1.0.0",
     "scheme": "economicfreedom",
@@ -8,7 +8,11 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "kr.kimvibe.economicfreedom",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "kr.kimvibe.economicfreedom",

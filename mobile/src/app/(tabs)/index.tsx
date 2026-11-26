@@ -1,38 +1,40 @@
-import { Link } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { MetricCard } from "@/components/MetricCard";
+import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { colors, radius, spacing } from "@/styles/theme";
+import type { PortfolioSummary } from "@/types";
 import { formatKRW, formatPercent } from "@/utils/format";
 
 export default function HomeScreen() {
-  const { summary, session, isLoading, error, isDemo, refresh } = usePortfolioSummary();
-  const totalPnL = summary.totalPnL ?? summary.totalValue - summary.totalCost;
-  const totalPnLPct = summary.totalPnLPct ?? (summary.totalCost > 0 ? (totalPnL / summary.totalCost) * 100 : 0);
-  const monthlyCashflow = summary.expectedAnnualDividend / 12;
-  const cashflowProgress = Math.round((monthlyCashflow / summary.targetMonthlyCashflow) * 100);
-  const isPositive = totalPnL >= 0;
+  const { summary, isLoading, error, refresh } = usePortfolioSummary();
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
       <View style={styles.topBar}>
         <View>
-          <Text style={styles.appName}>경제적 자유</Text>
-          <Text style={styles.accountName}>{session ? summary.account?.name ?? "내 포트폴리오" : "샘플 포트폴리오"}</Text>
+          <Text style={styles.appName}>가족연금계획</Text>
+          <Text style={styles.accountName}>{summary?.account?.name ?? "내 포트폴리오"}</Text>
         </View>
-        {isDemo ? (
-          <Link href="/login" asChild>
-            <Pressable style={styles.loginButton}>
-              <Text style={styles.loginButtonText}>로그인</Text>
-            </Pressable>
-          </Link>
-        ) : null}
       </View>
 
-      {error ? <Text style={styles.notice}>{error}</Text> : null}
+      {summary ? <HomeContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
+    </AppShell>
+  );
+}
 
+function HomeContent({ summary }: { summary: PortfolioSummary }) {
+  const totalPnL = summary.totalPnL ?? summary.totalValue - summary.totalCost;
+  const totalPnLPct = summary.totalPnLPct ?? (summary.totalCost > 0 ? (totalPnL / summary.totalCost) * 100 : 0);
+  const monthlyCashflow = summary.expectedAnnualDividend / 12;
+  const cashflowProgress =
+    summary.targetMonthlyCashflow > 0 ? Math.round((monthlyCashflow / summary.targetMonthlyCashflow) * 100) : 0;
+  const isPositive = totalPnL >= 0;
+
+  return (
+    <>
       <View style={styles.hero}>
         <Text style={styles.heroLabel}>총 평가금액</Text>
         <Text style={styles.heroValue}>{formatKRW(summary.totalValue)}</Text>
@@ -70,7 +72,7 @@ export default function HomeScreen() {
         ))}
         {(summary.categories ?? []).length === 0 ? <Text style={styles.cardText}>보유자산을 입력하면 자산 구성이 표시됩니다.</Text> : null}
       </Card>
-    </AppShell>
+    </>
   );
 }
 
@@ -90,25 +92,6 @@ const styles = StyleSheet.create({
   accountName: {
     marginTop: spacing.xs,
     color: colors.inkMuted,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  loginButton: {
-    borderRadius: radius.pill,
-    backgroundColor: colors.ink,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-  },
-  loginButtonText: {
-    color: colors.surface,
-    fontWeight: "900",
-  },
-  notice: {
-    marginBottom: spacing.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.negativeSoft,
-    color: colors.negative,
-    padding: spacing.md,
     fontSize: 13,
     fontWeight: "800",
   },

@@ -1,6 +1,8 @@
 import { Link, router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import Constants from "expo-constants";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { clearSession, loadSession } from "@/storage/session";
@@ -29,10 +31,10 @@ export default function SettingsScreen() {
   return (
     <AppShell>
       <Text style={styles.title}>설정</Text>
-      <Text style={styles.subtitle}>앱 정보, 계정 연결, 심사에 필요한 안내를 관리합니다.</Text>
+      <Text style={styles.subtitle}>계정과 앱 정보를 관리합니다.</Text>
 
       <Card title="계정">
-        <InfoRow label="상태" value={session ? "연결됨" : "샘플 모드"} />
+        <InfoRow label="상태" value={session ? "연결됨" : "로그아웃됨"} />
         <InfoRow label="이메일" value={session?.user.email ?? "로그인 필요"} />
         {session ? (
           <Pressable style={styles.secondaryButton} onPress={handleLogout}>
@@ -48,15 +50,33 @@ export default function SettingsScreen() {
       </Card>
 
       <Card title="앱 정보">
-        <InfoRow label="앱 이름" value="경제적 자유" />
-        <InfoRow label="패키지" value="kr.kimvibe.economicfreedom" />
-        <InfoRow label="제출 형식" value="Android App Bundle" />
+        <InfoRow label="앱 이름" value="가족연금계획" />
+        <InfoRow label="버전" value={Constants.expoConfig?.version ?? "-"} />
       </Card>
 
-      <Card title="심사 준비">
-        <Text style={styles.bodyText}>개인정보처리방침과 계정 삭제 안내 페이지를 웹앱에 추가한 뒤 Play Console 데이터 보안 답변을 맞춥니다.</Text>
+      <Card title="약관 및 안내">
+        <LinkRow label="개인정보처리방침" url={webUrl("/privacy")} />
+        <LinkRow label="계정 삭제 안내" url={webUrl("/account-deletion")} />
       </Card>
+
+      {session ? (
+        <Link href="/delete-account" asChild>
+          <Pressable style={styles.dangerButton}>
+            <Text style={styles.dangerButtonText}>계정 삭제</Text>
+          </Pressable>
+        </Link>
+      ) : null}
     </AppShell>
+  );
+}
+
+function LinkRow({ label, url }: { label: string; url: string | null }) {
+  if (!url) return null;
+  return (
+    <Pressable accessibilityRole="link" onPress={() => Linking.openURL(url)} style={styles.infoRow}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.linkValue}>열기 ›</Text>
+    </Pressable>
   );
 }
 
@@ -122,9 +142,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "900",
   },
-  bodyText: {
-    color: colors.inkMuted,
-    fontSize: 14,
-    lineHeight: 20,
+  linkValue: {
+    color: colors.primary,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  dangerButton: {
+    marginTop: spacing.md,
+    padding: spacing.lg,
+  },
+  dangerButtonText: {
+    color: colors.negative,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "900",
   },
 });

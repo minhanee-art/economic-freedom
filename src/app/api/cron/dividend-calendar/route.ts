@@ -1,5 +1,6 @@
 // 매일 08:00 KST 7일 이내 배당 일정 체크 → 텔레그램 전송 (일정 없으면 조용히 종료)
 import { NextResponse, type NextRequest } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 
@@ -21,10 +22,7 @@ const EVENT_EMOJI: Record<string, string> = {
 };
 
 async function handle(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  const qs = request.nextUrl.searchParams.get("secret");
-  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -247,3 +247,21 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_year INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_birth_year INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS expected_return_pct NUMERIC(5,2);
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS salary_bracket TEXT; -- 'low'(총급여 5,500만원 이하) | 'high'
+
+-- 15. 텔레그램 채팅 소유 확인(연결 코드) — 코드(src/lib/telegram-link.ts ensureTelegramLinkSchema)에서도
+--     같은 정의를 IF NOT EXISTS로 보장한다.
+-- telegram_chat_verified_at: 연결 코드로 소유를 확인한 시각. NULL이면 telegram_chat_id가 있어도 리포트를 보내지 않는다.
+ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS telegram_chat_verified_at TIMESTAMPTZ;
+-- 일회용 연결 코드 — 평문은 저장하지 않고 SHA-256 해시만. 10분 만료·1회용.
+-- session_version: 발급 당시 users.session_version. 사용 시 값이 다르면(비밀번호 변경·Google 첫 연결 등) 무효.
+CREATE TABLE IF NOT EXISTS telegram_link_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  account_id UUID NOT NULL REFERENCES portfolio_accounts(id) ON DELETE CASCADE,
+  code_hash TEXT NOT NULL UNIQUE,
+  session_version INTEGER NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_telegram_link_codes_account ON telegram_link_codes(account_id);

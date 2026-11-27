@@ -95,10 +95,39 @@ test("Bearer 시크릿이 맞으면 인증을 통과한다", async (t) => {
   }
 });
 
-test("쿼리 시크릿도 인증으로 인정한다", async () => {
+test("쿼리 시크릿(?secret=)은 더 이상 인증으로 인정하지 않는다", async (t) => {
+  for (const route of routes) {
+    await t.test(route.name, async () => {
+      const response = await route.GET(
+        cronRequest(`/api/cron/${route.name}?secret=${process.env.CRON_SECRET}&type=all`)
+      );
+      assert.equal(response.status, 401);
+    });
+  }
+  assert.equal(telegramCalls.length > 0, true, "앞선 Bearer 테스트에서는 전송이 있었어야 한다");
+});
+
+test("Bearer 접두어가 없거나 시크릿 앞뒤가 다르면 401", async (t) => {
+  const secret = process.env.CRON_SECRET!;
   const report = routes.find((route) => route.name === "report")!;
-  const response = await report.GET(
-    cronRequest(`/api/cron/report?secret=${process.env.CRON_SECRET}&type=all`)
-  );
-  assert.notEqual(response.status, 401);
+  for (const authorization of [secret, `bearer ${secret}`, `Bearer ${secret}x`, `Bearer ${secret.slice(1)}`, `Bearer  ${secret}`]) {
+    await t.test(JSON.stringify(authorization), async () => {
+      const response = await report.GET(cronRequest("/api/cron/report?type=all", { authorization }));
+      assert.equal(response.status, 401);
+    });
+  }
+});
+
+test("CRON_SECRET이 공백뿐이면 'Bearer ' 헤더도 거부한다(fail closed)", async () => {
+  const saved = process.env.CRON_SECRET;
+  process.env.CRON_SECRET = "   ";
+  try {
+    const report = routes.find((route) => route.name === "report")!;
+    for (const authorization of ["Bearer    ", "Bearer ", "Bearer"]) {
+      const response = await report.GET(cronRequest("/api/cron/report", { authorization }));
+      assert.equal(response.status, 401);
+    }
+  } finally {
+    process.env.CRON_SECRET = saved;
+  }
 });

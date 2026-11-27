@@ -1,5 +1,6 @@
 // 매일 09:00, 18:00 KST 배당 관련 뉴스 수집 후 AI 헤드라인 정리 → 텔레그램 전송
 import { NextResponse, type NextRequest } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { NEWS_DIGEST_SYSTEM_PROMPT, asDataBlock, callOpenAIChat, withAiDisclaimer } from "@/lib/ai-text";
 
@@ -53,10 +54,7 @@ function parseRss(xml: string, keyword: string, cutoff: Date): NewsItem[] {
 }
 
 async function handle(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  const qs = request.nextUrl.searchParams.get("secret");
-  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

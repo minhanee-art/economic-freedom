@@ -1,5 +1,6 @@
 // 계좌별 포트폴리오 기간 수익률 스냅샷/계산
 import { sql } from "@/lib/db";
+import { ensureTelegramLinkSchema, toTelegramLinkStatus } from "@/lib/telegram-link";
 
 export type ReturnPeriodKey = "day" | "week" | "month";
 
@@ -17,7 +18,12 @@ export type PortfolioReturnPeriod = {
 export type PortfolioReturnSummary = {
   accountId: string;
   accountName: string;
+  /** 소유 확인(연결 코드)을 마친 chat_id만. 미확인 chat_id는 null — 리포트 발송 대상이 아니다. */
   telegramChatId: string | null;
+  /** 확인된 chat_id 끝 4자리(화면 표시용) */
+  telegramChatIdMasked: string | null;
+  /** 예전에 직접 입력한 미확인 chat_id가 남아 있어 다시 연결해야 한다 */
+  telegramNeedsRelink: boolean;
   asOfDate: string;
   totalValue: number;
   totalCost: number;
@@ -68,9 +74,10 @@ export async function getPortfolioReturnSummary(
   accountId: string
 ): Promise<PortfolioReturnSummary> {
   await ensurePortfolioReturnSchema();
+  await ensureTelegramLinkSchema();
   const today = toKstDateKey(new Date());
   const [account] = await sql`
-    SELECT id, name, telegram_chat_id
+    SELECT id, name, telegram_chat_id, telegram_chat_verified_at
     FROM portfolio_accounts
     WHERE id = ${accountId} AND user_id = ${userId}
   `;
@@ -90,13 +97,16 @@ export async function getPortfolioReturnSummary(
     })
   );
 
+  const telegram = toTelegramLinkStatus(account);
   const totalPnL = current.totalValue - current.totalCost;
   const totalPnLPct = current.totalCost > 0 ? (totalPnL / current.totalCost) * 100 : 0;
 
   return {
     accountId,
     accountName: String(account.name),
-    telegramChatId: typeof account.telegram_chat_id === "string" ? account.telegram_chat_id : null,
+    telegramChatId: telegram.verifiedChatId,
+    telegramChatIdMasked: telegram.chatIdMasked,
+    telegramNeedsRelink: telegram.needsRelink,
     asOfDate: today,
     totalValue: current.totalValue,
     totalCost: current.totalCost,
@@ -104,22 +114,6 @@ export async function getPortfolioReturnSummary(
     totalPnLPct,
     periods: Object.fromEntries(periodEntries) as Record<ReturnPeriodKey, PortfolioReturnPeriod>,
   };
-}
-
-export async function updatePortfolioTelegramChatId(
-  userId: string,
-  accountId: string,
-  telegramChatId: string | null
-): Promise<void> {
-  const cleanChatId = telegramChatId?.trim() || null;
-  if (cleanChatId && !/^-?\d{5,20}$/.test(cleanChatId)) {
-    throw new Error("텔레그램 chat_id는 숫자만 입력해주세요.");
-  }
-  await sql`
-    UPDATE portfolio_accounts
-    SET telegram_chat_id = ${cleanChatId}
-    WHERE id = ${accountId} AND user_id = ${userId}
-  `;
 }
 
 export function formatReturnReport(summary: PortfolioReturnSummary): string {

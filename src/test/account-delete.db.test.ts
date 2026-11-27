@@ -40,6 +40,7 @@ const USER_TABLES = [
   "portfolio_value_snapshots",
   "pension_contributions",
   "pension_income_sources",
+  "telegram_link_codes",
 ];
 const ALL_TABLES = ["users", ...USER_TABLES, "purchase_items"].sort();
 
@@ -73,6 +74,8 @@ before(async () => {
   await returns.ensurePortfolioReturnSchema();
   const pension = await import("@/lib/pension-data");
   await pension.ensurePensionSchema();
+  const telegramLink = await import("@/lib/telegram-link");
+  await telegramLink.ensureTelegramLinkSchema();
 
   me = await import("@/app/api/me/route");
 });
@@ -116,6 +119,7 @@ async function seedUser(userId: string, email: string, passwordHash: string | nu
   await db.sql`INSERT INTO portfolio_value_snapshots (user_id, account_id, snapshot_date, total_value, total_cost) VALUES (${userId}, ${acc.id}, ${"2026-11-25"}, ${110000}, ${100000})`;
   await db.sql`INSERT INTO pension_contributions (user_id, account_id, year, amount) VALUES (${userId}, ${acc.id}, ${2026}, ${3000000})`;
   await db.sql`INSERT INTO pension_income_sources (user_id, member, source_type, monthly_amount, start_age) VALUES (${userId}, ${"self"}, ${"national_pension"}, ${1000000}, ${65})`;
+  await db.sql`INSERT INTO telegram_link_codes (user_id, account_id, code_hash, session_version, expires_at) VALUES (${userId}, ${acc.id}, ${`hash-${userId}`}, ${0}, NOW() + INTERVAL '10 minutes')`;
 }
 
 /** 한 사용자 소유 행 수를 테이블별로 센다 (purchase_items는 record 경유). */

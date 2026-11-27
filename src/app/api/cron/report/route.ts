@@ -2,8 +2,10 @@
 //  · 매월 1일  → 월간 리포트
 //  · 매주 월요일 → 주간 리포트(손익 상위 3종목)
 //  · 매월 5일  → 투자 알림
-// 수동 테스트: ?secret=<CRON_SECRET>&type=monthly|weekly|reminder|all
+// 수동 테스트: Authorization: Bearer <CRON_SECRET> 헤더 + ?type=monthly|weekly|reminder|all
+//   curl -H "Authorization: Bearer $CRON_SECRET" "https://<도메인>/api/cron/report?type=all"
 import { NextResponse, type NextRequest } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import {
   resolveUserId,
   loadPortfolio,
@@ -17,12 +19,7 @@ import {
 export const dynamic = "force-dynamic";
 
 async function handle(request: NextRequest) {
-  // 인증: Vercel Cron은 Authorization: Bearer <CRON_SECRET> 자동 첨부.
-  // 수동 테스트는 ?secret=<CRON_SECRET> 쿼리로도 허용.
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  const querySecret = request.nextUrl.searchParams.get("secret");
-  if (!secret || (auth !== `Bearer ${secret}` && querySecret !== secret)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,5 +1,6 @@
 // 매일 08:30 KST DB watchlist 종목 뉴스 수집 → AI 헤드라인 정리 → 텔레그램 전송 cron
 import { NextResponse, type NextRequest } from "next/server";
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { sql } from "@/lib/db";
 import { sendTelegramMessage } from "@/lib/telegram";
 import { NEWS_DIGEST_SYSTEM_PROMPT, asDataBlock, callOpenAIChat, withAiDisclaimer } from "@/lib/ai-text";
@@ -33,10 +34,7 @@ async function fetchNewsHeadlines(stockName: string): Promise<string[]> {
 }
 
 async function handle(request: NextRequest) {
-  const secret = process.env.CRON_SECRET;
-  const auth = request.headers.get("authorization");
-  const qs = request.nextUrl.searchParams.get("secret");
-  if (!secret || (auth !== `Bearer ${secret}` && qs !== secret)) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

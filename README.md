@@ -52,6 +52,7 @@ npm run dev                  # http://localhost:3000
 | `CRON_SECRET` | Cron 호출 인증 (미설정 시 cron이 401로 차단) | Cron 사용 시 |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` | 텔레그램 리포트·봇. 봇은 `TELEGRAM_WEBHOOK_SECRET`과 허용 chat_id가 없으면 모든 요청을 거부 | 선택 |
 | `TELEGRAM_ALLOWED_CHAT_IDS` | 봇과 대화할 수 있는 chat_id(쉼표 구분). `TELEGRAM_CHAT_ID`와 합쳐 허용 목록이 됨 | 봇 사용 시 |
+| `TELEGRAM_BOT_USERNAME` | 봇 사용자명(@ 제외). 설정 > 텔레그램 연결에서 `t.me` 딥링크를 만든다. 없으면 코드만 보여 준다 | 선택 |
 | `REPORT_USER_EMAIL` 또는 `REPORT_USER_ID` | 리포트 대상 사용자 | 리포트 사용 시 |
 | `KIS_APP_KEY`, `KIS_APP_SECRET` | 한국투자증권 시세 | 선택 |
 | `OPENAI_API_KEY` | 뉴스 감정분석·봇 답변 | 선택 |
@@ -78,7 +79,7 @@ CI(`.github/workflows/ci.yml`)는 PR과 `main` push에서 타입 검사 → lint
 
 ## Cron
 
-`vercel.json`에 등록된 경로: `/api/cron/report`, `sentiment`, `market-close`, `portfolio`, `dividend-news`, `dividend-calendar`, `technical`. 모두 `CRON_SECRET`으로 인증하며 결과를 텔레그램으로 보냅니다.
+`vercel.json`에 등록된 경로: `/api/cron/report`, `sentiment`, `market-close`, `portfolio`, `dividend-news`, `dividend-calendar`, `technical`. 모두 `Authorization: Bearer <CRON_SECRET>` 헤더로만 인증하며(쿼리 `?secret=`는 받지 않음, 상수 시간 비교) 결과를 운영자 채팅(`TELEGRAM_CHAT_ID`)으로 보냅니다. 수동 실행: `curl -H "Authorization: Bearer $CRON_SECRET" https://<도메인>/api/cron/report?type=all`
 
 ## 모바일 앱 (`mobile/`)
 

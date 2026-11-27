@@ -1,5 +1,5 @@
 import type { DividendRecord, PurchaseRecord } from "@/types";
-import { apiRequest } from "./client";
+import { ApiError, apiRequest } from "./client";
 
 /**
  * 거래 기록 API. 계좌를 헤더(X-Portfolio-Account-Id)와 ?accountId= 쿼리에 같은 값으로 함께 보낸다.
@@ -122,4 +122,42 @@ export async function deleteDividend(token: string, accountId: string, id: strin
     fallbackError: "배당 수령 기록을 삭제하지 못했습니다.",
     body: { id },
   });
+}
+
+/** 삭제하려는 매수 기록이 서버에 없음(404). 계좌 없음(404)과 구분하기 위한 별도 오류. */
+export class PurchaseNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PurchaseNotFoundError";
+  }
+}
+
+/** 정확히 되돌릴 수 없어 서버가 거절함(409). message는 서버 문구 그대로다. */
+export class PurchaseDeleteConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "PurchaseDeleteConflictError";
+  }
+}
+
+const PURCHASE_NOT_FOUND_MESSAGE = "매수 기록을 찾을 수 없습니다.";
+
+export async function deletePurchase(token: string, accountId: string, id: string): Promise<void> {
+  try {
+    await apiRequest(scoped(`/api/purchases/${encodeURIComponent(id)}`, accountId), {
+      method: "DELETE",
+      token,
+      accountId,
+      fallbackError: "매수 기록을 삭제하지 못했습니다.",
+    });
+  } catch (err) {
+    // 서버는 계좌 없음("계좌를 찾을 수 없습니다.")과 기록 없음 모두 404로 답한다. 문구로 구분한다.
+    if (err instanceof ApiError && err.status === 404 && err.message === PURCHASE_NOT_FOUND_MESSAGE) {
+      throw new PurchaseNotFoundError(err.message);
+    }
+    if (err instanceof ApiError && err.status === 409) {
+      throw new PurchaseDeleteConflictError(err.message);
+    }
+    throw err;
+  }
 }

@@ -37,7 +37,7 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
               color: "#0d253d",
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 12, color: "#5f6f88" }} />
+          <Legend wrapperStyle={{ fontSize: 12 }} formatter={(value) => <span className="text-ink-mute">{value}</span>} />
           {/* 누적 투입: 회색 점선(채움 없음), 평가금액: 브랜드 실선 + 옅은 단색 면 */}
           <Area
             type="monotone"

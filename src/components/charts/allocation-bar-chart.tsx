@@ -35,9 +35,9 @@ export function AllocationBarChart({ data }: AllocationBarChartProps) {
               color: "#0d253d",
             }}
           />
-          <Legend wrapperStyle={{ fontSize: 12, color: "#5f6f88" }} />
+          <Legend wrapperStyle={{ fontSize: 12 }} formatter={(value) => <span className="text-ink-mute">{value}</span>} />
           {/* 목표: 회색 테두리 막대(3:1 이상), 현재: 브랜드 채움 — 색과 모양 둘 다로 구분 */}
-          <Bar dataKey="target" name="목표" fill="var(--surface)" stroke={CHART_MUTED} strokeWidth={1.5} strokeDasharray="3 2" isAnimationActive={!reduceMotion} />
+          <Bar dataKey="target" name="목표" fill="var(--hairline)" stroke={CHART_MUTED} strokeWidth={1.5} strokeDasharray="3 2" isAnimationActive={!reduceMotion} />
           <Bar dataKey="current" name="현재" fill="#533afd" isAnimationActive={!reduceMotion} />
         </BarChart>
       </ResponsiveContainer>

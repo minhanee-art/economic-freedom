@@ -10,6 +10,7 @@ import { HoldingCard } from "@/components/portfolio/holding-card";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
 import { DialogFrame } from "@/components/dashboard/confirm-dialog";
+import { StatusLine } from "@/components/dashboard/status-line";
 
 interface CategoryBalance {
   name: string;
@@ -1279,7 +1280,7 @@ function HiddenHoldingManager({
         onHoldingDetailsChange={onHoldingDetailsChange}
         isSavingTargetPct={isSavingTargetPct}
       />
-      {status && <p className="px-1 text-xs font-semibold text-danger">{status}</p>}
+      {status && <StatusLine ok={false} message={status} />}
       {dialog}
     </div>
   );
@@ -1528,9 +1529,7 @@ function AddHoldingForm({
         {isAdding ? "추가 중" : "종목 추가"}
       </button>
       {status && (
-        <p role={status.includes("추가했습니다") ? "status" : "alert"} className={`mt-2 text-xs font-semibold ${status.includes("추가했습니다") ? "text-success" : "text-danger"}`}>
-          {status}
-        </p>
+        <StatusLine className="mt-2" ok={status.includes("추가했습니다")} message={status} />
       )}
     </div>
   );

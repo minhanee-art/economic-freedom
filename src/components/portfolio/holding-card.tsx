@@ -7,6 +7,7 @@ import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, cn, formatTargetG
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
+import { StatusLine } from "@/components/dashboard/status-line";
 
 interface HoldingCardProps {
   holding: HoldingWithPnL;
@@ -530,9 +531,7 @@ export function HoldingCard({
                 거래내역 전체 재계산이 아니라 현재 표시값과 평균단가 기준 원가를 정정합니다. 보유수량이 있으면 평균단가는 0보다 커야 합니다.
               </p>
               {detailsStatus && (
-                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-success" : "text-danger"}`}>
-                  {detailsStatus}
-                </p>
+                <StatusLine className="mt-2" ok={detailsStatus.includes("완료")} message={detailsStatus} />
               )}
             </div>
           )}
@@ -644,9 +643,7 @@ export function HoldingCard({
             </div>
           )}
           {tradeStatus && (
-            <p className={`mt-2 text-xs font-semibold ${tradeStatus.includes("완료") ? "text-success" : "text-danger"}`}>
-              {tradeStatus}
-            </p>
+            <StatusLine className="mt-2" ok={tradeStatus.includes("완료")} message={tradeStatus} />
           )}
         </div>
       </div>

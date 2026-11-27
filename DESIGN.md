@@ -25,8 +25,8 @@ colors:
   danger: "#b42318"
   danger-soft: "#fef3f2"
   danger-line: "#fecdca"
-  caution: "#9a3412"
-  caution-soft: "#fff7ed"
+  caution: "#8a5a00"
+  caution-soft: "#fdf6e3"
   success: "#047857"
   chart-target: "#8792a2"
   dark-ink: "#f4f4f5"
@@ -217,11 +217,13 @@ components:
 | 토큰 | 라이트 | 다크 | 뜻 |
 |---|---|---|---|
 | `danger` / `danger-soft` / `danger-line` | #b42318 / #fef3f2 / #fecdca | #fda29b / #2b1615 / #7a271a | 삭제·오류·되돌릴 수 없는 작업 |
-| `caution` / `caution-soft` | #9a3412 / #fff7ed | #fbbf24 / #2a2010 | 주의: 목표 비중 초과, 예산 초과, 한도 초과, 추정값 |
+| `caution` / `caution-soft` | #8a5a00 / #fdf6e3 | #fbbf24 / #2a2010 | 주의: 목표 비중 초과, 예산 초과, 한도 초과, 추정값 |
 | `success` | #047857 | #6ee7b7 | "저장했습니다" 같은 상태 문구에만. 숫자에는 쓰지 않는다 |
 
 - 위험·오류의 빨강은 손익의 빨강과 색상이 가깝다. 그래서 **위험은 색 하나로 표시하지 않는다**: 테두리(`danger-line`), 선 아이콘, 무엇이 어떻게 되는지 적은 문구, `role="alert"`를 함께 쓴다. 손익 빨강은 언제나 부호가 붙은 숫자에만 나온다.
-- 목표 비중 초과는 손실이 아니다. `caution` 글자 + "초과" 문구로, 부족은 일반 잉크 + "부족" 문구로 표시한다.
+- `caution`은 **호박색**(색상 약 40°)이다. 손익 빨강(`gain`, 약 355°)·위험 빨강(`danger`, 약 4°)과 색상으로 구분되게 고른 값이고, 라이트 #8a5a00은 흰 면 5.9:1, `canvas-soft` 5.6:1, `caution-soft` 5.5:1로 12px 글자 기준을 넘는다. 다크 #fbbf24도 `dark-gain` #ff7b7b와 색상이 다르다.
+- 목표 비중 초과는 손실이 아니다. `caution` 글자 + "초과" 문구로, 부족은 일반 잉크 + "부족" 문구로 표시한다. 차이는 `+`/`-` 부호 대신 말로 적는다: "초과 49.4%p", "부족 3.0%p"(`formatTargetGap`). 부호는 손익에만 쓴다.
+- 은퇴 목표 대비 부족액, 예산 잔액처럼 손익이 아닌 금액은 `ink`로 적고 열 이름이나 "부족" 문구로 뜻을 전한다. 빨강·파랑을 쓰지 않는다.
 - 배당 금액은 수입 기록이지 손익이 아니다. 일반 `ink`, 굵기 600, 고정폭 숫자.
 
 ### 차트 색
@@ -308,7 +310,8 @@ components:
 | `gain` (기존 `positive`) | #d01f2e | `gain` |
 | `loss` (기존 `negative`) | #1f5ed6 | `loss` |
 | `danger` | #b42318 | `danger` |
-| `caution` (기존 `warning`) | #9a3412 | `caution` |
+| `caution` (기존 `warning`) | #8a5a00 | `caution` |
+| `cautionSoft` | #fdf6e3 | `caution-soft` |
 | `success` | #047857 | `success` |
 
 - 손익 규칙(빨강 상승·파랑 하락·부호 병기), 금액 표기 규칙, 기록 용어, 탭 구성(홈/자산/배당/연금/설정)은 웹과 앱이 같다.

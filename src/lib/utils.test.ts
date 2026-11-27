@@ -14,6 +14,7 @@ import {
   pnlArrow,
   formatPercent,
   formatPctPoint,
+  formatTargetGap,
   cn,
 } from "@/lib/utils";
 
@@ -97,4 +98,10 @@ test("cn: falsy 값을 제외하고 공백으로 잇는다", () => {
   assert.equal(cn("a", "b"), "a b");
   assert.equal(cn("a", undefined, false, "b"), "a b");
   assert.equal(cn(), "");
+});
+
+test("formatTargetGap: 부호 대신 초과·부족을 말로", () => {
+  assert.equal(formatTargetGap(49.42), "초과 49.4%p");
+  assert.equal(formatTargetGap(-3), "부족 3.0%p");
+  assert.equal(formatTargetGap(0.04), "차이 없음");
 });

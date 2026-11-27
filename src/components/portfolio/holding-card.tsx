@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
-import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn, formatTargetGap } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
@@ -410,12 +410,12 @@ export function HoldingCard({
           {hasPnL && (
             <Badge
               label={formatSignedKRW(h.profit_loss)}
-              variant={h.profit_loss >= 0 ? "green" : "red"}
+              variant={h.profit_loss > 0 ? "gain" : h.profit_loss < 0 ? "loss" : "default"}
             />
           )}
           {showDiff && (
             <Badge
-              label={`${diff > 0 ? "▲" : "▼"}${Math.abs(diff).toFixed(1)}%p`}
+              label={`목표 ${formatTargetGap(diff)}`}
               variant="amber"
             />
           )}
@@ -659,7 +659,7 @@ function Badge({
   variant,
 }: {
   label: string;
-  variant: "default" | "indigo" | "green" | "red" | "amber";
+  variant: "default" | "indigo" | "gain" | "loss" | "amber";
 }) {
   return (
     <span
@@ -667,8 +667,8 @@ function Badge({
         "inline-flex items-center border px-2 py-0.5 text-xs font-medium tabular-nums",
         variant === "default" && "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
         variant === "indigo" && "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-900/30 dark:text-indigo-400",
-        variant === "green" && "border-hairline bg-canvas-soft text-success",
-        variant === "red" && "border-danger-line bg-danger-soft text-danger",
+        variant === "gain" && "border-hairline bg-gain-soft text-gain",
+        variant === "loss" && "border-hairline bg-loss-soft text-loss",
         variant === "amber" && "border-caution/30 bg-caution-soft text-caution"
       )}
     >

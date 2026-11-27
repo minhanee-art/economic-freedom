@@ -5,7 +5,7 @@ import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
-import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, formatTargetGap } from "@/lib/utils";
 import { HoldingCard } from "@/components/portfolio/holding-card";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
@@ -631,7 +631,7 @@ export function RebalanceAlert({
           <dd className={`mt-1 text-lg font-semibold tabular-nums ${
             Math.abs(totalDiffPct) >= 0.1 && totalDiffPct > 0 ? "text-caution" : "text-ink"
           }`}>
-            {totalDiffPct > 0 ? "+" : ""}{totalDiffPct.toFixed(1)}%p
+            {formatTargetGap(totalDiffPct)}
           </dd>
         </div>
       </dl>
@@ -691,8 +691,7 @@ export function RebalanceAlert({
                       : "text-ink"
                   }`}
                 >
-                  {isOver ? "+" : ""}{c.diff}%p
-                  {isAlert && (isOver ? " 초과" : " 부족")}
+                  {formatTargetGap(c.diff)}
                 </span>
               </div>
               <div className="grid gap-1.5">
@@ -801,7 +800,7 @@ export function RebalanceAlert({
                 )}
               </p>
               <p className="mt-2 text-xs font-semibold text-caution">
-                총 이탈폭 {totalDrift.toFixed(1)}%p · 주황색 글자는 목표보다 많은 비중(초과)입니다.
+                총 이탈폭 {totalDrift.toFixed(1)}%p · 호박색 글자는 목표보다 많은 비중(초과)입니다.
               </p>
             </div>
           ) : (
@@ -839,13 +838,9 @@ export function RebalanceAlert({
                       h.diff > 0 ? "text-caution" : "text-ink"
                     }`}
                   >
-                    ({h.diff > 0 ? "+" : ""}{h.diff}%p)
+                    {formatTargetGap(h.diff)}
                   </span>
-                  <span className="ml-1">
-                    {h.diff > 0
-                      ? `${Math.abs(h.diff).toFixed(1)}%p 높음 (설정한 목표 비중 대비, 계산값)`
-                      : `${Math.abs(h.diff).toFixed(1)}%p 낮음 (설정한 목표 비중 대비, 계산값)`}
-                  </span>
+                  <span className="ml-1">(설정한 목표 비중 대비, 계산값)</span>
                 </div>
               ))}
             </div>
@@ -914,7 +909,7 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
           {hasPnL ? formatSignedKRW(holding.profit_loss) : "-"}
         </span>
         <span className={`border px-1.5 py-1 ${hasDiff ? isOver ? "border-caution/30 bg-caution-soft text-caution" : "border-hairline bg-surface text-ink" : "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"}`}>
-          {diff > 0 ? "+" : ""}{diff.toFixed(1)}%p{hasDiff ? (isOver ? " 초과" : " 부족") : ""}
+          {hasDiff ? formatTargetGap(diff) : `차이 ${Math.abs(diff).toFixed(1)}%p`}
         </span>
       </div>
     </div>

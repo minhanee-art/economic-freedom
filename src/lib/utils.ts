@@ -112,6 +112,16 @@ export function formatPctPoint(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(1)}%p`;
 }
 
+/**
+ * 목표 비중과의 차이(%p)를 손익처럼 보이지 않게 말로 적는다: "초과 49.4%p", "부족 3.0%p", "차이 없음".
+ * 목표 초과는 손실도 이익도 아니므로 +/− 부호를 쓰지 않는다(DESIGN.md 상태 색 규칙).
+ */
+export function formatTargetGap(diff: number, digits = 1): string {
+  const rounded = Number(Math.abs(diff).toFixed(digits));
+  if (rounded === 0) return "차이 없음";
+  return `${diff > 0 ? "초과" : "부족"} ${rounded.toFixed(digits)}%p`;
+}
+
 export function cn(...classes: (string | undefined | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }

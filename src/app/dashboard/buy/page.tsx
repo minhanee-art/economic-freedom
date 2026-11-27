@@ -32,7 +32,7 @@ export default async function BuyPlanPage() {
     <BuyClient
       initialHoldings={holdings}
       initialCostBases={costBases}
-      defaultBudget={profile?.monthly_budget ?? 300000}
+      defaultBudget={profile?.monthly_budget ?? 0}
       lastPurchaseDates={lastPurchaseDates}
       userId={userId}
     />

@@ -8,7 +8,7 @@ import { GiftTaxGuide } from "@/components/gift/gift-tax-guide";
 import { presentValueOfInstallments } from "@/lib/gift-tax";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { failureMessage } from "@/components/dashboard/inline-error";
-import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, cn } from "@/lib/utils";
 
 interface Props {
   child: ChildRow;
@@ -618,7 +618,7 @@ function HoldingsTab({
                   <p className="text-sm font-semibold">{formatKRW(currentValue)}</p>
                   {costValue > 0 && (
                     <p className={cn("text-xs tabular-nums", pnlTextClass(pnl))}>
-                      {formatSignedKRW(pnl)}
+                      {formatPnlKRW(pnl)}
                     </p>
                   )}
                 </div>

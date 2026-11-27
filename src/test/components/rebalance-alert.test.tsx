@@ -125,9 +125,9 @@ test("RebalanceAlert: 테마별 설정·현재 비중과 초과/부족을 표시
   assert.ok(screen.getByText("테마별 비중 현황"));
   assert.ok(screen.getByText("주식"));
   assert.ok(screen.getByText("채권"));
-  assert.ok(screen.getByText("+12%p 초과"));
-  assert.ok(screen.getByText("-12%p 부족"));
-  assert.equal((screen.getByLabelText("주식 테마 설정 비중") as HTMLInputElement).value, "40.0");
+  assert.ok(screen.getByText("초과 12.0%p"));
+  assert.ok(screen.getByText("부족 12.0%p"));
+  assert.equal((screen.getByLabelText("주식 테마 목표 비중") as HTMLInputElement).value, "40.0");
   assert.ok(screen.getByText("52.0%"));
 });
 
@@ -161,7 +161,7 @@ test("RebalanceAlert: 차이가 기준 이내면 차이가 작다고 알린다",
   assert.equal(screen.queryByText("목표 비중 대비 차이 계산 결과"), null);
 });
 
-test("RebalanceAlert: 테마 설정 비중을 저장하고 0~100으로 자른다", async () => {
+test("RebalanceAlert: 테마 목표 비중을 저장하고 0~100으로 자른다", async () => {
   const calls: [string, number][] = [];
   render(
     <RebalanceAlert
@@ -173,7 +173,7 @@ test("RebalanceAlert: 테마 설정 비중을 저장하고 0~100으로 자른다
     />
   );
 
-  const input = screen.getByLabelText("주식 테마 설정 비중");
+  const input = screen.getByLabelText("주식 테마 목표 비중");
   fireEvent.change(input, { target: { value: "55" } });
   fireEvent.blur(input);
   assert.deepEqual(calls, [["주식", 55]]);
@@ -341,8 +341,8 @@ test("RebalanceAlert: 검색으로 종목을 찾아 추가한다", async () => {
 
   assert.ok(await screen.findByText("자동 테마 분류"));
   fireEvent.change(screen.getByLabelText("보유수량"), { target: { value: "10" } });
-  fireEvent.change(screen.getByLabelText("평단가"), { target: { value: "19000" } });
-  fireEvent.change(screen.getByLabelText("설정비중 (%)"), { target: { value: "20" } });
+  fireEvent.change(screen.getByLabelText("평균단가"), { target: { value: "19000" } });
+  fireEvent.change(screen.getByLabelText("목표 비중 (%)"), { target: { value: "20" } });
 
   fireEvent.click(screen.getByRole("button", { name: "종목 추가" }));
 

@@ -22,6 +22,10 @@ export type OnboardingStep = {
 };
 
 export const ONBOARDING_HIDDEN_COOKIE = "pension-onboarding-hidden";
+/** 안내를 진행 중 상태로 한 번이라도 본 사람에게만 완료 한 줄을 보여 주기 위한 표시 */
+export const ONBOARDING_STARTED_COOKIE = "pension-onboarding-started";
+/** 완료 한 줄을 이미 보여 줬다 */
+export const ONBOARDING_DONE_SEEN_COOKIE = "pension-onboarding-done-seen";
 
 export function buildOnboardingSteps(facts: OnboardingFacts): OnboardingStep[] {
   return [

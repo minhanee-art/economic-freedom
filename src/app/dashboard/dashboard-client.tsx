@@ -3,7 +3,7 @@
 
 import { LazyCategoryPieChart, LazyAllocationBarChart } from "@/components/charts/lazy";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis } from "@/types";
 import { computeHoldingsWithPnL } from "@/lib/portfolio";
@@ -25,6 +25,8 @@ interface Props {
   dividendRecords: DividendRecordLite[];
   lastPriceUpdate: string | null;
   dividendCalendar: DividendCalendarRow[];
+  /** 홈 제목(h1) 바로 아래에 놓을 첫 사용 안내 */
+  firstRun?: ReactNode;
 }
 
 type NewHoldingPayload = {
@@ -77,6 +79,7 @@ export function DashboardClient({
   dividendRecords,
   lastPriceUpdate,
   dividendCalendar,
+  firstRun,
 }: Props) {
   const [holdings, setLocalHoldings] = useState(initialHoldings);
   const [costBases, setCostBases] = useState(initialCostBases);
@@ -225,12 +228,12 @@ export function DashboardClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: holdingId, target_pct: nextTargetPct }),
         });
-        if (!res.ok) throw new Error("설정 비중 저장 실패");
-        setRefreshResult("설정 비중 저장 완료");
+        if (!res.ok) throw new Error("목표 비중 저장 실패");
+        setRefreshResult("목표 비중 저장 완료");
         router.refresh();
       } catch (err) {
         setLocalHoldings(previousHoldings);
-        setRefreshResult(`설정 비중 저장 실패: ${(err as Error).message}`);
+        setRefreshResult(`목표 비중 저장 실패: ${(err as Error).message}`);
       } finally {
         setSavingTargetPctId(null);
         setTimeout(() => setRefreshResult(""), 3000);
@@ -290,15 +293,15 @@ export function DashboardClient({
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ id: h.id, target_pct: nextTargets.get(h.id) ?? h.target_pct }),
             }).then((res) => {
-              if (!res.ok) throw new Error(`${h.name} 설정 비중 저장 실패`);
+              if (!res.ok) throw new Error(`${h.name} 목표 비중 저장 실패`);
             })
           )
         );
-        setRefreshResult(`${category} 테마 설정 비중 저장 완료`);
+        setRefreshResult(`${category} 테마 목표 비중 저장 완료`);
         router.refresh();
       } catch (err) {
         setLocalHoldings(previousHoldings);
-        setRefreshResult(`테마 설정 비중 저장 실패: ${(err as Error).message}`);
+        setRefreshResult(`테마 목표 비중 저장 실패: ${(err as Error).message}`);
       } finally {
         setSavingCategoryTarget(null);
         setTimeout(() => setRefreshResult(""), 3000);
@@ -502,6 +505,8 @@ export function DashboardClient({
 
       <HomeStatus />
 
+      {firstRun}
+
       <SummaryHeader
         totalValue={totalValue}
         totalCost={totalCost}
@@ -568,13 +573,25 @@ function ReturnSummaryCard({
   status: string;
 }) {
   const periods: ReturnPeriodKey[] = ["day", "week", "month"];
+  // 비교할 기준 기록이 하나도 없으면 빈 칸 세 개 대신 한 줄 안내로 접는다
+  const noData = summary !== null && periods.every((key) => summary.periods[key]?.returnPct == null);
+  if (noData) {
+    return (
+      <section aria-labelledby="home-returns-title" className="border border-hairline bg-surface px-5 py-3 shadow-card dark:border-zinc-800">
+        <h2 id="home-returns-title" className="text-sm font-semibold text-ink">기간별 수익률</h2>
+        <p className="mt-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+          아직 비교할 기준 기록이 없습니다. 계좌 평가액이 하루 한 번 저장되며, 기록이 쌓이면 일별·주간·월간 수익률을 계산합니다.
+        </p>
+      </section>
+    );
+  }
   return (
     <section aria-labelledby="home-returns-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
       <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h2 id="home-returns-title" className="text-base font-bold tracking-tight text-ink">기간별 수익률</h2>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            일별·주간·월간 수익률을 계좌별 스냅샷 기준으로 계산합니다. 추가 매수/매도 원가 변동은 보정합니다.
+            일별·주간·월간 수익률을 하루 한 번 저장되는 계좌 평가액 기록으로 계산합니다. 추가 매수/매도 원가 변동은 보정합니다.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -611,7 +628,7 @@ function ReturnSummaryCard({
         <span>
           {summary
             ? `${summary.accountName} · 기준일 ${summary.asOfDate}`
-            : "수익률 스냅샷을 불러오는 중입니다."}
+            : "수익률 기준 기록을 불러오는 중입니다."}
         </span>
         {status && (
           <span role={status.includes("실패") ? "alert" : "status"} className={status.includes("실패") ? "text-danger" : "text-success"}>
@@ -642,7 +659,7 @@ function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
       </p>
       <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">
         {amount === null || amount === undefined
-          ? "기준 스냅샷 없음"
+          ? "기준 기록 없음"
           : formatSignedKRW(amount)}
       </p>
       {period?.snapshotDate && (

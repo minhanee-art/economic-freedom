@@ -69,7 +69,7 @@ async function createGoogleUser(email: string, googleId: string, name: string): 
   await getActivePortfolioAccountId(userId);
   await sql`
     INSERT INTO profiles (id, email, display_name, monthly_budget)
-    VALUES (${userId}, ${email}, ${name}, 300000)
+    VALUES (${userId}, ${email}, ${name}, 0)
     ON CONFLICT DO NOTHING
   `;
   return { id: userId, sessionVersion: toSessionVersion(row.session_version), linked: false };

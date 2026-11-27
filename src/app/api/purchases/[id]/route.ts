@@ -152,7 +152,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json(
       {
         error: first
-          ? `${first.name ?? first.code ?? "종목"}: ${CONFLICT_MESSAGES[first.reason]} 보유 종목 편집에서 수량·평단가를 직접 수정해주세요.`
+          ? `${first.name ?? first.code ?? "종목"}: ${CONFLICT_MESSAGES[first.reason]} 보유 종목 편집에서 수량·평균단가를 직접 수정해주세요.`
           : "매수 기록을 삭제하지 못했습니다.",
         conflicts,
       },

@@ -38,16 +38,17 @@ export function HomeStatus() {
   }, [load]);
 
   return (
-    <header className="space-y-2">
+    <header className="space-y-3">
       <h1 className="text-xl font-bold tracking-tight text-ink">홈</h1>
-      <div className="min-h-12 text-sm leading-relaxed text-ink" aria-live="polite">
+      {/* 숫자가 들어올 자리를 미리 잡아 둬 아래 패널이 밀리지 않게 한다 */}
+      <div className="min-h-[7.5rem] text-sm leading-relaxed text-ink sm:min-h-[5.5rem]" aria-live="polite">
         {state.kind === "loading" && (
           <p className="text-zinc-500 dark:text-zinc-400">올해 세액공제와 은퇴 현금흐름을 불러오는 중입니다.</p>
         )}
         {state.kind === "error" && (
           <p role="alert" className="text-danger">
             연금 요약을 불러오지 못했습니다. 네트워크를 확인한 뒤{" "}
-            <button type="button" onClick={load} className="min-h-10 font-semibold underline underline-offset-2">
+            <button type="button" onClick={load} className="min-h-11 font-semibold underline underline-offset-2">
               다시 불러오기
             </button>
           </p>
@@ -58,43 +59,48 @@ export function HomeStatus() {
   );
 }
 
+const NUMBER_CLASS = "mt-1 text-[1.75rem] font-semibold leading-tight tracking-tight tabular-nums text-ink";
+
 function StatusLine({ summary }: { summary: PensionSummaryLite }) {
   const tax = homeTaxCreditStatus(summary);
   const cashflow = homeCashflowStatus(summary);
 
   return (
-    <ul className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-6">
-      <li data-testid="home-tax-credit">
-        {tax.kind === "ready" ? (
-          <>
-            {tax.year}년 세액공제 한도 <b className="font-semibold tabular-nums">{tax.progressPct}%</b> 채움
-            <span className="text-zinc-500 dark:text-zinc-400"> · 남은 한도 </span>
-            <b className="font-semibold tabular-nums">{formatKRW(tax.remaining)}</b>
-          </>
-        ) : (
-          <span className="text-zinc-500 dark:text-zinc-400">연금저축·IRP 계좌가 없어 세액공제를 계산하지 않았습니다.</span>
-        )}
-      </li>
-      <li data-testid="home-cashflow">
-        {cashflow.kind === "ready" ? (
-          <>
-            {cashflow.age}세 예상 월 <b className="font-semibold tabular-nums">{formatKRW(cashflow.monthly)}</b>
-            <span className="text-zinc-500 dark:text-zinc-400">
-              {" "}/ 목표 {formatKRW(cashflow.target)} ({cashflow.coveragePct}%)
-            </span>
-          </>
-        ) : (
-          <span className="text-zinc-500 dark:text-zinc-400">은퇴 목표를 입력하면 은퇴 시점 월 현금흐름을 계산합니다.</span>
-        )}
-      </li>
-      <li>
-        <Link
-          href="/dashboard/retirement"
-          className="inline-flex min-h-10 items-center font-semibold text-brand underline-offset-2 hover:underline dark:text-indigo-300"
-        >
-          연금 설계 보기
-        </Link>
-      </li>
-    </ul>
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-10">
+        <div data-testid="home-tax-credit">
+          <dt className="text-xs font-medium text-ink-mute">{tax.year}년 세액공제 남은 한도</dt>
+          {tax.kind === "ready" ? (
+            <>
+              <dd className={NUMBER_CLASS}>{formatKRW(tax.remaining)}</dd>
+              <dd className="mt-0.5 text-xs tabular-nums text-ink-mute">한도의 {tax.progressPct}% 채움</dd>
+            </>
+          ) : (
+            <dd className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">연금저축·IRP 계좌가 없어 계산하지 않았습니다.</dd>
+          )}
+        </div>
+        <div data-testid="home-cashflow">
+          <dt className="text-xs font-medium text-ink-mute">
+            {cashflow.kind === "ready" ? `${cashflow.age}세 예상 월 현금흐름` : "은퇴 시점 예상 월 현금흐름"}
+          </dt>
+          {cashflow.kind === "ready" ? (
+            <>
+              <dd className={NUMBER_CLASS}>월 {formatKRW(cashflow.monthly)}</dd>
+              <dd className="mt-0.5 text-xs tabular-nums text-ink-mute">
+                목표 월 {formatKRW(cashflow.target)}의 {cashflow.coveragePct}%
+              </dd>
+            </>
+          ) : (
+            <dd className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">은퇴 목표를 입력하면 계산합니다.</dd>
+          )}
+        </div>
+      </dl>
+      <Link
+        href="/dashboard/retirement"
+        className="inline-flex min-h-11 items-center self-start text-sm font-semibold text-brand underline-offset-2 hover:underline sm:self-auto dark:text-indigo-300"
+      >
+        연금 설계 보기
+      </Link>
+    </div>
   );
 }

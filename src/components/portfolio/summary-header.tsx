@@ -1,6 +1,6 @@
 "use client";
 
-import { formatKRW, formatPercent, formatSignedKRW, pnlTextClass } from "@/lib/utils";
+import { formatKRW, formatPercent, formatPnlKRW, pnlTextClass } from "@/lib/utils";
 import type { DailyChange, DividendYields } from "@/lib/dashboard-insights";
 
 interface SummaryHeaderProps {
@@ -26,7 +26,9 @@ export function SummaryHeader({
   dailyChange,
 }: SummaryHeaderProps) {
   const pnl = totalValue - totalCost;
-  const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+  // 원가(매수 기록)가 없으면 손익을 계산할 수 없다 — "+0원 / +0.00%" 대신 "-"
+  const hasCost = totalCost > 0;
+  const pnlPct = hasCost ? (pnl / totalCost) * 100 : 0;
 
   return (
     <div className="border border-hairline bg-surface px-5 py-5 shadow-card dark:border-zinc-800 sm:px-6 sm:py-6">
@@ -35,7 +37,7 @@ export function SummaryHeader({
           <p className="text-xs font-medium text-ink-mute mb-1.5">
             총 평가금액
           </p>
-          <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink sm:text-4xl">
+          <p className="text-2xl font-semibold tabular-nums tracking-tight text-ink">
             {formatKRW(totalValue)}
           </p>
           {dailyChange !== undefined && (
@@ -46,7 +48,7 @@ export function SummaryHeader({
                   <span
                     className={`font-semibold ${pnlTextClass(dailyChange.amount)}`}
                   >
-                    {formatSignedKRW(dailyChange.amount)}
+                    {formatPnlKRW(dailyChange.amount)}
                     {dailyChange.pct !== null && ` (${formatPercent(dailyChange.pct)})`}
                   </span>
                   {dailyChange.includesContribution && (
@@ -54,7 +56,7 @@ export function SummaryHeader({
                   )}
                 </>
               ) : (
-                <span className="text-ink-mute">전일 대비 · 기준 스냅샷 없음</span>
+                <span className="text-ink-mute">전일 대비 · 기준 기록 없음</span>
               )}
             </p>
           )}
@@ -62,7 +64,7 @@ export function SummaryHeader({
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="inline-flex min-h-10 w-full items-center justify-center border border-hairline bg-surface px-4 py-2 text-xs font-semibold text-ink transition-colors hover:bg-canvas-soft disabled:opacity-50 dark:border-zinc-700 sm:w-auto"
+          className="inline-flex min-h-11 w-full items-center justify-center border border-hairline bg-surface px-4 py-2 text-xs font-semibold text-ink transition-colors hover:bg-canvas-soft disabled:opacity-50 dark:border-zinc-700 sm:w-auto"
         >
           {isRefreshing ? "갱신 중..." : "시세 새로고침"}
         </button>
@@ -73,18 +75,16 @@ export function SummaryHeader({
           <p className="text-xs text-ink-mute mb-0.5">총 손익</p>
           <p
             className={`text-sm font-semibold tabular-nums ${
-              pnlTextClass(pnl)
+              hasCost ? pnlTextClass(pnl) : "text-ink-mute"
             }`}
           >
-            {formatSignedKRW(pnl)}
+            {hasCost ? formatPnlKRW(pnl) : "-"}
           </p>
-          <p
-            className={`text-xs tabular-nums ${
-              pnlTextClass(pnl)
-            }`}
-          >
-            {formatPercent(pnlPct)}
-          </p>
+          {hasCost && (
+            <p className={`text-xs tabular-nums ${pnlTextClass(pnl)}`}>
+              {formatPercent(pnlPct)}
+            </p>
+          )}
         </div>
         <div>
           <p className="text-xs text-ink-mute mb-0.5">누적 배당</p>
@@ -92,7 +92,9 @@ export function SummaryHeader({
         </div>
         <div>
           <p className="text-xs text-ink-mute mb-0.5">월 적립금</p>
-          <p className="text-sm font-semibold tabular-nums text-ink">{formatKRW(monthlyBudget)}</p>
+          <p className={`text-sm font-semibold tabular-nums ${monthlyBudget > 0 ? "text-ink" : "text-ink-mute"}`}>
+            {monthlyBudget > 0 ? formatKRW(monthlyBudget) : "미설정"}
+          </p>
         </div>
       </div>
 

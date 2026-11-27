@@ -175,8 +175,8 @@ test("회원가입: 성공하면 프로필을 만들고 쿠키를 준다 — 종
   assert.equal(db.find("INSERT INTO holdings").length, 0, "가입 시 예시 종목을 넣지 않는다");
   const profileInserts = db.find("INSERT INTO profiles");
   assert.equal(profileInserts.length, 1);
-  // 기본 월 예산은 SQL 리터럴로 들어간다
-  assert.match(profileInserts[0].query, /300000/);
+  // 새 계정은 월 적립금 미설정(0)으로 시작한다 — 화면에서는 '미설정'으로 보인다
+  assert.match(profileInserts[0].query, /monthly_budget\) VALUES \(\?, \?, 0\)/);
   assert.equal(profileInserts[0].values[0], "user-new");
 
   const cookie = response.headers.get("set-cookie") ?? "";

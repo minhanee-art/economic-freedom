@@ -104,6 +104,11 @@ export function pnlArrow(value: number | null | undefined): string {
   return tone === "gain" ? "▲" : tone === "loss" ? "▼" : "";
 }
 
+/** 손익 금액: ▲/▼ + 부호 금액(앱 mobile/src/utils/format.ts 와 같은 표기). 보합은 화살표 없이 "0원". */
+export function formatPnlKRW(amount: number, full = false): string {
+  return `${pnlArrow(amount)} ${formatSignedKRW(amount, full)}`.trim();
+}
+
 export function formatPercent(value: number): string {
   return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 }

@@ -71,15 +71,15 @@ test("HoldingCard: 종목·금액·비중 뱃지를 렌더한다", async () => {
   render(<HoldingCard holding={makeHolding()} />);
 
   assert.ok(screen.getByText("KODEX 200"));
-  assert.ok(screen.getByText("티커 305050"));
+  assert.ok(screen.getByText("종목코드 305050"));
   assert.ok(screen.getByText("10만원"), "평가금액");
   assert.ok(screen.getByText("10주 × 10,000원"));
-  assert.ok(screen.getByText("9,000원"), "평단가");
+  assert.ok(screen.getByText("9,000원"), "평균단가");
   assert.ok(screen.getByText("+11.1%"), "수익률");
   assert.ok(screen.getByText("설정 50.0%"));
   assert.ok(screen.getByText("현재 보유 40.0%"));
   assert.ok(screen.getByText("총보수 0.15%"));
-  assert.ok(screen.getByText("▼10.0%p"), "3%p 이상 벌어지면 차이 뱃지");
+  assert.ok(screen.getByText("목표 부족 10.0%p"), "3%p 이상 벌어지면 차이 뱃지");
 });
 
 test("HoldingCard: 운용사 접두어를 떼고 원문도 함께 보여준다", async () => {
@@ -91,7 +91,7 @@ test("HoldingCard: 운용사 접두어를 떼고 원문도 함께 보여준다",
 
   assert.ok(screen.getByText("TIGER 미국S&P500"));
   assert.ok(screen.getByText(/원문: 미래에셋 TIGER/));
-  assert.ok(screen.getByText("티커 360750"), "이름으로 코드 추정");
+  assert.ok(screen.getByText("종목코드 360750"), "이름으로 코드 추정");
   assert.ok(screen.getByText("이름 기준 추정"));
 });
 
@@ -114,7 +114,7 @@ test("HoldingCard: 보유 수량이 0이면 매도 버튼이 비활성", async (
   assert.equal((screen.getByRole("button", { name: "매수 기록" }) as HTMLButtonElement).disabled, false);
 });
 
-test("HoldingCard: 설정 비중을 바꾸면 저장 콜백을 부른다", async () => {
+test("HoldingCard: 목표 비중을 바꾸면 저장 콜백을 부른다", async () => {
   const calls: [string, number][] = [];
   render(
     <HoldingCard
@@ -125,14 +125,14 @@ test("HoldingCard: 설정 비중을 바꾸면 저장 콜백을 부른다", async
     />
   );
 
-  const input = screen.getByLabelText("KODEX 200 설정 비중");
+  const input = screen.getByLabelText("KODEX 200 목표 비중");
   fireEvent.change(input, { target: { value: "60" } });
   fireEvent.blur(input);
 
   assert.deepEqual(calls, [["h1", 60]]);
 });
 
-test("HoldingCard: 설정 비중은 0~100으로 잘라서 저장한다", async () => {
+test("HoldingCard: 목표 비중은 0~100으로 잘라서 저장한다", async () => {
   const calls: [string, number][] = [];
   render(
     <HoldingCard
@@ -143,7 +143,7 @@ test("HoldingCard: 설정 비중은 0~100으로 잘라서 저장한다", async (
     />
   );
 
-  const input = screen.getByLabelText("KODEX 200 설정 비중");
+  const input = screen.getByLabelText("KODEX 200 목표 비중");
   fireEvent.change(input, { target: { value: "150" } });
   fireEvent.blur(input);
 
@@ -162,7 +162,7 @@ test("HoldingCard: 종목 정정에서 소수 수량은 거부한다", async () 
   );
 
   fireEvent.click(screen.getByRole("button", { name: "종목 정보 정정" }));
-  const editor = screen.getByText("품번 / 상품명 / 수량 / 평단가 정정").parentElement as HTMLElement;
+  const editor = screen.getByText("종목코드 / 종목명 / 수량 / 평균단가 정정").parentElement as HTMLElement;
 
   const numberInputs = within(editor).getAllByRole("spinbutton") as HTMLInputElement[];
   fireEvent.change(numberInputs[0], { target: { value: "1.5" } });
@@ -172,17 +172,17 @@ test("HoldingCard: 종목 정정에서 소수 수량은 거부한다", async () 
   assert.equal(calls.length, 0, "저장 콜백이 불리지 않는다");
 });
 
-test("HoldingCard: 수량이 있는데 평단가가 0이면 저장을 막는다", async () => {
+test("HoldingCard: 수량이 있는데 평균단가가 0이면 저장을 막는다", async () => {
   render(<HoldingCard holding={makeHolding()} onHoldingDetailsChange={async () => {}} />);
 
   fireEvent.click(screen.getByRole("button", { name: "종목 정보 정정" }));
-  const editor = screen.getByText("품번 / 상품명 / 수량 / 평단가 정정").parentElement as HTMLElement;
+  const editor = screen.getByText("종목코드 / 종목명 / 수량 / 평균단가 정정").parentElement as HTMLElement;
   const inputs = within(editor).getAllByRole("spinbutton") as HTMLInputElement[];
 
   fireEvent.change(inputs[1], { target: { value: "0" } });
   fireEvent.click(within(editor).getByRole("button", { name: "정정 저장" }));
 
-  assert.ok(await screen.findByText("보유수량이 있으면 평단가는 0보다 커야 합니다."));
+  assert.ok(await screen.findByText("보유수량이 있으면 평균단가는 0보다 커야 합니다."));
 });
 
 test("HoldingCard: 종목 정보를 정정하면 콜백에 값이 전달된다", async () => {
@@ -197,7 +197,7 @@ test("HoldingCard: 종목 정보를 정정하면 콜백에 값이 전달된다",
   );
 
   fireEvent.click(screen.getByRole("button", { name: "종목 정보 정정" }));
-  const editor = screen.getByText("품번 / 상품명 / 수량 / 평단가 정정").parentElement as HTMLElement;
+  const editor = screen.getByText("종목코드 / 종목명 / 수량 / 평균단가 정정").parentElement as HTMLElement;
   const textInputs = within(editor).getAllByRole("textbox");
   const numberInputs = within(editor).getAllByRole("spinbutton") as HTMLInputElement[];
 
@@ -213,7 +213,7 @@ test("HoldingCard: 종목 정보를 정정하면 콜백에 값이 전달된다",
   ]);
   // 저장에 성공하면 편집 패널이 닫힌다
   await screen.findByRole("button", { name: "종목 정보 정정" });
-  assert.equal(screen.queryByText("품번 / 상품명 / 수량 / 평단가 정정"), null);
+  assert.equal(screen.queryByText("종목코드 / 종목명 / 수량 / 평균단가 정정"), null);
 });
 
 test("HoldingCard: 매수 기록 저장 시 수량·단가·날짜를 담아 API를 부른다", async () => {

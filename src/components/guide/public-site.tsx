@@ -22,7 +22,7 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
               href="/signup"
               className="inline-flex h-10 items-center bg-white px-4 text-sm font-bold text-dark-header transition-colors hover:bg-indigo-50"
             >
-              계정 만들기
+              회원가입
             </Link>
           </nav>
         )}

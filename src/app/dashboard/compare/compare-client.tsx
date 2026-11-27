@@ -486,7 +486,7 @@ export function CompareClient({ holdings }: Props) {
                   <div
                     key={etf.code}
                     className={cn(
-                      "w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors",
+                      "w-full flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 text-left transition-colors sm:flex-nowrap",
                       isSel ? "bg-indigo-50 dark:bg-indigo-900/20 opacity-60" : "hover:bg-canvas-soft dark:hover:bg-zinc-800"
                     )}
                   >
@@ -508,7 +508,7 @@ export function CompareClient({ holdings }: Props) {
                         <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{etf.code}</strong> · {etf.category} · 거래량 {fmtVol(etf.volume)}주 · 거래대금 {etf.tradingValue > 0 ? formatKRW(etf.tradingValue) : "-"}
                       </p>
                     </button>
-                    <div className="text-right ml-2 shrink-0">
+                    <div className="text-right shrink-0">
                       <p className="text-sm font-semibold tabular-nums">{formatKRWFull(etf.price)}</p>
                       <p className={cn("text-xs tabular-nums", etf.changePct > 0 ? "text-gain" : etf.changePct < 0 ? "text-loss" : "text-zinc-500 dark:text-zinc-400")}>
                         {etf.changePct > 0 ? "+" : ""}{etf.changePct.toFixed(2)}%
@@ -520,7 +520,7 @@ export function CompareClient({ holdings }: Props) {
                       disabled={isMy || addingCode === etf.code || Boolean(addingCode)}
                       aria-label={isMy ? `${etf.name} 이미 내 종목 목록에 있음` : `${etf.name}을(를) 내 종목 목록에 0주로 추가(주문 아님)`}
                       title="지금 선택한 계좌의 종목 목록에 0주로 추가합니다. 주문은 실행되지 않습니다."
-                      className="inline-flex min-h-10 shrink-0 items-center border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+                      className="inline-flex min-h-11 basis-full shrink-0 items-center justify-center border border-indigo-100 sm:basis-auto bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                     >
                       {isMy ? "내 종목에 있음" : addingCode === etf.code ? "추가 중" : "내 종목에 추가"}
                     </button>

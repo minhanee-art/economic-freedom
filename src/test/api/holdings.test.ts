@@ -76,10 +76,10 @@ test("POST: 현재가가 음수면 400", async () => {
   assert.match((await readJson<{ error: string }>(response)).error, /현재가/);
 });
 
-test("POST: 설정비중이 100을 넘으면 400", async () => {
+test("POST: 목표 비중이 100을 넘으면 400", async () => {
   const response = await route.POST(jsonRequest("POST", { ...validBody, target_pct: 101 }));
   assert.equal(response.status, 400);
-  assert.match((await readJson<{ error: string }>(response)).error, /설정비중/);
+  assert.match((await readJson<{ error: string }>(response)).error, /목표 비중/);
 });
 
 test("POST: 보유수량이 정수가 아니면 400", async () => {
@@ -88,10 +88,10 @@ test("POST: 보유수량이 정수가 아니면 400", async () => {
   assert.match((await readJson<{ error: string }>(response)).error, /보유수량/);
 });
 
-test("POST: 수량이 있는데 평단가가 0이면 400", async () => {
+test("POST: 수량이 있는데 평균단가가 0이면 400", async () => {
   const response = await route.POST(jsonRequest("POST", { ...validBody, shares: 10, avg_price: 0 }));
   assert.equal(response.status, 400);
-  assert.match((await readJson<{ error: string }>(response)).error, /평단가/);
+  assert.match((await readJson<{ error: string }>(response)).error, /평균단가/);
 });
 
 test("POST: 수량 0이면 원가·매수기록을 만들지 않는다", async () => {
@@ -117,7 +117,7 @@ test("POST: 수량이 있으면 원가와 매수기록을 함께 만든다", asy
 
   const costBasis = db.find("INSERT INTO cost_basis");
   assert.equal(costBasis.length, 1);
-  // 수량 10 × 반올림 평단가 1235 = 12,350 / values: [user, account, holdingId, cost, shares]
+  // 수량 10 × 반올림 평균단가 1235 = 12,350 / values: [user, account, holdingId, cost, shares]
   assert.match(String(costBasis[0].values[2]), /^[0-9a-f-]{36}$/);
   assert.deepEqual(costBasis[0].values.slice(3), [12_350, 10]);
 
@@ -145,7 +145,7 @@ test("POST: 분류를 생략하면 종목명으로 추론한다", async () => {
   assert.equal(insert.values[6], "배당");
 });
 
-test("POST: 목록에 없는 대분류는 주식으로 처리한다", async () => {
+test("POST: 목록에 없는 자산군는 주식으로 처리한다", async () => {
   db.setHandler((query) => (query.includes("FROM holdings") ? [{ id: "h-new" }] : []));
 
   await route.POST(jsonRequest("POST", { ...validBody, category: "코인" }));
@@ -161,7 +161,7 @@ test("POST: 종목명과 종목코드만 보내도(모바일 종목 추가) 분�
   const [insert] = db.find("INSERT INTO holdings");
   // values: [id, user_id, account_id, code, name, category, sub_category, current_price, shares, target_pct]
   assert.deepEqual(insert.values.slice(3, 5), ["069500", "KODEX 200"]);
-  assert.ok(insert.values[5], "대분류가 비어 있으면 안 된다");
+  assert.ok(insert.values[5], "자산군가 비어 있으면 안 된다");
   assert.deepEqual(insert.values.slice(7), [0, 0, 0]);
   assert.equal(db.find("INSERT INTO purchase_records").length, 0);
 });
@@ -190,7 +190,7 @@ test("PATCH: id가 없으면 400", async () => {
   assert.match((await readJson<{ error: string }>(response)).error, /id/);
 });
 
-test("PATCH: 설정비중 범위를 벗어나면 400", async () => {
+test("PATCH: 목표 비중 범위를 벗어나면 400", async () => {
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", target_pct: 101 }));
   assert.equal(response.status, 400);
 });
@@ -214,10 +214,10 @@ test("PATCH: 수량을 0으로 바꾸면 원가를 지운다", async () => {
   assert.equal(db.find("INSERT INTO cost_basis").length, 0);
 });
 
-test("PATCH: 수량이 있는데 평단가가 0이면 400", async () => {
+test("PATCH: 수량이 있는데 평균단가가 0이면 400", async () => {
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", shares: 3, avg_price: 0 }));
   assert.equal(response.status, 400);
-  assert.match((await readJson<{ error: string }>(response)).error, /평단가/);
+  assert.match((await readJson<{ error: string }>(response)).error, /평균단가/);
   assert.equal(db.find("<transaction>").length, 0);
 });
 
@@ -228,7 +228,7 @@ test("PATCH: 계좌에 없는 종목이면 404", async () => {
   assert.equal(response.status, 404);
 });
 
-test("PATCH: 평단가만 보내면 수량을 읽어 되쓰지 않고 한 문장으로 원가만 다시 계산한다", async () => {
+test("PATCH: 평균단가만 보내면 수량을 읽어 되쓰지 않고 한 문장으로 원가만 다시 계산한다", async () => {
   db.setHandler((query) => (query.includes("WITH h AS") ? [{ found: 1, shares: 7 }] : query.includes("FROM holdings") ? [{ id: "h1", shares: 7 }] : []));
 
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", avg_price: 1200 }));
@@ -241,14 +241,14 @@ test("PATCH: 평단가만 보내면 수량을 읽어 되쓰지 않고 한 문장
   assert.equal(db.find("SELECT shares FROM holdings").length, 0, "트랜잭션 밖 사전 조회 없음");
 });
 
-test("PATCH: 평단가만 보냈는데 종목이 없으면 404", async () => {
+test("PATCH: 평균단가만 보냈는데 종목이 없으면 404", async () => {
   db.setHandler((query) => (query.includes("WITH h AS") ? [{ found: 0, shares: 0 }] : []));
 
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h-other", avg_price: 1200 }));
   assert.equal(response.status, 404);
 });
 
-test("PATCH: 평단가만 0으로 보내면 수량이 있을 때 400, 아무 것도 쓰지 않는다", async () => {
+test("PATCH: 평균단가만 0으로 보내면 수량이 있을 때 400, 아무 것도 쓰지 않는다", async () => {
   db.setHandler((query) => (query.includes("SELECT shares FROM holdings") ? [{ shares: 5 }] : []));
 
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", name: "새 이름", avg_price: 0 }));

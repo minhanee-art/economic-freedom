@@ -51,7 +51,7 @@ export async function GET(request: Request) {
     totalPnL,
     totalPnLPct,
     totalDividend,
-    monthlyBudget: profile?.monthly_budget ?? 300000,
+    monthlyBudget: profile?.monthly_budget ?? 0,
     targetMonthlyCashflow,
     /** true면 사용자가 저장한 목표가 없어 기본값을 보낸 것 */
     targetMonthlyCashflowIsDefault: savedTarget === null,

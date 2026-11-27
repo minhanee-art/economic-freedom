@@ -5,7 +5,7 @@ import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
-import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, formatTargetGap } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, formatTargetGap } from "@/lib/utils";
 import { HoldingCard } from "@/components/portfolio/holding-card";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
@@ -81,8 +81,8 @@ export interface CandlePoint {
 
 const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
   { value: "diff", label: "목표와 차이 큰 순" },
-  { value: "target-desc", label: "설정 비중 높은 순" },
-  { value: "target-asc", label: "설정 비중 낮은 순" },
+  { value: "target-desc", label: "목표 비중 높은 순" },
+  { value: "target-asc", label: "목표 비중 낮은 순" },
   { value: "current-desc", label: "현재 비중 높은 순" },
   { value: "current-asc", label: "현재 비중 낮은 순" },
   { value: "name-asc", label: "테마명 가나다순" },
@@ -391,7 +391,7 @@ export function RebalanceAlert({
         <div className="mb-4 border-b border-zinc-100 pb-4 dark:border-zinc-800">
           <h2 className="text-base font-bold text-ink">새 계좌 시작하기</h2>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            아직 이 계좌에 종목이 없습니다. 아래에서 종목을 추가하면서 대분류/소분류와 설정비중을 입력하면 테마별 비율이 바로 만들어집니다.
+            아직 이 계좌에 종목이 없습니다. 아래에서 종목을 추가하면서 자산군/세부 분류와 목표 비중을 입력하면 테마별 비율이 바로 만들어집니다.
           </p>
         </div>
         {onAddHolding ? (
@@ -417,7 +417,7 @@ export function RebalanceAlert({
           <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             {isCollapsed
               ? `종목 ${holdings.length}개 · ${headerSummary}`
-              : "개별 종목 설정 비중의 합계가 테마 설정 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다."}
+              : "개별 종목 목표 비중의 합계가 테마 목표 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -486,7 +486,7 @@ export function RebalanceAlert({
               <div>
                 <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">신규 종목 추가</p>
                 <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                  종목은 검색으로 불러오고, 보유수량·평단가·설정비중만 입력합니다.
+                  종목은 검색으로 불러오고, 보유수량·평균단가·목표 비중만 입력합니다.
                 </p>
               </div>
               <button
@@ -726,12 +726,12 @@ export function RebalanceAlert({
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      {c.name} 테마 보유종목입니다. 설정 비중 수정과 매수·매도 기록을 여기서 할 수 있습니다.
+                      {c.name} 테마 보유종목입니다. 목표 비중 수정과 매수·매도 기록을 여기서 할 수 있습니다.
                     </p>
                   </div>
                   {renderHoldingCollection(
                     categoryHoldings,
-                    "표시 중인 종목이 없습니다. 숨김 종목에서 설정비중을 올리거나 매수 기록으로 보유수량을 만들면 표시됩니다.",
+                    "표시 중인 종목이 없습니다. 숨김 종목에서 목표 비중을 올리거나 매수 기록으로 보유수량을 만들면 표시됩니다.",
                     c.name
                   )}
 
@@ -749,7 +749,7 @@ export function RebalanceAlert({
                       {isHiddenExpanded && (
                         <div className="mt-3 space-y-2">
                           <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                            보유수량 0주 또는 설정비중 0%인 종목입니다. 설정비중을 올리거나 매수하면 일반 목록에 표시되고, 보유수량 0주는 종목 목록에서 삭제할 수 있습니다.
+                            보유수량 0주 또는 목표 비중 0%인 종목입니다. 목표 비중을 올리거나 매수하면 일반 목록에 표시되고, 보유수량 0주는 종목 목록에서 삭제할 수 있습니다.
                           </p>
                           {hiddenCategoryHoldings.map((h) => (
                             <HiddenHoldingManager
@@ -805,7 +805,7 @@ export function RebalanceAlert({
             </div>
           ) : (
             <div className="border border-hairline bg-canvas-soft p-4 text-sm font-semibold text-success">
-              현재 설정 비중과 보유 비중 차이가 기준 이내입니다. 설정한 목표 비중 대비 차이가 작습니다.
+              현재 목표 비중과 보유 비중 차이가 기준 이내입니다. 설정한 목표 비중 대비 차이가 작습니다.
             </div>
           )}
 
@@ -900,13 +900,13 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
 
       <div className="mt-3 grid grid-cols-2 gap-1 text-center text-xs font-bold tabular-nums sm:grid-cols-4">
         <span className="border border-zinc-100 bg-zinc-50 px-1.5 py-1 text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-          평단 {formatKRWFull(Math.round(holding.avg_price || 0))}
+          평균단가 {formatKRWFull(Math.round(holding.avg_price || 0))}
         </span>
         <span className={`border px-1.5 py-1 ${!hasPnL ? "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400" : `border-hairline bg-surface ${pnlTextClass(holding.profit_loss_pct)}`}`}>
           수익률 {hasPnL ? `${holding.profit_loss_pct >= 0 ? "+" : ""}${holding.profit_loss_pct.toFixed(1)}%` : "-"}
         </span>
         <span className={`border px-1.5 py-1 ${!hasPnL ? "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400" : `border-hairline bg-surface ${pnlTextClass(holding.profit_loss)}`}`}>
-          {hasPnL ? formatSignedKRW(holding.profit_loss) : "-"}
+          {hasPnL ? formatPnlKRW(holding.profit_loss) : "-"}
         </span>
         <span className={`border px-1.5 py-1 ${hasDiff ? isOver ? "border-caution/30 bg-caution-soft text-caution" : "border-hairline bg-surface text-ink" : "border-zinc-100 bg-zinc-50 text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400"}`}>
           {hasDiff ? formatTargetGap(diff) : `차이 ${Math.abs(diff).toFixed(1)}%p`}
@@ -1180,7 +1180,7 @@ function CategoryTargetEditor({
           if (e.key === "Enter") e.currentTarget.blur();
         }}
         disabled={!onCategoryTargetPctChange || isSaving}
-        aria-label={`${category} 테마 설정 비중`}
+        aria-label={`${category} 테마 목표 비중`}
         className="h-8 w-20 border border-zinc-200 bg-white px-2 text-right text-xs font-bold tabular-nums text-zinc-700 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
       />
       <span>%</span>
@@ -1224,7 +1224,7 @@ function HiddenHoldingManager({
   const hiddenReasons = [
     isManuallyHidden ? "직접 숨김" : null,
     holding.shares <= 0 ? "보유수량 0주" : null,
-    holding.target_pct <= 0 ? "설정비중 0%" : null,
+    holding.target_pct <= 0 ? "목표 비중 0%" : null,
   ].filter(Boolean).join(" · ");
 
   async function deleteHolding() {
@@ -1378,7 +1378,7 @@ function AddHoldingForm({
       <div className="mb-3">
         <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">종목 검색 후 추가</p>
         <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-          티커·종목명·현재가는 검색 결과에서 가져옵니다. 수기 입력은 보유수량, 평단가, 설정비중만 사용합니다.
+          종목코드·종목명·현재가는 검색 결과에서 가져옵니다. 수기 입력은 보유수량, 평균단가, 목표 비중만 사용합니다.
         </p>
       </div>
 
@@ -1431,7 +1431,7 @@ function AddHoldingForm({
         {selectedEtf && (
           <div className="grid gap-2 border border-zinc-200 bg-white p-3 text-xs dark:border-zinc-800 dark:bg-zinc-950 sm:grid-cols-3">
             <div>
-              <p className="font-bold text-zinc-500 dark:text-zinc-400">티커</p>
+              <p className="font-bold text-zinc-500 dark:text-zinc-400">종목코드</p>
               <p className="mt-1 font-black tabular-nums text-zinc-900 dark:text-zinc-100">{selectedEtf.code}</p>
             </div>
             <div>
@@ -1469,7 +1469,7 @@ function AddHoldingForm({
             className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </Field>
-        <Field label="평단가">
+        <Field label="평균단가">
           <input
             type="text"
             inputMode="numeric"
@@ -1485,7 +1485,7 @@ function AddHoldingForm({
             className="h-9 w-full border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
           />
         </Field>
-        <Field label="설정비중 (%)">
+        <Field label="목표 비중 (%)">
           <input
             type="number"
             inputMode="decimal"

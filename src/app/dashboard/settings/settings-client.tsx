@@ -45,10 +45,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const [holdings, setHoldings] = useState(initialHoldings);
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [monthlyBudget, setMonthlyBudget] = useState(
-    profile?.monthly_budget ?? 300000
+    profile?.monthly_budget ?? 0
   );
   const [budgetInput, setBudgetInput] = useState(
-    (profile?.monthly_budget ?? 300000).toLocaleString()
+    profile?.monthly_budget ? profile.monthly_budget.toLocaleString() : ""
   );
   const [saveStatus, setSaveStatus] = useState("");
   const [error, setError] = useState<{ message: string; retry?: () => void } | null>(null);
@@ -450,7 +450,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 />
               </div>
               <div>
-                <label htmlFor="settings-field-5" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">대분류</label>
+                <label htmlFor="settings-field-5" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">자산군</label>
                 <select id="settings-field-5"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}

@@ -3,7 +3,7 @@
 import { LazyPnLAreaChart } from "@/components/charts/lazy";
 import type { Holding, CostBasis, PurchaseRecord } from "@/types";
 import type { CSSProperties } from "react";
-import { formatKRW, formatKRWFull, formatPercent, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPercent, formatPnlKRW, pnlTextClass, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 
 interface HoldingPnL {
@@ -116,7 +116,7 @@ export function PnLClient({
                 pnlTextClass(totalPnL)
               )}
             >
-              {formatSignedKRW(totalPnL)}
+              {formatPnlKRW(totalPnL)}
             </p>
             <p
               className={cn(
@@ -176,7 +176,7 @@ export function PnLClient({
                           pnlTextClass(data.pnl)
                         )}
                       >
-                        {formatSignedKRW(data.pnl)}{" "}
+                        {formatPnlKRW(data.pnl)}{" "}
                         <span className="text-xs font-normal tabular-nums">
                           ({formatPercent(pct)})
                         </span>
@@ -217,7 +217,7 @@ export function PnLClient({
                             pnlTextClass(h.profitLoss)
                           )}
                         >
-                          {formatSignedKRW(h.profitLoss, true)}
+                          {formatPnlKRW(h.profitLoss, true)}
                         </p>
                         <p
                           className={cn(

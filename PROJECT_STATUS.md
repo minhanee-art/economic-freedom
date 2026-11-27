@@ -33,7 +33,7 @@
 - 모바일 전용 API: `/api/mobile/auth/{login,signup}`, `/api/mobile/portfolio-summary`. 그 외 `/api/accounts`, `/api/pension/*`, `/api/purchases`, `/api/dividends`, `/api/auth/password`, `DELETE /api/me`를 공용으로 호출
 - 토큰은 expo-secure-store에 저장, 서버 주소는 `EXPO_PUBLIC_API_BASE_URL`
 - `mobile/eas.json`의 preview·production 프로필에 운영 API 주소 설정됨
-- Android 패키지 `kr.kimvibe.economicfreedom`, versionCode 4 (`mobile/app.json`)
+- Android 패키지 `family.pension.plan`, versionCode 4 (`mobile/app.json`)
 
 ### 테스트
 - `npm test`: `src/**/*.test.ts(x)`를 node:test로 실행 (API, 컴포넌트, 계산 로직)

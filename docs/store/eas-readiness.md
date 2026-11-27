@@ -19,7 +19,7 @@
 | `EXPO_PUBLIC_API_BASE_URL` | **확인 필요** | `preview`·`production` 둘 다 `https://economic-freedom.vercel.app`. 빌드 시점에 번들에 박히므로 최종 웹 도메인이 정해지면 **다시 빌드**해야 함. 이 주소가 지금 응답하는지는 확인하지 않음. `development` 프로필엔 값이 없음 | 최종 도메인 확정(`checklist.md` 사용자 할 일). 정책 요건은 아니고 **현재 구현** 때문: 앱의 설정 탭이 방침·계정 삭제 링크를 API 기본 주소에 경로를 붙여 만듦(`mobile/src/api/client.ts:16` `webUrl`, `settings.tsx:61-62`). 그래서 도메인을 바꾸면 이 링크도 같이 바뀌고, 스토어에 넣는 방침·삭제 URL 은 따로 같은 도메인으로 맞춰야 함(Play 요구는 정상 로드되는 URL) |
 | `submit.production.android` | **확인 필요** | `track: "internal"` 만 있고 `serviceAccountKeyPath` 가 **없음**. 키 파일이 저장소에 없는 것은 의도적일 수 있음(비밀 키) | `eas submit` 으로 올리려면 Play 서비스 계정 키가 필요(EAS 에 등록했는지는 **미확인**). 처음 올리는 앱은 Play Console 에서 직접 올려야 할 수 있음 — 이 점은 이번에 문서로 **확인하지 못함** |
 | `submit.production.ios` | **확인 필요** | 설정 없음(ascAppId 등). iOS 빌드를 만든 적이 있는지도 이 저장소에서는 알 수 없음 | iOS 를 낼 때만 필요 |
-| iOS `bundleIdentifier` | 준비됨(결정 대기 연동) | `kr.kimvibe.economicfreedom`. 변경 여부는 **결정 대기** | 아래 패키지 ID 항목 |
+| iOS `bundleIdentifier` | 준비됨 | `family.pension.plan`. **결정됨: family.pension.plan (2026-11-27)** | 아래 패키지 ID 항목 |
 | iOS `ITSAppUsesNonExemptEncryption` | 확인 필요 | `app.json` `ios.infoPlist` 에 `false`. 수출 규정 판단은 개발자 책임 | `checklist.md` B절 '수출 규정' |
 | iOS `buildNumber` | **확인 필요** | `app.json` 에 없음. local 소스에서 `autoIncrement` 가 없는 `buildNumber` 를 어떻게 처리하는지 문서에 없음 | iOS 빌드 전에 `buildNumber` 를 직접 넣을지(설정 파일 수정은 사용자 결정) 판단 |
 | `supportsTablet: true` | 확인 필요 | iPad 스크린샷(13인치)이 필요해짐(`checklist.md` B절). 태블릿 화면을 점검했는지는 기록 없음 | 태블릿 미지원으로 낮출지 결정 |
@@ -27,7 +27,7 @@
 | 이름·아이콘·적응형 아이콘 | 준비됨 | 이름 `가족연금계획`. `assets/icon.png` 1024×1024. 적응형 아이콘 3종(foreground/background/monochrome) 있음 | 스토어용 512 아이콘은 `store-assets/app-icon-512*.png` 가 로컬에 있으나 어느 것이 최종인지 **확인 필요**(2종 + 후보 3종) |
 | `slug` | **확인 필요 / 사실상 문제 후보** | 여전히 `economic-freedom`(앱 이름 '가족연금계획'과 다름). `package.json` name 도 `economic-freedom-mobile`. 이 값이 스토어에 노출되는지, EAS 프로젝트(`projectId a374e4aa-…`)와 어긋나 문제가 되는지는 **확인하지 못함** | 바꾸면 EAS 프로젝트·딥링크에 영향이 갈 수 있어 **이번엔 수정하지 않음**. 사용자가 이름 정리 여부 결정 |
 | `scheme` | 준비됨 | `economicfreedom`(앱 이름과 다르지만 동작에는 무관) | |
-| 패키지 ID `kr.kimvibe.economicfreedom` | **결정 대기** | Play 에 앱을 한 번 만들어 올리면 패키지 이름은 **바꿀 수 없음**(`checklist.md` 의 Apple 번들 ID 와 같은 성격). 변경 여부는 사용자가 결정. 이 문서는 바꾸지 않음 | 결정 후 `app.json` 의 `ios.bundleIdentifier`·`android.package` 를 함께 정리 |
+| 패키지 ID `family.pension.plan` | **결정됨: family.pension.plan (2026-11-27)** | 이전 값은 `kr.kimvibe.economicfreedom`. `app.json` 의 `ios.bundleIdentifier`·`android.package` 를 함께 바꿈. Play 에 앱을 한 번 올리면 패키지 이름은 바꿀 수 없으므로 **이 값으로 첫 업로드 전에 확정된 것으로 취급**. 결과는 아래 '패키지 ID 변경의 결과' 참고 | 아래 절 |
 | Android 서명 키(keystore) | **확인 필요** | `*.jks` 는 `.gitignore` 처리. EAS 가 관리하는 키인지, 이전에 직접 만든 키인지는 이 저장소에서 알 수 없음 | `eas credentials` 로 확인(로그인 필요 — 사용자 실행). Play App Signing 사용 여부도 Play Console 에서 확인 |
 | 타깃 API 레벨 | **확인 필요** | Expo SDK 57 / RN 0.86 기본 `targetSdk` 가 Play 요구(`checklist.md` A절)를 만족하는지 설정 파일에는 없음 | 새 production aab 를 만든 뒤 Play Console 업로드 단계 경고 또는 `bundletool` 로 확인 |
 | 권한 | 준비됨 | `app.json` 에 `android.permissions` 선언 없음. 플러그인: `expo-router`, `expo-status-bar`, `expo-secure-store`, `expo-build-properties`(minify·shrink 켬) | 최종 aab 의 병합 매니페스트 권한은 빌드 후 확인 |
@@ -58,6 +58,18 @@
 ## 3. 사용자 확인 사항 (이 문서에서 판정할 수 없음)
 
 - Play 에 올린 번호: v2·v3·v4 중 무엇을 어느 트랙에 올렸는지, 현재 최대 versionCode.
-- 패키지 ID(`kr.kimvibe.economicfreedom`)를 바꿀지 — **결정 대기**.
+- 패키지 ID: **결정됨: family.pension.plan (2026-11-27)**. 아래 '패키지 ID 변경의 결과'의 확인 필요 항목은 사용자 확인 대상.
 - 최종 웹 도메인, slug 정리 여부.
 - 서비스 계정 키·EAS 로그인 상태.
+
+## 4. 패키지 ID 변경의 결과 (`kr.kimvibe.economicfreedom` → `family.pension.plan`)
+
+`slug`(`economic-freedom`)·`scheme`·EAS `projectId`·`versionCode` 는 이번에 바꾸지 않았습니다(결정 안 됨).
+
+| 항목 | 내용 | 근거·상태 |
+|---|---|---|
+| 옛 ID 로 Play 에 올린 빌드가 있을 때 | Play 에서 앱의 정체성은 패키지 이름이므로 새 ID 는 옛 앱과 **별개의 새 앱**이 됨(기존 앱 업데이트로 이어지지 않음, 기존 설치 사용자는 새 앱으로 자동 이전되지 않음). 옛 앱의 목록·리뷰·설치 수는 이어지지 않음 | 일반적인 Play 동작. 이 저장소 문서·코드로 **확인하지 못함 — 확인 필요**. 옛 ID 로 Play 에 실제 업로드한 적이 있는지도 **확인 필요**(로컬 `mobile/builds/*.aab` v2~v4 는 존재하나 업로드 여부는 기록 없음) |
+| 서명 키(keystore) | EAS 는 앱 식별자(패키지 ID) 단위로 Android 서명 자격증명을 관리하므로 새 ID 에는 **새 keystore 가 만들어짐**(옛 ID 의 키는 새 ID 에 쓰이지 않음) | EAS 문서 기준 설명이나 이번에 **확인하지 못함 — 확인 필요**. 기존 키가 EAS 관리인지도 위 표의 'Android 서명 키' 항목처럼 미확인. `eas credentials` 는 이번에 실행하지 않음 |
+| `versionCode` 제약 | 새 앱이면 Play 의 "이전에 올린 최댓값보다 커야 한다"는 제약이 **새로 시작**됨(`versionCode: 4` 를 그대로 둬도 업로드는 가능할 수 있음). 옛 ID 의 이력에는 영향 없음 | **확인 필요**. `versionCode` 는 이번에 변경하지 않음. 그대로 4 인 상태에서 `autoIncrement` 가 어떻게 동작하는지도 위 표대로 미확인 |
+| iOS | `bundleIdentifier` 도 같이 바뀜. 옛 번들 ID 로 App Store Connect 앱을 만들었는지는 이 저장소에서 알 수 없음. 만들었다면 별개의 새 앱 | **확인 필요** |
+| 코드·딥링크 | 저장소 코드에서 옛 ID 를 참조하는 곳은 `mobile/app.json` 뿐이었음(`scheme` 은 별개 값이라 유지). 서버·Google OAuth 등 외부 설정에 옛 ID 가 등록돼 있는지는 저장소에서 알 수 없음 | 외부 설정은 **확인 필요**(예: Google Cloud 안드로이드 OAuth 클라이언트가 있다면 패키지명·SHA-1 재등록) |

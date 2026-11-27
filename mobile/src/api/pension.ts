@@ -71,9 +71,39 @@ export async function getRetirementPlan(token: string): Promise<RetirementPlan> 
  */
 export async function getPensionSummary(token: string): Promise<PensionSummary | null> {
   try {
-    return await apiGet<PensionSummary>("/api/pension/summary", token);
+    return normalizePensionSummary(await apiGet<PensionSummaryResponse>("/api/pension/summary", token));
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return null;
     throw err;
   }
+}
+
+/** 서버 응답 그대로의 모양. PR #40(명의자별 계산) 이전 서버는 명의자별·제외 계좌 필드를 주지 않는다. */
+type PensionSummaryResponse = Omit<PensionSummary, "taxCredit" | "retirement"> & {
+  taxCredit:
+    | (Omit<NonNullable<PensionSummary["taxCredit"]>, "byOwner" | "excludedAccounts"> &
+        Partial<Pick<NonNullable<PensionSummary["taxCredit"]>, "byOwner" | "excludedAccounts">>)
+    | null;
+  retirement: Omit<PensionSummary["retirement"], "cashflow"> & {
+    cashflow:
+      | (Omit<NonNullable<PensionSummary["retirement"]["cashflow"]>, "excludedAccounts"> &
+          Partial<Pick<NonNullable<PensionSummary["retirement"]["cashflow"]>, "excludedAccounts">>)
+      | null;
+  };
+};
+
+function normalizePensionSummary(raw: PensionSummaryResponse): PensionSummary {
+  const { taxCredit, retirement } = raw;
+  return {
+    ...raw,
+    taxCredit: taxCredit
+      ? { ...taxCredit, byOwner: taxCredit.byOwner ?? [], excludedAccounts: taxCredit.excludedAccounts ?? [] }
+      : null,
+    retirement: {
+      ...retirement,
+      cashflow: retirement.cashflow
+        ? { ...retirement.cashflow, excludedAccounts: retirement.cashflow.excludedAccounts ?? [] }
+        : null,
+    },
+  };
 }

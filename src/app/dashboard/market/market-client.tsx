@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cn, formatKRWFull, pnlTextClass } from "@/lib/utils";
+import { cn, formatKRWFull } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -174,7 +174,7 @@ export function MarketClient() {
                     >
                       <XAxis
                         type="number"
-                        tick={{ fontSize: 12, fill: "#64748d" }}
+                        tick={{ fontSize: 12, fill: "#5f6f88" }}
                         tickFormatter={(v) =>
                           v >= 100000000
                             ? `${(v / 100000000).toFixed(0)}억`
@@ -187,7 +187,7 @@ export function MarketClient() {
                         type="category"
                         dataKey="name"
                         width={100}
-                        tick={{ fontSize: 12, fill: "#64748d" }}
+                        tick={{ fontSize: 12, fill: "#5f6f88" }}
                       />
                       <Tooltip
                         formatter={(v) => [`${Number(v).toLocaleString()}주`, "거래량"]}

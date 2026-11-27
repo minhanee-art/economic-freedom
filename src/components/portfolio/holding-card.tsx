@@ -381,7 +381,7 @@ export function HoldingCard({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={saveTargetPct}
                 disabled={!onTargetPctChange || !hasTargetChange || isSavingTargetPct}
-                className="h-8 border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                className="h-8 border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
               >
                 {isSavingTargetPct ? "저장중" : "저장"}
               </button>
@@ -409,7 +409,7 @@ export function HoldingCard({
           />
           {hasPnL && (
             <Badge
-              label={`${h.profit_loss >= 0 ? "+" : ""}${formatKRW(h.profit_loss)}`}
+              label={formatSignedKRW(h.profit_loss)}
               variant={h.profit_loss >= 0 ? "green" : "red"}
             />
           )}
@@ -437,7 +437,7 @@ export function HoldingCard({
               type="button"
               onClick={() => setTradeAction(tradeAction === "sell" ? null : "sell")}
               disabled={h.shares <= 0}
-              className="h-9 border border-hairline bg-surface px-3 text-xs font-bold text-ink transition-colors hover:bg-canvas-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+              className="h-9 border border-hairline bg-surface px-3 text-xs font-bold text-ink transition-colors hover:bg-canvas-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
             >
               바로 매도
             </button>
@@ -530,7 +530,7 @@ export function HoldingCard({
                 거래내역 전체 재계산이 아니라 현재 표시값과 평단 기준 원가를 정정합니다. 보유수량이 있으면 평단가는 0보다 커야 합니다.
               </p>
               {detailsStatus && (
-                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-success " : "text-danger"}`}>
+                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-success" : "text-danger"}`}>
                   {detailsStatus}
                 </p>
               )}
@@ -576,7 +576,7 @@ export function HoldingCard({
                 </button>
               </div>
               <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                입력 합계: {enteredQuantity}주 × {formatKRWFull(Math.round(Number(tradePrice) || 0))} = {formatKRW(enteredTradeAmount)}
+                입력 합계: {enteredQuantity}주 × {formatKRWFull(Math.round(Number(tradePrice) || 0))} = {formatKRWFull(enteredTradeAmount)}
               </p>
 
               <div
@@ -596,7 +596,7 @@ export function HoldingCard({
                         현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetBuyQuantity}주</b>가 필요합니다(계산값).
                       </p>
                       <p className="mt-1 tabular-nums">
-                        계산 금액: {targetBuyQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRW(targetBuyCost)}</b>
+                        계산 금액: {targetBuyQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRWFull(targetBuyCost)}</b>
                       </p>
                       <p className="mt-1 tabular-nums">
                         반영 시 예상 비중 약 {projectedPctAfterTargetBuy.toFixed(1)}%
@@ -622,7 +622,7 @@ export function HoldingCard({
                       현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetSellQuantity}주</b>가 필요합니다(계산값).
                     </p>
                     <p className="mt-1 tabular-nums">
-                      계산 금액: {targetSellQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRW(targetSellAmount)}</b>
+                      계산 금액: {targetSellQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRWFull(targetSellAmount)}</b>
                     </p>
                     <p className="mt-1 tabular-nums">
                       반영 시 예상 비중 약 {projectedPctAfterTargetSell.toFixed(1)}%
@@ -644,7 +644,7 @@ export function HoldingCard({
             </div>
           )}
           {tradeStatus && (
-            <p className={`mt-2 text-xs font-semibold ${tradeStatus.includes("완료") ? "text-success " : "text-danger"}`}>
+            <p className={`mt-2 text-xs font-semibold ${tradeStatus.includes("완료") ? "text-success" : "text-danger"}`}>
               {tradeStatus}
             </p>
           )}

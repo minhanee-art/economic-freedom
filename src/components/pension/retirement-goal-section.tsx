@@ -318,12 +318,12 @@ export function RetirementGoalSection({
                 {pickRows(cashflow.rows).map((row) => (
                   <tr key={row.age} className="border-b border-zinc-50 dark:border-zinc-800/60">
                     <td className="py-1.5">{row.age}세</td>
-                    <td className="py-1.5 text-right">{formatKRW(row.layers.public)}</td>
-                    <td className="py-1.5 text-right">{formatKRW(row.layers.retirement)}</td>
-                    <td className="py-1.5 text-right">{formatKRW(row.layers.private)}</td>
-                    <td className="py-1.5 text-right">{formatKRW(row.layers.dividend)}</td>
-                    <td className="py-1.5 text-right font-semibold">{formatKRW(row.total)}</td>
-                    <td className={`py-1.5 text-right ${row.shortfall > 0 ? "text-danger" : "text-zinc-500 dark:text-zinc-400"}`}>
+                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.public)}</td>
+                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.retirement)}</td>
+                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.private)}</td>
+                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.dividend)}</td>
+                    <td className="py-1.5 text-right font-semibold">{formatKRWFull(row.total)}</td>
+                    <td className={`py-1.5 text-right ${row.shortfall > 0 ? "text-caution" : "text-zinc-500 dark:text-zinc-400"}`}>
                       {row.shortfall > 0 ? formatKRWFull(row.shortfall) : "-"}
                     </td>
                   </tr>

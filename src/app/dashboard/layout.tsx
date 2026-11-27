@@ -149,7 +149,7 @@ export default function DashboardLayout({
         <div className="fixed inset-x-0 top-0 z-[60] h-1 bg-indigo-500" />
       )}
       <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm shadow-indigo-950/20">
-        <div className="relative mx-auto flex min-h-16 max-w-280 items-center gap-3 px-4 py-2 sm:px-6">
+        <div className="relative mx-auto flex min-h-16 max-w-280 items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6">
           <Link href="/dashboard" prefetch onClick={() => handleRouteIntent("/dashboard")} onMouseEnter={() => prefetchRoute("/dashboard")} className="shrink-0 text-lg font-bold tracking-tight">
             가족연금계획
           </Link>
@@ -176,7 +176,7 @@ export default function DashboardLayout({
                       "inline-flex h-10 items-center gap-1 border border-transparent px-3 text-sm font-semibold transition-colors",
                       isGroupActive
                         ? "border-white/15 bg-white/10 text-white"
-                        : "text-zinc-500 dark:text-zinc-400 hover:border-white/10 hover:bg-white/10 hover:text-white"
+                        : "text-zinc-200 hover:border-white/10 hover:bg-white/10 hover:text-white"
                     )}
                   >
                     {group.label}
@@ -229,7 +229,7 @@ export default function DashboardLayout({
             })}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
             {accounts.length > 0 && (
               <div className="flex items-center gap-1 border border-white/10 bg-white/10 p-1">
                 <select
@@ -322,11 +322,11 @@ export default function DashboardLayout({
             </div>
 
             {isAuthenticated && displayName && (
-              <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">{displayName}</span>
+              <span className="hidden text-sm text-zinc-200 sm:block">{displayName}</span>
             )}
             <button
               onClick={handleAuthButton}
-              className="border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+              className="shrink-0 whitespace-nowrap border border-white/10 px-2.5 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:bg-white/10 hover:text-white sm:px-3"
             >
               {isAuthenticated ? "로그아웃" : "로그인"}
             </button>

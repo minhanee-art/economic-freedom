@@ -166,7 +166,7 @@ export function TelegramLinkSection() {
       {message && (
         <p
           role={message.kind === "error" ? "alert" : "status"}
-          className={message.kind === "error" ? "text-xs text-danger " : "text-xs text-success"}
+          className={message.kind === "error" ? "text-xs text-danger" : "text-xs text-success"}
         >
           {message.text}
         </p>

@@ -108,7 +108,7 @@ export function PasswordSection() {
           />
         </div>
         {(status.kind === "error" || status.kind === "done") && (
-          <p role={status.kind === "error" ? "alert" : "status"} className={status.kind ==="error" ? "text-xs text-danger " : "text-xs text-success"}>
+          <p role={status.kind === "error" ? "alert" : "status"} className={status.kind ==="error" ? "text-xs text-danger" : "text-xs text-success"}>
             {status.message}
           </p>
         )}

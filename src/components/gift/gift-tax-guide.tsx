@@ -152,7 +152,7 @@ export function GiftTaxGuide() {
         </p>
 
         <div>
-          <p className="font-medium text-danger mb-1">방식 A. 사전 신고 없이 매회 개별 증여로 처리 (권장하지 않음)</p>
+          <p className="font-medium text-caution mb-1">방식 A. 사전 신고 없이 매회 개별 증여로 처리 (권장하지 않음)</p>
           <p className="leading-relaxed">
             매달 그냥 입금만 하고, 10년 누적액이 공제한도(2,000만원)를 넘는 시점에 그 초과분만 신고하는 방식입니다.
             간편해 보이지만, 국세청이 정기적·계획적인 입금을 &quot;처음부터 예정된 증여&quot;로 판단할 경우

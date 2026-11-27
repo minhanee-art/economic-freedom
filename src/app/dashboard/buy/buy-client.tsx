@@ -560,7 +560,7 @@ export function BuyClient({
                       type="button"
                       onClick={() => handleThemeSave(category)}
                       disabled={!hasChange || savingTheme !== null}
-                      className="h-8 border border-indigo-100 bg-indigo-50 px-3 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                      className="h-8 border border-indigo-100 bg-indigo-50 px-3 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                     >
                       {savingTheme === category ? "저장중" : "저장"}
                     </button>

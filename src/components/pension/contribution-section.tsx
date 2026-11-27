@@ -199,12 +199,12 @@ export function ContributionSection({
         </p>
       )}
       {progress.overAnnualContributionLimit && (
-        <p className="text-xs text-danger">
-          연금계좌 납입 합계가 연 납입 한도 {formatKRW(rules.annualContributionLimit)}를 넘었습니다. 금융회사 납입 내역을 확인하세요.
+        <p className="text-xs text-caution">
+          연금계좌 납입 합계가 연 납입 한도 {formatKRW(rules.annualContributionLimit)}을 넘었습니다. 금융회사 납입 내역을 확인하세요.
         </p>
       )}
       {progress.overIsaAnnualLimit && (
-        <p className="text-xs text-danger">ISA 납입이 연 {formatKRW(rules.isa.annualLimit)}를 넘었습니다. 이월 한도를 포함한 실제 한도는 금융회사에서 확인하세요.</p>
+        <p className="text-xs text-caution">ISA 납입이 연 {formatKRW(rules.isa.annualLimit)}을 넘었습니다. 이월 한도를 포함한 실제 한도는 금융회사에서 확인하세요.</p>
       )}
 
       <TaxDisclaimer

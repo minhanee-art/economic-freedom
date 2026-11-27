@@ -353,8 +353,8 @@ function GiftsTab({
                           <td className="px-2 py-1.5">{row.year}</td>
                           <td className="px-2 py-1.5 text-right tabular-nums">{row.installmentYear}</td>
                           <td className="px-2 py-1.5 text-right tabular-nums">{row.count}개월</td>
-                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRW(row.principal)}</td>
-                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRW(row.pv)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRWFull(row.principal)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRWFull(row.pv)}</td>
                         </tr>
                       ))}
                     </tbody>

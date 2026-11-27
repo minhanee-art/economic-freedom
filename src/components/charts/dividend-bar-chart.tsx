@@ -26,12 +26,12 @@ export function DividendBarChart({ data }: DividendBarChartProps) {
         <BarChart data={data}>
           <XAxis
             dataKey="month"
-            tick={{ fontSize: 12, fill: "#64748d" }}
+            tick={{ fontSize: 12, fill: "#5f6f88" }}
             axisLine={{ stroke: "#e3e8ee" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 12, fill: "#64748d" }}
+            tick={{ fontSize: 12, fill: "#5f6f88" }}
             tickFormatter={(v) => formatKRWAxis(v)}
             width={50}
             axisLine={false}

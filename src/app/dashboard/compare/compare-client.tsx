@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import type { Holding } from "@/types";
 import { SERIES_COLORS } from "@/lib/colors";
-import { cn, formatKRWFull, pnlTextClass } from "@/lib/utils";
+import { cn, formatKRWFull } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
 import {
   RadarChart,
@@ -499,7 +499,7 @@ export function CompareClient({ holdings }: Props) {
                       type="button"
                       onClick={() => addToPortfolio(etf)}
                       disabled={isMy || addingCode === etf.code || Boolean(addingCode)}
-                      className="shrink-0 border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+                      className="shrink-0 border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                     >
                       {isMy ? "추가됨" : addingCode === etf.code ? "추가중" : "내 계좌 추가"}
                     </button>
@@ -693,7 +693,7 @@ export function CompareClient({ holdings }: Props) {
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData}>
                     <PolarGrid stroke="#e3e8ee" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 12, fill: "#71717a" }} />
+                    <PolarAngleAxis dataKey="metric" tick={{ fontSize: 12, fill: "#5f6f88" }} />
                     <PolarRadiusAxis tick={false} domain={[0, 100]} />
                     {selected.map((s, i) => (
                       <Radar
@@ -721,7 +721,7 @@ export function CompareClient({ holdings }: Props) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={returnBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
                     <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
-                    <YAxis tick={{ fontSize: 12, fill: "#71717a" }} unit="%" />
+                    <YAxis tick={{ fontSize: 12, fill: "#5f6f88" }} unit="%" />
                     <Bar dataKey="수익률">
                       {returnBarData.map((e, i) => (
                         <Cell key={i} fill={e.color} />
@@ -740,7 +740,7 @@ export function CompareClient({ holdings }: Props) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
                     <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
-                    <YAxis tick={{ fontSize: 12, fill: "#71717a" }} tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}만` : String(v)} />
+                    <YAxis tick={{ fontSize: 12, fill: "#5f6f88" }} tickFormatter={(v) => v >= 10000 ? `${(v / 10000).toFixed(0)}만` : String(v)} />
                     <Bar dataKey="현재가">
                       {barData.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>
@@ -757,7 +757,7 @@ export function CompareClient({ holdings }: Props) {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
                     <XAxis dataKey="code" interval={0} height={58} tick={<AxisTick />} />
-                    <YAxis tick={{ fontSize: 12, fill: "#71717a" }} tickFormatter={(v) => fmtVol(v)} />
+                    <YAxis tick={{ fontSize: 12, fill: "#5f6f88" }} tickFormatter={(v) => fmtVol(v)} />
                     <Bar dataKey="거래량">
                       {volumeBarData.map((e, i) => <Cell key={i} fill={e.color} />)}
                     </Bar>

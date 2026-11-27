@@ -54,7 +54,7 @@ export function ProgressBar({ pct, tone = "normal" }: { pct: number; tone?: "nor
   return (
     <div className="h-2 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
       <div
-        className={`bar-w h-full transition-all ${tone === "over" ? "bg-danger-fill" : "bg-indigo-500"}`}
+        className={`bar-w h-full transition-all ${tone === "over" ? "bg-caution" : "bg-indigo-500"}`}
         style={{ "--bar-w": `${width}%` } as CSSProperties}
       />
     </div>

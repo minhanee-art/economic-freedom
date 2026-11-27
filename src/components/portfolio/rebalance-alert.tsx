@@ -440,8 +440,8 @@ export function RebalanceAlert({
               showAdvice
                 ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
                 : hasAdvice
-                ? "border-zinc-200 bg-white text-danger hover:border-danger-line hover:bg-danger-soft dark:border-zinc-700 dark:bg-zinc-900"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-hairline hover:bg-canvas-soft hover:text-success dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+                ? "border-caution/30 bg-caution-soft text-caution hover:bg-caution-soft dark:border-zinc-700"
+                : "border-zinc-200 bg-white text-zinc-500 hover:bg-canvas-soft hover:text-ink dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
             }`}
           >
             진단
@@ -581,10 +581,10 @@ export function RebalanceAlert({
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-2 border border-indigo-100 bg-indigo-50/70 p-3 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/10 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-2 border border-hairline bg-canvas-soft p-3 dark:border-zinc-800 sm:grid-cols-3">
         <div>
-          <p className="text-xs font-bold text-indigo-500 dark:text-indigo-300">현재 총 합계 비율</p>
-          <p className="mt-1 text-2xl font-black tabular-nums text-indigo-700 dark:text-indigo-200">
+          <p className="text-xs font-semibold text-ink-mute">현재 총 합계 비율</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-ink">
             {currentTotalPct.toFixed(1)}%
           </p>
         </div>
@@ -952,7 +952,7 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
           <p className="mt-1 truncate text-sm font-black text-zinc-950 dark:text-white">{holding.name}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-sm font-black tabular-nums text-zinc-900 dark:text-zinc-100">{formatKRW(holding.current_value)}</p>
+          <p className="text-sm font-black tabular-nums text-zinc-900 dark:text-zinc-100">{formatKRWFull(holding.current_value)}</p>
           <p className="text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">{holding.shares.toLocaleString()}주</p>
         </div>
       </div>
@@ -1074,7 +1074,7 @@ export function HoldingCandlePanel({ holding, className = "" }: { holding: Holdi
 
   return (
     <aside className={`overflow-hidden border border-zinc-200 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900 ${className}`}>
-      <div className="border-b border-zinc-100 bg-gradient-to-r from-zinc-50 to-white px-3 py-2.5 dark:border-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
+      <div className="border-b border-zinc-100 bg-canvas-soft px-3 py-2.5 dark:border-zinc-800">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-xs font-black text-zinc-500 dark:text-zinc-400">{periodLabel} 캔들</p>
@@ -1085,8 +1085,8 @@ export function HoldingCandlePanel({ holding, className = "" }: { holding: Holdi
           <span
             className={`shrink-0 border px-2 py-1 text-xs font-black tabular-nums ${
               isPositive
-                ? "border-hairline bg-canvas-soft text-success"
-                : "border-danger-line bg-danger-soft text-danger"
+                ? "border-hairline bg-surface text-gain"
+                : "border-hairline bg-surface text-loss"
             }`}
           >
             {isPositive ? "+" : ""}{changePct.toFixed(1)}%
@@ -1269,7 +1269,7 @@ function CategoryTargetEditor({
         onMouseDown={(e) => e.preventDefault()}
         onClick={save}
         disabled={!onCategoryTargetPctChange || !hasChange || isSaving}
-        className="h-8 border border-indigo-100 bg-indigo-50 px-2 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+        className="h-8 border border-indigo-100 bg-indigo-50 px-2 text-xs font-bold text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300 dark:hover:bg-indigo-500/25 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
       >
         {isSaving ? "저장중" : "저장"}
       </button>
@@ -1340,7 +1340,7 @@ function HiddenHoldingManager({
             type="button"
             onClick={deleteHolding}
             disabled={!onDeleteHolding || holding.shares > 0 || isDeleting}
-            className="border border-danger-line bg-danger-soft px-2.5 py-1.5 font-black text-danger transition-colors hover:bg-danger-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+            className="border border-danger-line bg-danger-soft px-2.5 py-1.5 font-black text-danger transition-colors hover:bg-danger-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
           >
             {isDeleting ? "삭제 중" : holding.shares > 0 ? "보유중 삭제불가" : "DB 삭제"}
           </button>
@@ -1497,7 +1497,7 @@ function AddHoldingForm({
                     <span className="mt-0.5 block text-xs font-semibold text-zinc-500 dark:text-zinc-400">{etf.category || "기타"}</span>
                   </span>
                   <span className="shrink-0 text-right text-xs font-black tabular-nums text-zinc-700 dark:text-zinc-200">
-                    {formatKRW(etf.price)}
+                    {formatKRWFull(etf.price)}
                   </span>
                 </button>
               ))
@@ -1517,7 +1517,7 @@ function AddHoldingForm({
             </div>
             <div>
               <p className="font-bold text-zinc-500 dark:text-zinc-400">현재가</p>
-              <p className="mt-1 font-black tabular-nums text-zinc-900 dark:text-zinc-100">{formatKRW(selectedEtf.price)}</p>
+              <p className="mt-1 font-black tabular-nums text-zinc-900 dark:text-zinc-100">{formatKRWFull(selectedEtf.price)}</p>
             </div>
             <div className="sm:col-span-3">
               <p className="font-bold text-zinc-500 dark:text-zinc-400">자동 테마 분류</p>
@@ -1587,12 +1587,12 @@ function AddHoldingForm({
         type="button"
         onClick={submit}
         disabled={!canSubmit}
-        className="mt-3 h-10 w-full border border-indigo-600 bg-indigo-600 px-4 text-sm font-black text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+        className="mt-3 h-10 w-full border border-indigo-600 bg-indigo-600 px-4 text-sm font-black text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
       >
         {isAdding ? "추가 중" : "종목 추가"}
       </button>
       {status && (
-        <p className={`mt-2 text-xs font-semibold ${status.includes("추가했습니다") ? "text-success " : "text-danger"}`}>
+        <p className={`mt-2 text-xs font-semibold ${status.includes("추가했습니다") ? "text-success" : "text-danger"}`}>
           {status}
         </p>
       )}

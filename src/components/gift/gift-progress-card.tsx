@@ -24,13 +24,13 @@ export function GiftProgressCard({ birthDate, gifts }: Props) {
         <span>
           {minor ? "미성년자" : "성년"} · 만 {age}세 · 10년 공제한도 {formatKRW(limit)}
         </span>
-        <span className={over ? "text-danger font-semibold" : "text-zinc-500 dark:text-zinc-400"}>
+        <span className={over ? "text-caution font-semibold" : "text-zinc-500 dark:text-zinc-400"}>
           {over ? "한도 초과" : `잔여 ${formatKRW(remaining)}`}
         </span>
       </div>
       <div className="h-2 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         <div
-          className={`bar-w h-full transition-all ${over ? "bg-danger-fill" : "bg-indigo-500"}`}
+          className={`bar-w h-full transition-all ${over ? "bg-caution" : "bg-indigo-500"}`}
           style={{ "--bar-w": `${pct}%` } as CSSProperties}
         />
       </div>
@@ -39,7 +39,7 @@ export function GiftProgressCard({ birthDate, gifts }: Props) {
         <span className="block mt-0.5">정부지원금·비증여 입금은 공제한도 계산에서 제외합니다.</span>
       </p>
       {over && (
-        <p className="text-xs text-danger">
+        <p className="text-xs text-caution">
           공제한도를 초과했습니다. 초과분에 대해 증여세 신고·납부가 필요할 수 있어요. 아래 &quot;증여세 신고 가이드&quot;를 확인하세요.
         </p>
       )}

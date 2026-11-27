@@ -94,7 +94,7 @@ export default function PrivacyPage() {
           가족연금계획
         </Link>
         <h1 className="mt-6 text-4xl font-black tracking-tight text-dark-header dark:text-white">개인정보처리방침</h1>
-        <p className="mt-4 text-sm text-ink-mute dark:text-zinc-400">시행일: 2026년 9월 29일</p>
+        <p className="mt-4 text-sm text-ink-mute dark:text-zinc-400">시행일: 2026년 11월 27일</p>
         <p className="mt-6 rounded-2xl border border-hairline bg-white p-5 text-sm leading-7 text-ink-mute shadow-card dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300">
           가족연금계획은 연금 ETF, 배당, 은퇴 목표, 자녀 증여 기록을 이용자가 직접 입력하고 관리하는 개인 기록 서비스입니다. 이 방침은 웹 서비스와 모바일 앱에 적용됩니다.
         </p>

@@ -361,7 +361,8 @@ await step("신규 계정: 자산 탭 빈 상태 → 종목 추가 화면에서 
   await openTab("자산");
   await expectText("아직 종목이 없습니다");
   await shot("fresh-holdings-empty");
-  await button("종목 추가").click();
+  // 홈 탭의 빈 상태에도 '종목 추가'가 있고(탭 화면은 DOM 에 남는다) 그 버튼은 자산 탭 아래에 가려져 있다 — 자산 탭 것(문서 순서상 뒤)을 누른다.
+  await visible(page.getByRole("button", { name: "종목 추가", exact: true })).last().click();
   await expectText("추가할 계좌");
   await expectText("가지고 있는 종목의 이름과 종목코드");
   await shot("add-holding");

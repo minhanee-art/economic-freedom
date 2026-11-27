@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { DocPage, doc } from "@/components/guide/public-site";
 
 export const metadata: Metadata = {
   title: "계정 및 데이터 삭제 안내 - 가족연금계획",
@@ -19,75 +20,50 @@ const deleteItems = [
 
 export default function AccountDeletionPage() {
   return (
-    <main className="min-h-dvh bg-background px-4 py-12 text-foreground dark:bg-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-          가족연금계획
+    <DocPage title="계정 및 데이터 삭제 안내" updated="최종 업데이트: 2026년 11월 27일">
+      <h2 className={doc.h2}>설정에서 직접 삭제</h2>
+      <ol className={doc.ol}>
+        <li>가족연금계획 웹 또는 앱에 로그인합니다.</li>
+        <li>설정 화면 맨 아래의 &lsquo;계정 삭제&rsquo;를 누릅니다.</li>
+        <li>비밀번호(Google 로그인 계정은 계정 이메일)를 입력해 본인 확인 후 &lsquo;계정 영구 삭제&rsquo;를 누릅니다.</li>
+      </ol>
+      <p className={doc.p}>
+        삭제는 즉시 이루어지며 되돌릴 수 없습니다. 로그인이 되지 않아 직접 삭제할 수 없는 경우에만 아래 이메일 요청을 이용해주세요.
+      </p>
+
+      <h2 className={doc.h2}>이메일로 삭제 요청 (보조 수단)</h2>
+      <p className={doc.p}>
+        {supportEmail
+          ? `${supportEmail}로 삭제 요청을 보내주세요.`
+          : "Google Play·App Store 스토어 등록정보에 표시된 개발자 연락처 또는 앱 운영자에게 삭제 요청을 보내주세요."}
+      </p>
+      <p className={doc.p}>요청 시 본인 확인을 위해 가입 이메일 주소를 함께 알려주세요. 비밀번호는 절대 보내지 마세요.</p>
+
+      <h2 className={doc.h2}>삭제되는 데이터</h2>
+      <ul className={doc.ul}>
+        {deleteItems.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+
+      <h2 className={doc.h2}>처리 기간과 보관 예외</h2>
+      <p className={doc.p}>
+        설정에서 직접 삭제하면 즉시 처리됩니다. 이메일로 요청한 경우에는 본인 확인 후 가능한 한 빠르게 처리하며, 일반적으로 영업일 기준 30일 이내에 처리 결과를 안내합니다.
+      </p>
+      <p className={doc.p}>법령상 보관이 필요한 정보가 있는 경우 해당 법령에서 정한 기간 동안 제한적으로 보관될 수 있습니다.</p>
+
+      <h2 className={doc.h2}>앱에서 할 수 있는 조치</h2>
+      <p className={doc.p}>
+        설정 화면의 로그아웃은 기기에 저장된 로그인 세션만 지우며 서버의 계정과 데이터는 그대로 남습니다. 서버 계정과 입력 데이터를 지우려면 위의 &lsquo;계정 삭제&rsquo;를 이용해주세요.
+      </p>
+
+      <p className={`${doc.p} mt-12`}>
+        데이터 처리 기준은{" "}
+        <Link href="/privacy" className={doc.link}>
+          개인정보처리방침
         </Link>
-        <h1 className="mt-6 text-4xl font-black tracking-tight text-dark-header dark:text-white">계정 및 데이터 삭제 안내</h1>
-        <p className="mt-4 text-sm text-ink-mute dark:text-zinc-400">최종 업데이트: 2026년 11월 27일</p>
-
-        <section className="mt-8 rounded-2xl border border-hairline bg-white p-6 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-xl font-black text-dark-header dark:text-white">설정에서 직접 삭제</h2>
-          <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm leading-7 text-ink-mute dark:text-zinc-400">
-            <li>가족연금계획 웹 또는 앱에 로그인합니다.</li>
-            <li>설정 화면 맨 아래의 &lsquo;계정 삭제&rsquo;를 누릅니다.</li>
-            <li>비밀번호(Google 로그인 계정은 계정 이메일)를 입력해 본인 확인 후 &lsquo;계정 영구 삭제&rsquo;를 누릅니다.</li>
-          </ol>
-          <p className="mt-4 text-sm leading-7 text-ink-mute dark:text-zinc-400">
-            삭제는 즉시 이루어지며 되돌릴 수 없습니다. 로그인이 되지 않아 직접 삭제할 수 없는 경우에만 아래 이메일 요청을 이용해주세요.
-          </p>
-        </section>
-
-        <section className="mt-6 rounded-2xl border border-hairline bg-white p-6 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-xl font-black text-dark-header dark:text-white">이메일로 삭제 요청 (보조 수단)</h2>
-          <div className="mt-4 space-y-3 text-sm leading-7 text-ink-mute dark:text-zinc-400">
-            <p>
-              {supportEmail
-                ? `${supportEmail}로 삭제 요청을 보내주세요.`
-                : "Google Play·App Store 스토어 등록정보에 표시된 개발자 연락처 또는 앱 운영자에게 삭제 요청을 보내주세요."}
-            </p>
-            <p>요청 시 본인 확인을 위해 가입 이메일 주소를 함께 알려주세요. 비밀번호는 절대 보내지 마세요.</p>
-          </div>
-        </section>
-
-        <section className="mt-6 rounded-2xl border border-hairline bg-white p-6 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-xl font-black text-dark-header dark:text-white">삭제되는 데이터</h2>
-          <ul className="mt-4 space-y-3">
-            {deleteItems.map((item) => (
-              <li key={item} className="flex gap-3 text-sm leading-6 text-ink-mute dark:text-zinc-400">
-                <span className="mt-2 h-1.5 w-1.5 rounded-full bg-indigo-600" />
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="mt-6 rounded-2xl border border-hairline bg-white p-6 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-xl font-black text-dark-header dark:text-white">처리 기간과 보관 예외</h2>
-          <div className="mt-4 space-y-3 text-sm leading-7 text-ink-mute dark:text-zinc-400">
-            <p>설정에서 직접 삭제하면 즉시 처리됩니다. 이메일로 요청한 경우에는 본인 확인 후 가능한 한 빠르게 처리하며, 일반적으로 영업일 기준 30일 이내에 처리 결과를 안내합니다.</p>
-            <p>법령상 보관이 필요한 정보가 있는 경우 해당 법령에서 정한 기간 동안 제한적으로 보관될 수 있습니다.</p>
-          </div>
-        </section>
-
-        <section className="mt-6 rounded-2xl border border-hairline bg-white p-6 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-          <h2 className="text-xl font-black text-dark-header dark:text-white">앱에서 할 수 있는 조치</h2>
-          <p className="mt-4 text-sm leading-7 text-ink-mute dark:text-zinc-400">
-            설정 화면의 로그아웃은 기기에 저장된 로그인 세션만 지우며 서버의 계정과 데이터는 그대로 남습니다. 서버 계정과 입력 데이터를 지우려면 위의 &lsquo;계정 삭제&rsquo;를 이용해주세요.
-          </p>
-        </section>
-
-        <div className="mt-8 flex flex-col gap-3 rounded-2xl bg-indigo-600 p-6 text-white sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-black">개인정보처리방침</h2>
-            <p className="mt-2 text-sm text-indigo-50">데이터 처리 기준은 개인정보처리방침에서 확인할 수 있습니다.</p>
-          </div>
-          <Link href="/privacy" className="inline-flex justify-center rounded-full bg-white px-5 py-2 text-sm font-bold text-indigo-700">
-            방침 보기
-          </Link>
-        </div>
-      </div>
-    </main>
+        에서 확인할 수 있습니다.
+      </p>
+    </DocPage>
   );
 }

@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, StyleSheet, type PressableProps, type StyleProp, type ViewStyle } from "react-native";
+import { Text } from "@/components/AppText";
 import { colors, radius, spacing, touchTarget } from "@/styles/theme";
 
 export type ButtonVariant = "primary" | "secondary" | "danger" | "link" | "dangerLink";

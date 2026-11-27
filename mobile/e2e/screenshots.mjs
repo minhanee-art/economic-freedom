@@ -418,6 +418,8 @@ await selectAccountChip("내 계좌");
 // 8 설정
 await openTab("설정");
 await expectText(EMAIL);
+// 비밀번호 카드는 설정 여부를 서버에 물은 뒤에 버튼을 그린다 — 로딩 문구가 아니라 실제 버튼이 보인 뒤에 찍는다.
+await visible(page.getByRole("button", { name: /^비밀번호 (변경|설정)$/ })).first().waitFor({ state: "visible", timeout: 30000 });
 await expectText("계정 삭제 안내");
 await scrollTop();
 await shot(8);

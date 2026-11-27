@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { Text } from "react-native";
+import { Text } from "@/components/AppText";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { type } from "@/styles/theme";

@@ -1,4 +1,5 @@
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from "react-native";
+import { StyleSheet, TextInput, View, type TextInputProps } from "react-native";
+import { Text } from "@/components/AppText";
 import { Button } from "@/components/Button";
 import { colors, radius, spacing, type } from "@/styles/theme";
 import { formatDateInput, quickDates } from "@/utils/records";

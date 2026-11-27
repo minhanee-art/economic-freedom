@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { AppShell } from "@/components/AppShell";
 import { Card, Rows, ValueRow } from "@/components/Card";
 import { Notice, ProgressBar, RETIREMENT_WEB_PATH, ScreenTitle, WebLinkButton } from "@/components/Parts";

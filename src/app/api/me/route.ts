@@ -2,11 +2,12 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
-import { clearSessionCookie, getBearerSession, getSession } from "@/lib/session";
+import { clearSessionCookie, getBearerSession, getRequestSession, getSession } from "@/lib/session";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
 
-export async function GET() {
-  const session = await getSession();
+/** 프로필 조회 — 쿠키 세션 또는 Bearer 토큰(getRequestSession: 둘 다 session_version 폐기 검사를 거친다). */
+export async function GET(request: Request) {
+  const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ authenticated: false, error: "인증 필요" }, { status: 401 });
 
   const [row] = await sql`

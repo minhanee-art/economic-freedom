@@ -143,7 +143,7 @@ test("DELETE: 사용자 행이 이미 없으면 401", async () => {
 
 test("GET: 비밀번호 보유 여부를 함께 돌려준다", async () => {
   db.setHandler(() => [{ display_name: "홍", email: "a@b.com", has_password: false }]);
-  const response = await me.GET();
+  const response = await me.GET(jsonRequest("GET"));
   assert.deepEqual(await readJson(response), {
     authenticated: true,
     displayName: "홍",

@@ -165,6 +165,25 @@ test("계정 삭제: 삭제된 사용자의 토큰은 거부된다", { skip }, a
   assert.equal(await session.getRequestSession(authRequest("GET", { bearer: token })), null);
 });
 
+test("GET /api/me: 쿠키·Bearer 모두 통과하고, 비밀번호 변경으로 폐기된 토큰은 두 경로 모두 401", { skip }, async () => {
+  const oldToken = await session.signToken(U.other.id, 0);
+  const asCookie = await me.GET(authRequest("GET", { cookie: oldToken }));
+  const asBearer = await me.GET(authRequest("GET", { bearer: oldToken }));
+  assert.equal(asCookie.status, 200);
+  assert.equal(asBearer.status, 200);
+  assert.deepEqual(await asBearer.json(), await asCookie.json());
+
+  const changed = await password.POST(
+    authRequest("POST", { bearer: oldToken, body: { currentPassword: "other-password", newPassword: "next-password" } })
+  );
+  const { token } = (await changed.json()) as { token: string };
+
+  assert.equal((await me.GET(authRequest("GET", { bearer: oldToken }))).status, 401);
+  assert.equal((await me.GET(authRequest("GET", { cookie: oldToken }))).status, 401);
+  assert.equal((await me.GET(authRequest("GET", { bearer: token }))).status, 200);
+  assert.equal((await me.GET(authRequest("GET"))).status, 401);
+});
+
 // ── 계정 선점 차단 ─────────────────────────────
 
 test("Google 첫 연결: 선점 계정의 비밀번호 무효화·토큰 폐기·텔레그램 chat_id 삭제, 다른 사용자는 그대로", { skip }, async () => {

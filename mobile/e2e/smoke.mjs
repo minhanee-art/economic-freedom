@@ -98,6 +98,8 @@ function rowButton(rowText, name) {
 }
 
 async function openTab(label) {
+  // 새로고침 직후에는 탭바가 아직 없을 수 있어 나타날 때까지 기다린 뒤 고른다(없는 채로 링크를 찾다 시간 초과되지 않게).
+  await visible(page.getByRole("tab")).first().waitFor({ state: "visible", timeout: 60000 });
   const tab = visible(page.getByRole("tab", { name: label })).first();
   if (await tab.count()) await tab.click();
   else await visible(page.getByRole("link", { name: label })).first().click();
@@ -246,7 +248,9 @@ let freshPickedName = "";
 
 /** 기록 화면의 종목 선택 목록 상태: 0주 종목 버튼 수, 접기/보기 토글 문구, 보유 종목 버튼 이름. */
 async function pickerState() {
-  await visible(page.getByText("종목", { exact: true })).first().waitFor({ state: "visible", timeout: 30000 });
+  // 계좌 배너는 요약 응답이 도착한 뒤에 그려진다 — 종목 목록도 같은 응답이므로 이를 조건으로 기다린다(로딩 중에는 '보유 종목이 없습니다'가 잠깐 보인다).
+  await expectText("기록할 계좌");
+  await expectText("이전 화면에서 계좌를 선택하세요");
   return page.evaluate(() => {
     const shown = (el) => el.offsetParent !== null;
     const buttons = [...document.querySelectorAll('[role="button"]')].filter(shown);
@@ -314,6 +318,12 @@ await step("신규 계정: 홈 '보유 종목 0개', 기본 종목은 전부 0�
   await shot("fresh-home");
 });
 
+/** 기록 화면(스택)에서 이전 탭 화면으로 돌아온다. 단계가 중간에 실패해도 다음 단계가 탭바에서 시작하도록 실패 시에도 호출한다. */
+async function leaveRecordScreen() {
+  if (new URL(page.url()).pathname.includes("record-")) await page.goBack().catch(() => {});
+  await visible(page.getByRole("tab")).first().waitFor({ state: "visible", timeout: 30000 });
+}
+
 await step("신규 계정: 배당 기록 화면은 0주 종목이 처음부터 펼쳐져 있음(접기 토글 없음)", async (s) => {
   await openTab("배당");
   await button("배당 수령 기록 추가").click();
@@ -324,10 +334,10 @@ await step("신규 계정: 배당 기록 화면은 0주 종목이 처음부터 �
   assert(state.toggle === null, "보유 종목이 없는데 접기/보기 토글이 보임");
   await expectText("보유 수량이 있는 종목이 없어 등록된 종목을 모두 표시합니다.");
   await shot("fresh-dividend-picker");
-  await page.goBack();
 });
 
 await step("신규 계정: 매수 기록 — 0주 종목이 펼쳐져 보이고 하나를 골라 저장 성공", async (s) => {
+  await leaveRecordScreen();
   await openTab("자산");
   await button("매수 기록 추가").click();
   await expectText("이미 한 거래를 기록합니다");
@@ -347,11 +357,11 @@ await step("신규 계정: 매수 기록 — 0주 종목이 펼쳐져 보이고 
   assert(res.ok(), `0주 종목 매수 기록 저장 실패: HTTP ${res.status()}`);
   await expectText("2주 매수 기록을 추가했습니다");
   await shot("fresh-purchase-saved");
-  await page.goBack();
 });
 
 await step("신규 계정: 다시 열면 그 종목만 보이고 '보유하지 않은 종목 N개 보기'가 접힘 → 펼침/접기 동작", async (s) => {
   const rest = freshHoldingCount - 1;
+  await leaveRecordScreen();
   await openTab("홈");
   await visible(page.locator("div")).filter({ hasText: /보유 종목\s*1개/ }).last().waitFor({ state: "visible", timeout: 30000 });
   for (const [tabLabel, openLabel, marker] of [
@@ -374,7 +384,7 @@ await step("신규 계정: 다시 열면 그 종목만 보이고 '보유하지 �
     await shot(`fresh-${tabLabel === "자산" ? "purchase" : "dividend"}-picker-expanded`);
     await button(`보유하지 않은 종목 ${rest}개 접기`).click();
     await button(`보유하지 않은 종목 ${rest}개 보기`).waitFor({ state: "visible", timeout: 15000 });
-    await page.goBack();
+    await leaveRecordScreen();
   }
 });
 

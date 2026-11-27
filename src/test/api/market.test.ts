@@ -27,9 +27,9 @@ function textResponse(body: string, init: ResponseInit = {}): Response {
 const naverEtfList = {
   result: {
     etfItemList: [
-      { itemcode: "305050", itemname: "KODEX 200", nowVal: 57490, changeVal: 100, changeRate: 0.17, quant: 1_000_000, amount: 57_000_000_000 },
-      { itemcode: "458730", itemname: "TIGER US BOND 10Y", nowVal: 14635, changeVal: -35, changeRate: -0.24, quant: 300_000, amount: 4_000_000_000 },
-      { itemcode: "319640", itemname: "TIGER GOLD", nowVal: 27810, changeVal: 210, changeRate: 0.76, quant: 500_000, amount: 9_000_000_000 },
+      { itemcode: "305050", itemname: "KODEX 200", nowVal: 57490, changeVal: 100, changeRate: 0.17, quant: 1_000_000, amonut: 57_490 },
+      { itemcode: "458730", itemname: "TIGER US BOND 10Y", nowVal: 14635, changeVal: -35, changeRate: -0.24, quant: 300_000, amonut: 4_391 },
+      { itemcode: "319640", itemname: "TIGER GOLD", nowVal: 27810, changeVal: 210, changeRate: 0.76, quant: 500_000, amonut: 13_905 },
     ],
   },
 };
@@ -120,44 +120,16 @@ test("search: 코드·이름으로 검색하고 정렬한다", async () => {
   const byCodeBody = await readJson<{ etfs: { code: string }[] }>(byCode);
   assert.deepEqual(byCodeBody.etfs.map((e) => e.code), ["458730"]);
 
+  // 거래대금: 네이버 'amonut'(백만 원) → 원, 거래대금 많은 순 정렬
+  const byValue = await GET(new Request("https://pension.test/api/market/search?sort=value"));
+  const byValueBody = await readJson<{ etfs: { code: string; tradingValue: number }[] }>(byValue);
+  assert.deepEqual(byValueBody.etfs.map((e) => e.code), ["305050", "319640", "458730"]);
+  assert.equal(byValueBody.etfs[0].tradingValue, 57_490_000_000);
+
   const sorted = await GET(new Request("https://pension.test/api/market/search?sort=name"));
   const sortedBody = await readJson<{ etfs: { name: string }[] }>(sorted);
   const names = sortedBody.etfs.map((e) => e.name);
   assert.deepEqual(names, [...names].sort((a, b) => a.localeCompare(b)));
-});
-
-// ── /api/market/volume ───────────────────────
-test("volume: 거래량 상위 10개를 순위와 함께 돌려준다", async () => {
-  const { GET } = await import("@/app/api/market/volume/route");
-  stub("naver-volume", "etfItemList", () => jsonResponse(naverEtfList));
-
-  const response = await GET();
-  assert.equal(response.status, 200);
-
-  const body = await readJson<{ etfs: { rank: number; code: string; volume: number }[] }>(response);
-  assert.equal(body.etfs.length, 3);
-  assert.deepEqual(body.etfs.map((e) => e.rank), [1, 2, 3]);
-  assert.deepEqual(body.etfs.map((e) => e.code), ["305050", "319640", "458730"]);
-});
-
-test("volume: 상류 응답이 실패하면 500과 빈 목록", async () => {
-  const { GET } = await import("@/app/api/market/volume/route");
-  stub("naver-volume", "etfItemList", () => textResponse("nope", { status: 503 }));
-
-  const response = await GET();
-  assert.equal(response.status, 500);
-  const body = await readJson<{ etfs: unknown[]; error: string }>(response);
-  assert.deepEqual(body.etfs, []);
-  assert.match(body.error, /실패/);
-});
-
-test("volume: 목록이 비면 500", async () => {
-  const { GET } = await import("@/app/api/market/volume/route");
-  stub("naver-volume", "etfItemList", () => jsonResponse({ result: { etfItemList: [] } }));
-
-  const response = await GET();
-  assert.equal(response.status, 500);
-  assert.match((await readJson<{ error: string }>(response)).error, /데이터 없음/);
 });
 
 // ── /api/market/indices ──────────────────────

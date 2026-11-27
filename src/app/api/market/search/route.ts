@@ -7,7 +7,7 @@ export interface SearchETF {
   change: number;
   changePct: number;
   volume: number;
-  tradingValue: number; // 거래대금
+  tradingValue: number; // 거래대금(원)
   category: string;
 }
 
@@ -100,7 +100,8 @@ async function getETFList(): Promise<SearchETF[]> {
       change: Number(item.changeVal ?? 0),
       changePct: Number(item.changeRate ?? 0),
       volume: Number(item.quant ?? 0),
-      tradingValue: Number(item.amount ?? 0),
+      // 네이버 응답의 거래대금 필드명은 'amonut'(원문 그대로의 오타)이고 단위는 백만 원이다 → 원으로 바꾼다
+      tradingValue: Number(item.amonut ?? item.amount ?? 0) * 1_000_000,
       category: guessCategory(name),
     };
   });

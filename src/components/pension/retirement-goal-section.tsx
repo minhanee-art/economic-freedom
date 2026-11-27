@@ -138,7 +138,7 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
             <option value="">미입력 (낮은 공제율로 가정)</option>
             {(["low", "high"] as SalaryBracket[]).map((b) => (
               <option key={b} value={b}>
-                {rules.taxCredit.rates[b].label} · 공제율 {(rules.taxCredit.rates[b].rate * 100).toFixed(1)}%
+                공제율 {(rules.taxCredit.rates[b].rate * 100).toFixed(1)}% · {rules.taxCredit.rates[b].label}
               </option>
             ))}
           </select>

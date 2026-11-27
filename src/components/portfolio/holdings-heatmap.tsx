@@ -97,12 +97,9 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
     const hPx = (r.h / 100) * size.h - TILE_GAP;
     return { r, level: heatmapLabelLevel(wPx, hPx), wPx, hPx };
   });
-  // 이름이 칸 안에 안 보이는 종목(글자 없음·수익률만) + "기타"로 묶인 종목은 아래 목록으로 보여준다
+  // 아래 목록은 측정과 무관하게 모든 종목을 보여준다. 어느 칸에 이름이 들어가는지는 화면 크기를 재야 알 수 있는데,
+  // 목록이 그것에 따라 달라지면 측정 전(서버 렌더)과 후에 목록 줄 수가 바뀌어 아래 내용이 밀린다.
   const groupedIds = new Set(grouped.map((g) => g.id));
-  const small: HeatmapItem[] = [
-    ...placed.filter((p) => p.level !== "two-line" && !p.r.groupedCount).map((p) => p.r),
-    ...grouped,
-  ].sort((a, b) => b.value - a.value);
   const total = items.reduce((s, i) => s + i.value, 0);
   const shareOf = (i: HeatmapItem) => (total > 0 ? (i.value / total) * 100 : 0);
   const selected = rects.find((r) => r.id === selectedId) ?? null;
@@ -136,7 +133,8 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
               <button
                 type="button"
                 data-heat-tile
-                data-heat-hatch={isOther ? "" : undefined}
+                // 글자가 있으면 이름("기타 N종목")이 보합 칸과 구별해 주므로 빗금은 글자 없는 칸에만 둔다(글자가 깔끔하게 읽히도록)
+                data-heat-hatch={isOther && level === "none" ? "" : undefined}
                 aria-label={tileLabel(r)}
                 aria-pressed={isSelected}
                 title={isOther ? undefined : tileSummary(r)}
@@ -166,9 +164,9 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
         {selected ? tileSummary(selected) : "칸을 누르면 종목 이름·비중·수익률이 여기에 나와요."}
       </p>
 
-      {small.length > 0 && (
-        <ul aria-label="비중이 작은 종목" className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
-          {small.map((r) => (
+      {items.length > 0 && (
+        <ul aria-label="종목별 비중·수익률" className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+          {items.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-2">
               <span className="flex min-w-0 items-center gap-1.5">
                 <span

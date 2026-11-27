@@ -1,10 +1,10 @@
 "use client";
 
+import { LazyDividendBarChart } from "@/components/charts/lazy";
 import { useEffect, useState, useMemo } from "react";
 import { formatKRWFull, formatKRW } from "@/lib/utils";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
-import { DividendBarChart } from "@/components/charts/dividend-bar-chart";
 
 interface HoldingOption {
   id: string;
@@ -228,7 +228,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
       {monthlyData.length > 0 && (
         <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
           <h2 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">월별 배당금</h2>
-          <DividendBarChart data={monthlyData} />
+          <LazyDividendBarChart data={monthlyData} />
         </div>
       )}
 

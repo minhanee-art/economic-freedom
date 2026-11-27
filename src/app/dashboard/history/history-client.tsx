@@ -138,7 +138,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       {/* 가져오기 버튼 */}
       <button
         onClick={() => setShowImport(true)}
-        className="w-full h-11 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-card hover:shadow-float hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+        className="w-full h-11 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-card hover:shadow-float hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
       >
         증권사 거래내역 가져오기 (CSV)
       </button>
@@ -174,7 +174,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
             <button
               onClick={loadMore}
               disabled={isLoadingMore}
-              className="w-full h-11 border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-semibold text-ink-mute dark:text-zinc-400 shadow-card hover:shadow-float hover:bg-canvas-soft dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
+              className="w-full h-11 border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-semibold text-ink-mute dark:text-zinc-400 shadow-card hover:shadow-float hover:bg-canvas-soft dark:hover:bg-zinc-800 transition-colors disabled:opacity-50"
             >
               {isLoadingMore ? "불러오는 중..." : "더 보기"}
             </button>

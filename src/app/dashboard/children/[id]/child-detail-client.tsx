@@ -352,15 +352,19 @@ function GiftsTab({
                   원금 합계는 <b>{formatKRWFull(installmentPrincipal)}</b>, 연 3% 할인율 추정 평가액은 <b>{formatKRWFull(pv)}</b>입니다.
                 </div>
 
-                <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">표가 넓으면 좌우로 밀어 보세요</p>
+
+                <div tabIndex={0} role="region" aria-label="정기금 연도별 표" className="overflow-x-auto border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
                   <table className="w-full text-xs">
+
+                  <caption className="sr-only">유기정기금 연도별 원금과 추정 평가액</caption>
                     <thead className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                       <tr>
-                        <th className="text-left font-medium px-2 py-1.5">년도</th>
-                        <th className="text-right font-medium px-2 py-1.5">불입년도</th>
-                        <th className="text-right font-medium px-2 py-1.5">횟수</th>
-                        <th className="text-right font-medium px-2 py-1.5">불입원금</th>
-                        <th className="text-right font-medium px-2 py-1.5">할인평가액</th>
+                        <th scope="col" className="text-left font-medium px-2 py-1.5">년도</th>
+                        <th scope="col" className="text-right font-medium px-2 py-1.5">불입년도</th>
+                        <th scope="col" className="text-right font-medium px-2 py-1.5">횟수</th>
+                        <th scope="col" className="text-right font-medium px-2 py-1.5">불입원금</th>
+                        <th scope="col" className="text-right font-medium px-2 py-1.5">할인평가액</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -456,11 +460,12 @@ function GiftsTab({
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => handleDelete(g.id)}
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors"
-                  aria-label="삭제"
+                  aria-label={`${g.date} 입금·증여 기록 삭제`}
+                  className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
@@ -618,11 +623,12 @@ function HoldingsTab({
                   )}
                 </div>
                 <button
+                  type="button"
                   onClick={() => handleDelete(h.id)}
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors shrink-0"
-                  aria-label="삭제"
+                  aria-label={`${h.name} 종목 삭제`}
+                  className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>

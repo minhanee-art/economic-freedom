@@ -307,17 +307,21 @@ export function RetirementGoalSection({
             </p>
           )}
 
-          <div className="overflow-x-auto">
+          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">표가 넓으면 좌우로 밀어 보세요</p>
+
+          <div tabIndex={0} role="region" aria-label="나이별 예상 월 현금흐름 표" className="overflow-x-auto">
             <table className="w-full text-xs tabular-nums">
+
+            <caption className="sr-only">나이별 예상 월 현금흐름: 국민연금, 퇴직연금, 개인연금, 배당, 합계, 목표 대비 부족액</caption>
               <thead className="text-zinc-500 dark:text-zinc-400">
                 <tr className="border-b border-zinc-100 dark:border-zinc-800">
-                  <th className="py-1.5 text-left font-medium">나이</th>
-                  <th className="py-1.5 text-right font-medium">국민연금</th>
-                  <th className="py-1.5 text-right font-medium">퇴직연금</th>
-                  <th className="py-1.5 text-right font-medium">개인연금</th>
-                  <th className="py-1.5 text-right font-medium">배당</th>
-                  <th className="py-1.5 text-right font-medium">합계</th>
-                  <th className="py-1.5 text-right font-medium">부족액</th>
+                  <th scope="col" className="py-1.5 text-left font-medium">나이</th>
+                  <th scope="col" className="py-1.5 text-right font-medium">국민연금</th>
+                  <th scope="col" className="py-1.5 text-right font-medium">퇴직연금</th>
+                  <th scope="col" className="py-1.5 text-right font-medium">개인연금</th>
+                  <th scope="col" className="py-1.5 text-right font-medium">배당</th>
+                  <th scope="col" className="py-1.5 text-right font-medium">합계</th>
+                  <th scope="col" className="py-1.5 text-right font-medium">부족액</th>
                 </tr>
               </thead>
               <tbody>

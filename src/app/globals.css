@@ -116,6 +116,47 @@ body {
   overflow-wrap: break-word;
 }
 
+/* 고정 헤더(4rem)와 모바일 하단 탭(5rem)이 초점 받은 요소·앵커 이동을 가리지 않게 */
+html {
+  scroll-padding-top: 5rem;
+  scroll-padding-bottom: 6rem;
+}
+
+/* 누를 수 있는 것은 손가락 모양, 두 번 탭 확대 지연 없이 */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+select:not(:disabled),
+summary,
+label[for],
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled) {
+  cursor: pointer;
+}
+a,
+button,
+select,
+summary,
+label,
+input,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* 움직임 줄이기: 전환·애니메이션·부드러운 스크롤을 끈다(차트는 컴포넌트에서 isAnimationActive 로 함께 끔) */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* 대시보드 고정 하단 탭·헤더 메뉴 치수 */
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);

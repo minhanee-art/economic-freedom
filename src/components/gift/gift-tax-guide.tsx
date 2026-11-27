@@ -43,7 +43,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <details className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden group" open>
       <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-sm flex items-center justify-between">
         {title}
-        <svg className="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg aria-hidden="true" className="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </summary>
@@ -102,13 +102,15 @@ export function GiftTaxGuide() {
         </div>
         <div>
           <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">증여세 세율 (초과누진세율)</p>
-          <div className="overflow-x-auto -mx-1">
+          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">표가 넓으면 좌우로 밀어 보세요</p>
+          <div tabIndex={0} role="region" aria-label="증여세 세율 표" className="overflow-x-auto -mx-1">
             <table className="w-full text-xs border-collapse">
+            <caption className="sr-only">증여세 과세표준별 세율과 누진공제액</caption>
               <thead>
                 <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
-                  <th className="text-left font-medium py-1.5 px-1">과세표준</th>
-                  <th className="text-right font-medium py-1.5 px-1">세율</th>
-                  <th className="text-right font-medium py-1.5 px-1">누진공제액</th>
+                  <th scope="col" className="text-left font-medium py-1.5 px-1">과세표준</th>
+                  <th scope="col" className="text-right font-medium py-1.5 px-1">세율</th>
+                  <th scope="col" className="text-right font-medium py-1.5 px-1">누진공제액</th>
                 </tr>
               </thead>
               <tbody>

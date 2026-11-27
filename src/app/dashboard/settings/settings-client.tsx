@@ -595,10 +595,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{w.code}</span>
                 )}
                 <button
+                  type="button"
                   onClick={() => handleDeleteWatchlist(w.id)}
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors text-xs"
+                  aria-label={`${w.name} 감정분석 종목 삭제`}
+                  className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                 >
-                  ✕
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
                 </button>
               </li>
             ))}
@@ -679,13 +681,15 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 <li key={c.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
                   <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 w-20 shrink-0">{c.date}</span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
-                  <span className="flex-1 text-sm truncate">{c.stock}</span>
+                  <span className="flex-1 text-sm truncate" title={c.stock}>{c.stock}</span>
                   {c.note && <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-25">{c.note}</span>}
                   <button
+                    type="button"
                     onClick={() => handleDeleteCalendar(c.id)}
-                    className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors text-xs"
+                    aria-label={`${c.date} ${c.stock} 일정 삭제`}
+                    className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                   >
-                    ✕
+                    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
                   </button>
                 </li>
               );
@@ -798,10 +802,12 @@ function HoldingSettingCard({
           </div>
           {h.shares === 0 && (
             <button
+              type="button"
               onClick={() => onDelete(h.id)}
-              className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors"
+              aria-label={`${h.name} 종목 삭제`}
+              className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
             >
-              <svg
+              <svg aria-hidden="true"
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"

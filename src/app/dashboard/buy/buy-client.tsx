@@ -606,16 +606,18 @@ export function BuyClient({
 
               {showAnnualPlan && (
                 <>
-                  <div className="mt-3 overflow-x-auto">
+                  <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">표가 넓으면 좌우로 밀어 보세요</p>
+                  <div tabIndex={0} role="region" aria-label="연간 배분 계획 표" className="mt-3 overflow-x-auto">
                     <table className="w-full min-w-130 border-collapse text-xs tabular-nums">
+                    <caption className="sr-only">종목별 연간 배분 계획: 목표 비중, 1주 가격, 연 수량, 배분 주기, 연 금액</caption>
                       <thead>
                         <tr className="text-zinc-500 dark:text-zinc-400">
-                          <th className="pb-2 text-left font-medium">종목</th>
-                          <th className="pb-2 text-right font-medium">목표 비중</th>
-                          <th className="pb-2 text-right font-medium">1주 가격</th>
-                          <th className="pb-2 text-right font-medium">연 수량</th>
-                          <th className="pb-2 text-right font-medium">배분 주기</th>
-                          <th className="pb-2 text-right font-medium">연 금액</th>
+                          <th scope="col" className="pb-2 text-left font-medium">종목</th>
+                          <th scope="col" className="pb-2 text-right font-medium">목표 비중</th>
+                          <th scope="col" className="pb-2 text-right font-medium">1주 가격</th>
+                          <th scope="col" className="pb-2 text-right font-medium">연 수량</th>
+                          <th scope="col" className="pb-2 text-right font-medium">배분 주기</th>
+                          <th scope="col" className="pb-2 text-right font-medium">연 금액</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -920,8 +922,10 @@ function BuyPlanCard({
           <div className="text-right shrink-0">
             <div className="flex items-center gap-1 justify-end">
               <button
+                type="button"
                 onClick={() => onQuantityChange(item.quantity - 1)}
-                className="w-7 h-7 bg-canvas-soft border border-hairline dark:bg-zinc-800 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:hover:bg-zinc-700 flex items-center justify-center text-lg font-bold leading-none transition-colors select-none"
+                aria-label={`${h.name} 수량 1주 줄이기`}
+                className="h-11 w-11 bg-canvas-soft border border-hairline dark:bg-zinc-800 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:hover:bg-zinc-700 flex items-center justify-center text-lg font-bold leading-none transition-colors select-none"
               >
                 −
               </button>
@@ -930,8 +934,10 @@ function BuyPlanCard({
                 <span className="text-xs font-normal text-zinc-500 dark:text-zinc-400 ml-0.5">주</span>
               </span>
               <button
+                type="button"
                 onClick={() => onQuantityChange(item.quantity + 1)}
-                className="w-7 h-7 bg-canvas-soft border border-hairline dark:bg-zinc-800 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:hover:bg-zinc-700 flex items-center justify-center text-lg font-bold leading-none transition-colors select-none"
+                aria-label={`${h.name} 수량 1주 늘리기`}
+                className="h-11 w-11 bg-canvas-soft border border-hairline dark:bg-zinc-800 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 dark:hover:bg-zinc-700 flex items-center justify-center text-lg font-bold leading-none transition-colors select-none"
               >
                 +
               </button>

@@ -1,6 +1,7 @@
 // 대시보드 클라이언트 — 시세 자동 갱신, 테마별 그룹·정렬, 차트
 "use client";
 
+import { LazyCategoryPieChart, LazyAllocationBarChart } from "@/components/charts/lazy";
 import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -10,8 +11,6 @@ import { SummaryHeader } from "@/components/portfolio/summary-header";
 import { HoldingsHeatmap } from "@/components/portfolio/holdings-heatmap";
 import { computeDailyChange, computeDividendYields, type DividendRecordLite } from "@/lib/dashboard-insights";
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
-import { CategoryPieChart } from "@/components/charts/category-pie-chart";
-import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
 import { cn, formatSignedKRW } from "@/lib/utils";
 import { toLocalDateKey, upcomingDividendSchedule } from "@/lib/dashboard-home";
 import { HomeStatus } from "@/components/portfolio/home-status";
@@ -529,11 +528,11 @@ export function DashboardClient({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <section aria-labelledby="home-pie-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
             <h2 id="home-pie-title" className="text-sm font-semibold text-ink mb-3">자산군별 비중</h2>
-            <CategoryPieChart data={pieData} />
+            <LazyCategoryPieChart data={pieData} />
           </section>
           <section aria-labelledby="home-bar-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
             <h2 id="home-bar-title" className="text-sm font-semibold text-ink mb-3">현재 vs 목표 비중</h2>
-            <AllocationBarChart data={barData} />
+            <LazyAllocationBarChart data={barData} />
           </section>
         </div>
       )}

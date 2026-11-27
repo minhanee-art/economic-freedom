@@ -4,6 +4,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { CSSProperties } from "react";
 import { getCategoryColor } from "@/lib/colors";
 import { formatKRW } from "@/lib/utils";
+import { categorySummary } from "./chart-summary";
+import { usePrefersReducedMotion } from "./use-reduced-motion";
 
 interface PieData {
   name: string;
@@ -17,12 +19,13 @@ interface CategoryPieChartProps {
 
 export function CategoryPieChart({ data }: CategoryPieChartProps) {
   const total = data.reduce((s, d) => s + d.value, 0);
+  const reduceMotion = usePrefersReducedMotion();
 
   return (
     <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-      <div className="w-40 h-40 shrink-0">
+      <div className="w-40 h-40 shrink-0" role="img" aria-label={categorySummary(data)}>
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          <PieChart accessibilityLayer={false}>
             <Pie
               data={data}
               cx="50%"
@@ -30,7 +33,9 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
               innerRadius={45}
               outerRadius={72}
               dataKey="value"
-              stroke="none"
+              stroke="var(--surface)"
+              strokeWidth={2}
+              isAnimationActive={!reduceMotion}
             >
               {data.map((entry) => (
                 <Cell
@@ -40,7 +45,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
               ))}
             </Pie>
             <Tooltip
-              formatter={(value) => formatKRW(Number(value))}
+              formatter={(value, name) => [formatKRW(Number(value)), name]}
               contentStyle={{
                 fontSize: 12,
                 borderRadius: 0,
@@ -55,6 +60,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-2">
             <span
+              aria-hidden="true"
               className="dot-bg w-3 h-3 shrink-0"
               style={{ "--dot-bg": getCategoryColor(d.name) } as CSSProperties}
             />

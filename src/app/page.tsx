@@ -1,252 +1,287 @@
 import Link from "next/link";
+import { SiteFooter, SiteHeader } from "@/components/guide/public-site";
 
-const productPillars = [
-  {
-    title: "연금 포트폴리오",
-    body: "계좌별 보유 종목, 설정 비중, 현재 비중, 손익을 한 화면에서 정리합니다.",
-    href: "/dashboard",
-    cta: "대시보드 보기",
-  },
-  {
-    title: "배당 현금흐름",
-    body: "누적 배당과 월별 분배금 흐름을 확인하고 은퇴 후 현금흐름 목표와 연결합니다.",
-    href: "/dashboard/dividend",
-    cta: "배당 관리",
-  },
-  {
-    title: "자녀 증여 관리",
-    body: "일괄 증여, 유기정기금 방식, 신고 여부, 투자 증빙 기록을 함께 관리합니다.",
-    href: "/dashboard/children",
-    cta: "증여 기록",
-  },
-  {
-    title: "ETF 비교와 리밸런싱",
-    body: "ETF 비교, 테마별 비중, 설정한 목표 비중 대비 차이를 계산해 보여줍니다.",
-    href: "/dashboard/compare",
-    cta: "ETF 비교",
-  },
-];
+// 랜딩. 이 제품이 실제로 계산해 보여 주는 두 화면(연금 설계의 '은퇴 목표와 예상 월 현금흐름',
+// '연금계좌 세액공제 진행률')을 같은 구조로 본뜬 예시를 보여 준다.
+// - 구조 출처: src/components/pension/retirement-goal-section.tsx, contribution-section.tsx
+// 예시의 숫자는 가상의 계정 값이며 화면마다 '예시'라고 적는다.
 
-const familyTruths = [
-  {
-    title: "증여만 하면 끝이 아닙니다",
-    body: "자녀 명의 계좌, 신고 접수증, 입금 이행 내역, 투자 판단 기록까지 남겨야 나중에 설명이 쉬워집니다.",
-  },
-  {
-    title: "목표 없는 적립은 흐려집니다",
-    body: "연금, 배당, 자녀계좌를 따로 보지 않고 같은 목표 안에서 관리해야 장기 계획이 흔들리지 않습니다.",
-  },
-  {
-    title: "투자 기록도 교육입니다",
-    body: "왜 샀는지, 얼마나 보유할지, 언제 리밸런싱할지를 짧게 남기면 가족 금융교육의 자료가 됩니다.",
-  },
-  {
-    title: "세금과 수익률은 같이 봐야 합니다",
-    body: "수익이 커질수록 자금출처, 증여 신고, 계좌 분리 같은 기본 증빙이 더 중요해집니다.",
-  },
-];
+const primaryButton =
+  "inline-flex h-12 items-center justify-center bg-indigo-500 px-6 text-base font-bold text-white transition-colors hover:bg-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500";
+const secondaryButton =
+  "inline-flex h-12 items-center justify-center border border-zinc-300 bg-white px-6 text-base font-bold text-ink transition-colors hover:border-zinc-400 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800";
 
-const workflows = [
-  "부모 계좌에서 자녀 계좌로 이체한 내역 기록",
-  "유기정기금 평가액과 신고기한 확인",
-  "보유 종목과 매수 이유를 자녀별로 보관",
-  "연금 ETF 목표 비중과 현재 비중 비교",
-  "배당 현금흐름과 은퇴 목표 연결",
-  "모바일 앱에서 주요 지표 확인",
-];
+const h2 = "text-2xl font-bold tracking-tight text-dark-header text-balance break-keep dark:text-white sm:text-3xl";
+const lead = "mt-4 text-base leading-7 text-zinc-600 break-keep dark:text-zinc-400";
 
-const stats = [
-  ["연금", "ETF 중심 장기 포트폴리오"],
-  ["배당", "월별 현금흐름 관리"],
-  ["자녀", "증여 신고와 투자 증빙"],
-  ["모바일", "Play Store 출시 준비 중"],
-];
-
-function PreviewCard() {
+function ExampleFrame({ title, note, children }: { title: string; note: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-[28px] border border-indigo-100 bg-white p-4 shadow-float dark:border-indigo-900/50 dark:bg-zinc-950">
-      <div className="rounded-[22px] bg-canvas-soft p-4 dark:bg-zinc-900">
-        <div className="flex items-center justify-between border-b border-hairline pb-3 dark:border-zinc-800">
-          <div>
-            <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">가족연금계획</p>
-            <p className="mt-1 text-lg font-bold text-dark-header dark:text-white">가족 자산 현황</p>
-          </div>
-          <div className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white">실행 중</div>
-        </div>
+    <figure className="border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+        <p className="text-sm font-bold text-dark-header break-keep dark:text-white">{title}</p>
+        <p className="shrink-0 border border-zinc-300 px-2 py-0.5 text-xs font-semibold text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+          예시
+        </p>
+      </div>
+      <div className="space-y-4 p-4">{children}</div>
+      <figcaption className="border-t border-zinc-200 px-4 py-3 text-xs leading-5 text-zinc-600 break-keep dark:border-zinc-800 dark:text-zinc-400">
+        {note}
+      </figcaption>
+    </figure>
+  );
+}
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-            <p className="text-xs text-ink-mute dark:text-zinc-400">총 평가금액</p>
-            <p className="mt-2 text-xl font-bold text-dark-header dark:text-white">128,400,000원</p>
-            <p className="mt-1 text-xs font-semibold text-emerald-600">+7.8%</p>
-          </div>
-          <div className="rounded-2xl bg-white p-3 dark:bg-zinc-950">
-            <p className="text-xs text-ink-mute dark:text-zinc-400">월 배당 목표</p>
-            <p className="mt-2 text-xl font-bold text-dark-header dark:text-white">620,000원</p>
-            <p className="mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400">목표의 41%</p>
-          </div>
-        </div>
-
-        <div className="mt-3 rounded-2xl bg-white p-3 dark:bg-zinc-950">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-semibold text-dark-header dark:text-white">자녀 증여 기록</span>
-            <span className="text-indigo-600 dark:text-indigo-400">신고기한 확인</span>
-          </div>
-          <div className="mt-3 space-y-2">
-            {["월 160,000원 정기금", "유기정기금 평가명세서", "투자교육 메모"].map((item) => (
-              <div key={item} className="flex items-center justify-between rounded-xl bg-indigo-50 px-3 py-2 text-xs dark:bg-indigo-950/40">
-                <span className="font-medium text-dark-header dark:text-zinc-100">{item}</span>
-                <span className="text-indigo-600 dark:text-indigo-400">관리</span>
-              </div>
-            ))}
-          </div>
-        </div>
+function Progress({ label, value, fill }: { label: string; value: string; fill: string }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3 text-sm">
+        <span className="text-ink tabular-nums dark:text-zinc-200">{label}</span>
+        <span className="font-semibold text-ink tabular-nums dark:text-zinc-200">{value}</span>
+      </div>
+      <div className="mt-2 h-2 bg-zinc-100 dark:bg-zinc-800">
+        <div className={`h-full bg-indigo-500 ${fill}`} />
       </div>
     </div>
   );
 }
 
+function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div className="border border-zinc-200 p-3 dark:border-zinc-800">
+      <p className="text-xs text-zinc-600 dark:text-zinc-400">{label}</p>
+      <p className="mt-1 text-base font-bold text-dark-header tabular-nums dark:text-white">{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400">{hint}</p>}
+    </div>
+  );
+}
+
+const cashflowRows = [
+  { age: "65세", national: "110만", retirement: "45만", personal: "69.6만", dividend: "53.5만", total: "278.1만" },
+  { age: "70세", national: "175만", retirement: "45만", personal: "69.6만", dividend: "53.5만", total: "343.1만" },
+  { age: "85세", national: "175만", retirement: "45만", personal: "0", dividend: "53.5만", total: "273.5만" },
+];
+
+function CashflowExample() {
+  return (
+    <ExampleFrame
+      title="은퇴 목표와 예상 월 현금흐름"
+      note="가상의 부부 계정으로 만든 예시입니다. 실제 화면은 입력한 계좌·연금 예상액·배당 기록으로 계산하며, 세전·현재 가치 기준 참고용입니다."
+    >
+      <Progress label="65세 예상 월 278.1만 / 목표 250만" value="111%" fill="w-full" />
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Stat label="1층 국민연금" value="110만" />
+        <Stat label="2층 퇴직연금" value="45만" />
+        <Stat label="3층 개인연금" value="69.6만" />
+        <Stat label="배당" value="53.5만" hint="최근 1년 기준" />
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-80 text-right text-xs tabular-nums sm:text-sm">
+          <caption className="sr-only">나이별 예상 월 현금흐름 예시</caption>
+          <thead>
+            <tr className="border-b border-zinc-200 text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
+              <th scope="col" className="py-2 text-left font-medium">나이</th>
+              <th scope="col" className="py-2 font-medium">국민연금</th>
+              <th scope="col" className="py-2 font-medium">퇴직연금</th>
+              <th scope="col" className="py-2 font-medium">개인연금</th>
+              <th scope="col" className="py-2 font-medium">배당</th>
+              <th scope="col" className="py-2 font-medium">합계</th>
+            </tr>
+          </thead>
+          <tbody className="text-ink dark:text-zinc-200">
+            {cashflowRows.map((row) => (
+              <tr key={row.age} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+                <th scope="row" className="py-2 text-left font-medium">{row.age}</th>
+                <td className="py-2">{row.national}</td>
+                <td className="py-2">{row.retirement}</td>
+                <td className="py-2">{row.personal}</td>
+                <td className="py-2">{row.dividend}</td>
+                <td className="py-2 font-bold text-dark-header dark:text-white">{row.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs leading-5 text-zinc-600 break-keep dark:text-zinc-400">
+        본인 65세, 배우자 63세부터 국민연금을 받는다고 입력한 경우입니다. 개인연금은 연금계좌 평가액을 20년에 나눠 받는다고 가정했습니다.
+      </p>
+    </ExampleFrame>
+  );
+}
+
+function ContributionExample() {
+  return (
+    <ExampleFrame
+      title="2026년 연금계좌 세액공제 진행률"
+      note="가상의 계정으로 만든 예시입니다. 예상 세액공제액은 결정세액보다 클 수 없고, 다른 공제·감면에 따라 실제 환급액은 달라집니다."
+    >
+      <Progress label="가족 합계 공제 대상 720만 / 1,800만" value="40%" fill="w-2/5" />
+      <dl className="divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
+        <div className="flex items-baseline justify-between gap-3 py-2">
+          <dt className="text-ink dark:text-zinc-200">
+            본인 연금저축 <span className="text-zinc-600 dark:text-zinc-400">· 공제율 16.5%</span>
+          </dt>
+          <dd className="font-semibold text-ink tabular-nums dark:text-zinc-200">420만 / 900만</dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3 py-2">
+          <dt className="text-ink dark:text-zinc-200">
+            배우자 IRP <span className="text-zinc-600 dark:text-zinc-400">· 공제율 13.2%</span>
+          </dt>
+          <dd className="font-semibold text-ink tabular-nums dark:text-zinc-200">300만 / 900만</dd>
+        </div>
+      </dl>
+      <div className="grid grid-cols-2 gap-2">
+        <Stat label="예상 세액공제액" value="1,089,000원" />
+        <Stat label="남은 공제 한도" value="1,080만" />
+      </div>
+    </ExampleFrame>
+  );
+}
+
+const steps = [
+  {
+    title: "계좌를 등록하고 유형을 정합니다",
+    body: "연금저축·IRP·DC·ISA·일반 계좌마다 유형과 명의(본인·배우자)를 지정합니다. 세액공제와 개인연금 계산이 이 정보로 나뉩니다.",
+  },
+  {
+    title: "매수와 배당을 기록합니다",
+    body: "이미 한 거래를 직접 입력하거나, 증권사에서 내려받은 거래내역(엑셀·CSV)을 가져옵니다. 보유 수량과 평균단가는 이 기록으로 계산합니다.",
+  },
+  {
+    title: "국민연금·퇴직연금 예상액을 적습니다",
+    body: "국민연금공단 '내 연금 알아보기'나 통합연금포털에서 조회한 예상 월 수령액과 수령 시작 나이를 본인·배우자별로 옮겨 적습니다.",
+  },
+  {
+    title: "은퇴 나이와 목표 월 생활비를 정합니다",
+    body: "나이별 예상 월 현금흐름과 목표 대비 부족액이 표로 나옵니다. 올해 납입액을 적으면 세액공제 진행률도 함께 갱신됩니다.",
+  },
+];
+
 export default function Home() {
   return (
-    <main className="min-h-dvh bg-background text-foreground dark:bg-zinc-950">
-      <header className="sticky top-0 z-20 border-b border-white/70 bg-background/90 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/90">
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="text-base font-black tracking-tight text-dark-header dark:text-white">
-            가족연금계획
-          </Link>
-          <div className="hidden items-center gap-6 text-sm font-medium text-ink-mute dark:text-zinc-400 md:flex">
-            <a href="#features" className="hover:text-indigo-600 dark:hover:text-indigo-400">기능</a>
-            <a href="#family" className="hover:text-indigo-600 dark:hover:text-indigo-400">자녀자산</a>
-            <a href="#workflow" className="hover:text-indigo-600 dark:hover:text-indigo-400">관리흐름</a>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/login" className="rounded-full px-4 py-2 text-sm font-semibold text-ink hover:bg-white dark:text-zinc-200 dark:hover:bg-zinc-900">
-              로그인
-            </Link>
-            <Link href="/signup" className="rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-indigo-700 active:scale-[0.98]">
-              시작하기
-            </Link>
-          </div>
-        </nav>
-      </header>
+    <div className="flex min-h-dvh flex-col bg-background text-foreground dark:bg-zinc-950">
+      <SiteHeader />
 
-      <section className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 pb-20 pt-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:pt-20">
-        <div className="flex flex-col justify-center">
-          <p className="mb-5 inline-flex w-fit rounded-full border border-indigo-200 bg-white px-4 py-2 text-xs font-bold text-indigo-600 shadow-card dark:border-indigo-900 dark:bg-zinc-900 dark:text-indigo-400">
-            연금, 배당, 자녀 증여를 한 계정에서
-          </p>
-          <h1 className="max-w-3xl text-4xl font-black leading-[1.05] tracking-tight text-dark-header dark:text-white sm:text-5xl lg:text-6xl">
-            가족의 장기 자산을 기록하고 증명하는 금융 관리 앱
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-mute dark:text-zinc-400">
-            참고 사이트의 가족 투자교육 흐름을 우리 서비스에 맞게 재구성했습니다. 연금 ETF, 배당, 자녀 증여 증빙을 함께 관리합니다.
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/dashboard" className="inline-flex h-12 items-center justify-center rounded-full bg-indigo-600 px-7 text-sm font-bold text-white shadow-float transition hover:bg-indigo-700 active:scale-[0.98]">
-              대시보드 열기
-            </Link>
-            <Link href="/dashboard/children" className="inline-flex h-12 items-center justify-center rounded-full border border-hairline bg-white px-7 text-sm font-bold text-ink shadow-card transition hover:shadow-float active:scale-[0.98] dark:border-zinc-700 dark:bg-zinc-900 dark:text-white">
-              자녀 증여 관리
-            </Link>
-          </div>
-        </div>
-        <PreviewCard />
-      </section>
-
-      <section className="border-y border-hairline bg-white/70 dark:border-zinc-800 dark:bg-zinc-900/60">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 py-6 sm:px-6 md:grid-cols-4 lg:px-8">
-          {stats.map(([label, value]) => (
-            <div key={label} className="p-4">
-              <p className="text-sm font-black text-indigo-600 dark:text-indigo-400">{label}</p>
-              <p className="mt-1 text-sm text-ink-mute dark:text-zinc-400">{value}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section id="features" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="max-w-2xl">
-          <h2 className="text-3xl font-black tracking-tight text-dark-header dark:text-white sm:text-4xl">매일 쓰는 가족 금융 허브</h2>
-          <p className="mt-4 text-base leading-relaxed text-ink-mute dark:text-zinc-400">
-            참고 사이트처럼 기능을 한곳에 모으되, 우리 서비스는 실제 보유자산 관리와 신고 기록에 집중합니다.
-          </p>
-        </div>
-        <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {productPillars.map((item, index) => (
-            <Link
-              key={item.title}
-              href={item.href}
-              className={[
-                "group rounded-3xl border p-5 transition hover:-translate-y-1 hover:shadow-float active:scale-[0.99]",
-                index === 0
-                  ? "border-indigo-200 bg-indigo-600 text-white dark:border-indigo-700"
-                  : "border-hairline bg-white text-ink dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100",
-              ].join(" ")}
-            >
-              <p className={index === 0 ? "text-lg font-black" : "text-lg font-black text-dark-header dark:text-white"}>{item.title}</p>
-              <p className={index === 0 ? "mt-4 text-sm leading-relaxed text-indigo-50" : "mt-4 text-sm leading-relaxed text-ink-mute dark:text-zinc-400"}>{item.body}</p>
-              <p className={index === 0 ? "mt-6 text-sm font-bold text-white" : "mt-6 text-sm font-bold text-indigo-600 dark:text-indigo-400"}>{item.cta}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section id="family" className="bg-white py-20 dark:bg-zinc-900">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
+      <main className="flex-1">
+        <section className="mx-auto grid max-w-280 grid-cols-1 gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:pt-16">
           <div>
-            <h2 className="text-3xl font-black tracking-tight text-dark-header dark:text-white sm:text-4xl">자녀 증여는 신고와 교육 기록이 같이 가야 합니다</h2>
-            <p className="mt-4 text-base leading-relaxed text-ink-mute dark:text-zinc-400">
-              유기정기금 계산, 신고 가이드, 자녀 계좌 투자 메모를 연결해 나중에 설명 가능한 기록을 만듭니다.
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-dark-header text-balance break-keep dark:text-white sm:text-4xl lg:text-5xl">
+              은퇴하면 매달 얼마가 들어올지, 직접 남긴 기록으로 계산합니다
+            </h1>
+            <p className="mt-5 max-w-prose text-lg leading-8 text-ink break-keep dark:text-zinc-300">
+              국민연금·퇴직연금 예상액, 연금계좌 평가액, 배당 기록을 더해 나이별 월 현금흐름을 본인과 배우자 기준으로 보여 줍니다. 올해 연금저축·IRP 납입이 세액공제 한도를 얼마나 채웠는지도 함께 계산합니다.
             </p>
-            <Link href="/dashboard/children" className="mt-7 inline-flex h-11 items-center justify-center rounded-full bg-indigo-600 px-6 text-sm font-bold text-white transition hover:bg-indigo-700 active:scale-[0.98]">
-              자녀 관리 시작
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {familyTruths.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-hairline bg-canvas-soft p-5 dark:border-zinc-800 dark:bg-zinc-950">
-                <h3 className="text-lg font-black text-dark-header dark:text-white">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-ink-mute dark:text-zinc-400">{item.body}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="workflow" className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-        <div className="rounded-4xl border border-indigo-100 bg-white p-6 shadow-card dark:border-indigo-900/40 dark:bg-zinc-900 sm:p-8 lg:p-10">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <h2 className="text-3xl font-black tracking-tight text-dark-header dark:text-white sm:text-4xl">우리 페이지에 적용한 관리 흐름</h2>
-              <p className="mt-4 text-base leading-relaxed text-ink-mute dark:text-zinc-400">
-                참고 사이트의 넓은 자료 구조를 그대로 복제하지 않고, 우리 앱에서 바로 쓸 수 있는 기록 중심 흐름으로 압축했습니다.
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link href="/signup" className={primaryButton}>
+                계정 만들기
+              </Link>
+              <Link href="/login" className={secondaryButton}>
+                로그인
+              </Link>
+            </div>
+            <div className="mt-8 max-w-prose border border-zinc-300 bg-white px-4 py-3 text-sm leading-6 text-ink break-keep dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
+              <p>
+                <strong className="font-bold text-dark-header dark:text-white">기록과 계산만 하는 도구입니다.</strong>{" "}
+                증권사 계좌와 연결하지 않고 주문을 실행하지 않습니다. 투자 자문이나 중개를 하지 않으며, 세액과 수령액 계산은 참고용입니다.
               </p>
             </div>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {workflows.map((item, index) => (
-                <div key={item} className="rounded-2xl border border-hairline bg-background p-4 dark:border-zinc-800 dark:bg-zinc-950">
-                  <p className="text-xs font-black text-indigo-600 dark:text-indigo-400">{String(index + 1).padStart(2, "0")}</p>
-                  <p className="mt-2 text-sm font-semibold leading-relaxed text-ink dark:text-zinc-100">{item}</p>
-                </div>
+          </div>
+          <CashflowExample />
+        </section>
+
+        <section aria-labelledby="tax-credit" className="border-t border-hairline bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="mx-auto grid max-w-280 grid-cols-1 gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-14">
+            <div>
+              <h2 id="tax-credit" className={h2}>
+                올해 연금계좌 세액공제 한도를 얼마나 채웠는지 봅니다
+              </h2>
+              <p className={lead}>
+                연금저축은 600만원, 연금저축과 IRP·DC 본인 납입을 합쳐 900만원까지가 명의자 한 사람의 세액공제 대상입니다. 계좌별로 올해 납입액을 적으면 본인과 배우자 각각의 공제 대상 금액, 예상 세액공제액, 남은 한도를 계산합니다.
+              </p>
+              <p className={lead}>
+                공제율은 명의자의 총급여 구간에 따라 16.5% 또는 13.2%(지방소득세 포함)로 계산합니다.
+              </p>
+            </div>
+            <ContributionExample />
+          </div>
+        </section>
+
+        <section aria-labelledby="records" className="border-t border-hairline dark:border-zinc-800">
+          <div className="mx-auto max-w-280 px-4 py-16 sm:px-6">
+            <h2 id="records" className={`${h2} max-w-prose`}>
+              기록을 채우는 순서
+            </h2>
+            <p className={`${lead} max-w-prose`}>
+              증권사 계좌를 연결하지 않으므로 거래·배당·연금 예상액은 직접 입력합니다. 평가금액은 기록한 보유 수량에 공개 시세를 곱해 계산합니다.
+            </p>
+            <ol className="mt-10 grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2">
+              {steps.map((step, index) => (
+                <li key={step.title} className="flex gap-4">
+                  <span aria-hidden="true" className="mt-0.5 shrink-0 text-base font-bold text-indigo-600 tabular-nums dark:text-indigo-300">
+                    {index + 1}.
+                  </span>
+                  <div>
+                    <h3 className="text-base font-bold text-dark-header break-keep dark:text-white">{step.title}</h3>
+                    <p className="mt-2 text-base leading-7 text-zinc-600 break-keep dark:text-zinc-400">{step.body}</p>
+                  </div>
+                </li>
               ))}
+            </ol>
+          </div>
+        </section>
+
+        <section aria-labelledby="more" className="border-t border-hairline bg-white dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="mx-auto grid max-w-280 grid-cols-1 gap-10 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:gap-14">
+            <div>
+              <h2 id="more" className={h2}>
+                그 밖에 할 수 있는 일
+              </h2>
+              <ul className="mt-6 space-y-5 text-base leading-7 text-ink break-keep dark:text-zinc-300">
+                <li>
+                  <strong className="font-bold text-dark-header dark:text-white">자녀 증여 기록.</strong> 자녀별 증여·입금 기록과 증여세 신고 여부를 적어 둘 수 있습니다.
+                </li>
+                <li>
+                  <strong className="font-bold text-dark-header dark:text-white">텔레그램 리포트.</strong> 계좌의 평가금액·손익·기간별 수익률을 내 텔레그램 채팅으로 보낼 수 있습니다.{" "}
+                  <Link href="/guide/telegram" className="font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
+                    연결 방법
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <h2 className={h2}>입력한 데이터</h2>
+              <p className={lead}>
+                계좌번호나 계좌 비밀번호는 받지 않습니다. 계정을 삭제하면 입력한 기록이 함께 지워집니다.
+              </p>
+              <p className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-base">
+                <Link href="/privacy" className="font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
+                  개인정보처리방침
+                </Link>
+                <Link href="/account-deletion" className="font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
+                  계정 및 데이터 삭제 안내
+                </Link>
+              </p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="bg-indigo-950 px-4 py-16 text-white sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-3xl font-black tracking-tight">가족연금계획를 가족 단위로 관리하세요</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-indigo-100">
-              웹 대시보드와 모바일 앱을 함께 준비 중입니다. 먼저 웹에서 자산과 증여 기록을 정리해두세요.
+        <section className="border-t border-hairline dark:border-zinc-800">
+          <div className="mx-auto flex max-w-280 flex-col gap-6 px-4 py-14 sm:px-6 md:flex-row md:items-center md:justify-between">
+            <p className="text-xl font-bold text-dark-header break-keep dark:text-white">
+              계정을 만들고 첫 계좌부터 등록해 보세요.
             </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/signup" className={primaryButton}>
+                계정 만들기
+              </Link>
+              <Link href="/login" className={secondaryButton}>
+                로그인
+              </Link>
+            </div>
           </div>
-          <Link href="/login" className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-white px-7 text-sm font-black text-indigo-950 transition hover:bg-indigo-50 active:scale-[0.98]">
-            로그인하기
-          </Link>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
 import type { Holding } from "@/types";
 import { SERIES_COLORS } from "@/lib/colors";
-import { cn, formatKRWFull } from "@/lib/utils";
+import { cn, formatKRW, formatKRWFull } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
 import {
   RadarChart,
@@ -62,10 +62,11 @@ const THEMES = [
   "2차전지", "바이오", "리츠", "채권", "금", "인도", "중국",
 ];
 
+// 기본은 이름순(중립). 거래량·거래대금은 '얼마나 활발히 거래되는가'(유동성)를 비교하는 기준으로 둔다 — 순위 목록이 아니다.
 const SORT_OPTIONS = [
-  { value: "volume", label: "거래량순" },
-  { value: "value", label: "거래대금순" },
   { value: "name", label: "이름순" },
+  { value: "volume", label: "거래량 많은 순" },
+  { value: "value", label: "거래대금 많은 순" },
 ];
 
 const PERIOD_OPTIONS = [
@@ -81,8 +82,8 @@ const COMPARISON_LABELS = {
   price: "현재가(원)",
   dayChange: "당일 등락률(%)",
   returnRate: "선택 기간 수익률(%)",
-  volume: "거래량(주)",
-  tradingValue: "거래대금(원)",
+  volume: "거래량(주, 당일)",
+  tradingValue: "거래대금(원, 당일)",
   fee: "총보수(연 %)",
   dividendYield: "분배금 수익률(%)",
   issuer: "운용사",
@@ -110,14 +111,14 @@ export function CompareClient({ holdings }: Props) {
   const [searchResults, setSearchResults] = useState<SearchETF[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [activeTheme, setActiveTheme] = useState("전체");
-  const [sortBy, setSortBy] = useState("volume");
+  const [sortBy, setSortBy] = useState("name");
   const [showSearch, setShowSearch] = useState(true);
   const [period, setPeriod] = useState("3m");
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [hasRestored, setHasRestored] = useState(false);
   const [addedCodes, setAddedCodes] = useState<Set<string>>(new Set());
   const [addingCode, setAddingCode] = useState<string | null>(null);
-  const [addStatus, setAddStatus] = useState("");
+  const [addStatus, setAddStatus] = useState<{ kind: "done" | "error"; text: string } | null>(null);
   const maxSelect = 5;
 
   const holdingMap = useMemo(
@@ -148,16 +149,14 @@ export function CompareClient({ holdings }: Props) {
     []
   );
 
-  // 초기 로드
-  useEffect(() => {
-    search("", "전체", "volume");
-  }, [search]);
-
   // 페이지 이동 후 돌아와도 사용자가 직접 초기화하기 전까지 비교 상태 유지
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) {
+        search("", "전체", "name");
+        return;
+      }
       const saved = JSON.parse(raw) as StoredCompareState;
       const savedSelected = Array.isArray(saved.selected)
         ? saved.selected.filter((item) => item?.code && item?.name).slice(0, maxSelect)
@@ -169,8 +168,15 @@ export function CompareClient({ holdings }: Props) {
       if (saved.sortBy && SORT_OPTIONS.some((o) => o.value === saved.sortBy)) setSortBy(saved.sortBy);
       if (typeof saved.searchQuery === "string") setSearchQuery(saved.searchQuery);
       if (typeof saved.showSearch === "boolean") setShowSearch(saved.showSearch);
+      // 마지막으로 고른 정렬·테마·검색어로 목록을 불러온다
+      search(
+        typeof saved.searchQuery === "string" ? saved.searchQuery : "",
+        saved.activeTheme && THEMES.includes(saved.activeTheme) ? saved.activeTheme : "전체",
+        saved.sortBy && SORT_OPTIONS.some((o) => o.value === saved.sortBy) ? saved.sortBy : "name"
+      );
     } catch {
       window.localStorage.removeItem(STORAGE_KEY);
+      search("", "전체", "name");
     } finally {
       setHasRestored(true);
     }
@@ -244,17 +250,17 @@ export function CompareClient({ holdings }: Props) {
     setSelected([]);
     setPeriod("3m");
     setActiveTheme("전체");
-    setSortBy("volume");
+    setSortBy("name");
     setSearchQuery("");
     setShowSearch(true);
     window.localStorage.removeItem(STORAGE_KEY);
-    search("", "전체", "volume");
+    search("", "전체", "name");
   };
 
   const addToPortfolio = async (etf: SearchETF) => {
     if (holdingMap.has(etf.code) || addedCodes.has(etf.code) || addingCode) return;
     setAddingCode(etf.code);
-    setAddStatus("");
+    setAddStatus(null);
     try {
       const res = await fetch("/api/holdings", {
         method: "POST",
@@ -274,13 +280,15 @@ export function CompareClient({ holdings }: Props) {
       if (!res.ok) throw new Error(data?.error ?? "종목 추가 실패");
 
       setAddedCodes((current) => new Set(current).add(etf.code));
-      setAddStatus(`${etf.code} ${etf.name} 추가 완료 · 대시보드에서 설정비중을 입력하세요.`);
+      setAddStatus({
+        kind: "done",
+        text: `${etf.name}(${etf.code})을(를) 지금 선택한 계좌의 종목 목록에 0주로 추가했습니다. 주문은 실행되지 않습니다. 실제로 매수한 뒤 매수 기록에 남기면 보유 수량이 반영됩니다.`,
+      });
       router.refresh();
     } catch (err) {
-      setAddStatus((err as Error).message);
+      setAddStatus({ kind: "error", text: `${etf.name}을(를) 내 종목에 추가하지 못했습니다: ${(err as Error).message}. 잠시 뒤 다시 시도해 주세요.` });
     } finally {
       setAddingCode(null);
-      setTimeout(() => setAddStatus(""), 4000);
     }
   };
 
@@ -349,7 +357,12 @@ export function CompareClient({ holdings }: Props) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold tracking-tight text-ink">ETF 종목 비교</h1>
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold tracking-tight text-ink">ETF 종목 비교</h1>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            공개 시세를 나란히 놓고 보는 참고 정보이며 종목 추천이 아닙니다. 주문은 실행되지 않습니다.
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           {selected.length > 0 && (
             <button
@@ -398,12 +411,15 @@ export function CompareClient({ holdings }: Props) {
       {showSearch && (
         <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card space-y-3">
           {addStatus && (
-            <p className={`border px-3 py-2 text-xs font-bold ${
-              addStatus.includes("완료")
-                ? "border-hairline bg-canvas-soft text-success"
-                : "border-danger-line bg-danger-soft text-danger"
-            }`}>
-              {addStatus}
+            <p
+              role={addStatus.kind === "error" ? "alert" : "status"}
+              className={`border px-3 py-2 text-xs leading-relaxed ${
+                addStatus.kind === "done"
+                  ? "border-hairline bg-surface text-ink dark:border-zinc-800"
+                  : "border-danger-line bg-danger-soft text-danger"
+              }`}
+            >
+              {addStatus.text}
             </p>
           )}
           <div className="relative">
@@ -439,21 +455,22 @@ export function CompareClient({ holdings }: Props) {
             ))}
           </div>
 
-          <div className="flex gap-2">
-            {SORT_OPTIONS.map((o) => (
-              <button
-                key={o.value}
-                onClick={() => handleSort(o.value)}
-                className={cn(
-                  "px-3 py-1 text-xs font-medium transition-colors",
-                  sortBy === o.value
-                    ? "border border-brand bg-brand text-white"
-                    : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
-                )}
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              정렬
+              <select
+                value={sortBy}
+                onChange={(e) => handleSort(e.target.value)}
+                className="h-10 border border-hairline bg-surface px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700"
               >
-                {o.label}
-              </button>
-            ))}
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </label>
+            <p className="min-w-0 flex-1 basis-56 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              거래량·거래대금이 적은 ETF 는 원하는 가격에 사고팔기 어려울 수 있습니다(유동성). 비교할 때 함께 보세요.
+            </p>
           </div>
 
           <div className="max-h-64 overflow-y-auto space-y-1">
@@ -480,15 +497,15 @@ export function CompareClient({ holdings }: Props) {
                       className="min-w-0 flex-1 text-left disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center gap-1.5">
-                        <p className="text-sm font-medium truncate">{etf.name}</p>
+                        <p className="text-sm font-medium truncate" title={etf.name}>{etf.name}</p>
                         {isMy && (
                           <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
-                            보유
+                            내 종목
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                        <strong className="font-extrabold text-zinc-700 dark:text-zinc-200">{etf.code}</strong> · {etf.category} · 거래량 {fmtVol(etf.volume)}
+                        <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{etf.code}</strong> · {etf.category} · 거래량 {fmtVol(etf.volume)}주 · 거래대금 {etf.tradingValue > 0 ? formatKRW(etf.tradingValue) : "-"}
                       </p>
                     </button>
                     <div className="text-right ml-2 shrink-0">
@@ -501,9 +518,11 @@ export function CompareClient({ holdings }: Props) {
                       type="button"
                       onClick={() => addToPortfolio(etf)}
                       disabled={isMy || addingCode === etf.code || Boolean(addingCode)}
-                      className="shrink-0 border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-black text-indigo-600 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+                      aria-label={isMy ? `${etf.name} 이미 내 종목 목록에 있음` : `${etf.name}을(를) 내 종목 목록에 0주로 추가(주문 아님)`}
+                      title="지금 선택한 계좌의 종목 목록에 0주로 추가합니다. 주문은 실행되지 않습니다."
+                      className="inline-flex min-h-10 shrink-0 items-center border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                     >
-                      {isMy ? "추가됨" : addingCode === etf.code ? "추가중" : "내 계좌 추가"}
+                      {isMy ? "내 종목에 있음" : addingCode === etf.code ? "추가 중" : "내 종목에 추가"}
                     </button>
                   </div>
                 );
@@ -559,10 +578,11 @@ export function CompareClient({ holdings }: Props) {
                 <CRow label={COMPARISON_LABELS.code} vals={selected.map((s) => s.code)} bold />
                 <CRow label={COMPARISON_LABELS.category} vals={selected.map((s) => s.category)} />
                 <CRow label={COMPARISON_LABELS.price} vals={selected.map((s) => formatKRWFull(s.price))} />
+                <CRow label={COMPARISON_LABELS.volume} vals={selected.map((s) => s.volume.toLocaleString("ko-KR"))} />
+                <CRow label={COMPARISON_LABELS.tradingValue} vals={selected.map((s) => (s.tradingValue > 0 ? formatKRWFull(s.tradingValue) : "-"))} />
                 <CRow
                   label={COMPARISON_LABELS.dayChange}
                   vals={selected.map((s) => `${s.changePct > 0 ? "+" : ""}${s.changePct.toFixed(2)}%`)}
-                  colors={selected.map((s) => s.changePct > 0 ? "text-gain" : s.changePct < 0 ? "text-loss" : "")}
                 />
                 <CRow
                   label={`${COMPARISON_LABELS.returnRate} · ${PERIOD_OPTIONS.find((p) => p.value === period)?.label}`}
@@ -570,13 +590,7 @@ export function CompareClient({ holdings }: Props) {
                     const r = getReturn(s);
                     return `${r > 0 ? "+" : ""}${r.toFixed(2)}%`;
                   })}
-                  colors={selected.map((s) => {
-                    const r = getReturn(s);
-                    return r > 0 ? "text-gain" : r < 0 ? "text-loss" : "";
-                  })}
                 />
-                <CRow label={COMPARISON_LABELS.volume} vals={selected.map((s) => fmtVol(s.volume))} />
-                <CRow label={COMPARISON_LABELS.tradingValue} vals={selected.map((s) => fmtVal(s.tradingValue))} />
                 <CRow
                   label={COMPARISON_LABELS.fee}
                   vals={selected.map((s) => s.detail ? `${s.detail.totalFee}%` : "-")}
@@ -868,8 +882,3 @@ function fmtVol(v: number): string {
   return String(v);
 }
 
-function fmtVal(v: number): string {
-  if (v >= 100_000_000) return `${(v / 100_000_000).toFixed(0)}억`;
-  if (v >= 10_000) return `${(v / 10_000).toFixed(0)}만`;
-  return String(v);
-}

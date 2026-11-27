@@ -35,7 +35,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-hairline bg-white dark:border-zinc-800 dark:bg-zinc-900">
       <div className="mx-auto flex max-w-280 flex-col gap-4 px-4 py-8 text-sm sm:px-6 md:flex-row md:items-start md:justify-between">
-        <p className="max-w-prose leading-6 text-zinc-600 dark:text-zinc-400">
+        <p className="max-w-prose leading-6 text-zinc-600 break-keep dark:text-zinc-400">
           가족연금계획은 사용자가 입력한 기록을 계산해 보여주는 도구이며 투자 자문이나 매매 권유를 하지 않습니다. 세금·수익 계산은 참고용입니다.
         </p>
         <nav aria-label="안내 문서" className="flex flex-wrap gap-x-5 gap-y-2">

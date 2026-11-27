@@ -22,15 +22,17 @@ export default function RootLayout({
             __html: `try{var t=localStorage.getItem('theme');if(t==='dark'||((!t||t==='system')&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}`,
           }}
         />
-        {/* Pretendard: jsDelivr의 동적 서브셋(unicode-range로 나뉜 92개 woff2 중 페이지에 쓰인 글자 조각만 받음).
-            next/font/local은 파일별 unicode-range를 지정할 수 없어 단일 2MB 파일을 모든 페이지에 내려받게 되므로 쓰지 않는다.
-            preconnect로 CSS·글꼴 요청의 DNS·TLS 연결을 미리 열어 렌더 차단 시간을 줄인다.
-            (jsDelivr 사용은 개인정보처리방침 3항에 적혀 있다 — 자체 호스팅으로 바꾸면 방침도 함께 고칠 것) */}
+        {/* Pretendard: jsDelivr의 동적 서브셋(unicode-range로 나뉜 woff2 중 페이지에 쓰인 글자·굵기 조각만 받음).
+            - static 판을 쓴다: globals.css의 --font-sans가 "Pretendard"를 찾는데, variable 판 CSS는 'Pretendard Variable'로
+              선언돼 있어 그동안 글꼴이 한 번도 적용되지 않았다(document.fonts 0/96 로드).
+            - next/font/local은 파일별 unicode-range를 지정할 수 없어 한글 글꼴 전체(굵기당 수 MB)를 모든 페이지에 내려받게 되므로 쓰지 않는다.
+            - preconnect로 CSS·글꼴 요청의 DNS·TLS 연결을 미리 열어 렌더 차단 시간을 줄인다.
+            - jsDelivr 사용은 개인정보처리방침 3항에 적혀 있다. 자체 호스팅으로 바꾸면 방침도 함께 고칠 것. */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
         <link
           rel="stylesheet"
           crossOrigin="anonymous"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css"
         />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground font-sans">

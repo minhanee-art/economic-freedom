@@ -208,7 +208,6 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
           value={password}
           onChange={setPassword}
           autoComplete={isLogin ? "current-password" : "new-password"}
-          placeholder={isLogin ? undefined : `${MIN_PASSWORD_LENGTH}자 이상`}
           hint={isLogin ? undefined : { id: "password-hint", text: `${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.` }}
         />
 

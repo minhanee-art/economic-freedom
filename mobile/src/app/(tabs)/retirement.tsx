@@ -4,7 +4,7 @@ import { Card } from "@/components/Card";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { useRetirementPlan } from "@/hooks/useRetirementPlan";
 import { colors, spacing } from "@/styles/theme";
-import type { IncomeSource, PensionLayers, PensionSummary, RetirementPlan } from "@/types";
+import type { AccountOwner, IncomeSource, PensionLayers, PensionSummary, RetirementPlan } from "@/types";
 import { formatKRW } from "@/utils/format";
 
 // 표시용 이름만 둔다(세율·한도 같은 숫자는 두지 않는다). 알 수 없는 값은 서버가 준 값을 그대로 보인다.
@@ -14,6 +14,8 @@ const SOURCE_LABELS: Record<string, string> = {
   pension_insurance: "연금보험",
 };
 const MEMBER_LABELS: Record<string, string> = { self: "본인", spouse: "배우자" };
+// 웹 src/lib/pension-planning.ts ACCOUNT_OWNER_LABELS 와 같은 이름
+const OWNER_LABELS: Record<AccountOwner, string> = { self: "본인", spouse: "배우자", child: "자녀", other: "기타" };
 const ACCOUNT_TYPE_LABELS: Record<string, string> = {
   pension_savings: "연금저축",
   irp: "IRP",
@@ -122,25 +124,9 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
 
       <Card title={`${summary.year}년 세액공제 납입`}>
         {taxCredit === null ? (
-          <Text style={styles.muted}>
-            {summary.taxCreditUnavailableReason === "no_pension_accounts"
-              ? "연금저축·IRP·DC·ISA 계좌가 없어 계산하지 않았습니다. 웹에서 연금 계좌를 등록하면 표시됩니다."
-              : "세액공제 계산값을 받지 못했습니다."}
-          </Text>
+          <Text style={styles.muted}>{taxCreditUnavailableText(summary.taxCreditUnavailableReason)}</Text>
         ) : (
-          <>
-            <Text style={styles.label}>공제 한도 대비 납입 진행률</Text>
-            <Text style={styles.bigNumber}>{taxCredit.progress.progressPct.toFixed(1)}%</Text>
-            <Metric label="남은 공제 한도" value={formatKRW(taxCredit.progress.remainingCreditRoom)} />
-            <Metric label="예상 공제액(현재 납입 기준)" value={formatKRW(taxCredit.progress.estimatedCredit)} />
-            <Metric label="한도까지 납입 시 공제액" value={formatKRW(taxCredit.progress.maxCredit)} />
-            {!taxCredit.contributionsRecorded ? (
-              <Notice>올해 납입 기록이 없습니다. 진행률 0%는 납입하지 않았다는 뜻이 아니라 기록이 없다는 뜻일 수 있습니다.</Notice>
-            ) : null}
-            {taxCredit.salaryBracketAssumed ? (
-              <Notice>소득 구간이 저장되어 있지 않아 서버가 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다.</Notice>
-            ) : null}
-          </>
+          <TaxCreditContent taxCredit={taxCredit} ownerLimit={summary.rules.taxCredit?.combinedLimit ?? null} />
         )}
       </Card>
 
@@ -170,6 +156,13 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
               label={cashflow.atRetirement.shortfall > 0 ? "목표 대비 부족액(월)" : "목표 대비 부족액"}
               value={cashflow.atRetirement.shortfall > 0 ? formatKRW(cashflow.atRetirement.shortfall) : "없음"}
             />
+            {cashflow.excludedAccounts.length > 0 ? (
+              <Notice>
+                {`현금흐름에서 뺀 계좌: ${cashflow.excludedAccounts
+                  .map((e) => `${e.name || "이름 없는 계좌"} (${e.reason === "spouse_birth_year_missing" ? "배우자 출생연도 미입력" : `${OWNER_LABELS[e.ownerType] ?? e.ownerType} 명의`})`)
+                  .join(", ")}`}
+              </Notice>
+            ) : null}
             {cashflow.expectedReturnAssumed ? (
               <Notice>기대수익률이 저장되어 있지 않아 0%로 계산했습니다. 웹에서 입력하면 값이 달라질 수 있습니다.</Notice>
             ) : null}
@@ -191,6 +184,79 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
           </>
         ) : null}
       </Card>
+    </>
+  );
+}
+
+function taxCreditUnavailableText(reason: string | null): string {
+  if (reason === "no_pension_accounts") {
+    return "연금저축·IRP·DC·ISA 계좌가 없어 계산하지 않았습니다. 웹에서 연금 계좌를 등록하면 표시됩니다.";
+  }
+  if (reason === "only_excluded_owner_accounts") {
+    return "연금저축·IRP·DC·ISA 계좌가 모두 자녀·기타 명의라 계산하지 않았습니다. 자녀·기타 명의 계좌는 명의자의 소득 정보가 없어 세액공제 계산에서 뺍니다.";
+  }
+  return "세액공제 계산값을 받지 못했습니다.";
+}
+
+type TaxCredit = NonNullable<PensionSummary["taxCredit"]>;
+
+function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; ownerLimit: number | null }) {
+  const { progress, byOwner, excludedAccounts } = taxCredit;
+  const family = byOwner.length > 1;
+  const onlySpouse = byOwner.length === 1 && byOwner[0].ownerType === "spouse";
+  return (
+    <>
+      <Text style={styles.label}>{family ? "가족 합계 " : ""}공제 한도 대비 납입 진행률</Text>
+      <Text style={styles.bigNumber}>{progress.progressPct.toFixed(1)}%</Text>
+      <Metric label="남은 공제 한도" value={formatKRW(progress.remainingCreditRoom)} />
+      <Metric label="예상 공제액(현재 납입 기준)" value={formatKRW(progress.estimatedCredit)} />
+      <Metric label="한도까지 납입 시 공제액" value={formatKRW(progress.maxCredit)} />
+
+      {byOwner.length > 0 ? (
+        <View style={styles.ownerList}>
+          <Text style={styles.label}>명의자별 계산</Text>
+          {byOwner.map((owner) => (
+            <View key={owner.ownerType} style={styles.ownerBlock}>
+              <Text style={styles.rowTitle}>{OWNER_LABELS[owner.ownerType]}</Text>
+              <Metric label="연금계좌 납입액" value={formatKRW(owner.progress.pensionPaid)} />
+              <Metric
+                label="공제 대상 / 한도"
+                value={`${formatKRW(owner.progress.creditableTotal)} / ${ownerLimit === null ? "-" : formatKRW(ownerLimit)}`}
+              />
+              <Metric label="예상 공제액" value={formatKRW(owner.progress.estimatedCredit)} />
+              <Metric label="공제율" value={`${(owner.progress.rate * 100).toFixed(1)}%`} />
+              {owner.salaryBracketAssumed ? <Notice>소득 구간 미입력 — 낮은 공제율로 가정</Notice> : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {onlySpouse ? (
+        <Notice>배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 배우자 소득 구간은 낮은 공제율로 가정했습니다.</Notice>
+      ) : null}
+      {excludedAccounts.length > 0 ? (
+        <>
+          <Notice>{`자녀·기타 명의 계좌 ${excludedAccounts.length}개는 명의자의 소득 정보가 없어 세액공제 계산에서 뺐습니다.`}</Notice>
+          {excludedAccounts.map((account) => (
+            <Notice key={account.id || account.name}>
+              {`· ${account.name || "이름 없는 계좌"} (${OWNER_LABELS[account.ownerType] ?? account.ownerType} 명의 · ${ACCOUNT_TYPE_LABELS[account.accountType] ?? account.accountType}) 납입 ${formatKRW(account.paid)}`}
+            </Notice>
+          ))}
+        </>
+      ) : null}
+      {progress.nonCreditablePaid > 0 ? (
+        <Notice>{`공제 한도를 넘은 ${formatKRW(progress.nonCreditablePaid)}은 올해 세액공제 대상이 아닙니다.`}</Notice>
+      ) : null}
+      {!taxCredit.contributionsRecorded ? (
+        <Notice>올해 납입 기록이 없습니다. 진행률 0%는 납입하지 않았다는 뜻이 아니라 기록이 없다는 뜻일 수 있습니다.</Notice>
+      ) : null}
+      {taxCredit.salaryBracketAssumed ? (
+        <Notice>
+          {byOwner.length > 0
+            ? "소득 구간이 없는 명의자는 서버가 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. 본인 소득 구간은 웹에서 저장할 수 있고, 배우자 소득 구간은 아직 입력할 수 없습니다."
+            : "소득 구간이 저장되어 있지 않아 서버가 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다."}
+        </Notice>
+      ) : null}
     </>
   );
 }
@@ -232,6 +298,8 @@ const styles = StyleSheet.create({
   bigNumber: { color: colors.ink, fontSize: 26, fontWeight: "900", letterSpacing: -0.5 },
   scope: { color: colors.inkMuted, fontSize: 12, fontWeight: "800", lineHeight: 18 },
   strong: { fontSize: 16 },
+  ownerList: { gap: spacing.md, marginTop: spacing.sm },
+  ownerBlock: { gap: spacing.xs, borderTopWidth: 1, borderTopColor: colors.line, paddingTop: spacing.sm },
   muted: { color: colors.inkMuted, fontSize: 14, lineHeight: 20 },
   notice: { color: colors.inkSubtle, fontSize: 12, lineHeight: 18 },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md },

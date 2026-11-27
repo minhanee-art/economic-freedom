@@ -1,5 +1,11 @@
 import { Tabs } from "expo-router";
+import type { ColorValue } from "react-native";
+import { TabIcon, type TabIconName } from "@/components/TabIcon";
 import { colors } from "@/styles/theme";
+
+const icon =
+  (name: TabIconName) =>
+  ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) => <TabIcon name={name} color={color} size={size} focused={focused} />;
 
 export default function TabLayout() {
   return (
@@ -14,11 +20,11 @@ export default function TabLayout() {
         },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "홈" }} />
-      <Tabs.Screen name="holdings" options={{ title: "자산" }} />
-      <Tabs.Screen name="dividends" options={{ title: "배당" }} />
-      <Tabs.Screen name="retirement" options={{ title: "연금" }} />
-      <Tabs.Screen name="settings" options={{ title: "설정" }} />
+      <Tabs.Screen name="index" options={{ tabBarIcon: icon("home"), title: "홈" }} />
+      <Tabs.Screen name="holdings" options={{ tabBarIcon: icon("holdings"), title: "자산" }} />
+      <Tabs.Screen name="dividends" options={{ tabBarIcon: icon("dividends"), title: "배당" }} />
+      <Tabs.Screen name="retirement" options={{ tabBarIcon: icon("retirement"), title: "연금" }} />
+      <Tabs.Screen name="settings" options={{ tabBarIcon: icon("settings"), title: "설정" }} />
     </Tabs>
   );
 }

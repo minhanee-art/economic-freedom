@@ -6,6 +6,7 @@ import { createDividend, deleteDividend, listDividends } from "@/api/records";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
+import { heldHoldings } from "@/utils/holdings";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { clearSelectedAccountId, notifyPortfolioChanged } from "@/storage/account";
 import { handleUnauthorized } from "@/storage/session";
@@ -29,7 +30,7 @@ export default function RecordDividendScreen() {
   const [recordsError, setRecordsError] = useState("");
   const submitLock = useRef(false);
 
-  const holdings = useMemo(() => summary?.holdings ?? [], [summary]);
+  const holdings = useMemo(() => heldHoldings(summary?.holdings ?? []), [summary]);
   const holding = holdings.find((item) => item.id === holdingId) ?? null;
   // 다른 계좌에서 불러온 목록은 보여주지 않는다.
   const records = loaded && loaded.accountId === selectedAccountId ? loaded.list : [];

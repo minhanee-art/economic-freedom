@@ -8,6 +8,7 @@ import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { colors, radius, spacing } from "@/styles/theme";
 import type { PortfolioSummary } from "@/types";
 import { formatKRW, formatPercent } from "@/utils/format";
+import { heldHoldings } from "@/utils/holdings";
 
 export default function HomeScreen() {
   const { summary, accounts, selectedAccountId, selectAccount, isLoading, error, refresh } = usePortfolioSummary();
@@ -52,7 +53,7 @@ function HomeContent({ summary }: { summary: PortfolioSummary }) {
         <MetricCard label="누적 배당" value={formatKRW(summary.totalDividend)} trend="up" />
         <MetricCard label="월 적립금" value={formatKRW(summary.monthlyBudget)} />
         <MetricCard label="월 현금흐름" value={formatKRW(monthlyCashflow)} caption={`목표 대비 ${cashflowProgress}%`} trend="up" />
-        <MetricCard label="보유 종목" value={`${summary.holdings.length}개`} />
+        <MetricCard label="보유 종목" value={`${heldHoldings(summary.holdings).length}개`} />
       </View>
 
       <Card title="은퇴 현금흐름" action={`${cashflowProgress}%`}>

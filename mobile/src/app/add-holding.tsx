@@ -4,6 +4,7 @@ import { View, type TextInput } from "react-native";
 import { Text } from "@/components/AppText";
 import { ApiError } from "@/api/client";
 import { createHolding, normalizeHoldingInput } from "@/api/holdings";
+import { fetchAndSavePrice } from "@/api/prices";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
@@ -13,12 +14,15 @@ import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { clearSelectedAccountId, notifyPortfolioChanged } from "@/storage/account";
 import { handleUnauthorized } from "@/storage/session";
 import { spacing, type } from "@/styles/theme";
+import { formatKRWFull } from "@/utils/format";
 
 type Errors = { name?: string; code?: string };
 
 /**
  * 종목 추가 — 종목명과 종목코드만 받아 현재 선택한 계좌에 0주로 넣는다.
- * 시세 조회·검색·목록 제안은 하지 않는다. 수량과 단가는 이어서 매수 기록으로 남긴다.
+ * 검색·목록 제안은 하지 않는다. 추가한 직후 웹과 같은 시세 API(/api/prices)로 현재가를 한 번 조회해 저장한다
+ * — 웹에서 추가한 종목(검색 시세를 현재가로 넣음)과 평가금액이 같게. 조회하지 못하면 첫 매수 기록 단가가 임시 현재가가 된다.
+ * 수량과 단가는 이어서 매수 기록으로 남긴다.
  */
 export default function AddHoldingScreen() {
   const { summary, session, accounts, selectedAccountId, isLoading, error: loadError, refresh } = usePortfolioSummary();
@@ -27,7 +31,8 @@ export default function AddHoldingScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
-  const [added, setAdded] = useState<{ id: string; name: string; code: string } | null>(null);
+  // price: 추가 직후 조회한 현재가(조회하지 못했으면 null)
+  const [added, setAdded] = useState<{ id: string; name: string; code: string; price: number | null } | null>(null);
   const submitLock = useRef(false);
   const codeRef = useRef<TextInput>(null);
   const account = accounts.find((item) => item.id === selectedAccountId);
@@ -67,7 +72,8 @@ export default function AddHoldingScreen() {
     setIsSubmitting(true);
     try {
       const { id } = await createHolding(session.token, selectedAccountId, checked.value);
-      setAdded({ id, ...checked.value });
+      const price = id ? await fetchAndSavePrice(session.token, selectedAccountId, { id, code: checked.value.code, currentPrice: 0 }) : null;
+      setAdded({ id, ...checked.value, price });
       setName("");
       setCode("");
       notifyPortfolioChanged();
@@ -130,14 +136,21 @@ export default function AddHoldingScreen() {
         onSubmitEditing={handleSubmit}
       />
       {error ? <FormError>{error}</FormError> : null}
-      <Button label="종목 추가" busy={isSubmitting} busyLabel="추가 중" onPress={handleSubmit} />
+      {/* 추가에 성공하면 다음 단계(매수 기록)가 주 버튼이 되고, 다른 종목 추가는 보조 버튼으로 내려간다. */}
+      <Button label="종목 추가" variant={added ? "secondary" : "primary"} busy={isSubmitting} busyLabel="추가 중" onPress={handleSubmit} />
 
       {added ? (
         <View style={{ gap: spacing.sm }}>
-          <StatusMessage>{`${added.name}(${added.code})을(를) 0주로 추가했습니다.`}</StatusMessage>
+          <StatusMessage>
+            {added.price !== null
+              ? `${added.name}(${added.code})을(를) 0주로 추가했습니다. 현재가 ${formatKRWFull(added.price)}을 불러왔습니다.`
+              : `${added.name}(${added.code})을(를) 0주로 추가했습니다.`}
+          </StatusMessage>
+          {added.price === null ? (
+            <Text style={type.caption}>현재가를 불러오지 못해 첫 매수 기록의 단가로 평가합니다. 자산 탭의 '시세 새로고침'으로 다시 불러올 수 있습니다.</Text>
+          ) : null}
           <Button
             label="이 종목의 매수 기록 추가"
-            variant="secondary"
             onPress={() => router.replace({ pathname: "/record-purchase", params: added.id ? { holdingId: added.id } : {} })}
           />
         </View>

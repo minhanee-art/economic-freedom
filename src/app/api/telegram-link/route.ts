@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { getRequestSession } from "@/lib/session";
 import { selectRequestAccount } from "@/lib/account-selection";
 import { authRateLimit } from "@/lib/rate-limit";
+import { getBotUsername } from "@/lib/telegram-bot-username";
 import {
   LINK_CODE_TTL_MINUTES,
   getTelegramLinkStatus,
@@ -18,12 +19,6 @@ export const dynamic = "force-dynamic";
 
 const NOT_FOUND = { error: "계좌를 찾을 수 없습니다." };
 
-/** 봇 사용자명(@ 제외). 있으면 t.me 딥링크를 만들어 준다. 형식이 틀리면 없는 것으로 본다. */
-function botUsername(): string | null {
-  const raw = process.env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/, "") ?? "";
-  return /^[A-Za-z0-9_]{5,32}$/.test(raw) ? raw : null;
-}
-
 export async function GET(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
@@ -32,7 +27,7 @@ export async function GET(request: Request) {
   if (!selected.ok) return selected.response;
   const status = await getTelegramLinkStatus(session.userId, selected.accountId);
   if (!status) return NextResponse.json(NOT_FOUND, { status: 404 });
-  return NextResponse.json({ accountName: selected.account.name, ...status, botUsername: botUsername() });
+  return NextResponse.json({ accountName: selected.account.name, ...status, botUsername: getBotUsername() });
 }
 
 export async function POST(request: Request) {
@@ -52,7 +47,7 @@ export async function POST(request: Request) {
   const issued = await issueTelegramLinkCode(session.userId, selected.accountId);
   if (!issued) return NextResponse.json(NOT_FOUND, { status: 404 });
 
-  const username = botUsername();
+  const username = getBotUsername();
   return NextResponse.json(
     {
       code: issued.code,

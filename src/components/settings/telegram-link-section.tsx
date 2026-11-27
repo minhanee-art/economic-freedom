@@ -2,6 +2,7 @@
 
 // 설정 > 텔레그램 연결 — 현재 계좌에 텔레그램 채팅을 연결 코드로 연결·해제한다.
 // chat_id를 직접 입력하지 않는다: 봇에게 코드를 보낸 채팅만 연결되므로, 본인이 쓰는 채팅임이 확인된다.
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 type LinkStatus = {
@@ -128,6 +129,10 @@ export function TelegramLinkSection() {
             : "연결된 채팅이 없습니다. 연결 코드를 발급해 봇에게 보내면 그 채팅이 이 계좌에 연결됩니다."}
         </p>
       )}
+
+      <Link href="/guide/telegram" className="inline-block text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+        연결 방법 안내
+      </Link>
 
       {issued && (
         <div className="rounded-xl border border-hairline dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800/50 p-3 space-y-2">

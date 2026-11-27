@@ -117,3 +117,13 @@ test("대시보드 페이지: 서명만 확인하고 DB를 조회하지 않는�
   assert.equal(response.headers.get("x-middleware-next"), "1");
   assert.equal(db.calls.length, 0);
 });
+
+test("안내 페이지(/guide/telegram)는 프록시 대상이 아니라 로그인 없이 열린다", async () => {
+  const { config } = await import("@/proxy");
+  // Next는 matcher에 걸린 경로에만 프록시를 실행한다 — 공개 경로는 목록에 없어야 한다
+  const matches = (path: string) =>
+    config.matcher.some((pattern) => new RegExp(`^${pattern.replace(/:path\*/g, ".*")}$`).test(path));
+  assert.equal(matches("/guide/telegram"), false);
+  assert.equal(matches("/privacy"), false);
+  assert.equal(matches("/dashboard/settings"), true);
+});

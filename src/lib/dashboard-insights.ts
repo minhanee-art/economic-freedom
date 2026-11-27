@@ -109,6 +109,8 @@ export type HeatmapItem = {
   value: number;
   returnPct: number;
   hasCost: boolean;
+  /** "기타" 묶음 칸일 때만 있다: 묶인 종목 수 */
+  groupedCount?: number;
 };
 
 export type HeatmapRect = HeatmapItem & { x: number; y: number; w: number; h: number; sharePct: number };
@@ -126,8 +128,73 @@ export function toHeatmapItems(holdings: HoldingWithPnL[]): HeatmapItem[] {
     .sort((a, b) => b.value - a.value);
 }
 
+/** 이 비중(%) 미만 종목은 "기타 N종목" 한 칸으로 묶는다(정확히 이 값이면 묶지 않는다) */
+export const HEATMAP_OTHER_BELOW_PCT = 2;
+export const HEATMAP_OTHER_ID = "__heatmap-other__";
+// 종목이 이보다 적으면 면적 비교가 의미 없고, 화면 전체를 덮는 한 가지 색 사각형이 오류처럼 보인다
+export const HEATMAP_MIN_TILES = 3;
+
+export type HeatmapGrouping = {
+  /** 그릴 칸: 큰 종목 + (있으면) "기타" 칸 */
+  tiles: HeatmapItem[];
+  /** "기타"로 묶인 종목. 묶지 않았으면 빈 배열 */
+  grouped: HeatmapItem[];
+};
+
+/**
+ * 비중이 아주 작은 종목을 "기타 N종목" 칸 하나로 묶는다.
+ * - 묶을 종목이 1개뿐이면 묶지 않는다(이름 없는 칸이 되어 오히려 정보가 줄어든다).
+ * - 묶은 뒤 칸이 HEATMAP_MIN_TILES 개 미만이면(거의 전부 작은 종목) 묶지 않는다.
+ * - 기타 칸은 원가 없음(hasCost=false)으로 두어 중립(보합) 색이 된다. 여러 종목의 수익률을 한 색으로 말하지 않는다.
+ */
+export function groupSmallHoldings(items: HeatmapItem[], belowPct = HEATMAP_OTHER_BELOW_PCT): HeatmapGrouping {
+  const sorted = items.filter((i) => i.value > 0).sort((a, b) => b.value - a.value);
+  const total = sorted.reduce((s, i) => s + i.value, 0);
+  const none: HeatmapGrouping = { tiles: sorted, grouped: [] };
+  if (total <= 0) return none;
+
+  // 부동소수점 오차를 피하려고 나눗셈 대신 곱셈으로 비교한다
+  const big = sorted.filter((i) => i.value * 100 >= total * belowPct);
+  const small = sorted.filter((i) => i.value * 100 < total * belowPct);
+  if (small.length < 2 || big.length + 1 < HEATMAP_MIN_TILES) return none;
+
+  const other: HeatmapItem = {
+    id: HEATMAP_OTHER_ID,
+    name: `기타 ${small.length}종목`,
+    value: small.reduce((s, i) => s + i.value, 0),
+    returnPct: 0,
+    hasCost: false,
+    groupedCount: small.length,
+  };
+  return { tiles: [...big, other].sort((a, b) => b.value - a.value), grouped: small };
+}
+
+/** 히트맵 영역의 실제 크기(px)에서 배치 비율(가로/세로)을 구한다. 측정 전·잘못된 값은 기본(폰) 비율 */
+export const HEATMAP_DEFAULT_ASPECT = 1.6;
+export function heatmapAspect(widthPx: number, heightPx: number): number {
+  if (!(widthPx > 0) || !(heightPx > 0)) return HEATMAP_DEFAULT_ASPECT;
+  return widthPx / heightPx;
+}
+
+export type HeatmapLabelLevel = "two-line" | "one-line" | "none";
+
+// 칸 글자는 12px(text-xs, 줄 높이 15px)로 고정하고, 칸 안쪽 여백은 4px.
+// 두 줄: 이름은 한글 4~5자쯤 보여야 뜻이 남는다(72px), 높이는 15×2+8 = 38 → 40px.
+export const HEATMAP_TWO_LINE_MIN_W = 72;
+export const HEATMAP_TWO_LINE_MIN_H = 40;
+// 한 줄: "-100.00%"·"원가 없음"이 잘리지 않을 너비(≈58px + 여백 8px = 66 → 68px), 높이 15+8 → 24px.
+export const HEATMAP_ONE_LINE_MIN_W = 68;
+export const HEATMAP_ONE_LINE_MIN_H = 24;
+
+/** 칸의 실제 px 크기로 글자를 얼마나 넣을지 정한다 */
+export function heatmapLabelLevel(widthPx: number, heightPx: number): HeatmapLabelLevel {
+  if (widthPx >= HEATMAP_TWO_LINE_MIN_W && heightPx >= HEATMAP_TWO_LINE_MIN_H) return "two-line";
+  if (widthPx >= HEATMAP_ONE_LINE_MIN_W && heightPx >= HEATMAP_ONE_LINE_MIN_H) return "one-line";
+  return "none";
+}
+
 /** 정사각형에 가깝게 쪼개는 squarify 배치. 결과 좌표는 0~100(%) */
-export function layoutHeatmap(items: HeatmapItem[], aspect = 1.6): HeatmapRect[] {
+export function layoutHeatmap(items: HeatmapItem[], aspect = HEATMAP_DEFAULT_ASPECT): HeatmapRect[] {
   const sorted = items.filter((i) => i.value > 0).sort((a, b) => b.value - a.value);
   const total = sorted.reduce((s, i) => s + i.value, 0);
   if (total <= 0) return [];

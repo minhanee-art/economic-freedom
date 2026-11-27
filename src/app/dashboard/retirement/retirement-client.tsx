@@ -47,7 +47,7 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
       <div>
         <h1 className="text-xl font-bold tracking-tight text-ink">연금 설계</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-          가족의 연금계좌 납입, 국민연금·퇴직연금 예상액, 은퇴 목표를 한곳에서 정리하세요.
+          은퇴 목표와 예상 연금으로 나이별 월 현금흐름을 계산하고, 올해 연금계좌 납입과 세액공제를 적습니다.
         </p>
       </div>
 

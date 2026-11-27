@@ -84,7 +84,7 @@ const visible = (locator) => locator.filter({ visible: true });
 const text = (value, exact = false) => visible(page.getByText(value, { exact })).first();
 const button = (name, exact = true) => visible(page.getByRole("button", { name, exact })).first();
 
-async function expectText(value, timeout = 15000, exact = false) {
+async function expectText(value, timeout = 30000, exact = false) {
   await text(value, exact).waitFor({ state: "visible", timeout });
 }
 
@@ -103,7 +103,32 @@ async function openTab(label) {
   else await visible(page.getByRole("link", { name: label })).first().click();
 }
 
+/** 조건 대기: 화면에 보이는 입력란이 n 개 이상이고 모두 수정 가능해질 때까지(고정 sleep 대신). */
+async function waitInputsReady(n, timeout = 30000) {
+  await page.waitForFunction(
+    (count) => {
+      const inputs = [...document.querySelectorAll("input")].filter((el) => el.offsetParent !== null);
+      return inputs.length >= count && inputs.every((el) => !el.disabled && !el.readOnly);
+    },
+    n,
+    { timeout }
+  );
+}
+
+/** 조건 대기: 요소의 속성이 기대값이 될 때까지(클릭 직후 한 번 읽어 비교하면 부하가 높을 때 상태 반영 전일 수 있다). */
+async function waitAttr(locator, name, expected, timeout = 15000) {
+  const deadline = Date.now() + timeout;
+  for (;;) {
+    // 다시 그려지며 요소가 바뀔 수 있으므로 매번 로케이터로 다시 읽는다(핸들 고정 X).
+    const value = await locator.getAttribute(name, { timeout: 2000 }).catch(() => null);
+    if (value === expected) return;
+    if (Date.now() > deadline) throw new Error(`${name} 가 ${expected} 가 되지 않음(현재 ${value})`);
+    await page.waitForTimeout(100);
+  }
+}
+
 async function fillInputs(values) {
+  await waitInputsReady(values.length);
   const inputs = visible(page.locator("input"));
   for (const [index, value] of values.entries()) {
     if (value === null) continue;
@@ -119,7 +144,7 @@ function quiet(promise) {
 }
 
 function waitApi(pathPart, method = "GET") {
-  return quiet(page.waitForResponse((res) => res.url().includes(pathPart) && res.request().method() === method, { timeout: 20000 }));
+  return quiet(page.waitForResponse((res) => res.url().includes(pathPart) && res.request().method() === method, { timeout: 45000 }));
 }
 
 async function apiDirect(pathname, { method = "GET", token, accountId, body } = {}) {
@@ -177,8 +202,9 @@ let firstAccountId = null;
 let spouseAccountId = null;
 
 await step("앱 첫 화면(로그인 전) 렌더링", async () => {
-  await page.goto(APP_URL, { waitUntil: "networkidle" });
-  await expectText("로그인하면 내 포트폴리오");
+  // 첫 요청은 Metro 가 번들을 처음 만드는 시간이 걸려 부하가 높으면 30초를 넘는다 → 로드 완료 대신 화면 문구를 조건으로 기다린다.
+  await page.goto(APP_URL, { waitUntil: "domcontentloaded", timeout: 180000 });
+  await expectText("로그인하면 내 포트폴리오", 120000);
   await shot("login");
 });
 
@@ -211,6 +237,145 @@ await step("회원가입", async () => {
   assert(session?.token, "세션이 저장되지 않았습니다");
   token = session.token;
   await shot("home-after-signup");
+});
+
+// ── 신규 계정(기본 종목이 전부 0주) ────────────────────────
+// 가입 직후 계정에는 수량 없는 기본 종목이 만들어진다. 이후 단계가 API 로 10주짜리 종목을 시드하므로, 그 전에 확인한다.
+let freshHoldingCount = 0;
+let freshPickedName = "";
+
+/** 기록 화면의 종목 선택 목록 상태: 0주 종목 버튼 수, 접기/보기 토글 문구, 보유 종목 버튼 이름. */
+async function pickerState() {
+  await visible(page.getByText("종목", { exact: true })).first().waitFor({ state: "visible", timeout: 30000 });
+  return page.evaluate(() => {
+    const shown = (el) => el.offsetParent !== null;
+    const buttons = [...document.querySelectorAll('[role="button"]')].filter(shown);
+    const notHeld = buttons.filter((b) => b.textContent.includes("보유 0주"));
+    const toggle = buttons.find((b) => /보유하지 않은 종목 \d+개 (보기|접기)/.test(b.textContent));
+    return { notHeld: notHeld.map((b) => b.textContent), toggle: toggle ? toggle.textContent : null };
+  });
+}
+
+await step("레이아웃: 탭바 다섯 라벨이 뷰포트·탭바 안에 온전히 들어옴(잘림 없음)", async (s) => {
+  const boxes = await page.evaluate((labels) => {
+    const shown = (el) => el.offsetParent !== null || getComputedStyle(el).position === "fixed";
+    const tabs = [...document.querySelectorAll('[role="tab"]')].filter(shown);
+    return labels.map((label) => {
+      const tab = tabs.find((t) => t.textContent.trim().endsWith(label) || t.textContent.includes(label));
+      if (!tab) return { label, error: "탭 요소 없음" };
+      // 라벨 글자만 가진 가장 안쪽 요소
+      const walker = [...tab.querySelectorAll("*")].filter((el) => el.children.length === 0 && el.textContent.trim() === label);
+      const el = walker.at(-1);
+      if (!el) return { label, error: "라벨 요소 없음" };
+      const r = el.getBoundingClientRect();
+      const t = tab.getBoundingClientRect();
+      const bar = (tab.closest('[role="tablist"]') ?? tab.parentElement).getBoundingClientRect();
+      return {
+        label,
+        label_box: [r.left, r.top, r.right, r.bottom],
+        tab_box: [t.left, t.top, t.right, t.bottom],
+        bar_box: [bar.left, bar.top, bar.right, bar.bottom],
+        viewport: [window.innerWidth, window.innerHeight],
+        // 라벨 글자 높이만큼 실제로 그려지는지(요소 내부가 잘려 있으면 scrollHeight 가 더 크다)
+        clipped_inside: el.scrollHeight > el.clientHeight + 1,
+      };
+    });
+  }, ["홈", "자산", "배당", "연금", "설정"]);
+  const eps = 0.5;
+  const problems = [];
+  for (const b of boxes) {
+    if (b.error) {
+      problems.push(`${b.label}: ${b.error}`);
+      continue;
+    }
+    const [l, t, r, bt] = b.label_box;
+    const [w, h] = b.viewport;
+    s.notes.push(`${b.label}: 라벨 ${b.label_box.map((n) => n.toFixed(1)).join(",")} / 탭 ${b.tab_box.map((n) => n.toFixed(1)).join(",")} / 뷰포트 ${w}x${h}`);
+    if (l < -eps || r > w + eps || bt > h + eps) problems.push(`${b.label}: 라벨이 뷰포트를 벗어남`);
+    if (t < b.bar_box[1] - eps || bt > b.bar_box[3] + eps) problems.push(`${b.label}: 라벨이 탭바 영역을 벗어남`);
+    if (bt > b.tab_box[3] + eps) problems.push(`${b.label}: 라벨 아래가 탭 영역 밖으로 ${(bt - b.tab_box[3]).toFixed(1)}px 넘침(잘림)`);
+    if (b.clipped_inside) problems.push(`${b.label}: 라벨 요소 안쪽이 잘림`);
+  }
+  assert(problems.length === 0, problems.join("; "));
+  await shot("tabbar-layout");
+});
+
+await step("신규 계정: 홈 '보유 종목 0개', 기본 종목은 전부 0주", async (s) => {
+  await openTab("홈");
+  await expectText("총 평가금액");
+  const metric = visible(page.locator("div")).filter({ hasText: /보유 종목\s*0개/ }).last();
+  await metric.waitFor({ state: "visible", timeout: 30000 });
+  const res = await apiDirect("/api/holdings", { token });
+  assert(res.status === 200 && Array.isArray(res.data), `종목 조회 ${res.status}`);
+  freshHoldingCount = res.data.length;
+  assert(freshHoldingCount >= 2, `기본 종목이 2개 미만(${freshHoldingCount}) — 접힘 확인을 할 수 없음`);
+  assert(res.data.every((h) => Number(h.shares) === 0), "신규 계정인데 0주가 아닌 기본 종목이 있음");
+  s.notes.push(`기본 종목 ${freshHoldingCount}개, 모두 0주`);
+  await shot("fresh-home");
+});
+
+await step("신규 계정: 배당 기록 화면은 0주 종목이 처음부터 펼쳐져 있음(접기 토글 없음)", async (s) => {
+  await openTab("배당");
+  await button("배당 수령 기록 추가").click();
+  await expectText("이미 받은 배당을 기록합니다");
+  const state = await pickerState();
+  s.notes.push(`0주 종목 ${state.notHeld.length}개 표시, 토글=${state.toggle}`);
+  assert(state.notHeld.length === freshHoldingCount, `0주 종목 ${state.notHeld.length}개만 보임(기대 ${freshHoldingCount})`);
+  assert(state.toggle === null, "보유 종목이 없는데 접기/보기 토글이 보임");
+  await expectText("보유 수량이 있는 종목이 없어 등록된 종목을 모두 표시합니다.");
+  await shot("fresh-dividend-picker");
+  await page.goBack();
+});
+
+await step("신규 계정: 매수 기록 — 0주 종목이 펼쳐져 보이고 하나를 골라 저장 성공", async (s) => {
+  await openTab("자산");
+  await button("매수 기록 추가").click();
+  await expectText("이미 한 거래를 기록합니다");
+  const state = await pickerState();
+  s.notes.push(`0주 종목 ${state.notHeld.length}개 표시, 토글=${state.toggle}`);
+  assert(state.notHeld.length === freshHoldingCount, `0주 종목 ${state.notHeld.length}개만 보임(기대 ${freshHoldingCount})`);
+  assert(state.toggle === null, "보유 종목이 없는데 접기/보기 토글이 보임");
+  await shot("fresh-purchase-picker");
+  const first = visible(page.getByRole("button", { name: /보유 0주/ })).first();
+  freshPickedName = (await first.innerText()).split("\n")[0].trim();
+  s.notes.push(`고른 종목: ${freshPickedName}`);
+  await first.click();
+  await fillInputs(["2", "5000", today]);
+  const post = waitApi("/api/purchases", "POST");
+  await visible(page.getByRole("button", { name: "매수 기록 추가", exact: true })).last().click();
+  const res = await post;
+  assert(res.ok(), `0주 종목 매수 기록 저장 실패: HTTP ${res.status()}`);
+  await expectText("2주 매수 기록을 추가했습니다");
+  await shot("fresh-purchase-saved");
+  await page.goBack();
+});
+
+await step("신규 계정: 다시 열면 그 종목만 보이고 '보유하지 않은 종목 N개 보기'가 접힘 → 펼침/접기 동작", async (s) => {
+  const rest = freshHoldingCount - 1;
+  await openTab("홈");
+  await visible(page.locator("div")).filter({ hasText: /보유 종목\s*1개/ }).last().waitFor({ state: "visible", timeout: 30000 });
+  for (const [tabLabel, openLabel, marker] of [
+    ["자산", "매수 기록 추가", "이미 한 거래를 기록합니다"],
+    ["배당", "배당 수령 기록 추가", "이미 받은 배당을 기록합니다"],
+  ]) {
+    await openTab(tabLabel);
+    await button(openLabel).click();
+    await expectText(marker);
+    await visible(page.getByRole("button", { name: /보유하지 않은 종목 \d+개/ })).first().waitFor({ state: "visible", timeout: 30000 });
+    const collapsed = await pickerState();
+    s.notes.push(`${tabLabel}: 접힌 상태 0주 ${collapsed.notHeld.length}개, 토글=${collapsed.toggle}`);
+    assert(collapsed.notHeld.length === 0, `${tabLabel}: 접힌 상태인데 0주 종목 ${collapsed.notHeld.length}개가 보임`);
+    assert(collapsed.toggle === `보유하지 않은 종목 ${rest}개 보기`, `${tabLabel}: 토글 문구 '${collapsed.toggle}'`);
+    assert((await visible(page.getByRole("button", { name: new RegExp(freshPickedName) })).count()) >= 1, `${tabLabel}: 매수한 종목이 목록에 없음`);
+    await button(`보유하지 않은 종목 ${rest}개 보기`).click();
+    await button(`보유하지 않은 종목 ${rest}개 접기`).waitFor({ state: "visible", timeout: 15000 });
+    const expanded = await pickerState();
+    assert(expanded.notHeld.length === rest, `${tabLabel}: 펼친 뒤 0주 종목 ${expanded.notHeld.length}개(기대 ${rest})`);
+    await shot(`fresh-${tabLabel === "자산" ? "purchase" : "dividend"}-picker-expanded`);
+    await button(`보유하지 않은 종목 ${rest}개 접기`).click();
+    await button(`보유하지 않은 종목 ${rest}개 보기`).waitFor({ state: "visible", timeout: 15000 });
+    await page.goBack();
+  }
 });
 
 await step("데이터 준비(API): 배우자 계좌 추가, 계좌별 보유 종목 등록", async (s) => {
@@ -277,7 +442,9 @@ await step("계좌 전환: 배우자 계좌 선택 → 요청 헤더 반영, 다
   await chip.click();
   await summaryReq;
   await expectText("배우자 계좌"); // 홈 상단 계좌 이름
-  assert((await chip.getAttribute("aria-selected")) === "true", "선택된 칩이 aria-selected 로 표시되지 않음");
+  await waitAttr(chip, "aria-selected", "true").catch(() => {
+    throw new Error("선택된 칩이 aria-selected 로 표시되지 않음");
+  });
   await openTab("자산");
   await expectText("배우자성장ETF");
   assert((await text("테스트배당ETF").count()) === 0, "자산 탭에 다른 계좌 종목이 보임");
@@ -363,10 +530,65 @@ await step("연금 탭: 요약 표시와 입력 없음 안내", async () => {
   await shot("retirement");
 });
 
+await step("연금 탭: 명의자별 세액공제 블록과 '제외된 계좌' 안내(서버 요약 API 와 대조)", async (s) => {
+  // 연금 유형 계좌: 본인 연금저축, 배우자 IRP, 자녀 연금저축(자녀 명의는 세액공제에서 제외되는 대상).
+  const make = async (name, ownerType, accountType) => {
+    const res = await apiDirect("/api/accounts", { method: "POST", token, body: { name, ownerType, accountType } });
+    assert(res.status === 201, `${name} 계좌 추가 ${res.status} ${JSON.stringify(res.data)}`);
+    return res.data.account.id;
+  };
+  const selfId = await make("본인 연금저축 E2E", "self", "pension_savings");
+  const spouseId = await make("배우자 IRP E2E", "spouse", "irp");
+  const childId = await make("자녀 연금저축 E2E", "child", "pension_savings");
+  // 연도는 서버 요약이 쓰는 올해(서버 시각 기준)에 맞춘다: 계좌를 만든 뒤 요약 연도를 읽어 납입을 넣는다.
+  const before = await apiDirect("/api/pension/summary", { token });
+  assert(before.status === 200, `요약 API ${before.status}`);
+  const year = before.data.year;
+  for (const [accountId, amount] of [[selfId, 3_000_000], [spouseId, 2_000_000], [childId, 1_000_000]]) {
+    const put = await apiDirect("/api/pension/contributions", { method: "PUT", token, body: { accountId, year, amount } });
+    assert(put.status === 200, `납입 기록 ${put.status} ${JSON.stringify(put.data)}`);
+  }
+  const res = await apiDirect("/api/pension/summary", { token });
+  const summary = res.data;
+  const credit = summary.taxCredit;
+  assert(credit, `세액공제 값이 없음(사유 ${summary.taxCreditUnavailableReason})`);
+  const owners = credit.byOwner.map((o) => o.ownerType);
+  assert(owners.includes("self") && owners.includes("spouse"), `서버 요약의 명의자: ${owners.join(",")}`);
+  assert(credit.excludedAccounts.some((e) => e.id === childId), "서버 요약에 자녀 계좌가 제외 목록에 없음");
+
+  const krw = (n) => new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(n);
+  const limit = summary.rules.taxCredit.combinedLimit;
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await openTab("연금");
+  await expectText("가족 전체 계좌를 합산한 값입니다");
+  await expectText("연금계좌 납입액");
+  const ownerLabel = { self: "본인", spouse: "배우자" };
+  for (const owner of credit.byOwner) {
+    const label = ownerLabel[owner.ownerType];
+    const block = visible(page.locator("div"))
+      .filter({ has: page.getByText(label, { exact: true }) })
+      .filter({ hasText: "연금계좌 납입액" })
+      .last();
+    await block.waitFor({ state: "visible", timeout: 30000 });
+    const body = (await block.innerText()).replace(/\s+/g, " ");
+    const expected = [krw(owner.progress.pensionPaid), `${krw(owner.progress.creditableTotal)} / ${krw(limit)}`, krw(owner.progress.estimatedCredit)];
+    for (const want of expected) assert(body.includes(want), `${label} 블록에 '${want}' 없음: ${body.slice(0, 200)}`);
+    s.notes.push(`${label}: 납입 ${krw(owner.progress.pensionPaid)}, 한도 ${krw(limit)}, 예상 공제액 ${krw(owner.progress.estimatedCredit)} (화면=서버 일치)`);
+  }
+  await expectText(krw(credit.progress.estimatedCredit));
+  await expectText(`자녀·기타 명의 계좌 ${credit.excludedAccounts.length}개`, 30000);
+  for (const ex of credit.excludedAccounts) {
+    await expectText(`${ex.name} (자녀 명의`);
+    await expectText(`납입 ${krw(ex.paid)}`);
+  }
+  await shot("retirement-owner-credit");
+});
+
 await step("비밀번호 변경 후에도 로그인 상태 유지", async (s) => {
   await openTab("설정");
   await expectText("연결됨");
   await button("비밀번호 변경").click();
+  await waitInputsReady(3); // 폼이 열리고 입력란이 활성화될 때까지 조건 대기
   await fillInputs([PASSWORD, NEW_PASSWORD, NEW_PASSWORD]);
   const before = (await storedSession())?.token;
   const change = waitApi("/api/auth/password", "POST");

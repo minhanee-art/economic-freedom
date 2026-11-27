@@ -1,6 +1,7 @@
 import { Link, router } from "expo-router";
 import { useRef, useState } from "react";
-import { Text, type TextInput } from "react-native";
+import { type TextInput } from "react-native";
+import { Text } from "@/components/AppText";
 import { loginWithEmail } from "@/api/auth";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";

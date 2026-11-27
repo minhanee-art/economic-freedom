@@ -1,5 +1,6 @@
 import { router } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
@@ -18,7 +19,7 @@ export default function HoldingsScreen() {
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
-      <ScreenTitle>보유자산</ScreenTitle>
+      <ScreenTitle>자산</ScreenTitle>
 
       <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
 

@@ -1,7 +1,8 @@
 import { Link, router, useFocusEffect } from "expo-router";
 import { useCallback, useState } from "react";
 import Constants from "expo-constants";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, Pressable, StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";

@@ -290,6 +290,7 @@ await step("레이아웃: 탭바 다섯 라벨이 뷰포트·탭바 안에 온�
         viewport: [window.innerWidth, window.innerHeight],
         // 라벨 글자 높이만큼 실제로 그려지는지(요소 내부가 잘려 있으면 scrollHeight 가 더 크다)
         clipped_inside: el.scrollHeight > el.clientHeight + 1,
+        font_size: parseFloat(getComputedStyle(el).fontSize),
       };
     });
   }, ["홈", "자산", "배당", "연금", "설정"]);
@@ -302,11 +303,12 @@ await step("레이아웃: 탭바 다섯 라벨이 뷰포트·탭바 안에 온�
     }
     const [l, t, r, bt] = b.label_box;
     const [w, h] = b.viewport;
-    s.notes.push(`${b.label}: 라벨 ${b.label_box.map((n) => n.toFixed(1)).join(",")} / 탭 ${b.tab_box.map((n) => n.toFixed(1)).join(",")} / 뷰포트 ${w}x${h}`);
+    s.notes.push(`${b.label}: 글자 ${b.font_size}px, 라벨 ${b.label_box.map((n) => n.toFixed(1)).join(",")} / 탭 ${b.tab_box.map((n) => n.toFixed(1)).join(",")} / 뷰포트 ${w}x${h}`);
     if (l < -eps || r > w + eps || bt > h + eps) problems.push(`${b.label}: 라벨이 뷰포트를 벗어남`);
     if (t < b.bar_box[1] - eps || bt > b.bar_box[3] + eps) problems.push(`${b.label}: 라벨이 탭바 영역을 벗어남`);
     if (bt > b.tab_box[3] + eps) problems.push(`${b.label}: 라벨 아래가 탭 영역 밖으로 ${(bt - b.tab_box[3]).toFixed(1)}px 넘침(잘림)`);
     if (b.clipped_inside) problems.push(`${b.label}: 라벨 요소 안쪽이 잘림`);
+    if (!(b.font_size >= 12)) problems.push(`${b.label}: 라벨 글자 ${b.font_size}px(12px 미만)`);
   }
   assert(problems.length === 0, problems.join("; "));
   await shot("tabbar-layout");
@@ -499,7 +501,7 @@ await step("로그인(새로 띄운 화면에서 이메일·비밀번호)", asyn
 
 for (const [label, marker] of [
   ["홈", "총 평가금액"],
-  ["자산", "보유자산"],
+  ["자산", /^종목 \d+개$/], // 화면 제목 '자산'은 탭 이름과 같아 표지로 쓰지 않는다
   ["배당", "예상 연 배당"],
   ["연금", "연금 설계"],
   ["설정", "약관 및 안내"],

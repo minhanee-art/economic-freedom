@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { Button } from "@/components/Button";
 import { EmptyHoldings } from "@/components/EmptyHoldings";
 import { colors, radius, spacing, touchTarget, type } from "@/styles/theme";

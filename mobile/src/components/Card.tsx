@@ -1,5 +1,6 @@
 import { Children, Fragment, isValidElement, type PropsWithChildren, type ReactNode } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { colors, radius, spacing, type } from "@/styles/theme";
 
 type CardProps = PropsWithChildren<{

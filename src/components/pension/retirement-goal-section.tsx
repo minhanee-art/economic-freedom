@@ -4,12 +4,14 @@ import { useMemo, useState } from "react";
 import type { IncomeSourceRow, RetirementGoalRow } from "@/lib/pension-data";
 import { ACCOUNT_OWNER_LABELS, computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
 import { pensionIncomeTaxRate, type PensionRuleSet, type SalaryBracket } from "@/lib/pension-rules";
+import type { SpousePresence } from "@/lib/spouse-presence";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PlanningAccount } from "./account-type-section";
 import {
   Field,
   ProgressBar,
   SectionCard,
+  secondaryButtonClass,
   Stat,
   TaxDisclaimer,
   inputClass,
@@ -25,6 +27,11 @@ interface Props {
   onGoalChange: (goal: RetirementGoalRow) => void;
   sources: IncomeSourceRow[];
   accounts: PlanningAccount[];
+  /** 저장된 데이터에서 유도한 배우자 데이터 유무 */
+  spousePresence: SpousePresence;
+  /** 배우자 입력란 묶음을 펼쳤는지(데이터가 있거나 '배우자 정보 추가'를 눌렀으면 true) */
+  spouseOpen: boolean;
+  onSpouseOpenChange: (open: boolean) => void;
 }
 
 const toText = (value: number | null) => (value === null ? "" : String(value));
@@ -37,7 +44,17 @@ function pickRows(rows: CashflowRow[]): CashflowRow[] {
   });
 }
 
-export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources, accounts }: Props) {
+export function RetirementGoalSection({
+  year,
+  rules,
+  goal,
+  onGoalChange,
+  sources,
+  accounts,
+  spousePresence,
+  spouseOpen,
+  onSpouseOpenChange,
+}: Props) {
   const [form, setForm] = useState({
     targetMonthly: toText(goal.targetMonthly),
     retirementAge: toText(goal.retirementAge),
@@ -47,6 +64,7 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
     spouseSalaryBracket: (goal.spouseSalaryBracket ?? "") as string,
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [isRemovingSpouse, setIsRemovingSpouse] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -65,9 +83,14 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
         targetMonthly: parseNumberInput(form.targetMonthly),
         retirementAge: parseNumberInput(form.retirementAge),
         birthYear: parseNumberInput(form.birthYear),
-        spouseBirthYear: parseNumberInput(form.spouseBirthYear),
         expectedReturnPct: parseNumberInput(form.expectedReturnPct),
-        spouseSalaryBracket: form.spouseSalaryBracket || null,
+        // 배우자 입력란이 접혀 있으면 배우자 항목은 보내지 않는다(API는 보낸 항목만 바꾼다)
+        ...(spouseOpen
+          ? {
+              spouseBirthYear: parseNumberInput(form.spouseBirthYear),
+              spouseSalaryBracket: form.spouseSalaryBracket || null,
+            }
+          : {}),
       });
       onGoalChange(data.goal);
       setMessage("저장했습니다.");
@@ -77,6 +100,52 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
       setIsSaving(false);
     }
   };
+
+  const clearSpouseForm = () => setForm((f) => ({ ...f, spouseBirthYear: "", spouseSalaryBracket: "" }));
+
+  // 배우자 출생연도·총급여 구간만 지운다. 배우자 명의 계좌와 배우자 연금 소득원은 여기서 지우지 않는다.
+  const removeSpouse = async () => {
+    setError("");
+    setMessage("");
+    if (!spousePresence.goalFields) {
+      // 저장된 값이 없으면 입력 중인 값만 비우고 접는다
+      clearSpouseForm();
+      onSpouseOpenChange(false);
+      return;
+    }
+    const remaining = [
+      spousePresence.spouseAccountCount > 0 ? `배우자 명의 계좌 ${spousePresence.spouseAccountCount}개` : "",
+      spousePresence.spouseSourceCount > 0 ? `배우자 연금 소득원 ${spousePresence.spouseSourceCount}개` : "",
+    ].filter(Boolean);
+    const ok = confirm(
+      "저장된 배우자 출생연도와 배우자 총급여 구간을 지웁니다." +
+        (remaining.length > 0 ? ` ${remaining.join("와 ")}는 지우지 않고 그대로 남습니다.` : "") +
+        " 계속할까요?"
+    );
+    if (!ok) return;
+    setIsRemovingSpouse(true);
+    try {
+      const data = await sendJson<{ goal: RetirementGoalRow }>("/api/pension/goal", "PATCH", {
+        spouseBirthYear: null,
+        spouseSalaryBracket: null,
+      });
+      onGoalChange(data.goal);
+      clearSpouseForm();
+      onSpouseOpenChange(false);
+      setMessage("배우자 출생연도·총급여 구간을 지웠습니다.");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setIsRemovingSpouse(false);
+    }
+  };
+
+  // 배우자 명의 계좌·연금 소득원이 남아 있으면 배우자 입력란을 접을 수 없다(그 데이터를 계산에 쓰므로)
+  const spouseLinkedData = [
+    spousePresence.spouseAccountCount > 0 ? `배우자 명의 계좌 ${spousePresence.spouseAccountCount}개` : "",
+    spousePresence.spouseSourceCount > 0 ? `배우자 연금 소득원 ${spousePresence.spouseSourceCount}개` : "",
+  ].filter(Boolean);
+  const canRemoveSpouse = spousePresence.goalFields || spouseLinkedData.length === 0;
 
   const ready = goal.targetMonthly !== null && goal.retirementAge !== null && goal.birthYear !== null;
 
@@ -126,27 +195,52 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
         <Field label={`출생연도 (${currentAgeHint(form.birthYear)})`}>
           <input inputMode="numeric" value={form.birthYear} onChange={(e) => set("birthYear", e.target.value)} placeholder="1980" className={inputClass} />
         </Field>
-        <Field label="배우자 출생연도(선택)">
-          <input inputMode="numeric" value={form.spouseBirthYear} onChange={(e) => set("spouseBirthYear", e.target.value)} className={inputClass} />
-        </Field>
-        <Field label="배우자 총급여 구간(선택)">
-          <select
-            value={form.spouseSalaryBracket}
-            onChange={(e) => set("spouseSalaryBracket", e.target.value)}
-            className={inputClass}
-          >
-            <option value="">미입력 (낮은 공제율로 가정)</option>
-            {(["low", "high"] as SalaryBracket[]).map((b) => (
-              <option key={b} value={b}>
-                공제율 {(rules.taxCredit.rates[b].rate * 100).toFixed(1)}% · {rules.taxCredit.rates[b].label}
-              </option>
-            ))}
-          </select>
-        </Field>
         <Field label="연 기대수익률(%)">
           <input inputMode="decimal" value={form.expectedReturnPct} onChange={(e) => set("expectedReturnPct", e.target.value)} placeholder="4" className={inputClass} />
         </Field>
       </div>
+
+      {spouseOpen ? (
+        <fieldset className="space-y-2 rounded-lg border border-zinc-100 p-3 dark:border-zinc-800">
+          <legend className="px-1 text-xs font-semibold text-zinc-500">배우자 정보</legend>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <Field label="배우자 출생연도(선택)">
+              <input inputMode="numeric" value={form.spouseBirthYear} onChange={(e) => set("spouseBirthYear", e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="배우자 총급여 구간(선택)">
+              <select
+                value={form.spouseSalaryBracket}
+                onChange={(e) => set("spouseSalaryBracket", e.target.value)}
+                className={inputClass}
+              >
+                <option value="">미입력 (낮은 공제율로 가정)</option>
+                {(["low", "high"] as SalaryBracket[]).map((b) => (
+                  <option key={b} value={b}>
+                    공제율 {(rules.taxCredit.rates[b].rate * 100).toFixed(1)}% · {rules.taxCredit.rates[b].label}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          </div>
+          {spouseLinkedData.length > 0 && (
+            <p className="text-xs text-zinc-500">
+              {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 계좌 명의는 아래 &lsquo;계좌 세제 유형&rsquo;에서,
+              연금 소득원은 &lsquo;국민연금·퇴직연금·연금보험&rsquo;에서 바꾸거나 지울 수 있습니다.
+            </p>
+          )}
+          {canRemoveSpouse && (
+            <button type="button" onClick={removeSpouse} disabled={isRemovingSpouse || isSaving} className={secondaryButtonClass}>
+              {isRemovingSpouse ? "지우는 중..." : "배우자 정보 제거"}
+            </button>
+          )}
+        </fieldset>
+      ) : (
+        <div>
+          <button type="button" onClick={() => onSpouseOpenChange(true)} className={secondaryButtonClass}>
+            배우자 정보 추가
+          </button>
+        </div>
+      )}
       <div className="flex items-center gap-3">
         <button onClick={save} disabled={isSaving} className={primaryButtonClass}>
           {isSaving ? "저장 중..." : "목표 저장"}

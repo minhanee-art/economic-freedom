@@ -460,14 +460,14 @@ export function BuyClient({
 
       {/* 투자금액 + 수수료 설정 */}
       <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-card transition-shadow hover:shadow-float">
-        <h2 className="text-lg font-bold text-ink dark:text-zinc-100">이번 달 투자금액</h2>
+        <h2 className="text-lg font-bold text-ink dark:text-zinc-100">이번 달 적립금</h2>
         <div className="relative">
           <input
             type="text"
             inputMode="numeric"
             value={inputValue}
             onChange={(e) => handleInputChange(e.target.value)}
-            aria-label="이번 달 투자금액(원)"
+            aria-label="이번 달 적립금(원)"
             className="w-full h-14 border border-hairline bg-canvas-soft pl-4 pr-12 text-2xl font-bold text-right tabular-nums text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
           <span aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg text-zinc-500 dark:text-zinc-400">원</span>
@@ -677,7 +677,7 @@ export function BuyClient({
                   {annualPlan.items.some((i) => i.quantity === 0) && (
                     <p className="mt-2 text-xs leading-relaxed text-caution">
                       {annualPlan.items.filter((i) => i.quantity === 0).length}개 종목은 연간 배분액으로 1주도 살 수 없습니다. 비중을 올리거나
-                      월 투자금액을 늘려야 합니다.
+                      월 적립금을 늘려야 합니다.
                     </p>
                   )}
                 </>
@@ -743,7 +743,7 @@ export function BuyClient({
                 ))}
               </ul>
               <p className="mt-2 text-xs leading-relaxed text-caution">
-                월 투자금액 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
+                월 적립금 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
                 우선 편성하고, 나머지 달은 건너뜁니다.
               </p>
             </div>

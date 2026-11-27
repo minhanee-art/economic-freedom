@@ -123,7 +123,7 @@ export function PasswordSection() {
         <button
           type="submit"
           disabled={status.kind === "saving"}
-          className="w-full h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors disabled:opacity-60"
+          className="w-full h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft transition-colors disabled:opacity-60 dark:border-zinc-700"
         >
           {status.kind === "saving" ? "저장 중…" : hasPassword ? "비밀번호 변경" : "비밀번호 설정"}
         </button>

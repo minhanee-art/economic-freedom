@@ -192,7 +192,7 @@ export function TelegramLinkSection() {
           type="button"
           onClick={issue}
           disabled={busy}
-          className="flex-1 h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors disabled:opacity-60"
+          className="flex-1 h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft transition-colors disabled:opacity-60 dark:border-zinc-700"
         >
           {status.linked ? "다른 채팅으로 다시 연결" : issued ? "새 코드 발급" : "연결 코드 발급"}
         </button>

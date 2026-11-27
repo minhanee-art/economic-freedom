@@ -361,7 +361,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         </div>
 
         <div>
-          <label htmlFor="settings-field-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">월 투자금액 (원)</label>
+          <label htmlFor="settings-field-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">월 적립금 (원)</label>
           <input id="settings-field-2"
             type="text"
             inputMode="numeric"

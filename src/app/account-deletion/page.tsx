@@ -25,7 +25,7 @@ export default function AccountDeletionPage() {
           가족연금계획
         </Link>
         <h1 className="mt-6 text-4xl font-black tracking-tight text-dark-header dark:text-white">계정 및 데이터 삭제 안내</h1>
-        <p className="mt-4 text-sm text-ink-mute dark:text-zinc-400">최종 업데이트: 2026년 9월 29일</p>
+        <p className="mt-4 text-sm text-ink-mute dark:text-zinc-400">최종 업데이트: 2026년 11월 27일</p>
 
         <section className="mt-8 rounded-2xl border border-hairline bg-white p-6 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
           <h2 className="text-xl font-black text-dark-header dark:text-white">설정에서 직접 삭제</h2>

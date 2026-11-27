@@ -224,8 +224,7 @@ export function RetirementGoalSection({
           </div>
           {spouseLinkedData.length > 0 && (
             <p className="text-xs text-zinc-500">
-              {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 계좌 명의는 아래 &lsquo;계좌 세제 유형&rsquo;에서,
-              연금 소득원은 &lsquo;국민연금·퇴직연금·연금보험&rsquo;에서 바꾸거나 지울 수 있습니다.
+              {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 이 항목은 배우자 정보 제거로 지워지지 않습니다.
             </p>
           )}
           {canRemoveSpouse && (

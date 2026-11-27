@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Linking, Pressable, Text, TextInput, View } from "react-native";
+import { Linking, Pressable, Text, TextInput, View } from "react-native";
 import { deleteAccount, getPasswordStatus } from "@/api/auth";
 import { ApiError, webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
@@ -8,6 +8,7 @@ import { Card } from "@/components/Card";
 import { clearSession, handleUnauthorized, loadSession } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
+import { confirmDestructive } from "@/utils/confirm";
 
 export default function DeleteAccountScreen() {
   const [password, setPassword] = useState("");
@@ -71,14 +72,12 @@ export default function DeleteAccountScreen() {
   };
 
   const confirmDelete = () => {
-    Alert.alert(
-      "정말 계정을 삭제할까요?",
-      "계정과 모든 포트폴리오 데이터가 영구 삭제되며 되돌릴 수 없습니다.",
-      [
-        { text: "취소", style: "cancel" },
-        { text: "계정 삭제", style: "destructive", onPress: performDelete },
-      ]
-    );
+    confirmDestructive({
+      title: "정말 계정을 삭제할까요?",
+      message: "계정과 모든 포트폴리오 데이터가 영구 삭제되며 되돌릴 수 없습니다.",
+      confirmText: "계정 삭제",
+      onConfirm: () => void performDelete(),
+    });
   };
 
   const disabled = isSubmitting || hasPassword === null || (hasPassword ? !password : !email.trim());
@@ -121,6 +120,7 @@ export default function DeleteAccountScreen() {
         )}
         {error ? <Text style={styles.error}>{error}</Text> : null}
         <Pressable
+          accessibilityRole="button"
           disabled={disabled}
           onPress={confirmDelete}
           style={[styles.button, styles.dangerButton, disabled && styles.buttonDisabled]}
@@ -130,7 +130,7 @@ export default function DeleteAccountScreen() {
       </Card>
 
       {guideUrl ? (
-        <Pressable style={styles.linkButton} onPress={() => Linking.openURL(guideUrl)}>
+        <Pressable accessibilityRole="link" style={styles.linkButton} onPress={() => Linking.openURL(guideUrl)}>
           <Text style={styles.linkText}>계정 삭제 안내 보기</Text>
         </Pressable>
       ) : null}

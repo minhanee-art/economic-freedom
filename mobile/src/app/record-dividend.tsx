@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { ApiError } from "@/api/client";
 import { createDividend, deleteDividend, listDividends } from "@/api/records";
 import { AppShell } from "@/components/AppShell";
@@ -12,6 +12,7 @@ import { handleUnauthorized } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { DividendRecord } from "@/types";
+import { confirmDestructive } from "@/utils/confirm";
 import { formatKRW } from "@/utils/format";
 import { parsePositiveInt, todayString, validateDate } from "@/utils/records";
 
@@ -110,10 +111,12 @@ export default function RecordDividendScreen() {
   };
 
   const confirmDelete = (record: DividendRecord) => {
-    Alert.alert("기록 삭제", `${record.date} ${record.holdingName ?? ""} ${formatKRW(record.amount)} 기록을 삭제할까요?`, [
-      { text: "취소", style: "cancel" },
-      { text: "삭제", style: "destructive", onPress: () => void performDelete(record) },
-    ]);
+    confirmDestructive({
+      title: "기록 삭제",
+      message: `${record.date} ${record.holdingName ?? ""} ${formatKRW(record.amount)} 기록을 삭제할까요?`,
+      confirmText: "삭제",
+      onConfirm: () => void performDelete(record),
+    });
   };
 
   const disabled = isSubmitting || !holding || !amount || !date;

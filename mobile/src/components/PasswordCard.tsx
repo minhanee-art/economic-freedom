@@ -84,6 +84,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
       {done ? <Text style={[styles.label, { color: colors.positive }]}>{done}</Text> : null}
       {!open ? (
         <Pressable
+          accessibilityRole="button"
           disabled={hasPassword === null}
           onPress={() => {
             setOpen(true);
@@ -117,10 +118,11 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
           </View>
           {mismatch ? <Text style={styles.error}>새 비밀번호가 서로 다릅니다.</Text> : null}
           {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable disabled={disabled} onPress={handleSubmit} style={[styles.button, { marginTop: 0 }, disabled && styles.buttonDisabled]}>
+          <Pressable accessibilityRole="button" disabled={disabled} onPress={handleSubmit} style={[styles.button, { marginTop: 0 }, disabled && styles.buttonDisabled]}>
             <Text style={styles.buttonText}>{isSubmitting ? "처리 중" : title}</Text>
           </Pressable>
           <Pressable
+            accessibilityRole="button"
             onPress={() => {
               reset();
               setError("");

@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "./secure-store";
 
 // 마지막으로 고른 계좌. 로그인 사용자별로 구분해 저장해, 다른 계정으로 로그인했을 때 이전 선택을 쓰지 않는다.
 const SELECTION_KEY = "economic-freedom-selected-account";

@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "./secure-store";
 import type { AuthSession } from "@/types";
 import { clearSelectedAccountId } from "./account";
 

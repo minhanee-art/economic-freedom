@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { ApiError } from "@/api/client";
 import { createPurchase, deletePurchase, listPurchases, PurchaseNotFoundError } from "@/api/records";
 import { AppShell } from "@/components/AppShell";
@@ -12,6 +12,7 @@ import { handleUnauthorized } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { PurchaseRecord } from "@/types";
+import { confirmDestructive } from "@/utils/confirm";
 import { formatKRW } from "@/utils/format";
 import { INT_MAX, parsePositiveInt, todayString, validateDate } from "@/utils/records";
 
@@ -133,14 +134,12 @@ export default function RecordPurchaseScreen() {
   };
 
   const confirmDelete = (record: PurchaseRecord) => {
-    Alert.alert(
-      "기록 삭제",
-      `${record.date} ${formatKRW(record.totalSpent)} 매수 기록을 삭제할까요? 보유 수량과 원가가 이 기록 입력 전 상태로 되돌아갑니다.`,
-      [
-        { text: "취소", style: "cancel" },
-        { text: "삭제", style: "destructive", onPress: () => void performDelete(record) },
-      ],
-    );
+    confirmDestructive({
+      title: "기록 삭제",
+      message: `${record.date} ${formatKRW(record.totalSpent)} 매수 기록을 삭제할까요? 보유 수량과 원가가 이 기록 입력 전 상태로 되돌아갑니다.`,
+      confirmText: "삭제",
+      onConfirm: () => void performDelete(record),
+    });
   };
 
   const total = (parsePositiveInt(quantity) ?? 0) * (parsePositiveInt(price) ?? 0);

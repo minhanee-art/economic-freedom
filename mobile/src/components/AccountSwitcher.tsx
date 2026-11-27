@@ -22,7 +22,7 @@ export function AccountSwitcher({ accounts, selectedAccountId, onSelect }: Accou
           <Pressable
             key={account.id}
             accessibilityRole="button"
-            accessibilityState={{ selected: active }}
+            aria-selected={active}
             onPress={() => onSelect(account.id)}
             style={[styles.chip, active && styles.chipActive]}
           >

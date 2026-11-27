@@ -4,35 +4,76 @@ import assert from "node:assert/strict";
 import {
   formatDate,
   formatKRW,
-  formatFullKRW,
+  formatKRWFull,
+  formatSignedKRW,
+  formatKRWAxis,
+  formatKRWCompact,
+  formatAmountInput,
+  parseAmountInput,
+  pnlTextClass,
+  pnlArrow,
   formatPercent,
   formatPctPoint,
   cn,
 } from "@/lib/utils";
 
-test("formatKRW: 억·만 단위로 축약한다", () => {
-  assert.equal(formatKRW(100_000_000), "1억");
-  assert.equal(formatKRW(150_000_000), "1.5억");
-  assert.equal(formatKRW(1_234_000_000), "12.3억");
-  assert.equal(formatKRW(10_000), "1만");
-  assert.equal(formatKRW(15_000), "1.5만");
-  assert.equal(formatKRW(99_999_999), "10000.0만");
+test("formatKRW(요약): 억·만원 단위, 만원 단위 반올림", () => {
+  assert.equal(formatKRW(162_890_500), "1억 6,289만원");
+  assert.equal(formatKRW(100_000_000), "1억원");
+  assert.equal(formatKRW(1_234_000_000), "12억 3,400만원");
+  assert.equal(formatKRW(16_895_000), "1,690만원");
+  assert.equal(formatKRW(10_000), "1만원");
+  assert.equal(formatKRW(99_999_999), "1억원");
 });
 
-test("formatKRW: 만원 미만은 원 단위로 표시한다", () => {
-  assert.equal(formatKRW(1_234), "₩1,234");
-  assert.equal(formatKRW(0), "₩0");
+test("formatKRW(요약): 만원 미만은 원 단위, 음수는 부호", () => {
+  assert.equal(formatKRW(1_234), "1,234원");
+  assert.equal(formatKRW(0), "0원");
+  assert.equal(formatKRW(-1_500_000), "-150만원");
+  assert.equal(formatKRW(-1_234), "-1,234원");
+  assert.equal(formatKRW(Number.NaN), "0원");
 });
 
-test("formatKRW: 음수는 부호를 앞에 붙인다", () => {
-  assert.equal(formatKRW(-1_500_000), "-150만");
-  assert.equal(formatKRW(-1_234), "-₩1,234");
+test("formatKRWFull(전체): 천 단위 구분 + 원", () => {
+  assert.equal(formatKRWFull(162_890_500), "162,890,500원");
+  assert.equal(formatKRWFull(0), "0원");
+  assert.equal(formatKRWFull(-2_500), "-2,500원");
 });
 
-test("formatFullKRW: 천 단위 구분 기호를 넣는다", () => {
-  assert.equal(formatFullKRW(1_234_567), "₩1,234,567");
-  assert.equal(formatFullKRW(0), "₩0");
-  assert.equal(formatFullKRW(-2_500), "₩-2,500");
+test("formatSignedKRW: 양수에 + 부호", () => {
+  assert.equal(formatSignedKRW(920_500), "+92만원");
+  assert.equal(formatSignedKRW(920_500, true), "+920,500원");
+  assert.equal(formatSignedKRW(-920_500), "-92만원");
+  assert.equal(formatSignedKRW(0), "0원");
+});
+
+test("formatKRWAxis: 차트 축용 짧은 표기", () => {
+  assert.equal(formatKRWAxis(160_000_000), "1.6억");
+  assert.equal(formatKRWAxis(4_500_000), "450만");
+  assert.equal(formatKRWAxis(9_500), "9,500");
+});
+
+test("formatKRWCompact: 텔레그램 리포트 형식 유지", () => {
+  assert.equal(formatKRWCompact(150_000_000), "1.5억");
+  assert.equal(formatKRWCompact(1_234), "₩1,234");
+  assert.equal(formatKRWCompact(-1_500_000), "-150만");
+});
+
+test("금액 입력 표시: 천 단위 구분 넣기와 되돌리기", () => {
+  assert.equal(formatAmountInput("2500000"), "2,500,000");
+  assert.equal(formatAmountInput("002,5a00"), "2,500");
+  assert.equal(formatAmountInput(""), "");
+  assert.equal(parseAmountInput("2,500,000"), "2500000");
+});
+
+test("손익 색: 상승 빨강(gain)·하락 파랑(loss)·보합", () => {
+  assert.equal(pnlTextClass(1), "text-gain");
+  assert.equal(pnlTextClass(-1), "text-loss");
+  assert.equal(pnlTextClass(0), "text-ink-mute");
+  assert.equal(pnlTextClass(null), "text-ink-mute");
+  assert.equal(pnlArrow(3), "▲");
+  assert.equal(pnlArrow(-3), "▼");
+  assert.equal(pnlArrow(0), "");
 });
 
 test("formatPercent: 소수 둘째 자리와 부호", () => {

@@ -309,38 +309,38 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
     <div className="space-y-6">
       {/* 저장 상태 토스트 */}
       {saveStatus && (
-        <div className="fixed top-4 right-4 z-50 rounded-full bg-emerald-500 text-white px-4 py-2 text-sm font-medium shadow-float animate-fade-in">
+        <div className="fixed top-4 right-4 z-50 bg-brand text-white px-4 py-2 text-sm font-medium shadow-float animate-fade-in">
           {saveStatus}
         </div>
       )}
 
       {/* 프로필 */}
-      <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-4">
+      <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-4">
         <h3 className="text-sm font-semibold">프로필</h3>
 
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">이메일 <span className="text-zinc-400">(Google 계정, 변경 불가)</span></label>
+          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500">(Google 계정, 변경 불가)</span></label>
           <input
             type="text"
             value={profile?.email ?? ""}
             readOnly
-            className="w-full h-10 rounded-xl border border-hairline bg-canvas-soft px-3 text-sm text-zinc-400 cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-800"
+            className="w-full h-10 border border-hairline bg-canvas-soft px-3 text-sm text-zinc-500 dark:text-zinc-400 cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">표시 이름</label>
+          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">표시 이름</label>
           <input
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="이름 입력"
-            className="w-full h-10 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            className="w-full h-10 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">
+          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
             월 투자금액 (원)
           </label>
           <input
@@ -353,13 +353,13 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               setBudgetInput(num > 0 ? num.toLocaleString() : "");
               setMonthlyBudget(num);
             }}
-            className="w-full h-10 rounded-xl border border-hairline bg-white transition px-3 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            className="w-full h-10 border border-hairline bg-white transition px-3 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
 
         <button
           onClick={saveProfile}
-          className="w-full h-10 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors"
+          className="w-full h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors"
         >
           프로필 저장
         </button>
@@ -370,10 +370,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 목표 비중 합계 */}
       <div
         className={cn(
-          "rounded-2xl px-4 py-3 text-sm font-medium tabular-nums shadow-card",
+          "px-4 py-3 text-sm font-medium tabular-nums shadow-card",
           isTarget100
-            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
-            : "bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+            ? "bg-canvas-soft text-success border border-hairline"
+            : "bg-danger-soft text-danger border border-danger-line"
         )}
       >
         목표 비중 합계: {totalTargetPct.toFixed(1)}%
@@ -387,7 +387,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             종목 관리 ({holdings.length})
           </h3>
           <div className="flex items-center gap-2">
-            <div className="flex items-center rounded-full border border-hairline dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
+            <div className="flex items-center border border-hairline dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
               {(
                 [
                   { value: "none", label: "전체" },
@@ -402,7 +402,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                     "px-3 py-1.5 transition-colors",
                     holdingGroupBy === opt.value
                       ? "bg-indigo-500 text-white"
-                      : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                      : "text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   )}
                 >
                   {opt.label}
@@ -411,7 +411,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             </div>
             <button
               onClick={() => setShowAdd(!showAdd)}
-              className="rounded-full border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-card transition-colors"
+              className="border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-card transition-colors"
             >
               {showAdd ? "닫기" : "+ 새 종목"}
             </button>
@@ -420,10 +420,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 새 종목 추가 폼 */}
         {showAdd && (
-          <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10 p-5 space-y-3 shadow-card">
+          <div className="border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10 p-5 space-y-3 shadow-card">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                   종목코드
                 </label>
                 <input
@@ -431,11 +431,11 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value)}
                   placeholder="예: 069500"
-                  className="w-full h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                   종목명
                 </label>
                 <input
@@ -443,17 +443,17 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="예: KODEX 200"
-                  className="w-full h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                   대분류
                 </label>
                 <select
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
-                  className="w-full h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
                 >
                   {CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -463,7 +463,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 mb-1">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                   소분류
                 </label>
                 <input
@@ -471,11 +471,11 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                   value={newSubCategory}
                   onChange={(e) => setNewSubCategory(e.target.value)}
                   placeholder="예: 국장, 배당"
-                  className="w-full h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-xs text-zinc-500 mb-1">
+                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
                   현재가 (원)
                 </label>
                 <input
@@ -487,14 +487,14 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                     setNewPrice(v ? parseInt(v).toLocaleString() : "");
                   }}
                   placeholder="0"
-                  className="w-full h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+                  className="w-full h-9 border border-hairline bg-white transition px-3 text-sm text-right tabular-nums focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
                 />
               </div>
             </div>
             <button
               onClick={handleAddHolding}
               disabled={!newCode || !newName || !newSubCategory || isAdding}
-              className="w-full h-9 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+              className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
             >
               {isAdding ? "추가 중..." : "종목 추가"}
             </button>
@@ -508,14 +508,14 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               {group.label && (
                 <div className="flex items-center gap-2 mb-2">
                   <span
-                    className="dot-bg w-2.5 h-2.5 rounded-full shrink-0"
+                    className="dot-bg w-2.5 h-2.5 shrink-0"
                     style={{ "--dot-bg": getCategoryColor(group.categoryKey) } as CSSProperties}
                   />
                   <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                     {group.label}
                   </span>
                   <div className="flex-1 h-px bg-zinc-100 dark:bg-zinc-800" />
-                  <span className="text-xs font-semibold text-zinc-500 tabular-nums">
+                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 tabular-nums">
                     {group.totalPct.toFixed(1)}%
                   </span>
                 </div>
@@ -536,10 +536,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       </section>
 
       {/* 감정분석 종목 watchlist */}
-      <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+      <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">📡 감정분석 종목 ({watchlist.length})</h3>
-          <span className="text-2xs text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
         </div>
 
         {/* 추가 폼 */}
@@ -550,12 +550,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               value={wlName}
               onChange={(e) => setWlName(e.target.value)}
               placeholder="종목명 (예: 삼성전자, SCHD ETF)"
-              className="flex-1 h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <select
               value={wlMarket}
               onChange={(e) => setWlMarket(e.target.value as "KR" | "US")}
-              className="h-9 rounded-xl border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-9 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
               <option value="KR">🇰🇷 KR</option>
               <option value="US">🇺🇸 US</option>
@@ -568,12 +568,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               onChange={(e) => setWlCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddWatchlist()}
               placeholder={wlMarket === "KR" ? "종목코드 (예: 069500)" : "심볼 (예: SCHD)"}
-              className="flex-1 h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <button
               onClick={handleAddWatchlist}
               disabled={!wlName.trim() || isAddingWl}
-              className="h-9 px-4 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+              className="h-9 px-4 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
             >
               {isAddingWl ? "..." : "+ 추가"}
             </button>
@@ -582,21 +582,21 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 종목 리스트 */}
         {watchlist.length === 0 ? (
-          <p className="text-xs text-zinc-400 text-center py-2">감정분석할 종목을 추가해 주세요.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">감정분석할 종목을 추가해 주세요.</p>
         ) : (
           <ul className="space-y-1.5">
             {watchlist.map((w) => (
-              <li key={w.id} className="flex items-center gap-2 rounded-xl border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
-                <span className="text-2xs font-semibold text-zinc-400 w-7 shrink-0">
+              <li key={w.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 w-7 shrink-0">
                   {w.market === "US" ? "🇺🇸" : "🇰🇷"}
                 </span>
                 <span className="flex-1 text-sm">{w.name}</span>
                 {w.code && (
-                  <span className="text-2xs text-zinc-400 font-mono">{w.code}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{w.code}</span>
                 )}
                 <button
                   onClick={() => handleDeleteWatchlist(w.id)}
-                  className="text-zinc-300 hover:text-red-500 transition-colors text-xs"
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors text-xs"
                 >
                   ✕
                 </button>
@@ -607,10 +607,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       </section>
 
       {/* 배당 캘린더 */}
-      <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+      <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold">📅 배당 캘린더 ({calendar.length})</h3>
-          <span className="text-2xs text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
+          <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
         </div>
 
         {/* 추가 폼 */}
@@ -620,12 +620,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="date"
               value={calDate}
               onChange={(e) => setCalDate(e.target.value)}
-              className="h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <select
               value={calType}
               onChange={(e) => setCalType(e.target.value)}
-              className="h-9 rounded-xl border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-9 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
               <option value="ex-date">⚠️ 배당락일</option>
               <option value="pay-date">💰 배당지급일</option>
@@ -639,7 +639,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               value={calStock}
               onChange={(e) => setCalStock(e.target.value)}
               placeholder="종목명 (예: 삼성전자)"
-              className="flex-1 h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <input
               type="text"
@@ -647,13 +647,13 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               onChange={(e) => setCalNote(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddCalendar()}
               placeholder="메모 (예: 2024년 결산배당)"
-              className="flex-1 h-9 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
           <button
             onClick={handleAddCalendar}
             disabled={!calDate || !calStock || isAddingCal}
-            className="w-full h-9 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+            className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
           >
             {isAddingCal ? "..." : "+ 추가"}
           </button>
@@ -661,7 +661,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 일정 리스트 */}
         {calendar.length === 0 ? (
-          <p className="text-xs text-zinc-400 text-center py-2">배당 일정을 추가해 주세요.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">배당 일정을 추가해 주세요.</p>
         ) : (
           <ul className="space-y-1.5">
             {calendar.map((c) => {
@@ -672,14 +672,14 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 "other": "📋 기타",
               };
               return (
-                <li key={c.id} className="flex items-center gap-2 rounded-xl border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
-                  <span className="text-2xs font-mono text-zinc-400 w-20 shrink-0">{c.date}</span>
-                  <span className="text-2xs text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
+                <li key={c.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
+                  <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 w-20 shrink-0">{c.date}</span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
                   <span className="flex-1 text-sm truncate">{c.stock}</span>
-                  {c.note && <span className="text-2xs text-zinc-400 truncate max-w-25">{c.note}</span>}
+                  {c.note && <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-25">{c.note}</span>}
                   <button
                     onClick={() => handleDeleteCalendar(c.id)}
-                    className="text-zinc-300 hover:text-red-500 transition-colors text-xs"
+                    className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors text-xs"
                   >
                     ✕
                   </button>
@@ -691,7 +691,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       </section>
 
       {/* 테마 설정 */}
-      <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+      <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <h3 className="text-sm font-semibold">테마</h3>
         <div className="flex gap-2">
           {(
@@ -705,7 +705,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               key={opt.value}
               onClick={() => setTheme(opt.value)}
               className={cn(
-                "flex-1 h-10 rounded-full border text-sm font-medium transition-colors",
+                "flex-1 h-10 border text-sm font-medium transition-colors",
                 theme === opt.value
                   ? "bg-indigo-500 text-white border-indigo-500 shadow-card"
                   : "border-hairline dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
@@ -718,8 +718,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       </section>
 
       {/* 위험 구역 */}
-      <section className="rounded-2xl border border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-900/10 p-5 space-y-3 shadow-card">
-        <h3 className="text-sm font-semibold text-red-600 dark:text-red-400">
+      <section className="border border-danger-line bg-danger-soft p-5 space-y-3 shadow-card">
+        <h3 className="text-sm font-semibold text-danger">
           위험 구역
         </h3>
         <div className="space-y-2">
@@ -749,9 +749,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 위험 확인 모달 */}
       {dangerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-sm rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
-            <h3 className="text-lg font-bold text-red-600">정말 삭제하시겠습니까?</h3>
-            <p className="text-sm text-zinc-500">
+          <div className="w-full max-w-sm border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
+            <h3 className="text-lg font-bold text-danger">정말 삭제하시겠습니까?</h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {dangerModal === "reset" &&
                 "현재 계좌의 보유 종목을 모두 삭제합니다. 이 종목들의 매수·매도·배당 기록과 원가 데이터도 함께 지워집니다. 이 작업은 되돌릴 수 없습니다."}
               {dangerModal === "purchases" &&
@@ -763,14 +763,14 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               <button
                 onClick={() => setDangerModal(null)}
                 disabled={isDeleting}
-                className="flex-1 h-11 rounded-xl border border-hairline dark:border-zinc-700 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+                className="flex-1 h-11 border border-hairline dark:border-zinc-700 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 취소
               </button>
               <button
                 onClick={handleDangerAction}
                 disabled={isDeleting}
-                className="flex-1 h-11 rounded-xl bg-red-500 text-white text-sm font-semibold hover:bg-red-600 disabled:opacity-50 shadow-card transition-colors"
+                className="flex-1 h-11 bg-danger-fill text-white text-sm font-semibold hover:bg-danger-fill/90 disabled:opacity-50 shadow-card transition-colors"
               >
                 {isDeleting ? "처리 중..." : "삭제 확정"}
               </button>
@@ -794,23 +794,19 @@ function HoldingSettingCard({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="flex rounded-xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
-      <div
-        className="dot-bg w-1.5 shrink-0"
-        style={{ "--dot-bg": getCategoryColor(h.category) } as CSSProperties}
-      />
+    <div className="flex border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
       <div className="flex-1 px-4 py-3 space-y-2">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-semibold">{h.name}</p>
-            <p className="text-xs text-zinc-400 tabular-nums">
+            <p className="text-sm font-semibold"><span aria-hidden="true" className="dot-bg mr-1.5 inline-block h-2 w-2 shrink-0 align-middle" style={{"--dot-bg": getCategoryColor(h.category) } as CSSProperties} />{h.name}</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
               {h.code} · {h.category}/{h.sub_category} · {h.shares}주 보유
             </p>
           </div>
           {h.shares === 0 && (
             <button
               onClick={() => onDelete(h.id)}
-              className="text-zinc-300 hover:text-red-500 transition-colors"
+              className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors"
             >
               <svg
                 className="w-4 h-4"
@@ -831,7 +827,7 @@ function HoldingSettingCard({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-2xs text-zinc-400 mb-0.5">
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">
               현재가 (원)
             </label>
             <input
@@ -842,11 +838,11 @@ function HoldingSettingCard({
                 const v = parseInt(e.target.value.replace(/[^0-9]/g, "")) || 0;
                 onUpdate(h.id, "current_price", v);
               }}
-              className="w-full h-8 rounded-lg border border-hairline bg-canvas-soft px-2 text-sm text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-8 border border-hairline bg-canvas-soft px-2 text-sm text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
           <div>
-            <label className="block text-2xs text-zinc-400 mb-0.5">
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">
               목표비중 (%)
             </label>
             <input
@@ -859,7 +855,7 @@ function HoldingSettingCard({
                 const v = parseFloat(e.target.value) || 0;
                 onUpdate(h.id, "target_pct", v);
               }}
-              className="w-full h-8 rounded-lg border border-hairline bg-canvas-soft px-2 text-sm text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-8 border border-hairline bg-canvas-soft px-2 text-sm text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
         </div>
@@ -880,16 +876,16 @@ function DangerButton({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between rounded-xl border border-red-200 dark:border-red-900 bg-white dark:bg-zinc-900 px-4 py-3 text-left shadow-card hover:bg-red-50 dark:hover:bg-red-900/20 hover:shadow-float transition-all"
+      className="w-full flex items-center justify-between border border-danger-line bg-white dark:bg-zinc-900 px-4 py-3 text-left shadow-card hover:bg-danger-soft hover:shadow-float transition-all"
     >
       <div>
-        <p className="text-sm font-medium text-red-600 dark:text-red-400">
+        <p className="text-sm font-medium text-danger">
           {label}
         </p>
-        <p className="text-xs text-zinc-400">{desc}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">{desc}</p>
       </div>
       <svg
-        className="w-4 h-4 text-red-400 shrink-0"
+        className="w-4 h-4 text-danger shrink-0"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

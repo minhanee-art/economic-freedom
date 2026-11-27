@@ -7,7 +7,7 @@ import {
   getCategoryAdvice,
 } from "@/lib/portfolio";
 import { sendTelegramMessage } from "@/lib/telegram";
-import { formatKRW, formatPercent } from "@/lib/utils";
+import { formatKRWCompact as formatKRW, formatPercent } from "@/lib/utils";
 import type {
   Holding,
   CostBasis,

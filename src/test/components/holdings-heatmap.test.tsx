@@ -63,10 +63,10 @@ test("히트맵: 큰 종목은 타일에 이름과 수익률 수치를 함께 �
 test("히트맵: 접근성 라벨에 비중과 수익률이 들어간다", () => {
   render(<HoldingsHeatmap holdings={holdings} />);
   const tile = screen.getByLabelText("KODEX 200 비중 60.0%, 수익률 +20.00%");
-  assert.match(tile.className, /bg-emerald-800/);
-  assert.match(tile.className, /dark:bg-emerald-700/);
+  // 한국 관습: 상승은 빨강 계열 토큰, 하락은 파랑 계열 토큰
+  assert.match(tile.className, /bg-heat-gain-strong/);
   const loss = screen.getByLabelText("TIGER 미국 비중 38.0%, 수익률 -5.00%");
-  assert.match(loss.className, /bg-red-600/);
+  assert.match(loss.className, /bg-heat-loss\b/);
 });
 
 test("히트맵: 비중이 작은 종목은 아래 목록에 이름·비중·수익률을 표시한다", () => {

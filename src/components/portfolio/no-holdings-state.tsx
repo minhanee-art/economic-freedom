@@ -22,16 +22,16 @@ export function NoHoldingsState({
   return (
     <section
       aria-labelledby="no-holdings-title"
-      className="border border-hairline bg-white px-5 py-8 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:px-8 sm:py-10"
+      className="border border-hairline bg-surface px-5 py-8 shadow-card dark:border-zinc-800 sm:px-8 sm:py-10"
     >
-      <h1 id="no-holdings-title" className="text-lg font-bold tracking-tight text-ink dark:text-white">
+      <h1 id="no-holdings-title" className="text-lg font-bold tracking-tight text-ink">
         {title}
       </h1>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">{description}</p>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">{description}</p>
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <Link
           href={ADD_HOLDING_HREF}
-          className="inline-flex h-10 items-center justify-center border border-indigo-600 bg-indigo-600 px-4 text-xs font-bold text-white transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          className="inline-flex h-10 items-center justify-center border border-brand bg-brand px-4 text-xs font-bold text-white transition-colors hover:bg-brand-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
         >
           {actionLabel}
         </Link>
@@ -43,4 +43,4 @@ export function NoHoldingsState({
 
 /** 빈 상태 옆에 두는 보조 동작 — 테두리 버튼 모양 */
 export const noHoldingsSecondaryClass =
-  "inline-flex h-10 items-center justify-center border border-zinc-200 bg-white px-4 text-xs font-bold text-zinc-700 transition-colors hover:border-indigo-300 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-indigo-500/40 dark:hover:text-indigo-300";
+  "inline-flex h-10 items-center justify-center border border-hairline bg-surface px-4 text-xs font-bold text-zinc-700 transition-colors hover:border-indigo-300 hover:text-indigo-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 dark:border-zinc-700 dark:text-zinc-200 dark:hover:border-indigo-500/40 dark:hover:text-indigo-300";

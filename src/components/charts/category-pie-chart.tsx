@@ -43,7 +43,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
               formatter={(value) => formatKRW(Number(value))}
               contentStyle={{
                 fontSize: 12,
-                borderRadius: 12,
+                borderRadius: 0,
                 border: "1px solid #e3e8ee",
                 boxShadow: "0 8px 24px rgba(0,55,112,0.08)",
               }}
@@ -55,16 +55,16 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
         {data.map((d) => (
           <div key={d.name} className="flex items-center gap-2">
             <span
-              className="dot-bg w-3 h-3 rounded-sm shrink-0"
+              className="dot-bg w-3 h-3 shrink-0"
               style={{ "--dot-bg": getCategoryColor(d.name) } as CSSProperties}
             />
             <span className="text-zinc-600 dark:text-zinc-400 w-10">{d.name}</span>
             <span className="font-medium">{d.pct.toFixed(1)}%</span>
-            <span className="text-zinc-400 text-xs">{formatKRW(d.value)}</span>
+            <span className="text-zinc-500 dark:text-zinc-400 text-xs">{formatKRW(d.value)}</span>
           </div>
         ))}
         {total > 0 && (
-          <div className="pt-1 border-t border-zinc-200 dark:border-zinc-700 text-xs text-zinc-500">
+          <div className="pt-1 border-t border-zinc-200 dark:border-zinc-700 text-xs text-zinc-500 dark:text-zinc-400">
             합계 {formatKRW(total)}
           </div>
         )}

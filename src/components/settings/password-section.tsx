@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 type Status = { kind: "idle" | "saving" } | { kind: "done"; message: string } | { kind: "error"; message: string };
 
 const inputClass =
-  "w-full h-10 rounded-xl border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800";
+  "w-full h-10 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800";
 
 export function PasswordSection() {
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
@@ -59,17 +59,17 @@ export function PasswordSection() {
   if (hasPassword === null) return null;
 
   return (
-    <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+    <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
       <h3 className="text-sm font-semibold">{hasPassword ? "비밀번호 변경" : "비밀번호 설정"}</h3>
       {!hasPassword && (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Google로 가입한 계정입니다. 비밀번호를 설정하면 모바일 앱에서 이메일과 비밀번호로 로그인할 수 있습니다.
         </p>
       )}
       <form onSubmit={submit} className="space-y-3">
         {hasPassword && (
           <div>
-            <label htmlFor="current-password" className="block text-xs text-zinc-500 mb-1">현재 비밀번호</label>
+            <label htmlFor="current-password" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">현재 비밀번호</label>
             <input
               id="current-password"
               type="password"
@@ -82,7 +82,7 @@ export function PasswordSection() {
           </div>
         )}
         <div>
-          <label htmlFor="new-password" className="block text-xs text-zinc-500 mb-1">새 비밀번호 (6자 이상)</label>
+          <label htmlFor="new-password" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">새 비밀번호 (6자 이상)</label>
           <input
             id="new-password"
             type="password"
@@ -95,7 +95,7 @@ export function PasswordSection() {
           />
         </div>
         <div>
-          <label htmlFor="confirm-password" className="block text-xs text-zinc-500 mb-1">새 비밀번호 확인</label>
+          <label htmlFor="confirm-password" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">새 비밀번호 확인</label>
           <input
             id="confirm-password"
             type="password"
@@ -108,14 +108,14 @@ export function PasswordSection() {
           />
         </div>
         {(status.kind === "error" || status.kind === "done") && (
-          <p role={status.kind === "error" ? "alert" : "status"} className={status.kind === "error" ? "text-xs text-red-600 dark:text-red-400" : "text-xs text-emerald-600"}>
+          <p role={status.kind === "error" ? "alert" : "status"} className={status.kind ==="error" ? "text-xs text-danger" : "text-xs text-success"}>
             {status.message}
           </p>
         )}
         <button
           type="submit"
           disabled={status.kind === "saving"}
-          className="w-full h-10 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors disabled:opacity-60"
+          className="w-full h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors disabled:opacity-60"
         >
           {status.kind === "saving" ? "저장 중…" : hasPassword ? "비밀번호 변경" : "비밀번호 설정"}
         </button>

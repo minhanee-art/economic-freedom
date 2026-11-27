@@ -1,6 +1,6 @@
 "use client";
 
-import { formatKRW, formatPercent } from "@/lib/utils";
+import { formatKRW, formatPercent, formatSignedKRW, pnlTextClass } from "@/lib/utils";
 import type { DailyChange, DividendYields } from "@/lib/dashboard-insights";
 
 interface SummaryHeaderProps {
@@ -29,35 +29,32 @@ export function SummaryHeader({
   const pnlPct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
 
   return (
-    <div
-      className="hero-gradient px-5 py-5 text-white shadow-float sm:px-6 sm:py-6"
-    >
+    <div className="border border-hairline bg-surface px-5 py-5 shadow-card dark:border-zinc-800 sm:px-6 sm:py-6">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1.5">
+          <p className="text-xs font-medium text-ink-mute mb-1.5">
             총 평가금액
           </p>
-          <p className="text-3xl font-semibold tabular-nums tracking-tight sm:text-4xl">
+          <p className="text-3xl font-semibold tabular-nums tracking-tight text-ink sm:text-4xl">
             {formatKRW(totalValue)}
           </p>
           {dailyChange !== undefined && (
             <p className="mt-1 text-xs tabular-nums" data-testid="daily-change">
               {dailyChange ? (
                 <>
-                  <span className="text-indigo-200">전일 대비 </span>
+                  <span className="text-ink-mute">전일 대비 </span>
                   <span
-                    className={`font-semibold ${dailyChange.amount >= 0 ? "text-emerald-300" : "text-red-300"}`}
+                    className={`font-semibold ${pnlTextClass(dailyChange.amount)}`}
                   >
-                    {dailyChange.amount > 0 ? "+" : ""}
-                    {formatKRW(dailyChange.amount)}
+                    {formatSignedKRW(dailyChange.amount)}
                     {dailyChange.pct !== null && ` (${formatPercent(dailyChange.pct)})`}
                   </span>
                   {dailyChange.includesContribution && (
-                    <span className="text-indigo-200"> · 매수·입출금 포함</span>
+                    <span className="text-ink-mute"> · 매수·입출금 포함</span>
                   )}
                 </>
               ) : (
-                <span className="text-indigo-200">전일 대비 · 기준 스냅샷 없음</span>
+                <span className="text-ink-mute">전일 대비 · 기준 스냅샷 없음</span>
               )}
             </p>
           )}
@@ -65,7 +62,7 @@ export function SummaryHeader({
         <button
           onClick={onRefresh}
           disabled={isRefreshing}
-          className="inline-flex min-h-10 w-full items-center justify-center border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-white/20 active:scale-[0.98] disabled:opacity-50 sm:w-auto"
+          className="inline-flex min-h-10 w-full items-center justify-center border border-hairline bg-surface px-4 py-2 text-xs font-semibold text-ink transition-colors hover:bg-canvas-soft disabled:opacity-50 dark:border-zinc-700 sm:w-auto"
         >
           {isRefreshing ? "갱신 중..." : "시세 새로고침"}
         </button>
@@ -73,29 +70,29 @@ export function SummaryHeader({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <div>
-          <p className="text-xs text-indigo-200 mb-0.5">총 손익</p>
+          <p className="text-xs text-ink-mute mb-0.5">총 손익</p>
           <p
             className={`text-sm font-semibold tabular-nums ${
-              pnl >= 0 ? "text-emerald-300" : "text-red-300"
+              pnlTextClass(pnl)
             }`}
           >
-            {formatKRW(pnl)}
+            {formatSignedKRW(pnl)}
           </p>
           <p
             className={`text-xs tabular-nums ${
-              pnl >= 0 ? "text-emerald-300/70" : "text-red-300/70"
+              pnlTextClass(pnl)
             }`}
           >
             {formatPercent(pnlPct)}
           </p>
         </div>
         <div>
-          <p className="text-xs text-indigo-200 mb-0.5">누적 배당</p>
-          <p className="text-sm font-semibold tabular-nums">{formatKRW(totalDividend)}</p>
+          <p className="text-xs text-ink-mute mb-0.5">누적 배당</p>
+          <p className="text-sm font-semibold tabular-nums text-ink">{formatKRW(totalDividend)}</p>
         </div>
         <div>
-          <p className="text-xs text-indigo-200 mb-0.5">월 적립금</p>
-          <p className="text-sm font-semibold tabular-nums">{formatKRW(monthlyBudget)}</p>
+          <p className="text-xs text-ink-mute mb-0.5">월 적립금</p>
+          <p className="text-sm font-semibold tabular-nums text-ink">{formatKRW(monthlyBudget)}</p>
         </div>
       </div>
 
@@ -112,20 +109,20 @@ function DividendYieldRow({ yields }: { yields: DividendYields }) {
   if (items.length === 0) return null;
 
   return (
-    <div className="mt-4 border-t border-white/15 pt-4" data-testid="dividend-yields">
+    <div className="mt-4 border-t border-hairline pt-4" data-testid="dividend-yields">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         {items.map((i) => (
           <div key={i.label}>
-            <p className="text-xs text-indigo-200 mb-0.5">{i.label}</p>
-            <p className="text-sm font-semibold tabular-nums">{(i.value as number).toFixed(2)}%</p>
-            <p className="text-xs text-indigo-200/80">{i.hint}</p>
+            <p className="text-xs text-ink-mute mb-0.5">{i.label}</p>
+            <p className="text-sm font-semibold tabular-nums text-ink">{(i.value as number).toFixed(2)}%</p>
+            <p className="text-xs text-ink-mute">{i.hint}</p>
           </div>
         ))}
       </div>
       {!yields.hasRecords ? (
-        <p className="mt-2 text-xs text-indigo-200/80">배당 기록이 없어 0%로 계산됐습니다.</p>
+        <p className="mt-2 text-xs text-ink-mute">배당 기록이 없어 0%로 계산됐습니다.</p>
       ) : yields.isPartialYear ? (
-        <p className="mt-2 text-xs text-amber-200">
+        <p className="mt-2 text-xs text-caution">
           배당 기록이 12개월 미만({yields.coveredMonths}개월)이라 연환산하지 않은 실제 수령액 기준입니다.
         </p>
       ) : null}

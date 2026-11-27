@@ -8,7 +8,7 @@ import {
   type FamilyMember,
   type IncomeSourceType,
 } from "@/lib/pension-planning";
-import { formatFullKRW } from "@/lib/utils";
+import { formatAmountInput, formatKRWFull, parseAmountInput } from "@/lib/utils";
 import { Field, SectionCard, inputClass, parseNumberInput, primaryButtonClass, secondaryButtonClass, sendJson } from "./ui";
 
 type FormState = {
@@ -124,9 +124,9 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
         const items = sources.filter((s) => s.member === member);
         return (
           <div key={member} className="space-y-1">
-            <p className="text-xs font-semibold text-zinc-500">{FAMILY_MEMBER_LABELS[member]}</p>
+            <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">{FAMILY_MEMBER_LABELS[member]}</p>
             {items.length === 0 ? (
-              <p className="text-xs text-zinc-400">입력한 항목이 없습니다.</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">입력한 항목이 없습니다.</p>
             ) : (
               <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
                 {items.map((s) => (
@@ -134,10 +134,10 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
                     <div>
                       <p className="text-sm font-medium">
                         {INCOME_SOURCE_LABELS[s.source_type]}
-                        {s.label && <span className="text-zinc-400"> · {s.label}</span>}
+                        {s.label && <span className="text-zinc-500 dark:text-zinc-400"> · {s.label}</span>}
                       </p>
-                      <p className="text-xs text-zinc-400">
-                        월 {formatFullKRW(s.monthly_amount)} · {s.start_age}세부터
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        월 {formatKRWFull(s.monthly_amount)} · {s.start_age}세부터
                         {s.end_age === null ? " 종신" : ` ${s.end_age}세까지`}
                       </p>
                     </div>
@@ -177,7 +177,7 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
           <input value={form.label} onChange={(e) => set("label", e.target.value)} placeholder="예: 회사 DB" className={inputClass} />
         </Field>
         <Field label="예상 월 수령액(원, 세전)">
-          <input inputMode="numeric" value={form.monthlyAmount} onChange={(e) => set("monthlyAmount", e.target.value)} className={inputClass} />
+          <input inputMode="numeric" value={formatAmountInput(form.monthlyAmount)} onChange={(e) => set("monthlyAmount", parseAmountInput(e.target.value))} className={inputClass} />
         </Field>
         <Field label="수령 개시 나이">
           <input inputMode="numeric" value={form.startAge} onChange={(e) => set("startAge", e.target.value)} className={inputClass} />
@@ -186,7 +186,7 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
           <input inputMode="numeric" value={form.endAge} onChange={(e) => set("endAge", e.target.value)} className={inputClass} />
         </Field>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <div className="flex gap-2">
         <button onClick={submit} disabled={isSaving || !form.monthlyAmount} className={primaryButtonClass}>
           {isSaving ? "저장 중..." : editingId ? "수정 저장" : "항목 추가"}

@@ -40,10 +40,10 @@ const CHILD_INVESTMENT_RECORDS = [
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <details className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden group" open>
+    <details className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden group" open>
       <summary className="cursor-pointer list-none px-4 py-3 font-semibold text-sm flex items-center justify-between">
         {title}
-        <svg className="w-4 h-4 text-zinc-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="w-4 h-4 text-zinc-500 dark:text-zinc-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </summary>
@@ -57,7 +57,7 @@ function Steps({ items }: { items: string[] }) {
     <ol className="space-y-2">
       {items.map((s, i) => (
         <li key={i} className="flex gap-2.5">
-          <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-2xs font-bold flex items-center justify-center mt-0.5">
+          <span className="shrink-0 w-5 h-5 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold flex items-center justify-center mt-0.5">
             {i + 1}
           </span>
           <span className="leading-relaxed">{s}</span>
@@ -70,7 +70,7 @@ function Steps({ items }: { items: string[] }) {
 export function GiftTaxGuide() {
   return (
     <div className="space-y-3">
-      <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
+      <div className="bg-caution-soft border border-caution/30 px-4 py-3 text-xs text-caution">
         ⚠️ 아래 내용은 일반적인 안내이며 개별 상황(증여자·수증자 관계, 기존 증여 이력 등)에 따라 결과가 달라질 수 있습니다.
         실제 신고 전 반드시 <b>국세청 홈택스(hometax.go.kr)</b> 자동계산 또는 <b>세무사 상담</b>으로 확인하세요.
         세법 개정으로 공제한도·세율·이자율이 바뀔 수 있습니다.
@@ -83,7 +83,7 @@ export function GiftTaxGuide() {
             <li>미성년자(만 19세 미만): <b>2,000만원</b></li>
             <li>성년(만 19세 이상): <b>5,000만원</b></li>
           </ul>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
             증여일 기준 최근 10년 내 같은 사람(부모)에게 받은 증여를 모두 합산합니다. 10년이 지나면 한도가 다시 채워집니다.
           </p>
         </div>
@@ -100,7 +100,7 @@ export function GiftTaxGuide() {
           <div className="overflow-x-auto -mx-1">
             <table className="w-full text-xs border-collapse">
               <thead>
-                <tr className="text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
+                <tr className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                   <th className="text-left font-medium py-1.5 px-1">과세표준</th>
                   <th className="text-right font-medium py-1.5 px-1">세율</th>
                   <th className="text-right font-medium py-1.5 px-1">누진공제액</th>
@@ -117,7 +117,7 @@ export function GiftTaxGuide() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-zinc-400 mt-1">산출세액 = 과세표준 × 세율 − 누진공제액</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">산출세액 = 과세표준 × 세율 − 누진공제액</p>
         </div>
         <div>
           <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">공통 구비서류</p>
@@ -131,7 +131,7 @@ export function GiftTaxGuide() {
       </Section>
 
       <Section title="1-1. 일괄 증여 시 처리 방법">
-        <p className="text-xs text-zinc-400">목돈을 한 번에 자녀 계좌로 이체하는 경우</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">목돈을 한 번에 자녀 계좌로 이체하는 경우</p>
         <Steps
           items={[
             "증여 실행: 부모 계좌에서 자녀 본인 명의 계좌로 목돈을 이체합니다. 반드시 자녀 명의 계좌여야 하며, 부모가 실질적으로 관리하는 차명계좌는 증여로 인정되지 않을 수 있습니다.",
@@ -147,12 +147,12 @@ export function GiftTaxGuide() {
       </Section>
 
       <Section title="1-2. 분할 증여(적립식) 시 처리 방법 — 적금처럼 매달 넣는 경우">
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
           적금 넣듯 매달 자녀 계좌에 일정 금액을 입금하는 경우, 두 가지 처리 방식이 있습니다.
         </p>
 
         <div>
-          <p className="font-medium text-red-500 mb-1">방식 A. 사전 신고 없이 매회 개별 증여로 처리 (권장하지 않음)</p>
+          <p className="font-medium text-caution mb-1">방식 A. 사전 신고 없이 매회 개별 증여로 처리 (권장하지 않음)</p>
           <p className="leading-relaxed">
             매달 그냥 입금만 하고, 10년 누적액이 공제한도(2,000만원)를 넘는 시점에 그 초과분만 신고하는 방식입니다.
             간편해 보이지만, 국세청이 정기적·계획적인 입금을 &quot;처음부터 예정된 증여&quot;로 판단할 경우
@@ -162,7 +162,7 @@ export function GiftTaxGuide() {
         </div>
 
         <div>
-          <p className="font-medium text-emerald-600 dark:text-emerald-400 mb-1">방식 B. 유기정기금 평가로 사전 1회 신고 (권장)</p>
+          <p className="font-medium text-success mb-1">방식 B. 유기정기금 평가로 사전 1회 신고 (권장)</p>
           <Steps
             items={[
               "증여계약 체결: '앞으로 N년간 매월 M만원씩 지급한다'는 증여계약서를 작성합니다(부모와 자녀의 법정대리인 간 계약, 자필 또는 세무서 비치 양식 사용).",
@@ -177,7 +177,7 @@ export function GiftTaxGuide() {
       </Section>
 
       <Section title="2. 홈택스 신고 실전 순서 — 유기정기금 방식">
-        <div className="rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+        <div className="bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 px-3 py-2 text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
           참고 자료의 핵심은 <b>자녀 계좌에 매월 같은 금액을 자동이체하고, 최초 입금 후 3개월 이내에 유기정기금으로 1회 신고</b>하는 방식입니다.
           앱에서는 신고 전 준비물, 홈택스 입력 순서, 신고 후 증빙 보관까지 한 번에 확인할 수 있도록 정리했습니다.
         </div>
@@ -197,7 +197,7 @@ export function GiftTaxGuide() {
         <div>
           <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">서류 만드는 순서</p>
           <Steps items={INSTALLMENT_DOC_STEPS} />
-          <p className="text-xs text-zinc-400 mt-2">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
             외부 계산 도구를 사용할 때도 최종 신고 전 홈택스 자동계산 결과와 첨부서류 금액이 일치하는지 확인하세요.
           </p>
         </div>
@@ -219,7 +219,7 @@ export function GiftTaxGuide() {
       </Section>
 
       <Section title="4. 자녀 투자 증빙 관리 — 우리 앱에 적용할 방식">
-        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+        <div className="bg-canvas-soft border border-hairline px-3 py-2 text-xs text-success leading-relaxed">
           참고 사이트의 장점은 단순히 증여세 신고 방법만 안내하는 것이 아니라, <b>자녀가 직접 배우고 투자했다는 과정 증빙</b>을 함께 남기도록 설계한 점입니다.
           우리 앱에서는 증여 기록과 포트폴리오 기록을 연결해 “돈을 보냈다”에서 끝나지 않고, “신고했고, 계좌가 분리되어 있고, 장기 투자 과정을 관리했다”까지 확인할 수 있게 정리합니다.
         </div>

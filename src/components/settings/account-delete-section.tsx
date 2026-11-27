@@ -62,9 +62,9 @@ export function AccountDeleteSection() {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold text-red-600 dark:text-red-400">계정 삭제</h2>
-      <div className="rounded-xl border border-red-200 bg-white p-4 shadow-card dark:border-red-900 dark:bg-zinc-900">
-        <p className="text-sm text-zinc-500">
+      <h2 className="text-sm font-semibold text-danger">계정 삭제</h2>
+      <div className="border border-danger-line bg-white p-4 shadow-card dark:bg-zinc-900">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
           계정과 입력한 모든 데이터(보유 종목, 매수·배당 기록, 자녀 증여 기록 등)가 즉시 영구 삭제되며 복구할 수 없습니다.{" "}
           <Link href="/account-deletion" className="underline">
             삭제 안내
@@ -75,7 +75,7 @@ export function AccountDeleteSection() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="mt-3 h-11 w-full rounded-xl border border-red-300 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            className="mt-3 h-11 w-full border border-danger-line text-sm font-medium text-danger transition-colors hover:bg-danger-soft"
           >
             계정 삭제
           </button>
@@ -93,10 +93,10 @@ export function AccountDeleteSection() {
               value={value}
               onChange={(e) => setValue(e.target.value)}
               disabled={busy}
-              className="h-11 w-full rounded-xl border border-hairline bg-canvas-soft px-3 text-sm focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-11 w-full border border-hairline bg-canvas-soft px-3 text-sm focus:outline-none focus:ring-1 focus:ring-danger dark:border-zinc-700 dark:bg-zinc-800"
             />
             {error && (
-              <p role="alert" className="text-sm text-red-600">
+              <p role="alert" className="text-sm text-danger">
                 {error}
               </p>
             )}
@@ -105,7 +105,7 @@ export function AccountDeleteSection() {
                 type="button"
                 onClick={close}
                 disabled={busy}
-                className="h-11 flex-1 rounded-xl border border-hairline text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                className="h-11 flex-1 border border-hairline text-sm font-medium transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
               >
                 취소
               </button>
@@ -113,7 +113,7 @@ export function AccountDeleteSection() {
                 type="button"
                 onClick={handleDelete}
                 disabled={busy || !value.trim()}
-                className="h-11 flex-1 rounded-xl bg-red-500 text-sm font-semibold text-white shadow-card transition-colors hover:bg-red-600 disabled:opacity-50"
+                className="h-11 flex-1 bg-danger-fill text-sm font-semibold text-white shadow-card transition-colors hover:bg-danger-fill/90 disabled:opacity-50"
               >
                 {busy ? "삭제 중..." : "계정 영구 삭제"}
               </button>

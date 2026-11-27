@@ -6,7 +6,7 @@ import type { ChildRow, ChildGiftRow, ChildHoldingRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
 import { GiftTaxGuide } from "@/components/gift/gift-tax-guide";
 import { presentValueOfInstallments } from "@/lib/gift-tax";
-import { formatKRW, formatFullKRW, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
 
 interface Props {
   child: ChildRow;
@@ -75,7 +75,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/dashboard/children" className="text-xs text-zinc-400 hover:text-indigo-500">
+        <Link href="/dashboard/children" className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-indigo-500">
           ← 자녀 목록
         </Link>
         <h2 className="text-lg font-bold mt-1">{child.name}</h2>
@@ -84,7 +84,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
       <GiftProgressCard birthDate={child.birth_date} gifts={gifts} />
 
       {/* 탭 */}
-      <div className="flex gap-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
+      <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800 p-1">
         {([
           ["gifts", "입금/증여 기록"],
           ["holdings", "보유 종목"],
@@ -94,10 +94,10 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
             key={key}
             onClick={() => setTab(key)}
             className={cn(
-              "flex-1 h-9 rounded-md text-sm font-medium transition-colors",
+              "flex-1 h-9 text-sm font-medium transition-colors",
               tab === key
                 ? "bg-white dark:bg-zinc-900 text-indigo-500 shadow-sm"
-                : "text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+                : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
             )}
           >
             {label}
@@ -192,19 +192,19 @@ function GiftsTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+      <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
         <h3 className="text-sm font-semibold">입금/증여 기록 추가</h3>
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">
           정부·지자체에서 자녀 계좌로 직접 지급되는 돈은 “정부지원금”으로 기록하면 증여 한도 계산과 신고 관리에서 제외됩니다.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
             onClick={() => setGiftType("lump")}
             className={cn(
-              "flex-1 h-9 rounded-lg text-xs font-medium border transition-colors",
+              "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "lump"
                 ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
-                : "border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
             일괄 증여
@@ -212,10 +212,10 @@ function GiftsTab({
           <button
             onClick={() => setGiftType("installment")}
             className={cn(
-              "flex-1 h-9 rounded-lg text-xs font-medium border transition-colors",
+              "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "installment"
                 ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
-                : "border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
             분할(정기금) 증여
@@ -223,10 +223,10 @@ function GiftsTab({
           <button
             onClick={() => setGiftType("government_support")}
             className={cn(
-              "flex-1 h-9 rounded-lg text-xs font-medium border transition-colors",
+              "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "government_support"
-                ? "border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-                : "border-zinc-200 dark:border-zinc-700 text-zinc-500"
+                ? "border-brand bg-canvas-soft text-success"
+                : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
             정부지원금
@@ -235,16 +235,16 @@ function GiftsTab({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-zinc-500 mb-1">날짜</label>
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">날짜</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 mb-1">금액 (원)</label>
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">금액 (원)</label>
             <input
               type="text"
               inputMode="numeric"
@@ -254,12 +254,12 @@ function GiftsTab({
                 setAmount(v ? parseInt(v).toLocaleString() : "");
               }}
               placeholder="0"
-              className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-zinc-200 bg-white px-3 text-sm text-right focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
         </div>
         <div>
-          <label className="block text-xs text-zinc-500 mb-1">메모 (선택)</label>
+          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">메모 (선택)</label>
           <input
             type="text"
             value={memo}
@@ -271,12 +271,12 @@ function GiftsTab({
                   ? "예: 아동수당, 부모급여, 지자체 지원금"
                   : "예: 세뱃돈, 입학축하금"
             }
-            className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+            className="w-full h-10 border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
 
         {giftType === "government_support" && (
-          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 p-3 text-xs text-emerald-700 dark:text-emerald-300">
+          <div className="bg-canvas-soft p-3 text-xs text-success">
             국가·지자체 지원금, 아동수당, 부모급여처럼 지급 주체가 부모가 아니고 자녀 계좌로 직접 들어온 돈은
             증여로 보지 않는 별도 입금으로 관리합니다. 단, 부모가 받은 돈을 다시 자녀에게 넘기는 구조라면
             사실관계에 따라 증여 이슈가 생길 수 있으니 증빙을 함께 보관하세요.
@@ -284,7 +284,7 @@ function GiftsTab({
         )}
 
         {giftType === "installment" && (
-          <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-3 space-y-3">
+          <div className="bg-zinc-50 dark:bg-zinc-800/50 p-3 space-y-3">
             <p className="text-xs font-medium text-zinc-600 dark:text-zinc-300">
               유기정기금 계약서·평가명세서 미리보기 (참고용 — 실제 신고는 홈택스 자동계산으로 확인)
             </p>
@@ -298,7 +298,7 @@ function GiftsTab({
                   setInstallMonthly(v ? parseInt(v).toLocaleString() : "");
                 }}
                 placeholder="월 납입액(원)"
-                className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+                className="h-9 border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
               />
               <input
                 type="text"
@@ -306,39 +306,39 @@ function GiftsTab({
                 value={installMonths}
                 onChange={(e) => setInstallMonths(e.target.value.replace(/[^0-9]/g, ""))}
                 placeholder="개월 수"
-                className="h-9 rounded-md border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
+                className="h-9 border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
               />
             </div>
 
             {pv > 0 && (
               <div className="space-y-3">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-2xs text-zinc-400">정기금 시작일</p>
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">정기금 시작일</p>
                     <p className="text-xs font-semibold">{date}</p>
                   </div>
-                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-2xs text-zinc-400">정기금 마지막일</p>
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">정기금 마지막일</p>
                     <p className="text-xs font-semibold">{installmentLastDate}</p>
                   </div>
-                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-2xs text-zinc-400">지급 시기</p>
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">지급 시기</p>
                     <p className="text-xs font-semibold">매월 {paymentDay}일</p>
                   </div>
-                  <div className="rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
-                    <p className="text-2xs text-zinc-400">할인율</p>
+                  <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 p-2">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">할인율</p>
                     <p className="text-xs font-semibold">연 3%</p>
                   </div>
                 </div>
 
-                <div className="rounded-md border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30 p-3 text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                  <b>{childName}</b>에게 매월 <b>{formatFullKRW(monthlyInstallmentAmount)}</b>씩 {installmentMonthCount}개월 지급하는 계약입니다.
-                  원금 합계는 <b>{formatFullKRW(installmentPrincipal)}</b>, 연 3% 할인율 추정 평가액은 <b>{formatFullKRW(pv)}</b>입니다.
+                <div className="border border-indigo-100 dark:border-indigo-900 bg-indigo-50 dark:bg-indigo-950/30 p-3 text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                  <b>{childName}</b>에게 매월 <b>{formatKRWFull(monthlyInstallmentAmount)}</b>씩 {installmentMonthCount}개월 지급하는 계약입니다.
+                  원금 합계는 <b>{formatKRWFull(installmentPrincipal)}</b>, 연 3% 할인율 추정 평가액은 <b>{formatKRWFull(pv)}</b>입니다.
                 </div>
 
-                <div className="overflow-x-auto rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                  <table className="w-full text-2xs">
-                    <thead className="text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
+                <div className="overflow-x-auto border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                  <table className="w-full text-xs">
+                    <thead className="text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-700">
                       <tr>
                         <th className="text-left font-medium px-2 py-1.5">년도</th>
                         <th className="text-right font-medium px-2 py-1.5">불입년도</th>
@@ -353,15 +353,15 @@ function GiftsTab({
                           <td className="px-2 py-1.5">{row.year}</td>
                           <td className="px-2 py-1.5 text-right tabular-nums">{row.installmentYear}</td>
                           <td className="px-2 py-1.5 text-right tabular-nums">{row.count}개월</td>
-                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRW(row.principal)}</td>
-                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRW(row.pv)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRWFull(row.principal)}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{formatKRWFull(row.pv)}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </div>
 
-                <p className="text-2xs text-zinc-400">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   참고 사이트처럼 계약서·평가명세서 생성에 필요한 핵심값을 한 화면에서 확인하도록 구성했습니다. 개인정보가 들어가는 실제 서류 출력 기능은 별도 동의/보안 설계 후 추가하는 것이 안전합니다.
                 </p>
               </div>
@@ -369,70 +369,70 @@ function GiftsTab({
           </div>
         )}
 
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-danger">{error}</p>}
         <button
           onClick={handleAdd}
           disabled={!date || !amount || isAdding}
-          className="w-full h-10 rounded-lg bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "입금 기록 추가"}
         </button>
       </div>
 
       {gifts.length === 0 ? (
-        <p className="text-sm text-zinc-400 py-8 text-center">아직 입금/증여 기록이 없습니다.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">아직 입금/증여 기록이 없습니다.</p>
       ) : (
         <div className="space-y-2">
           {gifts.map((g) => (
             <div
               key={g.id}
-              className="flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
+              className="flex items-center border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span
                     className={cn(
-                      "inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium",
+                      "inline-flex items-center px-2 py-0.5 text-xs font-medium",
                       g.gift_type === "government_support"
-                        ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+                        ? "bg-canvas-soft text-success"
                         : g.gift_type === "installment"
-                        ? "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                        ? "bg-caution-soft text-caution"
                         : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                     )}
                   >
                     {GIFT_TYPE_LABEL[g.gift_type] ?? g.gift_type}
                   </span>
                   {NON_GIFT_TYPES.has(g.gift_type) && (
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium bg-sky-50 text-sky-600 dark:bg-sky-900/30 dark:text-sky-400">
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-canvas-soft text-ink">
                       비증여
                     </span>
                   )}
                   {g.reported && (
-                    <span className="inline-flex items-center rounded-full px-2 py-0.5 text-2xs font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                    <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-canvas-soft text-success">
                       신고완료
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-zinc-400 mt-0.5">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                   {g.date}
                   {g.memo && ` · ${g.memo}`}
                 </p>
               </div>
               <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mx-3">
-                {formatFullKRW(g.amount)}
+                {formatKRWFull(g.amount)}
               </p>
               <div className="flex items-center gap-2 shrink-0">
                 {NON_GIFT_TYPES.has(g.gift_type) ? (
-                  <span className="text-2xs px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
+                  <span className="text-xs px-2 py-1 border border-hairline text-success">
                     신고제외
                   </span>
                 ) : (
                   <button
                     onClick={() => toggleReported(g)}
                     className={cn(
-                      "text-2xs px-2 py-1 rounded-md border transition-colors",
+                      "text-xs px-2 py-1 border transition-colors",
                       g.reported
-                        ? "border-zinc-200 dark:border-zinc-700 text-zinc-400"
+                        ? "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
                         : "border-indigo-200 dark:border-indigo-800 text-indigo-500"
                     )}
                   >
@@ -441,7 +441,7 @@ function GiftsTab({
                 )}
                 <button
                   onClick={() => handleDelete(g.id)}
-                  className="text-zinc-300 hover:text-red-500 transition-colors"
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors"
                   aria-label="삭제"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -514,7 +514,7 @@ function HoldingsTab({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+      <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
         <h3 className="text-sm font-semibold">보유 종목 추가</h3>
         <div className="grid grid-cols-2 gap-3">
           <input
@@ -522,14 +522,14 @@ function HoldingsTab({
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="종목코드"
-            className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+            className="h-10 border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           />
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="종목명"
-            className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800"
+            className="h-10 border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           />
           <input
             type="text"
@@ -537,7 +537,7 @@ function HoldingsTab({
             value={shares}
             onChange={(e) => setShares(e.target.value)}
             placeholder="보유 수량"
-            className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-right dark:border-zinc-700 dark:bg-zinc-800"
+            className="h-10 border border-zinc-200 bg-white px-3 text-sm text-right dark:border-zinc-700 dark:bg-zinc-800"
           />
           <input
             type="text"
@@ -545,7 +545,7 @@ function HoldingsTab({
             value={avgPrice}
             onChange={(e) => setAvgPrice(e.target.value)}
             placeholder="평균 매수가"
-            className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-right dark:border-zinc-700 dark:bg-zinc-800"
+            className="h-10 border border-zinc-200 bg-white px-3 text-sm text-right dark:border-zinc-700 dark:bg-zinc-800"
           />
           <input
             type="text"
@@ -553,21 +553,21 @@ function HoldingsTab({
             value={currentPrice}
             onChange={(e) => setCurrentPrice(e.target.value)}
             placeholder="현재가"
-            className="h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm text-right col-span-2 dark:border-zinc-700 dark:bg-zinc-800"
+            className="h-10 border border-zinc-200 bg-white px-3 text-sm text-right col-span-2 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-danger">{error}</p>}
         <button
           onClick={handleAdd}
           disabled={!code.trim() || !name.trim() || isAdding}
-          className="w-full h-10 rounded-lg bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "종목 추가"}
         </button>
       </div>
 
       {holdings.length === 0 ? (
-        <p className="text-sm text-zinc-400 py-8 text-center">등록된 보유 종목이 없습니다.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">등록된 보유 종목이 없습니다.</p>
       ) : (
         <div className="space-y-2">
           {holdings.map((h) => {
@@ -577,23 +577,23 @@ function HoldingsTab({
             return (
               <div
                 key={h.id}
-                className="flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
+                className="flex items-center border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{h.name}</p>
-                  <p className="text-xs text-zinc-400">{h.code} · {h.shares}주</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.code} · {h.shares}주</p>
                 </div>
                 <div className="text-right mx-3">
                   <p className="text-sm font-semibold">{formatKRW(currentValue)}</p>
                   {costValue > 0 && (
-                    <p className={cn("text-xs", pnl >= 0 ? "text-emerald-500" : "text-red-500")}>
-                      {pnl >= 0 ? "+" : ""}{formatKRW(pnl)}
+                    <p className={cn("text-xs tabular-nums", pnlTextClass(pnl))}>
+                      {formatSignedKRW(pnl)}
                     </p>
                   )}
                 </div>
                 <button
                   onClick={() => handleDelete(h.id)}
-                  className="text-zinc-300 hover:text-red-500 transition-colors shrink-0"
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors shrink-0"
                   aria-label="삭제"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

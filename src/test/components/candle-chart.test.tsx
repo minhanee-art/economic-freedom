@@ -96,10 +96,10 @@ test("HoldingCandlePanel: 원격 캔들을 쓰면 시가·종가·고가·저가
   candleResponse = { ok: true, body: { candles: remoteCandles } };
   render(<HoldingCandlePanel holding={makeHolding()} />);
 
-  assert.ok(await screen.findByText("시가 ₩10,000"));
-  assert.ok(screen.getByText("종가 ₩10,500"));
-  assert.ok(screen.getByText("고가 ₩10,600"));
-  assert.ok(screen.getByText("저가 ₩9,900"));
+  assert.ok(await screen.findByText("시가 10,000원"));
+  assert.ok(screen.getByText("종가 10,500원"));
+  assert.ok(screen.getByText("고가 10,600원"));
+  assert.ok(screen.getByText("저가 9,900원"));
   assert.ok(screen.getByText("+5.0%"));
   assert.ok(screen.getByText(/외부 시세 기준 일봉 차트입니다/));
   assert.ok(screen.getByText("11/10"));

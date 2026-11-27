@@ -20,6 +20,7 @@ const goal: RetirementGoalRow = {
   spouseBirthYear: 1981,
   expectedReturnPct: 0,
   salaryBracket: "low",
+  spouseSalaryBracket: null,
 };
 
 const contribution = (account_id: string, amount: number) => ({
@@ -63,6 +64,34 @@ test("summary: 부부 각 600만원 — 기존 progress 는 가족 합계, byOwn
     [["k", "계좌 k", "child_or_other_owner"]]
   );
   assert.equal(s.taxCredit.accounts.find((a) => a.id === "k")!.included, false);
+});
+
+test("summary: 배우자 구간을 저장하면 배우자 공제율에 반영하고 가정 안내를 끈다", () => {
+  const s = buildPensionSummary({
+    year: 2026,
+    asOf: "x",
+    accounts: [account("a", "self", "pension_savings"), account("b", "spouse", "pension_savings")],
+    contributions: [contribution("a", 6_000_000), contribution("b", 6_000_000)],
+    sources: [],
+    goal: { ...goal, salaryBracket: "high", spouseSalaryBracket: "low" },
+  });
+  assert.ok(s.taxCredit);
+  assert.equal(s.goal.spouseSalaryBracket, "low", "goal 응답에 배우자 구간이 실린다");
+  assert.equal(s.taxCredit.salaryBracket, "high", "기존 필드는 본인 구간");
+  assert.equal(s.taxCredit.salaryBracketAssumed, false, "둘 다 입력했으므로 가정 없음");
+  assert.deepEqual(
+    s.taxCredit.byOwner.map((o) => [o.ownerType, o.salaryBracket, o.progress.estimatedCredit, o.salaryBracketAssumed]),
+    [
+      ["self", "high", 792_000, false],
+      ["spouse", "low", 990_000, false],
+    ]
+  );
+  assert.equal(s.taxCredit.progress.estimatedCredit, 1_782_000);
+});
+
+test("summary: 프로필이 없으면 goal 기본값에 spouseSalaryBracket 이 null 로 있다", () => {
+  const s = buildPensionSummary({ year: 2026, asOf: "x", accounts: [], contributions: [], sources: [], goal: null });
+  assert.equal(s.goal.spouseSalaryBracket, null);
 });
 
 test("summary: 공제 대상 계좌가 모두 자녀 명의면 계산하지 않고 이유를 준다", () => {

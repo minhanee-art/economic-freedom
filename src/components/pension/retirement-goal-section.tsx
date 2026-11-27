@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import type { IncomeSourceRow, RetirementGoalRow } from "@/lib/pension-data";
 import { ACCOUNT_OWNER_LABELS, computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
-import { pensionIncomeTaxRate, type PensionRuleSet } from "@/lib/pension-rules";
+import { pensionIncomeTaxRate, type PensionRuleSet, type SalaryBracket } from "@/lib/pension-rules";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PlanningAccount } from "./account-type-section";
 import {
@@ -44,6 +44,7 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
     birthYear: toText(goal.birthYear),
     spouseBirthYear: toText(goal.spouseBirthYear),
     expectedReturnPct: toText(goal.expectedReturnPct),
+    spouseSalaryBracket: (goal.spouseSalaryBracket ?? "") as string,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -66,6 +67,7 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
         birthYear: parseNumberInput(form.birthYear),
         spouseBirthYear: parseNumberInput(form.spouseBirthYear),
         expectedReturnPct: parseNumberInput(form.expectedReturnPct),
+        spouseSalaryBracket: form.spouseSalaryBracket || null,
       });
       onGoalChange(data.goal);
       setMessage("저장했습니다.");
@@ -114,7 +116,7 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
       title="은퇴 목표와 예상 월 현금흐름"
       description="국민연금(1층)·퇴직연금(2층)·개인연금(3층)과 연금계좌 밖 계좌의 배당을 합쳐 목표 월 생활비와 비교합니다."
     >
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Field label="목표 월 생활비(원)">
           <input inputMode="numeric" value={form.targetMonthly} onChange={(e) => set("targetMonthly", e.target.value)} placeholder="3000000" className={inputClass} />
         </Field>
@@ -126,6 +128,20 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
         </Field>
         <Field label="배우자 출생연도(선택)">
           <input inputMode="numeric" value={form.spouseBirthYear} onChange={(e) => set("spouseBirthYear", e.target.value)} className={inputClass} />
+        </Field>
+        <Field label="배우자 총급여 구간(선택)">
+          <select
+            value={form.spouseSalaryBracket}
+            onChange={(e) => set("spouseSalaryBracket", e.target.value)}
+            className={inputClass}
+          >
+            <option value="">미입력 (낮은 공제율로 가정)</option>
+            {(["low", "high"] as SalaryBracket[]).map((b) => (
+              <option key={b} value={b}>
+                {rules.taxCredit.rates[b].label} · 공제율 {(rules.taxCredit.rates[b].rate * 100).toFixed(1)}%
+              </option>
+            ))}
+          </select>
         </Field>
         <Field label="연 기대수익률(%)">
           <input inputMode="decimal" value={form.expectedReturnPct} onChange={(e) => set("expectedReturnPct", e.target.value)} placeholder="4" className={inputClass} />

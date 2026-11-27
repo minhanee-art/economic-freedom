@@ -195,6 +195,68 @@ test("세액공제: 부부가 연금저축에 각 600만원 → 명의자별 한
   ]);
 });
 
+test("세액공제: 배우자 구간을 입력하면 그 구간의 공제율을 쓰고 가정으로 표시하지 않는다", () => {
+  const low = rules.taxCredit.rates.low.rate;
+  const high = rules.taxCredit.rates.high.rate;
+  const family = computeFamilyTaxCredit(
+    [
+      { ownerType: "self", accountType: "pension_savings", amount: 6_000_000 },
+      { ownerType: "spouse", accountType: "irp", amount: 9_000_000 },
+    ],
+    { self: "high", spouse: "low" },
+    rules
+  );
+  const [self, spouse] = family.byOwner;
+  assert.equal(self.salaryBracket, "high");
+  assert.equal(self.salaryBracketAssumed, false);
+  assert.equal(self.progress.rate, high);
+  assert.equal(self.progress.estimatedCredit, Math.round(6_000_000 * high));
+
+  assert.equal(spouse.salaryBracket, "low");
+  assert.equal(spouse.salaryBracketAssumed, false, "입력했으므로 가정 아님");
+  assert.equal(spouse.progress.rate, low, "본인과 다른 구간의 공제율");
+  assert.equal(spouse.progress.estimatedCredit, Math.round(9_000_000 * low));
+
+  assert.equal(family.total.estimatedCredit, self.progress.estimatedCredit + spouse.progress.estimatedCredit);
+  assert.ok(family.byOwner.every((o) => !o.salaryBracketAssumed));
+});
+
+test("세액공제: 배우자 구간 미입력이면 낮은 공제율로 가정하고, 입력하면 공제액이 바뀐다", () => {
+  const items = [{ ownerType: "spouse", accountType: "pension_savings" as const, amount: 6_000_000 }];
+  const missing = computeFamilyTaxCredit(items, { self: "low", spouse: null }, rules).byOwner[0];
+  assert.equal(missing.ownerType, "spouse");
+  assert.equal(missing.salaryBracket, "high", "미입력 → 총급여 5,500만원 초과(낮은 공제율)로 가정");
+  assert.equal(missing.salaryBracketAssumed, true);
+  assert.equal(missing.progress.estimatedCredit, Math.round(6_000_000 * rules.taxCredit.rates.high.rate));
+
+  const entered = computeFamilyTaxCredit(items, { self: "low", spouse: "low" }, rules).byOwner[0];
+  assert.equal(entered.salaryBracketAssumed, false);
+  assert.equal(entered.progress.estimatedCredit, Math.round(6_000_000 * rules.taxCredit.rates.low.rate));
+
+  // 배우자가 'high'를 직접 고른 경우: 공제액은 가정과 같지만 가정 표시는 하지 않는다
+  const enteredHigh = computeFamilyTaxCredit(items, { self: "low", spouse: "high" }, rules).byOwner[0];
+  assert.equal(enteredHigh.progress.estimatedCredit, missing.progress.estimatedCredit);
+  assert.equal(enteredHigh.salaryBracketAssumed, false);
+});
+
+test("세액공제: 본인 구간이 미입력이어도 배우자 구간은 따로 적용한다", () => {
+  const family = computeFamilyTaxCredit(
+    [
+      { ownerType: "self", accountType: "pension_savings", amount: 6_000_000 },
+      { ownerType: "spouse", accountType: "pension_savings", amount: 6_000_000 },
+    ],
+    { self: null, spouse: "low" },
+    rules
+  );
+  assert.deepEqual(
+    family.byOwner.map((o) => [o.ownerType, o.salaryBracket, o.salaryBracketAssumed]),
+    [
+      ["self", "high", true],
+      ["spouse", "low", false],
+    ]
+  );
+});
+
 test("세액공제: 한 명의자 안에서는 기존처럼 600만원 한도로 자른다", () => {
   const family = computeFamilyTaxCredit(
     [

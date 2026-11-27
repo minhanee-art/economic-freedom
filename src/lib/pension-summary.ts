@@ -67,7 +67,7 @@ export function buildPensionSummary(input: PensionSummaryInput) {
     | {
         /** 본인 소득 구간 */
         salaryBracket: SalaryBracket;
-        /** true면 계산에 넣은 명의자 중 누군가의 소득 구간이 없어 '총급여 5,500만원 초과'로 가정한 것 (배우자는 입력란이 없어 항상 가정) */
+        /** true면 계산에 넣은 명의자 중 누군가의 소득 구간이 없어 '총급여 5,500만원 초과'로 가정한 것. 명의자별 여부는 byOwner[].salaryBracketAssumed */
         salaryBracketAssumed: boolean;
         /** 계산에 넣은 계좌에 올해 저장된 납입 기록이 하나도 없으면 false (진행률 0은 '기록 없음'일 수 있음) */
         contributionsRecorded: boolean;
@@ -107,8 +107,8 @@ export function buildPensionSummary(input: PensionSummaryInput) {
         accountType: a.account_type,
         amount: paidByAccount.get(a.id) ?? 0,
       })),
-      // 배우자 소득 구간은 저장하는 곳이 없다 → null(가정으로 표시)
-      { self: goal?.salaryBracket ?? null, spouse: null },
+      // 미입력(null)인 명의자는 낮은 공제율로 가정하고 byOwner[].salaryBracketAssumed 로 알린다
+      { self: goal?.salaryBracket ?? null, spouse: goal?.spouseSalaryBracket ?? null },
       rules
     );
     if (family.byOwner.length === 0) {
@@ -218,6 +218,7 @@ export function buildPensionSummary(input: PensionSummaryInput) {
       spouseBirthYear: null,
       expectedReturnPct: null,
       salaryBracket: null,
+      spouseSalaryBracket: null,
     },
     taxCredit,
     taxCreditUnavailableReason,

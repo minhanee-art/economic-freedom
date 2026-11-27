@@ -1,26 +1,40 @@
 import { Link, router } from "expo-router";
-import { useState } from "react";
-import { Linking, Pressable, Text, TextInput, View } from "react-native";
+import { useRef, useState } from "react";
+import { Linking, Text, type TextInput } from "react-native";
 import { signupWithEmail } from "@/api/auth";
 import { webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { TextField } from "@/components/Field";
+import { FormError } from "@/components/Parts";
 import { saveSession } from "@/storage/session";
-import { formStyles as styles } from "@/styles/forms";
-import { colors } from "@/styles/theme";
+import { colors, type } from "@/styles/theme";
+
+type Errors = { email?: string; password?: string; passwordConfirm?: string };
 
 export default function SignupScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
-
-  const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
-  const disabled = isSubmitting || !email.trim() || !password || password !== passwordConfirm;
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
   const privacyUrl = webUrl("/privacy");
 
+  // 확인 칸을 채운 뒤에는 누르기 전에도 불일치 이유를 칸 아래에 바로 보인다.
+  const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm ? "비밀번호와 확인이 서로 다릅니다." : undefined;
+
   const handleSignup = async () => {
+    const found: Errors = {};
+    if (!email.trim()) found.email = "이메일을 입력해주세요.";
+    if (!password) found.password = "비밀번호를 입력해주세요.";
+    if (!passwordConfirm) found.passwordConfirm = "비밀번호를 한 번 더 입력해주세요.";
+    else if (mismatch) found.passwordConfirm = mismatch;
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
     setIsSubmitting(true);
     setError("");
     try {
@@ -36,65 +50,61 @@ export default function SignupScreen() {
 
   return (
     <AppShell>
-      <Text style={styles.title}>회원가입</Text>
-      <Text style={styles.subtitle}>이메일과 비밀번호로 계정을 만듭니다. 웹에서 만든 계정과 같은 계정입니다.</Text>
+      <Text style={type.label}>웹에서 만든 계정과 같은 계정입니다. 웹과 앱 어디서든 같은 이메일로 로그인합니다.</Text>
 
-      <Card title="계정 만들기">
-        <View style={styles.field}>
-          <Text style={styles.label}>이메일</Text>
-          <TextInput
-            autoCapitalize="none"
-            autoComplete="email"
-            autoCorrect={false}
-            keyboardType="email-address"
-            onChangeText={setEmail}
-            placeholder="name@example.com"
-            placeholderTextColor={colors.inkSubtle}
-            style={styles.input}
-            value={email}
-          />
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>비밀번호</Text>
-          <TextInput
-            autoComplete="new-password"
-            onChangeText={setPassword}
-            placeholder="비밀번호"
-            placeholderTextColor={colors.inkSubtle}
-            secureTextEntry
-            style={styles.input}
-            value={password}
-          />
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>비밀번호 확인</Text>
-          <TextInput
-            autoComplete="new-password"
-            onChangeText={setPasswordConfirm}
-            placeholder="비밀번호를 한 번 더 입력"
-            placeholderTextColor={colors.inkSubtle}
-            secureTextEntry
-            style={styles.input}
-            value={passwordConfirm}
-          />
-        </View>
-        {mismatch ? <Text style={styles.error}>비밀번호가 서로 다릅니다.</Text> : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable accessibilityRole="button" disabled={disabled} onPress={handleSignup} style={[styles.button, disabled && styles.buttonDisabled]}>
-          <Text style={styles.buttonText}>{isSubmitting ? "가입 중" : "회원가입"}</Text>
-        </Pressable>
+      <Card>
+        <TextField
+          label="이메일"
+          autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
+          keyboardType="email-address"
+          onChangeText={setEmail}
+          placeholder="name@example.com"
+          value={email}
+          error={errors.email}
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+        />
+        <TextField
+          ref={passwordRef}
+          label="비밀번호"
+          autoComplete="new-password"
+          onChangeText={setPassword}
+          secureTextEntry
+          value={password}
+          error={errors.password}
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => confirmRef.current?.focus()}
+        />
+        <TextField
+          ref={confirmRef}
+          label="비밀번호 확인"
+          autoComplete="new-password"
+          onChangeText={setPasswordConfirm}
+          secureTextEntry
+          value={passwordConfirm}
+          error={errors.passwordConfirm ?? mismatch}
+          returnKeyType="go"
+          onSubmitEditing={handleSignup}
+        />
+        {error ? <FormError>{error}</FormError> : null}
+        <Button label="회원가입" busy={isSubmitting} busyLabel="가입 중" onPress={handleSignup} />
+        {privacyUrl ? (
+          <Text style={type.caption}>
+            가입하면{" "}
+            <Text accessibilityRole="link" onPress={() => Linking.openURL(privacyUrl)} style={{ color: colors.primary, textDecorationLine: "underline" }}>
+              개인정보처리방침
+            </Text>
+            에 동의한 것으로 봅니다.
+          </Text>
+        ) : null}
       </Card>
 
-      {privacyUrl ? (
-        <Text style={styles.helper}>
-          가입하면 <Text onPress={() => Linking.openURL(privacyUrl)} style={styles.linkText}>개인정보처리방침</Text>에 동의한 것으로 봅니다.
-        </Text>
-      ) : null}
-
       <Link href="/login" asChild>
-        <Pressable style={styles.linkButton}>
-          <Text style={styles.linkText}>이미 계정이 있으신가요? 로그인</Text>
-        </Pressable>
+        <Button label="이미 계정이 있으신가요? 로그인" variant="link" />
       </Link>
     </AppShell>
   );

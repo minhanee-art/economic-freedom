@@ -11,6 +11,7 @@ export default function RootLayout() {
           headerStyle: { backgroundColor: colors.canvas },
           headerShadowVisible: false,
           headerTintColor: colors.ink,
+          headerTitleStyle: { fontWeight: "600", fontSize: 17 },
           contentStyle: { backgroundColor: colors.canvas },
         }}
       >

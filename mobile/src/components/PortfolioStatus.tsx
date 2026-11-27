@@ -1,6 +1,7 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text } from "react-native";
+import { ActivityIndicator, StyleSheet, Text } from "react-native";
+import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
-import { colors, radius, spacing } from "@/styles/theme";
+import { colors, spacing, type } from "@/styles/theme";
 
 type PortfolioStatusProps = {
   isLoading: boolean;
@@ -13,34 +14,16 @@ export function PortfolioStatus({ isLoading, error, onRetry }: PortfolioStatusPr
   if (error) {
     return (
       <Card title="데이터를 불러오지 못했습니다">
-        <Text style={styles.error}>{error}</Text>
-        <Pressable accessibilityRole="button" onPress={onRetry} style={styles.button}>
-          <Text style={styles.buttonText}>다시 시도</Text>
-        </Pressable>
+        <Text style={[type.body, { color: colors.danger }]} accessibilityRole="alert">
+          {error}
+        </Text>
+        <Button label="다시 시도" variant="secondary" compact onPress={onRetry} />
       </Card>
     );
   }
-  return isLoading ? <ActivityIndicator color={colors.primary} style={styles.loading} /> : null;
+  return isLoading ? <ActivityIndicator color={colors.primary} style={styles.loading} accessibilityLabel="불러오는 중" /> : null;
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    marginTop: spacing.xxl,
-  },
-  error: {
-    color: colors.negative,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  button: {
-    borderRadius: radius.pill,
-    backgroundColor: colors.ink,
-    padding: spacing.lg,
-  },
-  buttonText: {
-    color: colors.surface,
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "900",
-  },
+  loading: { marginTop: spacing.xxl },
 });

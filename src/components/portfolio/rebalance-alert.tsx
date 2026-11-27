@@ -390,9 +390,9 @@ export function RebalanceAlert({
     return (
       <section id="holdings" aria-label="종목 추가" className="scroll-mt-24 border border-hairline bg-surface px-5 py-4 shadow-card dark:border-zinc-800">
         <div className="mb-4 border-b border-zinc-100 pb-4 dark:border-zinc-800">
-          <h2 className="text-base font-bold text-ink">새 계좌 시작하기</h2>
+          <h2 className="text-base font-bold text-ink">첫 종목 추가</h2>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            아직 이 계좌에 종목이 없습니다. 아래에서 종목을 추가하면서 자산군/세부 분류와 목표 비중을 입력하면 테마별 비율이 바로 만들어집니다.
+            아직 이 계좌에 종목이 없습니다. 종목을 추가하면 자산군별 비중과 목표 비중과의 차이가 바로 계산됩니다.
           </p>
         </div>
         {onAddHolding ? (
@@ -1387,7 +1387,7 @@ function AddHoldingForm({
   }
 
   return (
-    <div className="border border-indigo-100 bg-indigo-50/70 p-4 shadow-card dark:border-indigo-500/20 dark:bg-indigo-500/10">
+    <div>
       <div className="mb-3">
         <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">종목 검색 후 추가</p>
         <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
@@ -1516,7 +1516,7 @@ function AddHoldingForm({
         </Field>
       </div>
 
-      <div className="mt-2 border border-indigo-100 bg-white/70 px-3 py-2 text-xs font-semibold text-zinc-600 shadow-sm dark:border-indigo-500/20 dark:bg-zinc-950/40 dark:text-zinc-300">
+      <div className="mt-2 text-xs font-semibold text-zinc-600 dark:text-zinc-300">
         초기 보유원가: <span className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">{parsedShares.toLocaleString()}주 × {formatKRWFull(parsedAvgPrice)} = {formatKRWFull(totalCost)}</span>
       </div>
       <button

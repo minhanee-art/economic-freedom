@@ -37,7 +37,7 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
     try {
       await sendJson(`/api/accounts/${account.id}`, "PATCH", { accountType: next });
       onChange(accounts.map((a) => (a.id === account.id ? { ...a, account_type: next } : a)));
-      setStatus(`${account.name} 계좌를 '${ACCOUNT_TYPE_LABELS[next]}'로 저장했습니다.`);
+      setStatus(`${account.name} 계좌의 세제 유형을 저장했습니다: ${ACCOUNT_TYPE_LABELS[next]}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {

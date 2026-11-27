@@ -335,7 +335,7 @@ export default function DashboardLayout({
 
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
             {/* 계좌 선택: 불러오는 동안에도 같은 크기의 자리를 잡아 헤더가 밀리지 않게 한다 */}
-            <div className="relative flex h-11 w-32 shrink-0 items-center gap-2 sm:w-48">
+            <div className="relative flex h-11 w-32 shrink-0 items-center gap-2 min-[375px]:w-40 sm:w-48">
               {accounts === null ? (
                 <span aria-hidden="true" className="h-11 flex-1 animate-pulse bg-white/10" />
               ) : accounts.length > 0 ? (
@@ -466,14 +466,15 @@ export default function DashboardLayout({
               aria-expanded={isMobileMenuOpen}
               aria-controls="dashboard-mobile-menu"
               className={cn(
-                "inline-flex h-11 shrink-0 items-center gap-1.5 border border-white/10 px-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 lg:hidden",
+                "inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 border border-white/10 px-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 lg:hidden",
                 focusRing
               )}
             >
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
               </svg>
-              메뉴
+              {/* 폰 폭에서는 아이콘만 보여 계좌 선택 칸에 자리를 준다(이름은 그대로 '메뉴') */}
+              <span className="sr-only sm:not-sr-only">메뉴</span>
             </button>
           </div>
         </div>

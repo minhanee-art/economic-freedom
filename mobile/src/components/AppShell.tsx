@@ -1,45 +1,44 @@
 import type { PropsWithChildren } from "react";
-import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, spacing } from "@/styles/theme";
+import { colors, contentMaxWidth, spacing } from "@/styles/theme";
 
 type AppShellProps = PropsWithChildren<{
-  padded?: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;
+  /** iOS 에서 스택 헤더 높이만큼 키보드 회피 위치를 보정한다(헤더가 있는 입력 화면). */
+  keyboardOffset?: number;
 }>;
 
-export function AppShell({ children, padded = true, refreshing = false, onRefresh }: AppShellProps) {
+/**
+ * 모든 화면의 바탕. 내용 사이 간격 16, 태블릿·가로에서 본문 최대 폭 560 가운데 정렬.
+ * 입력 화면을 위해 키보드 회피(iOS padding)와 keyboardShouldPersistTaps="handled"(키보드가 열린 채 버튼 한 번에 눌림)를 둔다.
+ */
+export function AppShell({ children, refreshing = false, onRefresh, keyboardOffset = 0 }: AppShellProps) {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[styles.content, padded && styles.padded]}
-        refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} /> : undefined}
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={keyboardOffset}
       >
-        {children}
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} colors={[colors.primary]} /> : undefined}
+        >
+          <View style={styles.column}>{children}</View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: colors.canvas,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-  },
-  padded: {
-    padding: spacing.lg,
-  },
-  bottomSpacer: {
-    height: spacing.xxl,
-  },
+  safeArea: { flex: 1, backgroundColor: colors.canvas },
+  flex: { flex: 1 },
+  content: { flexGrow: 1, padding: spacing.lg, paddingBottom: spacing.xxl },
+  column: { width: "100%", maxWidth: contentMaxWidth, alignSelf: "center", gap: spacing.lg },
 });

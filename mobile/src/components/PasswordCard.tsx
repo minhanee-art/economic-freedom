@@ -1,13 +1,17 @@
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { View, type TextInput } from "react-native";
 import { changePassword, getPasswordStatus } from "@/api/auth";
 import { ApiError } from "@/api/client";
+import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { TextField } from "@/components/Field";
+import { FormError, StatusMessage } from "@/components/Parts";
 import { handleUnauthorized, saveSession } from "@/storage/session";
-import { formStyles as styles } from "@/styles/forms";
-import { colors } from "@/styles/theme";
+import { spacing } from "@/styles/theme";
 import type { AuthSession } from "@/types";
+
+type Errors = { current?: string; next?: string; confirm?: string };
 
 /** 설정 탭의 비밀번호 변경(Google 전용 계정이면 설정) 카드. */
 export function PasswordCard({ session, onSessionChange }: { session: AuthSession; onSessionChange: (next: AuthSession) => void }) {
@@ -17,8 +21,11 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
   const [done, setDone] = useState("");
+  const nextRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
 
   const onUnauthorized = async (sentToken: string) => {
     if (await handleUnauthorized(sentToken)) router.replace("/login");
@@ -44,13 +51,24 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
     setCurrent("");
     setNext("");
     setConfirm("");
+    setErrors({});
   };
 
-  const mismatch = confirm.length > 0 && next !== confirm;
   const needsCurrent = hasPassword === true;
-  const disabled = isSubmitting || hasPassword === null || !next || next !== confirm || (needsCurrent && !current);
+
+  const validate = (): Errors => {
+    const found: Errors = {};
+    if (needsCurrent && !current) found.current = "현재 비밀번호를 입력해주세요.";
+    if (!next) found.next = "새 비밀번호를 입력해주세요.";
+    if (!confirm) found.confirm = "새 비밀번호를 한 번 더 입력해주세요.";
+    else if (next !== confirm) found.confirm = "새 비밀번호와 확인이 서로 다릅니다.";
+    return found;
+  };
 
   const handleSubmit = async () => {
+    const found = validate();
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
     setIsSubmitting(true);
     setError("");
     setDone("");
@@ -81,59 +99,69 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
 
   return (
     <Card title="비밀번호">
-      {done ? <Text style={[styles.label, { color: colors.positive }]}>{done}</Text> : null}
+      {done ? <StatusMessage>{done}</StatusMessage> : null}
       {!open ? (
-        <Pressable
-          accessibilityRole="button"
-          disabled={hasPassword === null}
+        <Button
+          label={hasPassword === null ? "확인 중" : title}
+          variant="secondary"
+          busy={hasPassword === null}
           onPress={() => {
             setOpen(true);
             setDone("");
           }}
-          style={[styles.button, { marginTop: 0 }, hasPassword === null && styles.buttonDisabled]}
-        >
-          <Text style={styles.buttonText}>{hasPassword === null ? "확인 중" : title}</Text>
-        </Pressable>
+        />
       ) : (
-        <View style={{ gap: 12 }}>
+        <View style={{ gap: spacing.md }}>
           {needsCurrent ? (
-            <View style={styles.field}>
-              <Text style={styles.label}>현재 비밀번호</Text>
-              <TextInput
-                autoComplete="current-password"
-                onChangeText={setCurrent}
-                secureTextEntry
-                style={styles.input}
-                value={current}
-              />
-            </View>
+            <TextField
+              label="현재 비밀번호"
+              autoComplete="current-password"
+              onChangeText={setCurrent}
+              secureTextEntry
+              value={current}
+              error={errors.current}
+              returnKeyType="next"
+              submitBehavior="submit"
+              onSubmitEditing={() => nextRef.current?.focus()}
+            />
           ) : null}
-          <View style={styles.field}>
-            <Text style={styles.label}>새 비밀번호</Text>
-            <TextInput autoComplete="new-password" onChangeText={setNext} secureTextEntry style={styles.input} value={next} />
-          </View>
-          <View style={styles.field}>
-            <Text style={styles.label}>새 비밀번호 확인</Text>
-            <TextInput autoComplete="new-password" onChangeText={setConfirm} secureTextEntry style={styles.input} value={confirm} />
-          </View>
-          {mismatch ? <Text style={styles.error}>새 비밀번호가 서로 다릅니다.</Text> : null}
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable accessibilityRole="button" disabled={disabled} onPress={handleSubmit} style={[styles.button, { marginTop: 0 }, disabled && styles.buttonDisabled]}>
-            <Text style={styles.buttonText}>{isSubmitting ? "처리 중" : title}</Text>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
+          <TextField
+            ref={nextRef}
+            label="새 비밀번호"
+            autoComplete="new-password"
+            onChangeText={setNext}
+            secureTextEntry
+            value={next}
+            error={errors.next}
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => confirmRef.current?.focus()}
+          />
+          <TextField
+            ref={confirmRef}
+            label="새 비밀번호 확인"
+            autoComplete="new-password"
+            onChangeText={setConfirm}
+            secureTextEntry
+            value={confirm}
+            error={errors.confirm}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+          />
+          {error ? <FormError>{error}</FormError> : null}
+          <Button label={title} busy={isSubmitting} busyLabel="처리 중" onPress={handleSubmit} />
+          <Button
+            label="취소"
+            variant="link"
             onPress={() => {
               reset();
               setError("");
               setOpen(false);
             }}
-          >
-            <Text style={styles.linkText}>취소</Text>
-          </Pressable>
+          />
         </View>
       )}
-      {!open && error ? <Text style={styles.error}>{error}</Text> : null}
+      {!open && error ? <FormError>{error}</FormError> : null}
     </Card>
   );
 }

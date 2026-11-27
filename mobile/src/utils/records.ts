@@ -31,3 +31,16 @@ export function parsePositiveInt(value: string): number | null {
   const n = Number(text);
   return Number.isSafeInteger(n) && n > 0 && n <= INT_MAX ? n : null;
 }
+
+/** 날짜 입력칸 표시: 숫자만 남겨 최대 8자리로 자르고 "YYYY-MM-DD" 모양으로 하이픈을 넣는다("2026013" → "2026-01-3"). */
+export function formatDateInput(text: string): string {
+  const d = text.replace(/\D/g, "").slice(0, 8);
+  if (d.length <= 4) return d;
+  if (d.length <= 6) return `${d.slice(0, 4)}-${d.slice(4)}`;
+  return `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6)}`;
+}
+
+/** '오늘'·'어제' 칩 값(KST). */
+export function quickDates(now = new Date()): { today: string; yesterday: string } {
+  return { today: todayString(now), yesterday: todayString(new Date(now.getTime() - 86_400_000)) };
+}

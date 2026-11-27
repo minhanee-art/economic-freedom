@@ -419,7 +419,7 @@ export function BuyClient({
       if (!saved) return;
 
       setSuccessMessage(
-        `${row.item.holding.name} ${row.item.quantity}주, ${formatKRWFull(row.actualCost)} 기록 저장 완료!`
+        `${row.item.holding.name} ${row.item.quantity.toLocaleString()}주, ${formatKRWFull(row.actualCost)} 기록 저장 완료!`
       );
       setQuantityOverrides((prev) => ({ ...prev, [holdingId]: 0 }));
       resetExecutionPrice(holdingId);
@@ -439,6 +439,15 @@ export function BuyClient({
         <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
           사용자가 설정한 목표 비중에 따른 계산 결과이며 투자 권유가 아닙니다.
         </p>
+        {/* 자동 시세 조회 상태 — 자리를 늘 잡아 두어 나타났다 사라질 때 아래 내용이 밀리지 않게 한다 */}
+        <p
+          role="status"
+          className={`mt-1 min-h-5 text-xs font-medium ${
+            priceStatus.includes("실패") ? "text-danger" : priceStatus.includes("중") ? "text-zinc-500 dark:text-zinc-400" : "text-success"
+          }`}
+        >
+          {priceStatus}
+        </p>
       </div>
 
       {saveError && <InlineError message={saveError.message} onRetry={saveError.retry} onDismiss={() => setSaveError(null)} />}
@@ -448,28 +457,17 @@ export function BuyClient({
         </div>
       )}
 
-      {priceStatus && (
-        <div className={`px-4 py-2.5 text-sm font-medium shadow-card ${
-          priceStatus.includes("실패")
-            ? "bg-danger-soft text-danger border border-danger-line"
-            : priceStatus.includes("중")
-              ? "bg-canvas-soft text-zinc-500 border border-hairline dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-              : "bg-canvas-soft text-success border border-hairline"
-        }`}>
-          {priceStatus}
-        </div>
-      )}
 
       {/* 투자금액 + 수수료 설정 */}
       <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-card transition-shadow hover:shadow-float">
-        <h2 className="text-lg font-bold text-ink dark:text-zinc-100">이번 달 투자금액</h2>
+        <h2 className="text-lg font-bold text-ink dark:text-zinc-100">이번 달 적립금</h2>
         <div className="relative">
           <input
             type="text"
             inputMode="numeric"
             value={inputValue}
             onChange={(e) => handleInputChange(e.target.value)}
-            aria-label="이번 달 투자금액(원)"
+            aria-label="이번 달 적립금(원)"
             className="w-full h-14 border border-hairline bg-canvas-soft pl-4 pr-12 text-2xl font-bold text-right tabular-nums text-ink focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100"
           />
           <span aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-lg text-zinc-500 dark:text-zinc-400">원</span>
@@ -519,7 +517,7 @@ export function BuyClient({
           className="flex w-full items-center justify-between"
         >
           <h2 className="text-lg font-bold text-ink dark:text-zinc-100">테마별 비중 조정</h2>
-          <span className="text-xs font-medium text-indigo-500">{showThemeEditor ? "닫기" : "열기"}</span>
+          <span className="text-xs font-medium text-indigo-500 dark:text-indigo-300">{showThemeEditor ? "닫기" : "열기"}</span>
         </button>
 
         {themeStatus && (
@@ -655,7 +653,7 @@ export function BuyClient({
                                   : "text-ink dark:text-zinc-100"
                               )}
                             >
-                              {item.quantity}주
+                              {item.quantity.toLocaleString()}주
                             </td>
                             <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
                               {annualCadenceLabel(item)}
@@ -679,7 +677,7 @@ export function BuyClient({
                   {annualPlan.items.some((i) => i.quantity === 0) && (
                     <p className="mt-2 text-xs leading-relaxed text-caution">
                       {annualPlan.items.filter((i) => i.quantity === 0).length}개 종목은 연간 배분액으로 1주도 살 수 없습니다. 비중을 올리거나
-                      월 투자금액을 늘려야 합니다.
+                      월 적립금을 늘려야 합니다.
                     </p>
                   )}
                 </>
@@ -745,7 +743,7 @@ export function BuyClient({
                 ))}
               </ul>
               <p className="mt-2 text-xs leading-relaxed text-caution">
-                월 투자금액 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
+                월 적립금 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
                 우선 편성하고, 나머지 달은 건너뜁니다.
               </p>
             </div>
@@ -820,7 +818,7 @@ export function BuyClient({
                   <div className="min-w-0">
                     <p className="truncate font-medium text-ink dark:text-zinc-100">{item.holding.name}</p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                      {item.quantity}주 × {formatKRWFull(executionPrice)}
+                      {item.quantity.toLocaleString()}주 × {formatKRWFull(executionPrice)}
                     </p>
                   </div>
                   <span className="shrink-0 font-semibold tabular-nums text-ink dark:text-zinc-100">{formatKRWFull(actualCost)}</span>
@@ -946,9 +944,9 @@ function BuyPlanCard({
             {isOverridden && (
               <button
                 onClick={() => onQuantityChange(algorithmQty)}
-                className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors tabular-nums"
+                className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-300 transition-colors tabular-nums"
               >
-                계산 {algorithmQty}주로 복원
+                계산 {algorithmQty.toLocaleString()}주로 복원
               </button>
             )}
           </div>
@@ -962,7 +960,7 @@ function BuyPlanCard({
                 <button
                   type="button"
                   onClick={onResetExecutionPrice}
-                  className="text-xs font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  className="text-xs font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-300"
                 >
                   현재가로 복원
                 </button>
@@ -989,7 +987,7 @@ function BuyPlanCard({
               type="button"
               onClick={onSaveRecord}
               disabled={isSaveDisabled}
-              className="mt-3 w-full h-9 bg-indigo-600 text-white text-xs font-semibold transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
+              className="mt-3 w-full h-11 text-xs font-semibold disabled:cursor-not-allowed border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
             >
               {isSavingRecord ? "저장 중..." : "이 종목만 기록 저장"}
             </button>

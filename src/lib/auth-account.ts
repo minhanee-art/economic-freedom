@@ -82,7 +82,7 @@ export async function signupWithPassword(request: Request, input: { email?: unkn
   // 기본 프로필 생성
   await sql`
     INSERT INTO profiles (id, email, monthly_budget)
-    VALUES (${userId}, ${email}, 300000)
+    VALUES (${userId}, ${email}, 0)
     ON CONFLICT DO NOTHING
   `;
 

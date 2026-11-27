@@ -36,6 +36,7 @@ export default async function DividendPage() {
   if (holdingsWithShares.length === 0 && dividends.length === 0) {
     return (
       <NoHoldingsState
+        pageTitle="배당 기록"
         title="배당을 기록할 종목이 없습니다"
         description="배당은 수량이 있는 종목에 기록합니다. 종목을 추가하고 이미 산 수량을 기록하면 이 화면에서 받은 배당을 입력할 수 있습니다."
       />

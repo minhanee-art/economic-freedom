@@ -40,7 +40,7 @@ test("SummaryHeader: 평가금액·손익·배당·적립금을 보여준다", a
   );
 
   assert.ok(screen.getByText("110만원"), "총 평가금액");
-  assert.ok(screen.getByText("+10만원"), "총 손익");
+  assert.ok(screen.getByText("▲ +10만원"), "총 손익");
   assert.ok(screen.getByText("+10.00%"), "손익률");
   assert.ok(screen.getByText("3만원"), "누적 배당");
   assert.ok(screen.getByText("50만원"), "월 적립금");
@@ -58,12 +58,12 @@ test("SummaryHeader: 손실이면 음수 부호와 하락(파랑) 토큰 클래�
     />
   );
 
-  const pnl = screen.getByText("-10만원");
+  const pnl = screen.getByText("▼ -10만원");
   assert.match(pnl.className, /text-loss/);
   assert.ok(screen.getByText("-10.00%"));
 });
 
-test("SummaryHeader: 원가가 0이면 손익률은 0.00%", async () => {
+test("SummaryHeader: 원가가 0이면 손익은 '-', 월 적립금 0은 '미설정'", async () => {
   render(
     <SummaryHeader
       totalValue={0}
@@ -75,7 +75,9 @@ test("SummaryHeader: 원가가 0이면 손익률은 0.00%", async () => {
     />
   );
 
-  assert.ok(screen.getByText("+0.00%"));
+  assert.equal(screen.queryByText("+0.00%"), null);
+  assert.ok(screen.getByText("-"), "손익 자리");
+  assert.ok(screen.getByText("미설정"), "월 적립금 0");
 });
 
 test("SummaryHeader: 새로고침 버튼은 갱신 중에 잠긴다", async () => {
@@ -167,12 +169,12 @@ test("SummaryHeader: 전일 대비 금액과 비율, 기준이 없으면 안내"
     />
   );
   const el = screen.getByTestId("daily-change");
-  assert.match(el.textContent ?? "", /전일 대비 -1만원 \(-0\.90%\)/);
+  assert.match(el.textContent ?? "", /전일 대비 ▼ -1만원 \(-0\.90%\)/);
   assert.match(el.textContent ?? "", /매수·입출금 포함/);
 
   cleanup();
   render(<SummaryHeader {...baseProps} dailyChange={null} />);
-  assert.match(screen.getByTestId("daily-change").textContent ?? "", /기준 스냅샷 없음/);
+  assert.match(screen.getByTestId("daily-change").textContent ?? "", /기준 기록 없음/);
 
   cleanup();
   render(<SummaryHeader {...baseProps} />);

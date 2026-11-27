@@ -3,7 +3,7 @@
 import { LazyPnLAreaChart } from "@/components/charts/lazy";
 import type { Holding, CostBasis, PurchaseRecord } from "@/types";
 import type { CSSProperties } from "react";
-import { formatKRW, formatKRWFull, formatPercent, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPercent, formatPnlKRW, pnlTextClass, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 
 interface HoldingPnL {
@@ -116,7 +116,7 @@ export function PnLClient({
                 pnlTextClass(totalPnL)
               )}
             >
-              {formatSignedKRW(totalPnL)}
+              {formatPnlKRW(totalPnL)}
             </p>
             <p
               className={cn(
@@ -176,7 +176,7 @@ export function PnLClient({
                           pnlTextClass(data.pnl)
                         )}
                       >
-                        {formatSignedKRW(data.pnl)}{" "}
+                        {formatPnlKRW(data.pnl)}{" "}
                         <span className="text-xs font-normal tabular-nums">
                           ({formatPercent(pct)})
                         </span>
@@ -207,7 +207,7 @@ export function PnLClient({
                       <div>
                         <p className="text-sm font-semibold text-ink">{h.name}</p>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                          {h.code} · {h.shares}주
+                          {h.code} · {Number(h.shares).toLocaleString()}주
                         </p>
                       </div>
                       <div className="text-right">
@@ -217,7 +217,7 @@ export function PnLClient({
                             pnlTextClass(h.profitLoss)
                           )}
                         >
-                          {formatSignedKRW(h.profitLoss, true)}
+                          {formatPnlKRW(h.profitLoss, true)}
                         </p>
                         <p
                           className={cn(

@@ -250,7 +250,7 @@ export function RetirementGoalSection({
         <button onClick={save} disabled={isSaving} className={primaryButtonClass}>
           {isSaving ? "저장 중..." : "목표 저장"}
         </button>
-        {message && <span className="text-xs text-zinc-500 dark:text-zinc-400">{message}</span>}
+        {message && <span role="status" className="text-xs text-success">{message}</span>}
         {error && <span role="alert" className="text-xs leading-relaxed text-danger">{error}</span>}
       </div>
 
@@ -307,34 +307,34 @@ export function RetirementGoalSection({
             </p>
           )}
 
-          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">표가 넓으면 좌우로 밀어 보세요</p>
+          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">좁은 화면에서는 만원 단위로 줄여 보여 줍니다. 표가 넓으면 좌우로 밀어 보세요.</p>
 
           <div tabIndex={0} role="region" aria-label="나이별 예상 월 현금흐름 표" className="overflow-x-auto">
-            <table className="w-full text-xs tabular-nums">
+            <table className="w-full min-w-120 text-xs tabular-nums sm:min-w-168">
 
             <caption className="sr-only">나이별 예상 월 현금흐름: 국민연금, 퇴직연금, 개인연금, 배당, 합계, 목표 대비 부족액</caption>
               <thead className="text-zinc-500 dark:text-zinc-400">
                 <tr className="border-b border-zinc-100 dark:border-zinc-800">
-                  <th scope="col" className="py-1.5 text-left font-medium">나이</th>
-                  <th scope="col" className="py-1.5 text-right font-medium">국민연금</th>
-                  <th scope="col" className="py-1.5 text-right font-medium">퇴직연금</th>
-                  <th scope="col" className="py-1.5 text-right font-medium">개인연금</th>
-                  <th scope="col" className="py-1.5 text-right font-medium">배당</th>
-                  <th scope="col" className="py-1.5 text-right font-medium">합계</th>
-                  <th scope="col" className="py-1.5 text-right font-medium">부족액</th>
+                  <th scope="col" className="py-2 pr-2 text-left font-medium whitespace-nowrap">나이</th>
+                  <th scope="col" className="px-2 py-2 text-right font-medium whitespace-nowrap">국민연금</th>
+                  <th scope="col" className="px-2 py-2 text-right font-medium whitespace-nowrap">퇴직연금</th>
+                  <th scope="col" className="px-2 py-2 text-right font-medium whitespace-nowrap">개인연금</th>
+                  <th scope="col" className="px-2 py-2 text-right font-medium whitespace-nowrap">배당</th>
+                  <th scope="col" className="px-2 py-2 text-right font-medium whitespace-nowrap">합계</th>
+                  <th scope="col" className="py-2 pl-2 text-right font-medium whitespace-nowrap">부족액</th>
                 </tr>
               </thead>
               <tbody>
                 {pickRows(cashflow.rows).map((row) => (
                   <tr key={row.age} className="border-b border-zinc-50 dark:border-zinc-800/60">
-                    <td className="py-1.5">{row.age}세</td>
-                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.public)}</td>
-                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.retirement)}</td>
-                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.private)}</td>
-                    <td className="py-1.5 text-right">{formatKRWFull(row.layers.dividend)}</td>
-                    <td className="py-1.5 text-right font-semibold">{formatKRWFull(row.total)}</td>
-                    <td className={`py-1.5 text-right ${row.shortfall > 0 ? "text-caution" : "text-zinc-500 dark:text-zinc-400"}`}>
-                      {row.shortfall > 0 ? formatKRWFull(row.shortfall) : "-"}
+                    <th scope="row" className="py-2 pr-2 text-left font-normal whitespace-nowrap">{row.age}세</th>
+                    <td className="px-2 py-2 text-right whitespace-nowrap"><TableAmount value={row.layers.public} /></td>
+                    <td className="px-2 py-2 text-right whitespace-nowrap"><TableAmount value={row.layers.retirement} /></td>
+                    <td className="px-2 py-2 text-right whitespace-nowrap"><TableAmount value={row.layers.private} /></td>
+                    <td className="px-2 py-2 text-right whitespace-nowrap"><TableAmount value={row.layers.dividend} /></td>
+                    <td className="px-2 py-2 text-right font-semibold whitespace-nowrap"><TableAmount value={row.total} /></td>
+                    <td className={`py-2 pl-2 text-right whitespace-nowrap ${row.shortfall > 0 ? "text-ink" : "text-zinc-500 dark:text-zinc-400"}`}>
+                      {row.shortfall > 0 ? <TableAmount value={row.shortfall} /> : "-"}
                     </td>
                   </tr>
                 ))}
@@ -355,5 +355,15 @@ export function RetirementGoalSection({
       )}
       {dialog}
     </SectionCard>
+  );
+}
+
+/** 표 금액: 폰 폭에서는 만원 단위(요약 표기), sm 이상에서는 원 단위 전체. */
+function TableAmount({ value }: { value: number }) {
+  return (
+    <>
+      <span className="sm:hidden">{formatKRW(value)}</span>
+      <span className="hidden sm:inline">{formatKRWFull(value)}</span>
+    </>
   );
 }

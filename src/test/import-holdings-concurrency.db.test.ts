@@ -1,6 +1,6 @@
 // 동시 요청 통합 테스트 — 실제 Postgres에서 두 요청을 동시에 보내 원자성을 확인한다.
 //   1) POST /api/import: 같은 파일을 동시에 두 번 가져와도(더블 클릭) 매수·매도·배당·수량·원가가 한 번만 반영된다.
-//   2) PATCH /api/holdings: 평단가만 고칠 때 읽어 둔 수량을 되쓰지 않아, 동시에 들어온 매도를 되돌리지 않는다.
+//   2) PATCH /api/holdings: 평균단가만 고칠 때 읽어 둔 수량을 되쓰지 않아, 동시에 들어온 매도를 되돌리지 않는다.
 // 경쟁을 확실히 만들려고 별도 연결에서 대상(행/테이블)을 먼저 잠가 두고, 요청들이 모두 잠금을 기다리는 것을
 // pg_stat_activity 로 확인한 뒤 잠금을 푼다 (두 요청의 중복 검사·읽기가 모두 앞 요청 커밋 전에 끝난 최악의 순서).
 // TEST_DATABASE_URL이 없으면 전체를 건너뛴다. 실행: scripts/verify-snapshot-db.sh
@@ -235,17 +235,17 @@ async function holdingState() {
   return { shares: Number(h.shares), totalCost: Number(cb?.total_cost ?? 0), totalShares: Number(cb?.total_shares ?? 0), sold: Number(s.sold) };
 }
 
-test("평단가 편집이 동시에 들어온 매도를 되돌리지 않는다 (매도가 먼저 반영된 뒤 평단가 편집)", { skip }, async () => {
+test("평균단가 편집이 동시에 들어온 매도를 되돌리지 않는다 (매도가 먼저 반영된 뒤 평균단가 편집)", { skip }, async () => {
   assert.equal((await importItems([buyItem("2026-01-05", 10, 1000)])).status, 200);
 
   const responses = await raceBehindLock(LOCK_HOLDING_ROW(), [() => sell(3), () => patchHolding({ avg_price: 1500 })]);
   assert.deepEqual(responses.map((r) => r.status), [200, 200]);
 
-  // 매도 3주 반영(보유 7) 위에 평단가 1500 → 원가 7 × 1500
+  // 매도 3주 반영(보유 7) 위에 평균단가 1500 → 원가 7 × 1500
   assert.deepEqual(await holdingState(), { shares: 7, totalCost: 10_500, totalShares: 7, sold: 3 });
 });
 
-test("평단가 편집이 먼저 반영되고 매도가 뒤따라도 결과가 같다", { skip }, async () => {
+test("평균단가 편집이 먼저 반영되고 매도가 뒤따라도 결과가 같다", { skip }, async () => {
   assert.equal((await importItems([buyItem("2026-01-05", 10, 1000)])).status, 200);
 
   const responses = await raceBehindLock(LOCK_HOLDING_ROW(), [() => patchHolding({ avg_price: 1500 }), () => sell(3)]);
@@ -254,7 +254,7 @@ test("평단가 편집이 먼저 반영되고 매도가 뒤따라도 결과가 �
   assert.deepEqual(await holdingState(), { shares: 7, totalCost: 10_500, totalShares: 7, sold: 3 });
 });
 
-test("수량과 평단가를 함께 지정하는 편집은 절대값 그대로 (last-write-wins 유지)", { skip }, async () => {
+test("수량과 평균단가를 함께 지정하는 편집은 절대값 그대로 (last-write-wins 유지)", { skip }, async () => {
   assert.equal((await importItems([buyItem("2026-01-05", 10, 1000)])).status, 200);
 
   const response = await patchHolding({ shares: 4, avg_price: 2000 });
@@ -265,12 +265,12 @@ test("수량과 평단가를 함께 지정하는 편집은 절대값 그대로 (
   assert.deepEqual(await holdingState(), { shares: 0, totalCost: 0, totalShares: 0, sold: 0 });
 });
 
-test("PATCH: 평단가만 보내는 편집은 수량을 건드리지 않고 원가만 바꾼다, 수량 0이면 원가를 지운다", { skip }, async () => {
+test("PATCH: 평균단가만 보내는 편집은 수량을 건드리지 않고 원가만 바꾼다, 수량 0이면 원가를 지운다", { skip }, async () => {
   assert.equal((await importItems([buyItem("2026-01-05", 10, 1000)])).status, 200);
   assert.equal((await patchHolding({ avg_price: 1234 })).status, 200);
   assert.deepEqual(await holdingState(), { shares: 10, totalCost: 12_340, totalShares: 10, sold: 0 });
 
-  assert.equal((await patchHolding({ avg_price: 0 })).status, 400, "수량이 있으면 평단가 0 불가");
+  assert.equal((await patchHolding({ avg_price: 0 })).status, 400, "수량이 있으면 평균단가 0 불가");
   assert.deepEqual(await holdingState(), { shares: 10, totalCost: 12_340, totalShares: 10, sold: 0 });
 
   assert.equal((await patchHolding({ shares: 0 })).status, 200);

@@ -113,7 +113,15 @@ export function TelegramLinkSection() {
     }
   };
 
-  if (!status) return null;
+  // 불러오는 동안에도 섹션 자리를 잡아 둔다(설정 화면 CLS)
+  if (!status) {
+    return (
+      <section aria-busy="true" className="min-h-44 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+        <h2 className="text-sm font-semibold">텔레그램 연결</h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">불러오는 중입니다.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
@@ -137,7 +145,7 @@ export function TelegramLinkSection() {
         </p>
       )}
 
-      <Link href="/guide/telegram" className="inline-block text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+      <Link href="/guide/telegram" className="inline-flex min-h-11 items-center text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
         연결 방법 안내
       </Link>
 
@@ -184,7 +192,7 @@ export function TelegramLinkSection() {
           type="button"
           onClick={issue}
           disabled={busy}
-          className="flex-1 h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors disabled:opacity-60"
+          className="flex-1 h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft transition-colors disabled:opacity-60 dark:border-zinc-700"
         >
           {status.linked ? "다른 채팅으로 다시 연결" : issued ? "새 코드 발급" : "연결 코드 발급"}
         </button>

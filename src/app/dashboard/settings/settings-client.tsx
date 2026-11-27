@@ -5,7 +5,7 @@ import { InlineError, failureMessage } from "@/components/dashboard/inline-error
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, missingFields } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import type { Profile, Holding } from "@/types";
@@ -38,17 +38,19 @@ interface Props {
   watchlist: WatchlistItem[];
   dividendCalendar: CalendarItem[];
   userId: string;
+  /** Google 계정이 연결돼 있다(이메일은 Google 계정에서 온다) */
+  hasGoogle?: boolean;
 }
 
-export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, dividendCalendar: initialCalendar }: Props) {
+export function SettingsClient({ profile, holdings: initialHoldings, watchlist: initialWatchlist, dividendCalendar: initialCalendar, hasGoogle = false }: Props) {
   const router = useRouter();
   const [holdings, setHoldings] = useState(initialHoldings);
   const [displayName, setDisplayName] = useState(profile?.display_name ?? "");
   const [monthlyBudget, setMonthlyBudget] = useState(
-    profile?.monthly_budget ?? 300000
+    profile?.monthly_budget ?? 0
   );
   const [budgetInput, setBudgetInput] = useState(
-    (profile?.monthly_budget ?? 300000).toLocaleString()
+    profile?.monthly_budget ? profile.monthly_budget.toLocaleString() : ""
   );
   const [saveStatus, setSaveStatus] = useState("");
   const [error, setError] = useState<{ message: string; retry?: () => void } | null>(null);
@@ -151,7 +153,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
   // 종목 추가
   const handleAddHolding = async () => {
-    if (!newCode || !newName || !newSubCategory) return;
+    const lack = missingFields([[Boolean(newCode), "종목코드"], [Boolean(newName), "종목명"], [Boolean(newSubCategory), "세부 분류"]]);
+    if (lack.length) { setError({ message: `${lack.join("·")}을(를) 입력해 주세요.` }); return; }
+    setError(null);
     setIsAdding(true);
 
     try {
@@ -205,8 +209,13 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
     purchases: "모든 매수 기록, 보유수량, 원가 데이터가 초기화됩니다. 이 작업은 되돌릴 수 없습니다.",
     dividends: "모든 배당금 수령 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
   };
+  const DANGER_TITLE: Record<"reset" | "purchases" | "dividends", { title: string; confirmLabel: string }> = {
+    reset: { title: "현재 계좌의 보유 종목을 모두 삭제할까요?", confirmLabel: "보유 종목 모두 삭제" },
+    purchases: { title: "매수 기록을 모두 삭제할까요?", confirmLabel: "매수 기록 모두 삭제" },
+    dividends: { title: "배당 기록을 모두 삭제할까요?", confirmLabel: "배당 기록 모두 삭제" },
+  };
   const handleDangerAction = async (kind: "reset" | "purchases" | "dividends") => {
-    const ok = await confirm({ title: "정말 삭제하시겠습니까?", body: DANGER_TEXT[kind], confirmLabel: "삭제 확정" });
+    const ok = await confirm({ ...DANGER_TITLE[kind], body: DANGER_TEXT[kind] });
     if (!ok) return;
     setError(null);
     try {
@@ -241,7 +250,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const [isAddingCal, setIsAddingCal] = useState(false);
 
   const handleAddCalendar = async () => {
-    if (!calDate || !calStock) return;
+    const lack = missingFields([[Boolean(calDate), "날짜"], [Boolean(calStock), "종목"]]);
+    if (lack.length) { setError({ message: `배당 일정의 ${lack.join("·")}을(를) 입력해 주세요.` }); return; }
+    setError(null);
     setIsAddingCal(true);
     try {
       const res = await fetch("/api/dividend-calendar", {
@@ -278,7 +289,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const [isAddingWl, setIsAddingWl] = useState(false);
 
   const handleAddWatchlist = async () => {
-    if (!wlName.trim()) return;
+    if (!wlName.trim()) { setError({ message: "뉴스 요약을 받을 종목명을 입력해 주세요." }); return; }
+    setError(null);
     setIsAddingWl(true);
     try {
       const res = await fetch("/api/watchlist", {
@@ -327,7 +339,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         <h2 className="text-sm font-semibold">프로필</h2>
 
         <div>
-          <label htmlFor="settings-email" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500">(Google 계정, 변경 불가)</span></label>
+          <label htmlFor="settings-email" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500 dark:text-zinc-400">({hasGoogle ? "Google 계정 이메일, 변경 불가" : "로그인 아이디, 변경 불가"})</span></label>
           <input
             id="settings-email"
             type="text"
@@ -349,7 +361,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         </div>
 
         <div>
-          <label htmlFor="settings-field-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">월 투자금액 (원)</label>
+          <label htmlFor="settings-field-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">월 적립금 (원)</label>
           <input id="settings-field-2"
             type="text"
             inputMode="numeric"
@@ -366,7 +378,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         <button
           onClick={saveProfile}
-          className="w-full h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors"
+          className="w-full h-11 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors"
         >
           프로필 저장
         </button>
@@ -418,7 +430,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             </div>
             <button
               onClick={() => setShowAdd(!showAdd)}
-              className="border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-card transition-colors"
+              className="border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-card transition-colors dark:text-indigo-300"
             >
               {showAdd ? "닫기" : "+ 새 종목"}
             </button>
@@ -450,7 +462,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 />
               </div>
               <div>
-                <label htmlFor="settings-field-5" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">대분류</label>
+                <label htmlFor="settings-field-5" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">자산군</label>
                 <select id="settings-field-5"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
@@ -490,8 +502,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             </div>
             <button
               onClick={handleAddHolding}
-              disabled={!newCode || !newName || !newSubCategory || isAdding}
-              className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+              disabled={isAdding}
+              className="w-full h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
             >
               {isAdding ? "추가 중..." : "종목 추가"}
             </button>
@@ -535,7 +547,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 감정분석 종목 watchlist */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">감정분석 종목 ({watchlist.length})</h2>
+          <h2 className="text-sm font-semibold">뉴스 요약 받을 종목 ({watchlist.length})</h2>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
         </div>
 
@@ -546,7 +558,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="text"
               value={wlName}
               onChange={(e) => setWlName(e.target.value)}
-              aria-label="감정분석 종목명"
+              aria-label="뉴스 요약 받을 종목명"
               placeholder="종목명 (예: 삼성전자, SCHD ETF)"
               className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
@@ -572,8 +584,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             />
             <button
               onClick={handleAddWatchlist}
-              disabled={!wlName.trim() || isAddingWl}
-              className="h-9 px-4 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+              disabled={isAddingWl}
+              className="h-11 px-4 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
             >
               {isAddingWl ? "..." : "+ 추가"}
             </button>
@@ -582,7 +594,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 종목 리스트 */}
         {watchlist.length === 0 ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">감정분석할 종목을 추가해 주세요.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">뉴스 요약을 받을 종목을 추가해 주세요.</p>
         ) : (
           <ul className="space-y-1.5">
             {watchlist.map((w) => (
@@ -597,7 +609,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 <button
                   type="button"
                   onClick={() => handleDeleteWatchlist(w.id)}
-                  aria-label={`${w.name} 감정분석 종목 삭제`}
+                  aria-label={`${w.name} 뉴스 요약 종목 삭제`}
                   className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                 >
                   <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
@@ -658,8 +670,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           </div>
           <button
             onClick={handleAddCalendar}
-            disabled={!calDate || !calStock || isAddingCal}
-            className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+            disabled={isAddingCal}
+            className="w-full h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
           >
             {isAddingCal ? "..." : "+ 추가"}
           </button>
@@ -797,7 +809,7 @@ function HoldingSettingCard({
           <div>
             <p className="text-sm font-semibold"><span aria-hidden="true" className="dot-bg mr-1.5 inline-block h-2 w-2 shrink-0 align-middle" style={{"--dot-bg": getCategoryColor(h.category) } as CSSProperties} />{h.name}</p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-              {h.code} · {h.category}/{h.sub_category} · {h.shares}주 보유
+              {h.code} · {h.category}/{h.sub_category} · {Number(h.shares).toLocaleString()}주 보유
             </p>
           </div>
           {h.shares === 0 && (
@@ -839,7 +851,7 @@ function HoldingSettingCard({
             />
           </div>
           <div>
-            <label htmlFor={`holding-${h.id}-target`} className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">목표비중 (%)</label>
+            <label htmlFor={`holding-${h.id}-target`} className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">목표 비중 (%)</label>
             <input id={`holding-${h.id}-target`}
               type="number"
               step="0.5"

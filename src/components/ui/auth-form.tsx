@@ -16,7 +16,7 @@ interface AuthFormProps {
 }
 
 const inputClass =
-  "h-12 w-full border border-zinc-300 bg-white px-3.5 text-base text-ink placeholder:text-zinc-500 transition-colors focus:border-indigo-500 focus:outline-2 focus:outline-offset-0 focus:outline-indigo-500 aria-invalid:border-red-600 dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:placeholder:text-zinc-400";
+  "h-12 w-full border border-zinc-300 bg-white px-3.5 text-base text-ink placeholder:text-zinc-500 transition-colors focus:border-indigo-500 focus:outline-2 focus:outline-offset-0 focus:outline-indigo-500 aria-invalid:border-danger dark:border-zinc-700 dark:bg-zinc-950 dark:text-white dark:placeholder:text-zinc-400";
 const labelClass = "block text-sm font-semibold text-ink dark:text-zinc-200";
 
 function PasswordField({
@@ -28,6 +28,7 @@ function PasswordField({
   placeholder,
   hint,
   invalid,
+  describedBy,
 }: {
   id: string;
   label: string;
@@ -37,6 +38,7 @@ function PasswordField({
   placeholder?: string;
   hint?: { id: string; text: string; tone?: "error" };
   invalid?: boolean;
+  describedBy?: string;
 }) {
   const [visible, setVisible] = useState(false);
   return (
@@ -54,7 +56,7 @@ function PasswordField({
           autoComplete={autoComplete}
           required
           minLength={MIN_PASSWORD_LENGTH}
-          aria-describedby={hint?.id}
+          aria-describedby={[hint?.id, describedBy].filter(Boolean).join(" ") || undefined}
           aria-invalid={invalid || undefined}
           className={`${inputClass} pr-16`}
         />
@@ -74,7 +76,7 @@ function PasswordField({
           id={hint.id}
           className={
             hint.tone === "error"
-              ? "text-sm font-medium text-red-700 dark:text-red-400"
+              ? "text-sm font-medium text-danger"
               : "text-sm text-zinc-600 dark:text-zinc-400"
           }
         >
@@ -91,7 +93,6 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [rememberEmail, setRememberEmail] = useState(false);
   const [error, setError] = useState(initialError ?? "");
-  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const errorRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -148,11 +149,10 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
         } else {
           localStorage.removeItem(SAVED_EMAIL_KEY);
         }
-        navigating = true;
-        router.push("/dashboard");
-      } else {
-        setSuccess(true);
       }
+      // 가입 API도 로그인과 같은 세션 쿠키를 준다(src/app/api/auth/signup) — 앱처럼 가입 즉시 홈으로 간다.
+      navigating = true;
+      router.push("/dashboard");
     } catch {
       showError(NETWORK_ERROR);
     } finally {
@@ -160,23 +160,6 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
       if (!navigating) setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <AuthShell>
-        <h1 className="text-2xl font-bold tracking-tight text-dark-header dark:text-white">가입 완료</h1>
-        <p className="mt-3 text-base leading-7 text-ink break-keep dark:text-zinc-300">
-          계정이 만들어졌습니다. 가입한 이메일과 비밀번호로 로그인해 주세요.
-        </p>
-        <Link
-          href="/login"
-          className="mt-6 flex h-12 w-full items-center justify-center bg-indigo-500 text-base font-bold text-white transition-colors hover:bg-indigo-600"
-        >
-          로그인하기
-        </Link>
-      </AuthShell>
-    );
-  }
 
   return (
     <AuthShell>
@@ -198,6 +181,8 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@example.com"
             required
+            aria-invalid={(isLogin && Boolean(error)) || undefined}
+            aria-describedby={error ? "auth-error" : undefined}
             className={inputClass}
           />
         </div>
@@ -209,6 +194,8 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
           onChange={setPassword}
           autoComplete={isLogin ? "current-password" : "new-password"}
           hint={isLogin ? undefined : { id: "password-hint", text: `${MIN_PASSWORD_LENGTH}자 이상 입력해 주세요.` }}
+          invalid={isLogin && Boolean(error)}
+          describedBy={isLogin && error ? "auth-error" : undefined}
         />
 
         {!isLogin && (
@@ -239,11 +226,15 @@ export function AuthForm({ mode, initialError }: AuthFormProps) {
         {error && (
           <div
             ref={errorRef}
+            id="auth-error"
             role="alert"
             tabIndex={-1}
-            className="border border-red-300 bg-red-50 px-3.5 py-3 text-sm font-medium leading-6 text-red-800 break-keep focus:outline-2 focus:outline-offset-2 focus:outline-red-600 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300"
+            className="flex gap-2 border border-danger-line bg-danger-soft px-3.5 py-3 text-sm font-medium leading-6 text-danger break-keep focus:outline-2 focus:outline-offset-2 focus:outline-danger"
           >
-            {error}
+            <svg aria-hidden="true" className="mt-1 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            <span>{error}</span>
           </div>
         )}
 
@@ -303,7 +294,7 @@ function AuthShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-1 flex-col bg-background dark:bg-zinc-950">
       <header className="bg-dark-header text-white">
         <div className="mx-auto flex h-16 max-w-280 items-center px-4 sm:px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight">
+          <Link href="/" className="inline-flex min-h-11 items-center text-lg font-bold tracking-tight">
             가족연금계획
           </Link>
         </div>

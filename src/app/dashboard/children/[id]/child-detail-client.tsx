@@ -8,7 +8,7 @@ import { GiftTaxGuide } from "@/components/gift/gift-tax-guide";
 import { presentValueOfInstallments } from "@/lib/gift-tax";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { failureMessage } from "@/components/dashboard/inline-error";
-import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, cn, missingFields } from "@/lib/utils";
 
 interface Props {
   child: ChildRow;
@@ -98,7 +98,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
             className={cn(
               "flex-1 h-9 text-sm font-medium transition-colors",
               tab === key
-                ? "bg-white dark:bg-zinc-900 text-indigo-500 shadow-sm"
+                ? "bg-white dark:bg-zinc-900 text-indigo-500 shadow-sm dark:text-indigo-300"
                 : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
             )}
           >
@@ -151,7 +151,8 @@ function GiftsTab({
 
   const handleAdd = async () => {
     const amt = parseInt(amount.replace(/[^0-9]/g, ""), 10);
-    if (!date || !amt) return;
+    const lack = missingFields([[Boolean(date), "날짜"], [Boolean(amt), "금액"]]);
+    if (lack.length) { setError(`${lack.join("·")}을(를) 입력해 주세요.`); return; }
     setIsAdding(true);
     setError("");
     try {
@@ -219,7 +220,7 @@ function GiftsTab({
             className={cn(
               "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "lump"
-                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
                 : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
@@ -230,7 +231,7 @@ function GiftsTab({
             className={cn(
               "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "installment"
-                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
                 : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
@@ -382,7 +383,7 @@ function GiftsTab({
                 </div>
 
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  참고 사이트처럼 계약서·평가명세서 생성에 필요한 핵심값을 한 화면에서 확인하도록 구성했습니다. 개인정보가 들어가는 실제 서류 출력 기능은 별도 동의/보안 설계 후 추가하는 것이 안전합니다.
+                  증여계약서와 유기정기금 평가명세서에 옮겨 적을 값입니다. 할인평가액은 참고용 추정치이니 신고 전 홈택스 자동계산 결과와 맞는지 확인하세요.
                 </p>
               </div>
             )}
@@ -392,7 +393,7 @@ function GiftsTab({
         {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
-          disabled={!date || !amount || isAdding}
+          disabled={isAdding}
           className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "입금 기록 추가"}
@@ -438,7 +439,7 @@ function GiftsTab({
                   {g.memo && ` · ${g.memo}`}
                 </p>
               </div>
-              <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mx-3">
+              <p className="text-sm font-bold text-indigo-600 dark:text-indigo-300 mx-3">
                 {formatKRWFull(g.amount)}
               </p>
               <div className="flex items-center gap-2 shrink-0">
@@ -453,7 +454,7 @@ function GiftsTab({
                       "text-xs px-2 py-1 border transition-colors",
                       g.reported
                         ? "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
-                        : "border-indigo-200 dark:border-indigo-800 text-indigo-500"
+                        : "border-indigo-200 dark:border-indigo-800 text-indigo-500 dark:text-indigo-300"
                     )}
                   >
                     {g.reported ? "신고취소" : "신고완료"}
@@ -497,7 +498,8 @@ function HoldingsTab({
   const { confirm, dialog } = useConfirmDialog();
 
   const handleAdd = async () => {
-    if (!code.trim() || !name.trim()) return;
+    const lack = missingFields([[Boolean(code.trim()), "종목코드"], [Boolean(name.trim()), "종목명"]]);
+    if (lack.length) { setError(`${lack.join("·")}을(를) 입력해 주세요.`); return; }
     setIsAdding(true);
     setError("");
     try {
@@ -590,7 +592,7 @@ function HoldingsTab({
         {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
-          disabled={!code.trim() || !name.trim() || isAdding}
+          disabled={isAdding}
           className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "종목 추가"}
@@ -612,13 +614,13 @@ function HoldingsTab({
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{h.name}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.code} · {h.shares}주</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.code} · {Number(h.shares).toLocaleString()}주</p>
                 </div>
                 <div className="text-right mx-3">
                   <p className="text-sm font-semibold">{formatKRW(currentValue)}</p>
                   {costValue > 0 && (
                     <p className={cn("text-xs tabular-nums", pnlTextClass(pnl))}>
-                      {formatSignedKRW(pnl)}
+                      {formatPnlKRW(pnl)}
                     </p>
                   )}
                 </div>

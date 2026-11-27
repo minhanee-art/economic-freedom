@@ -46,7 +46,7 @@ export default function DashboardLayout({
   const [isAccountSaving, setIsAccountSaving] = useState(false);
   const [isAddingAccount, setIsAddingAccount] = useState(false);
   const [newAccountName, setNewAccountName] = useState("");
-  const [newAccountOwner, setNewAccountOwner] = useState<PortfolioAccount["owner_type"]>("other");
+  const [newAccountOwner, setNewAccountOwner] = useState<PortfolioAccount["owner_type"]>("self");
   const [accountError, setAccountError] = useState("");
 
   const navRef = useRef<HTMLElement>(null);
@@ -165,7 +165,7 @@ export default function DashboardLayout({
   const closeAddAccount = () => {
     setIsAddingAccount(false);
     setNewAccountName("");
-    setNewAccountOwner("other");
+    setNewAccountOwner("self");
     setAccountError("");
     addAccountButtonRef.current?.focus();
   };
@@ -191,7 +191,7 @@ export default function DashboardLayout({
       setActiveAccountId(data.account.id);
       setIsAddingAccount(false);
       setNewAccountName("");
-      setNewAccountOwner("other");
+      setNewAccountOwner("self");
       router.refresh();
     } catch (err) {
       const reason = (err as Error).message;
@@ -307,7 +307,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-full flex-col pb-bottom-nav lg:pb-0">
+    <div className="flex min-h-dvh flex-col pb-bottom-nav lg:pb-0">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-70 focus:bg-surface focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-float focus:outline-none focus:ring-2 focus:ring-brand"
@@ -324,7 +324,7 @@ export default function DashboardLayout({
             prefetch
             onClick={() => handleRouteIntent("/dashboard")}
             onMouseEnter={() => prefetchRoute("/dashboard")}
-            className={cn("shrink-0 whitespace-nowrap text-base font-bold tracking-tight sm:text-lg", focusRing)}
+            className={cn("inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-base font-bold tracking-tight sm:text-lg", focusRing)}
           >
             가족연금계획
           </Link>
@@ -333,11 +333,11 @@ export default function DashboardLayout({
             {dashboardNavGroups.map(renderGroup)}
           </nav>
 
-          <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             {/* 계좌 선택: 불러오는 동안에도 같은 크기의 자리를 잡아 헤더가 밀리지 않게 한다 */}
-            <div className="relative flex h-11 w-30 shrink-0 items-center gap-1 border border-white/10 bg-white/10 p-1 sm:w-44">
+            <div className="relative flex h-11 w-34 shrink-0 items-center gap-2 min-[375px]:w-40 sm:w-48">
               {accounts === null ? (
-                <span aria-hidden="true" className="h-8 flex-1 animate-pulse bg-white/10" />
+                <span aria-hidden="true" className="h-11 flex-1 animate-pulse bg-white/10" />
               ) : accounts.length > 0 ? (
                 <>
                   <select
@@ -345,7 +345,7 @@ export default function DashboardLayout({
                     onChange={(event) => switchAccount(event.target.value)}
                     disabled={isAccountSaving}
                     className={cn(
-                      "h-9 min-w-0 flex-1 truncate bg-transparent px-1 text-xs font-bold text-white disabled:opacity-60 sm:px-2 [&_option]:bg-zinc-900",
+                      "h-11 min-w-0 flex-1 truncate border border-white/10 bg-white/10 px-1.5 text-base font-semibold text-white disabled:opacity-60 sm:px-2 [&_option]:bg-zinc-900",
                       focusRing
                     )}
                     aria-label="관리 계좌 선택"
@@ -362,7 +362,7 @@ export default function DashboardLayout({
                     aria-expanded={isAddingAccount}
                     aria-controls={`${formId}-add-account`}
                     className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center border border-white/10 text-white transition-colors hover:bg-white/10 disabled:opacity-60",
+                      "flex h-11 w-11 shrink-0 items-center justify-center border border-white/10 bg-white/10 text-white transition-colors hover:bg-white/10 disabled:opacity-60",
                       focusRing
                     )}
                     aria-label="계좌 추가"
@@ -379,7 +379,7 @@ export default function DashboardLayout({
                   ref={addAccountRef}
                   id={`${formId}-add-account`}
                   onKeyDown={(event) => closeOnEscape(event, closeAddAccount)}
-                  className="absolute right-0 top-full z-50 mt-2 w-popover border border-hairline bg-surface p-4 text-ink shadow-float dark:border-zinc-800"
+                  className="fixed inset-x-3 top-18 z-50 w-auto border border-hairline sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-popover bg-surface p-4 text-ink shadow-float dark:border-zinc-800"
                 >
                   <form onSubmit={addAccount} className="space-y-3" aria-label="계좌 추가">
                     <div>
@@ -393,7 +393,7 @@ export default function DashboardLayout({
                         onChange={(event) => setNewAccountName(event.target.value)}
                         placeholder="예: 아빠, 아내 IRP, 첫째"
                         maxLength={40}
-                        className="h-11 w-full border border-hairline bg-surface px-3 text-base text-ink placeholder:text-zinc-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700 sm:text-sm"
+                        className="h-11 w-full border border-hairline bg-surface px-3 text-base text-ink placeholder:text-ink-mute focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700"
                       />
                     </div>
                     <div>
@@ -404,7 +404,7 @@ export default function DashboardLayout({
                         id={`${formId}-owner`}
                         value={newAccountOwner}
                         onChange={(event) => setNewAccountOwner(event.target.value as PortfolioAccount["owner_type"])}
-                        className="h-11 w-full border border-hairline bg-surface px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700"
+                        className="h-11 w-full border border-hairline bg-surface px-2 text-base text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700"
                       >
                         {OWNER_OPTIONS.map((option) => (
                           <option key={option.value} value={option.value}>{option.label}</option>
@@ -456,17 +456,25 @@ export default function DashboardLayout({
               ref={mobileMenuButtonRef}
               type="button"
               onClick={() => setIsMobileMenuOpen((open) => !open)}
+              onKeyDown={(event) => {
+                // 메뉴가 열린 채 초점이 이 버튼에 있어도 Esc 로 닫힌다
+                if (event.key === "Escape" && isMobileMenuOpen) {
+                  event.preventDefault();
+                  setIsMobileMenuOpen(false);
+                }
+              }}
               aria-expanded={isMobileMenuOpen}
               aria-controls="dashboard-mobile-menu"
               className={cn(
-                "inline-flex h-11 shrink-0 items-center gap-1.5 border border-white/10 px-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 lg:hidden",
+                "inline-flex h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 border border-white/10 px-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 lg:hidden",
                 focusRing
               )}
             >
               <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
               </svg>
-              메뉴
+              {/* 폰 폭에서는 아이콘만 보여 계좌 선택 칸에 자리를 준다(이름은 그대로 '메뉴') */}
+              <span className="sr-only sm:not-sr-only">메뉴</span>
             </button>
           </div>
         </div>
@@ -530,7 +538,7 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="flex-1 bg-canvas-soft focus:outline-none dark:bg-zinc-950">
+      <main id="main-content" tabIndex={-1} className="min-h-dvh flex-1 bg-canvas-soft focus:outline-none dark:bg-zinc-950">
         <div className="mx-auto max-w-280 px-4 py-5 sm:px-6 md:py-7">
           {children}
         </div>

@@ -7,22 +7,22 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
   return (
     <header className="bg-dark-header text-white">
       <div className="mx-auto flex h-16 max-w-280 items-center justify-between gap-3 px-4 sm:px-6">
-        <Link href="/" className="text-lg font-bold tracking-tight">
+        <Link href="/" className="inline-flex min-h-11 items-center text-lg font-bold tracking-tight">
           가족연금계획
         </Link>
         {showAuth && (
           <nav aria-label="계정" className="flex items-center gap-2">
             <Link
               href="/login"
-              className="inline-flex h-10 items-center px-3 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+              className="inline-flex h-11 items-center px-3 text-sm font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white"
             >
               로그인
             </Link>
             <Link
               href="/signup"
-              className="inline-flex h-10 items-center bg-white px-4 text-sm font-bold text-dark-header transition-colors hover:bg-indigo-50"
+              className="inline-flex h-11 items-center bg-white px-4 text-sm font-bold text-dark-header transition-colors hover:bg-indigo-50"
             >
-              계정 만들기
+              회원가입
             </Link>
           </nav>
         )}
@@ -38,14 +38,14 @@ export function SiteFooter() {
         <p className="max-w-prose leading-6 text-zinc-600 break-keep dark:text-zinc-400">
           가족연금계획은 사용자가 입력한 기록을 계산해 보여주는 도구이며 투자 자문이나 매매 권유를 하지 않습니다. 세금·수익 계산은 참고용입니다.
         </p>
-        <nav aria-label="안내 문서" className="flex flex-wrap gap-x-5 gap-y-2">
-          <Link href="/privacy" className="font-semibold text-ink underline-offset-4 hover:underline dark:text-zinc-200">
+        <nav aria-label="안내 문서" className="flex flex-wrap gap-x-5">
+          <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold text-ink underline-offset-4 hover:underline dark:text-zinc-200">
             개인정보처리방침
           </Link>
-          <Link href="/account-deletion" className="font-semibold text-ink underline-offset-4 hover:underline dark:text-zinc-200">
+          <Link href="/account-deletion" className="inline-flex min-h-11 items-center font-semibold text-ink underline-offset-4 hover:underline dark:text-zinc-200">
             계정 및 데이터 삭제
           </Link>
-          <Link href="/guide/telegram" className="font-semibold text-ink underline-offset-4 hover:underline dark:text-zinc-200">
+          <Link href="/guide/telegram" className="inline-flex min-h-11 items-center font-semibold text-ink underline-offset-4 hover:underline dark:text-zinc-200">
             텔레그램 연결 방법
           </Link>
         </nav>

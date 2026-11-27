@@ -27,8 +27,17 @@ const LEGEND: { tone: HeatmapTone; label: string }[] = [
   { tone: "gain-strong", label: "+10% 이상" },
 ];
 
-// 이 비중 미만이면 타일 안에는 글자를 넣지 않고 아래 목록으로 보여준다
+// 이 비중 미만이거나 칸이 좁으면 타일 안에는 글자를 넣지 않고 아래 목록으로 보여준다
 const LABEL_MIN_SHARE = 6;
+// 칸 높이·너비(전체 대비 %)가 이보다 작으면 두 줄 글자가 칸 밖으로 넘친다(높이 12rem 기준)
+const LABEL_MIN_H = 20;
+const LABEL_MIN_W = 14;
+// 종목이 이보다 적으면 면적 비교가 의미 없고, 화면 전체를 덮는 한 가지 색 사각형이 오류처럼 보인다
+const MIN_HOLDINGS = 3;
+
+function fitsLabel(r: { sharePct: number; w: number; h: number }) {
+  return r.sharePct >= LABEL_MIN_SHARE && r.h >= LABEL_MIN_H && r.w >= LABEL_MIN_W;
+}
 
 function pctText(returnPct: number, hasCost: boolean) {
   return hasCost ? formatPercent(returnPct) : "원가 없음";
@@ -36,9 +45,9 @@ function pctText(returnPct: number, hasCost: boolean) {
 
 export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
   const rects = useMemo(() => layoutHeatmap(toHeatmapItems(holdings)), [holdings]);
-  if (rects.length === 0) return null;
+  if (rects.length < MIN_HOLDINGS) return null;
 
-  const small = rects.filter((r) => r.sharePct < LABEL_MIN_SHARE);
+  const small = rects.filter((r) => !fitsLabel(r));
 
   return (
     <section
@@ -50,9 +59,9 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
         <p className="text-xs text-zinc-500 dark:text-zinc-400">면적 = 평가금액 비중 · 색 = 수익률(빨강 상승, 파랑 하락)</p>
       </div>
 
-      <div className="relative h-80 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950 sm:h-96" role="list">
+      <div className="relative h-48 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950 sm:h-56" role="list">
         {rects.map((r) => {
-          const showLabel = r.sharePct >= LABEL_MIN_SHARE;
+          const showLabel = fitsLabel(r);
           const text = pctText(r.returnPct, r.hasCost);
           return (
             <div
@@ -65,7 +74,7 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
             >
               {showLabel && (
                 <>
-                  <span className="truncate text-xs font-semibold leading-tight sm:text-sm">{r.name}</span>
+                  <span className="truncate text-xs font-semibold leading-tight sm:text-sm" title={r.name}>{r.name}</span>
                   <span className="truncate text-xs tabular-nums leading-tight">{text}</span>
                 </>
               )}
@@ -83,7 +92,7 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
                   aria-hidden
                   className={`inline-block h-2.5 w-2.5 shrink-0 ${TONE_CLASS[heatmapTone(r.returnPct, r.hasCost)]}`}
                 />
-                <span className="truncate">{r.name}</span>
+                <span className="truncate" title={r.name}>{r.name}</span>
               </span>
               <span className="shrink-0 tabular-nums">
                 {r.sharePct.toFixed(1)}% · {pctText(r.returnPct, r.hasCost)}

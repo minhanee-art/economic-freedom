@@ -27,13 +27,17 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
   const [accountType, setAccountType] = useState<AccountType>("pension_savings");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
+  const [nameMissing, setNameMissing] = useState(false);
 
   const changeType = async (account: PlanningAccount, next: AccountType) => {
     setSavingId(account.id);
     setError("");
+    setStatus("");
     try {
       await sendJson(`/api/accounts/${account.id}`, "PATCH", { accountType: next });
       onChange(accounts.map((a) => (a.id === account.id ? { ...a, account_type: next } : a)));
+      setStatus(`${account.name} 계좌의 세제 유형을 저장했습니다: ${ACCOUNT_TYPE_LABELS[next]}`);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -42,7 +46,14 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
   };
 
   const addAccount = async () => {
-    if (!name.trim()) return;
+    setStatus("");
+    // 버튼은 미리 막지 않는다 — 누르면 무엇이 빠졌는지 칸 아래에 알려 준다
+    if (!name.trim()) {
+      setNameMissing(true);
+      document.getElementById("account-type-new-name")?.focus();
+      return;
+    }
+    setNameMissing(false);
     setSavingId("new");
     setError("");
     try {
@@ -52,6 +63,7 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
         { name: name.trim(), ownerType, accountType }
       );
       onChange([...accounts, { ...data.account, value: 0, annual_dividend: 0 }]);
+      setStatus(`${data.account.name} 계좌를 추가했습니다.`);
       setName("");
     } catch (err) {
       setError((err as Error).message);
@@ -94,7 +106,23 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
         <Field label="새 계좌 이름">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="예: 아내 IRP" className={inputClass} />
+          <input
+            id="account-type-new-name"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              if (e.target.value.trim()) setNameMissing(false);
+            }}
+            placeholder="예: 아내 IRP"
+            aria-invalid={nameMissing || undefined}
+            aria-describedby={nameMissing ? "account-type-new-name-error" : undefined}
+            className={inputClass}
+          />
+          {nameMissing && (
+            <p id="account-type-new-name-error" role="alert" className="mt-1 text-xs text-danger">
+              새 계좌 이름을 입력해 주세요.
+            </p>
+          )}
         </Field>
         <Field label="명의">
           <select value={ownerType} onChange={(e) => setOwnerType(e.target.value)} className={inputClass}>
@@ -115,13 +143,14 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
           </select>
         </Field>
         <div className="flex items-end">
-          <button onClick={addAccount} disabled={!name.trim() || savingId === "new"} className={`${primaryButtonClass} w-full`}>
+          <button onClick={addAccount} disabled={savingId === "new"} className={`${primaryButtonClass} w-full`}>
             {savingId === "new" ? "추가 중..." : "계좌 추가"}
           </button>
         </div>
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">새로 만든 계좌는 상단 계좌 선택에서 현재 계좌로 바뀝니다.</p>
       {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
+      <p role="status" className="min-h-5 text-xs text-success">{status}</p>
     </SectionCard>
   );
 }

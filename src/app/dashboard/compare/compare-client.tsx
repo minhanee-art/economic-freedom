@@ -374,7 +374,7 @@ export function CompareClient({ holdings }: Props) {
           )}
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-colors hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
+            className="border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-colors hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700 dark:text-indigo-300"
           >
             {showSearch ? "검색 닫기" : "종목 검색"}
           </button>
@@ -486,7 +486,7 @@ export function CompareClient({ holdings }: Props) {
                   <div
                     key={etf.code}
                     className={cn(
-                      "w-full flex items-center gap-2 px-3 py-2.5 text-left transition-colors",
+                      "w-full flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 text-left transition-colors sm:flex-nowrap",
                       isSel ? "bg-indigo-50 dark:bg-indigo-900/20 opacity-60" : "hover:bg-canvas-soft dark:hover:bg-zinc-800"
                     )}
                   >
@@ -499,7 +499,7 @@ export function CompareClient({ holdings }: Props) {
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium truncate" title={etf.name}>{etf.name}</p>
                         {isMy && (
-                          <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                          <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
                             내 종목
                           </span>
                         )}
@@ -508,7 +508,7 @@ export function CompareClient({ holdings }: Props) {
                         <strong className="font-semibold text-zinc-700 dark:text-zinc-200">{etf.code}</strong> · {etf.category} · 거래량 {fmtVol(etf.volume)}주 · 거래대금 {etf.tradingValue > 0 ? formatKRW(etf.tradingValue) : "-"}
                       </p>
                     </button>
-                    <div className="text-right ml-2 shrink-0">
+                    <div className="text-right shrink-0">
                       <p className="text-sm font-semibold tabular-nums">{formatKRWFull(etf.price)}</p>
                       <p className={cn("text-xs tabular-nums", etf.changePct > 0 ? "text-gain" : etf.changePct < 0 ? "text-loss" : "text-zinc-500 dark:text-zinc-400")}>
                         {etf.changePct > 0 ? "+" : ""}{etf.changePct.toFixed(2)}%
@@ -520,7 +520,7 @@ export function CompareClient({ holdings }: Props) {
                       disabled={isMy || addingCode === etf.code || Boolean(addingCode)}
                       aria-label={isMy ? `${etf.name} 이미 내 종목 목록에 있음` : `${etf.name}을(를) 내 종목 목록에 0주로 추가(주문 아님)`}
                       title="지금 선택한 계좌의 종목 목록에 0주로 추가합니다. 주문은 실행되지 않습니다."
-                      className="inline-flex min-h-10 shrink-0 items-center border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+                      className="inline-flex min-h-11 basis-full shrink-0 items-center justify-center border border-indigo-100 sm:basis-auto bg-indigo-50 px-2.5 text-xs font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
                     >
                       {isMy ? "내 종목에 있음" : addingCode === etf.code ? "추가 중" : "내 종목에 추가"}
                     </button>
@@ -566,7 +566,7 @@ export function CompareClient({ holdings }: Props) {
                   </th>
                   {selected.map((s, i) => (
                     <th scope="col" key={s.code} className="series-fg px-3 py-3 text-right min-w-35" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>
-                      <span className="block text-sm font-extrabold tabular-nums">{s.code}</span>
+                      <span className="block text-sm font-bold tabular-nums">{s.code}</span>
                       <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-normal break-keep">
                         {s.name}
                       </span>
@@ -614,7 +614,7 @@ export function CompareClient({ holdings }: Props) {
                 />
                 <CRow
                   label={COMPARISON_LABELS.shares}
-                  vals={selected.map((s) => s.shares > 0 ? `${s.shares}주` : "-")}
+                  vals={selected.map((s) => s.shares > 0 ? `${s.shares.toLocaleString()}주` : "-")}
                 />
               </tbody>
             </table>
@@ -638,7 +638,7 @@ export function CompareClient({ holdings }: Props) {
                   <div key={s.code} className="border border-zinc-100 bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="series-fg text-sm font-extrabold tabular-nums" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>{s.code}</p>
+                        <p className="series-fg text-sm font-bold tabular-nums" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>{s.code}</p>
                         <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 truncate">{s.name}</p>
                       </div>
                       <span className="shrink-0 bg-white px-2 py-1 text-xs font-bold text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-300">
@@ -651,7 +651,7 @@ export function CompareClient({ holdings }: Props) {
                           <div key={`${s.code}-${component.code || component.name}`} className="space-y-1">
                             <div className="flex items-center justify-between gap-2 text-xs">
                               <span className="min-w-0 truncate text-zinc-700 dark:text-zinc-300">
-                                <strong className="font-extrabold text-zinc-950 dark:text-white">{component.code || "코드없음"}</strong>
+                                <strong className="font-bold text-zinc-950 dark:text-white">{component.code || "코드없음"}</strong>
                                 <span className="ml-1">{component.name}</span>
                               </span>
                               <span className="shrink-0 font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
@@ -859,7 +859,7 @@ function ChartLegend({ items }: { items: CompareItem[] }) {
       {items.map((item, i) => (
         <div key={item.code} className="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
           <span className="dot-bg h-2.5 w-2.5 shrink-0" style={{ "--dot-bg": SERIES_COLORS[i] } as CSSProperties} />
-          <strong className="shrink-0 font-extrabold tabular-nums text-zinc-950 dark:text-white">{item.code}</strong>
+          <strong className="shrink-0 font-bold tabular-nums text-zinc-950 dark:text-white">{item.code}</strong>
           <span className="max-w-60 whitespace-normal break-keep leading-snug">{item.name}</span>
         </div>
       ))}

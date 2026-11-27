@@ -115,16 +115,17 @@ test("AuthForm 로그인: 저장된 이메일을 불러와 체크 상태로 시�
   assert.equal((screen.getByLabelText("아이디 저장") as HTMLInputElement).checked, true);
 });
 
-test("AuthForm 회원가입: 성공하면 가입 완료 화면을 보여준다", async () => {
+test("AuthForm 회원가입: 성공하면 다시 로그인하지 않고 바로 홈으로 간다", async () => {
   render(<AuthForm mode="signup" />);
   fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "new@b.com" } });
   fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "secret123" } });
   fireEvent.change(screen.getByLabelText("비밀번호 확인"), { target: { value: "secret123" } });
   fireEvent.submit(screen.getByRole("button", { name: "회원가입" }).closest("form") as HTMLFormElement);
 
-  assert.ok(await screen.findByText("가입 완료"));
+  await new Promise((resolve) => setTimeout(resolve, 10));
   assert.equal(fetchCalls[0].url, "/api/auth/signup");
-  assert.deepEqual(router.push, [], "가입은 바로 이동하지 않는다");
+  assert.deepEqual(router.push, ["/dashboard"], "가입 API가 세션 쿠키를 주므로 바로 홈으로");
+  assert.equal(screen.queryByText("가입 완료"), null);
 });
 
 test("AuthForm 로그인: initialError가 있으면 처음부터 안내 문구를 보여준다", () => {

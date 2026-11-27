@@ -25,8 +25,8 @@ colors:
   danger: "#b42318"
   danger-soft: "#fef3f2"
   danger-line: "#fecdca"
-  caution: "#9a3412"
-  caution-soft: "#fff7ed"
+  caution: "#8a5a00"
+  caution-soft: "#fdf6e3"
   success: "#047857"
   chart-target: "#8792a2"
   dark-ink: "#f4f4f5"
@@ -85,6 +85,11 @@ typography:
     fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
     fontSize: 12px
     fontWeight: 500
+    lineHeight: 1.4
+  input:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 16px
+    fontWeight: 400
     lineHeight: 1.4
 
 rounded:
@@ -217,11 +222,13 @@ components:
 | 토큰 | 라이트 | 다크 | 뜻 |
 |---|---|---|---|
 | `danger` / `danger-soft` / `danger-line` | #b42318 / #fef3f2 / #fecdca | #fda29b / #2b1615 / #7a271a | 삭제·오류·되돌릴 수 없는 작업 |
-| `caution` / `caution-soft` | #9a3412 / #fff7ed | #fbbf24 / #2a2010 | 주의: 목표 비중 초과, 예산 초과, 한도 초과, 추정값 |
+| `caution` / `caution-soft` | #8a5a00 / #fdf6e3 | #fbbf24 / #2a2010 | 주의: 목표 비중 초과, 예산 초과, 한도 초과, 추정값 |
 | `success` | #047857 | #6ee7b7 | "저장했습니다" 같은 상태 문구에만. 숫자에는 쓰지 않는다 |
 
 - 위험·오류의 빨강은 손익의 빨강과 색상이 가깝다. 그래서 **위험은 색 하나로 표시하지 않는다**: 테두리(`danger-line`), 선 아이콘, 무엇이 어떻게 되는지 적은 문구, `role="alert"`를 함께 쓴다. 손익 빨강은 언제나 부호가 붙은 숫자에만 나온다.
-- 목표 비중 초과는 손실이 아니다. `caution` 글자 + "초과" 문구로, 부족은 일반 잉크 + "부족" 문구로 표시한다.
+- `caution`은 **호박색**(색상 약 40°)이다. 손익 빨강(`gain`, 약 355°)·위험 빨강(`danger`, 약 4°)과 색상으로 구분되게 고른 값이고, 라이트 #8a5a00은 흰 면 5.9:1, `canvas-soft` 5.6:1, `caution-soft` 5.5:1로 12px 글자 기준을 넘는다. 다크 #fbbf24도 `dark-gain` #ff7b7b와 색상이 다르다.
+- 목표 비중 초과는 손실이 아니다. `caution` 글자 + "초과" 문구로, 부족은 일반 잉크 + "부족" 문구로 표시한다. 차이는 `+`/`-` 부호 대신 말로 적는다: "초과 49.4%p", "부족 3.0%p"(`formatTargetGap`). 부호는 손익에만 쓴다.
+- 은퇴 목표 대비 부족액, 예산 잔액처럼 손익이 아닌 금액은 `ink`로 적고 열 이름이나 "부족" 문구로 뜻을 전한다. 빨강·파랑을 쓰지 않는다.
 - 배당 금액은 수입 기록이지 손익이 아니다. 일반 `ink`, 굵기 600, 고정폭 숫자.
 
 ### 차트 색
@@ -233,6 +240,8 @@ components:
 - 글꼴은 **Pretendard 하나**. 제목·라벨·본문·숫자를 모두 Pretendard로 쓴다. 종목코드·날짜도 고정폭 글꼴 대신 Pretendard + `tabular-nums`.
 - 굵기 규칙: 본문 400, 라벨 500, 소제목·숫자 600, 화면 제목 700. 800/900(`font-black`)은 새로 쓰지 않는다.
 - 최소 글자 크기 12px. 10·11px 토큰(`text-2xs`·`text-3xs`)은 없앴다.
+- 입력칸(input·select·textarea) 글자는 16px(`input` 토큰). iOS 가 포커스 때 화면을 확대하지 않는 크기다. 대시보드는 `globals.css`의 `#main-content` 규칙이 개별 유틸리티보다 우선해 16px·높이 44px을 보장한다.
+- 홈 한 줄 상태의 핵심 숫자(남은 세액공제 한도, 은퇴 시점 예상 월 현금흐름)는 `number-lg` 28px(`text-number-lg`)로 화면에서 가장 큰 숫자다. 총 평가금액은 그 아래 위계(24px).
 - 한글 라벨에 `uppercase`·넓은 자간(`tracking-wide` 등)을 쓰지 않는다. 자간은 제목에서만 -0.01~-0.02em.
 - 숫자 열·금액은 `tabular-nums`. 설명문은 줄높이 1.6 이상(`leading-relaxed`).
 - 한글은 어절 단위로 줄바꿈한다(`word-break: keep-all`, 전역).
@@ -247,7 +256,8 @@ components:
 | 표·목록·입력 옆·기록 상세 | 원 단위 전체 + 천 단위 쉼표 | `162,890,500원` | `formatKRWFull` |
 | 차트 축 눈금 (자리가 아주 좁을 때만) | 짧은 단위, "원" 생략 | `1.6억`, `450만` | `formatKRWAxis` |
 
-- 방향이 있는 금액(손익, 전일 대비)은 양수에 `+`를 붙인다: `formatSignedKRW`. 음수는 `-`.
+- 방향이 있는 금액(손익, 전일 대비)은 양수에 `+`를 붙인다: `formatSignedKRW`. 음수는 `-`. 손익 금액은 앱과 같이 ▲▼를 앞에 함께 쓴다: `formatPnlKRW`(`▲ +10만원`, `▼ -1,663만원`, 보합은 화살표 없음).
+- 원가(매수 기록)가 없으면 손익은 `+0원/+0.00%` 대신 `-`, 값이 0인 설정(월 적립금 등)은 `미설정`으로 쓴다.
 - `₩` 기호는 쓰지 않는다. 단위는 숫자 뒤 "원".
 - 금액 입력칸은 입력 중에도 천 단위 쉼표를 보여 주고(`formatAmountInput`), 저장할 때는 숫자만 보낸다(`parseAmountInput`). 단위 "원"은 칸 안 오른쪽에 둔다.
 - **모바일 앱도 같은 규칙**을 따른다: `mobile/src/utils/format.ts`의 `₩162,890,500` 형식을 위 표에 맞춰 `162,890,500원`(목록·상세)과 `1억 6,289만원`(홈 요약)으로 바꾼다. 반올림은 만원 단위 반올림(`Math.round(abs / 10000)`), 1만원 미만은 원 단위 전체.
@@ -281,6 +291,10 @@ components:
 - **카테고리 표시**: 카드 왼쪽 색 띠 대신 정사각 색 점 + 글자 라벨.
 - **아이콘**: 내비와 같은 1.5~2px 선 아이콘(SVG, `aria-hidden`). 이모지를 아이콘으로 쓰지 않는다.
 - **확인 대화상자**: 브라우저 `confirm()`·`alert()`·`prompt()`를 쓰지 않는다. 삭제 확인은 `useConfirmDialog`(src/components/dashboard/confirm-dialog.tsx) — 제목에 삭제 대상, 본문에 무엇이 함께 지워지는지, 첫 초점은 '취소', Esc·바깥 클릭으로 닫힘. 실패는 `InlineError`(role=alert, 원인 + 다시 시도).
+- **빈 상태**: 화면 제목(h1)은 화면 이름 그대로 두고, "아직 종목이 없습니다" 같은 빈 상태 문구는 그 아래 h2 와 본문으로 쓴다(`NoHoldingsState`의 `pageTitle`).
+- **필수 칸이 빈 제출 버튼**: 입력 전부터 비활성으로 두지 않는다. 요청 중에만 비활성, 누르면 빠진 칸 이름을 알려 준다(`missingFields`).
+- **저장 확인**: 바로 저장되는 선택(계좌 세제 유형 등)과 추가 작업 뒤에는 `role="status"` 한 줄로 무엇이 저장됐는지 알린다.
+- **히트맵**: 종목이 3개 미만이면 그리지 않는다(한 칸짜리 큰 사각형이 오류처럼 보인다). 높이는 폰 12rem·데스크톱 14rem, 칸이 좁으면 이름을 칸 밖 목록으로 옮긴다.
 - **아이콘 버튼**: 보이는 크기와 상관없이 누르는 영역 44×44px, `aria-label`에 대상 이름(예: "2026-11-15 배당 기록 삭제").
 - **표**: `th scope`, 화면 낭독용 `caption`, 가로 스크롤 영역에는 이름과 안내.
 - **차트**: 래퍼에 요약 `aria-label`, 계열 이름은 한글, 목표·보조 계열은 `chart-target` 점선. 동작 줄이기를 켜면 애니메이션을 끈다. recharts 는 `next/dynamic` 으로 지연 로딩.
@@ -308,7 +322,8 @@ components:
 | `gain` (기존 `positive`) | #d01f2e | `gain` |
 | `loss` (기존 `negative`) | #1f5ed6 | `loss` |
 | `danger` | #b42318 | `danger` |
-| `caution` (기존 `warning`) | #9a3412 | `caution` |
+| `caution` (기존 `warning`) | #8a5a00 | `caution` |
+| `cautionSoft` | #fdf6e3 | `caution-soft` |
 | `success` | #047857 | `success` |
 
 - 손익 규칙(빨강 상승·파랑 하락·부호 병기), 금액 표기 규칙, 기록 용어, 탭 구성(홈/자산/배당/연금/설정)은 웹과 앱이 같다.
@@ -346,4 +361,7 @@ components:
 - 기준 폭: 390px(폰), 768px(하단 탭 → 상단 내비 전환은 1024px), 1440px.
 - 320px에서도 가로 넘침이 없어야 한다. 입력 행은 `min-w-0` + 줄바꿈.
 - 고정 헤더·하단 탭이 포커스된 요소를 가리지 않게 `scroll-padding`을 둔다.
-- 터치 대상 44×44px 이상, 대상 사이 8px 이상.
+- 터치 대상 44×44px 이상, 대상 사이 8px 이상. 대시보드는 `globals.css`의 `#main-content` 규칙이 버튼·탭·버튼 모양 링크에 최소 44×44px를 준다(글 속 인라인 링크 제외). 헤더의 계좌 선택·계좌 추가·메뉴도 44px, 서로 8px 간격.
+- 계좌 추가 같은 머리 팝오버는 640px 미만에서 화면 기준(`fixed inset-x-3`)으로 놓아 왼쪽이 잘리지 않게 한다.
+- 넓은 표(연금 설계 나이별 현금흐름)는 셀 좌우 여백 8px, 최소 폭을 주고 가로 스크롤 안내를 단다. 폰 폭에서는 금액을 만원 단위(`formatKRW`)로 줄인다.
+- 늦게 불러오는 영역(홈 한 줄 상태, 설정의 비밀번호·텔레그램, 시세 조회 상태 줄)은 자리를 미리 잡아 레이아웃 이동(CLS)을 0.1 아래로 둔다.

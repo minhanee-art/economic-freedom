@@ -5,8 +5,14 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getHoldings, getCostBases, getProfile, getDividends, getDividendCalendar } from "@/lib/queries";
 import { getOnboardingFacts } from "@/lib/onboarding";
-import { buildOnboardingSteps, isOnboardingComplete, ONBOARDING_HIDDEN_COOKIE } from "@/lib/onboarding-steps";
-import { FirstRunGuide } from "@/components/onboarding/first-run-guide";
+import {
+  buildOnboardingSteps,
+  isOnboardingComplete,
+  ONBOARDING_DONE_SEEN_COOKIE,
+  ONBOARDING_HIDDEN_COOKIE,
+  ONBOARDING_STARTED_COOKIE,
+} from "@/lib/onboarding-steps";
+import { FirstRunComplete, FirstRunGuide } from "@/components/onboarding/first-run-guide";
 import { DashboardClient } from "./dashboard-client";
 
 export const metadata: Metadata = { title: "홈 · 가족연금계획" };
@@ -26,25 +32,34 @@ export default async function DashboardPage() {
     getOnboardingFacts(userId).catch(() => null),
     cookies(),
   ]);
-  const showFirstRunGuide =
-    onboardingFacts !== null &&
-    cookieStore.get(ONBOARDING_HIDDEN_COOKIE)?.value !== "1" &&
-    !isOnboardingComplete(onboardingFacts);
+  const guideHidden = cookieStore.get(ONBOARDING_HIDDEN_COOKIE)?.value === "1";
+  const complete = onboardingFacts !== null && isOnboardingComplete(onboardingFacts);
+  const showFirstRunGuide = onboardingFacts !== null && !guideHidden && !complete;
+  // 진행 중인 안내를 본 적이 있는 사람이 세 단계를 마쳤을 때만 한 번 보여 준다(기존 사용자에게는 나오지 않는다)
+  const showFirstRunComplete =
+    complete &&
+    !guideHidden &&
+    cookieStore.get(ONBOARDING_STARTED_COOKIE)?.value === "1" &&
+    cookieStore.get(ONBOARDING_DONE_SEEN_COOKIE)?.value !== "1";
 
   const totalDividend = dividends.reduce((s, d) => s + Number(d.amount), 0);
 
   return (
-    <div className="space-y-5 md:space-y-6">
-      {showFirstRunGuide && onboardingFacts && <FirstRunGuide steps={buildOnboardingSteps(onboardingFacts)} />}
-      <DashboardClient
+    <DashboardClient
+        firstRun={
+          showFirstRunGuide && onboardingFacts ? (
+            <FirstRunGuide steps={buildOnboardingSteps(onboardingFacts)} />
+          ) : showFirstRunComplete ? (
+            <FirstRunComplete />
+          ) : null
+        }
         initialHoldings={holdings}
         initialCostBases={costBases}
-        monthlyBudget={profile?.monthly_budget ?? 300000}
+        monthlyBudget={profile?.monthly_budget ?? 0}
         totalDividend={totalDividend}
         dividendRecords={dividends.map((d) => ({ date: d.date, amount: Number(d.amount) }))}
         lastPriceUpdate={profile?.last_price_update ?? null}
         dividendCalendar={dividendCalendar}
       />
-    </div>
   );
 }

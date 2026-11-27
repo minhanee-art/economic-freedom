@@ -87,8 +87,19 @@ test("히트맵: 평가금액이 있는 종목이 없으면 렌더하지 않는�
 test("히트맵: 원가가 없으면 수익률 대신 '원가 없음'", () => {
   render(
     <HoldingsHeatmap
-      holdings={[make({ id: "n", name: "원가없음", current_value: 100, total_cost: 0, profit_loss_pct: 0 })]}
+      holdings={[
+        make({ id: "n", name: "원가없음", current_value: 100, total_cost: 0, profit_loss_pct: 0 }),
+        make({ id: "a", name: "가", current_value: 100 }),
+        make({ id: "b", name: "나", current_value: 100 }),
+      ]}
     />
   );
   assert.ok(screen.getByText("원가 없음"));
+});
+
+test("히트맵: 종목이 3개 미만이면 그리지 않는다(한 칸짜리 사각형이 오류처럼 보임)", () => {
+  const { container } = render(
+    <HoldingsHeatmap holdings={[make({ id: "a", current_value: 100 }), make({ id: "b", current_value: 50 })]} />
+  );
+  assert.equal(container.innerHTML, "");
 });

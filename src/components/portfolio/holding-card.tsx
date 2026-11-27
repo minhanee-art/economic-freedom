@@ -3,10 +3,11 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
-import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, cn, formatTargetGap } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
+import { StatusLine } from "@/components/dashboard/status-line";
 
 interface HoldingCardProps {
   holding: HoldingWithPnL;
@@ -161,7 +162,7 @@ export function HoldingCard({
       return;
     }
     if (!Number.isFinite(nextAvgPrice) || nextAvgPrice < 0 || (nextShares > 0 && nextAvgPrice <= 0)) {
-      setDetailsStatus("보유수량이 있으면 평단가는 0보다 커야 합니다.");
+      setDetailsStatus("보유수량이 있으면 평균단가는 0보다 커야 합니다.");
       return;
     }
     if (nextCode && !/^[0-9A-Za-z]{1,12}$/.test(nextCode)) {
@@ -258,13 +259,13 @@ export function HoldingCard({
             <div className="flex flex-wrap items-center gap-2">
               <span
                 className={cn(
-                  "inline-flex items-center border px-2.5 py-1 text-sm font-black tabular-nums shadow-card",
+                  "inline-flex items-center border px-2.5 py-1 text-sm font-semibold tabular-nums shadow-card",
                   displayCode
                     ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-200"
                     : "border-danger-line bg-danger-soft text-danger"
                 )}
               >
-                {displayCode ? `티커 ${displayCode}` : "티커 미등록"}
+                {displayCode ? `종목코드 ${displayCode}` : "종목코드 미등록"}
               </span>
               {isCodeInferred && (
                 <span className="border border-caution/30 bg-caution-soft px-2 py-1 text-xs font-bold text-caution">
@@ -272,7 +273,7 @@ export function HoldingCard({
                 </span>
               )}
             </div>
-            <p className="mt-2 break-keep text-base font-black leading-6 text-zinc-950 dark:text-white">
+            <p className="mt-2 break-keep text-base font-semibold leading-6 text-zinc-950 dark:text-white">
               {displayName}
             </p>
             <p className="mt-1 text-xs font-semibold leading-4 text-zinc-500 dark:text-zinc-400">
@@ -284,7 +285,7 @@ export function HoldingCard({
                 value={h.category}
                 onChange={(e) => saveCategory(e.target.value)}
                 disabled={!onHoldingDetailsChange || isSavingCategory}
-                className="h-8 border border-zinc-200 bg-white px-2 text-xs font-black text-zinc-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                className="h-8 border border-zinc-200 bg-white px-2 text-xs font-semibold text-zinc-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
                 aria-label={`${h.name} 테마 변경`}
               >
                 {CATEGORIES.map((category) => (
@@ -299,21 +300,21 @@ export function HoldingCard({
           <div className="sm:text-right">
             <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-              {h.shares}주 × {formatKRWFull(h.current_price)}
+              {Number(h.shares).toLocaleString()}주 × {formatKRWFull(h.current_price)}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">평단가</p>
-            <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
+            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">평균단가</p>
+            <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
               {avgPrice > 0 ? formatKRWFull(avgPrice) : "-"}
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
             <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">수익률</p>
-            <p className={`mt-0.5 text-xs font-black tabular-nums ${
+            <p className={`mt-0.5 text-xs font-semibold tabular-nums ${
               !hasPnL
                 ? "text-zinc-500 dark:text-zinc-400"
                 : pnlTextClass(h.profit_loss_pct)
@@ -323,26 +324,26 @@ export function HoldingCard({
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
             <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">평가손익</p>
-            <p className={`mt-0.5 text-xs font-black tabular-nums ${
+            <p className={`mt-0.5 text-xs font-semibold tabular-nums ${
               !hasPnL
                 ? "text-zinc-500 dark:text-zinc-400"
                 : pnlTextClass(h.profit_loss)
             }`}>
-              {hasPnL ? formatSignedKRW(h.profit_loss) : "-"}
+              {hasPnL ? formatPnlKRW(h.profit_loss) : "-"}
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
             <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">현재가</p>
-            <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
+            <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-800 dark:text-zinc-100">
               {formatKRWFull(h.current_price)}
             </p>
           </div>
         </div>
 
-        {/* 설정 비중 vs 현재 보유 비중 */}
+        {/* 목표 비중 vs 현재 보유 비중 */}
         <div className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950/50">
           <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">내 설정 비중</span>
+            <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">내 목표 비중</span>
             <div className="flex items-center gap-2">
               <input
                 type="number"
@@ -372,7 +373,7 @@ export function HoldingCard({
                   if (e.key === "Enter") e.currentTarget.blur();
                 }}
                 disabled={!onTargetPctChange || isSavingTargetPct}
-                aria-label={`${h.name} 설정 비중`}
+                aria-label={`${h.name} 목표 비중`}
                 className="h-8 w-20 border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums text-ink focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               />
               <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">%</span>
@@ -396,7 +397,7 @@ export function HoldingCard({
             <span className="tabular-nums text-indigo-600 dark:text-indigo-300">{h.actual_pct.toFixed(1)}%</span>
           </div>
           <div className="h-2 overflow-hidden bg-indigo-100 dark:bg-indigo-950">
-            <div className="bar-w h-full bg-indigo-500" style={{"--bar-w": `${actualPct}%` } as CSSProperties} />
+            <div className="bar-w h-full bg-indigo-500 dark:bg-indigo-400" style={{"--bar-w": `${actualPct}%` } as CSSProperties} />
           </div>
         </div>
 
@@ -409,13 +410,13 @@ export function HoldingCard({
           />
           {hasPnL && (
             <Badge
-              label={formatSignedKRW(h.profit_loss)}
-              variant={h.profit_loss >= 0 ? "green" : "red"}
+              label={formatPnlKRW(h.profit_loss)}
+              variant={h.profit_loss > 0 ? "gain" : h.profit_loss < 0 ? "loss" : "default"}
             />
           )}
           {showDiff && (
             <Badge
-              label={`${diff > 0 ? "▲" : "▼"}${Math.abs(diff).toFixed(1)}%p`}
+              label={`목표 ${formatTargetGap(diff)}`}
               variant="amber"
             />
           )}
@@ -461,10 +462,10 @@ export function HoldingCard({
 
           {showDetailsEditor && (
             <div className="mt-3 border border-caution/30 bg-caution-soft p-3">
-              <p className="mb-2 text-xs font-black text-caution">품번 / 상품명 / 수량 / 평단가 정정</p>
+              <p className="mb-2 text-xs font-semibold text-caution">종목코드 / 종목명 / 수량 / 평균단가 정정</p>
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-[120px_1fr_96px_120px_auto] lg:items-end">
                 <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-caution">품번/종목번호</span>
+                  <span className="mb-1 block text-xs font-semibold text-caution">종목코드</span>
                   <input
                     type="text"
                     value={codeDraft}
@@ -502,7 +503,7 @@ export function HoldingCard({
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-xs font-semibold text-caution">평단가</span>
+                  <span className="mb-1 block text-xs font-semibold text-caution">평균단가</span>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -521,18 +522,16 @@ export function HoldingCard({
                   type="button"
                   onClick={saveDetails}
                   disabled={isSavingDetails}
-                  className="col-span-2 h-9 border border-caution/30 bg-caution px-3 text-xs font-black text-white transition-colors hover:bg-caution disabled:opacity-60 lg:col-span-1"
+                  className="col-span-2 h-9 border border-caution/30 bg-caution px-3 text-xs font-semibold text-white transition-colors hover:bg-caution disabled:opacity-60 lg:col-span-1"
                 >
                   {isSavingDetails ? "저장 중" : "정정 저장"}
                 </button>
               </div>
               <p className="mt-2 text-xs leading-5 text-caution">
-                거래내역 전체 재계산이 아니라 현재 표시값과 평단 기준 원가를 정정합니다. 보유수량이 있으면 평단가는 0보다 커야 합니다.
+                거래내역 전체 재계산이 아니라 현재 표시값과 평균단가 기준 원가를 정정합니다. 보유수량이 있으면 평균단가는 0보다 커야 합니다.
               </p>
               {detailsStatus && (
-                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-success" : "text-danger"}`}>
-                  {detailsStatus}
-                </p>
+                <StatusLine className="mt-2" ok={detailsStatus.includes("완료")} message={detailsStatus} />
               )}
             </div>
           )}
@@ -582,18 +581,18 @@ export function HoldingCard({
               <div
                 className="mt-3 border border-hairline bg-canvas-soft p-3 text-xs text-ink"
               >
-                <p className="font-black">목표 비중 계산 (사용자 설정 기준)</p>
+                <p className="font-semibold">목표 비중 계산 (사용자 설정 기준)</p>
                 {!validTradePrice ? (
                   <p className="mt-1">단가를 0보다 큰 숫자로 입력하면 계산 수량이 계산됩니다.</p>
                 ) : tradeAction === "buy" ? (
                   h.target_pct <= 0 ? (
-                    <p className="mt-1">설정 비중이 0%라 계산 매수 수량이 없습니다.</p>
+                    <p className="mt-1">목표 비중이 0%라 계산 매수 수량이 없습니다.</p>
                   ) : h.target_pct >= 100 ? (
-                    <p className="mt-1">설정 비중 100%는 전체 포트폴리오 기준으로 자동 계산할 수 없습니다.</p>
+                    <p className="mt-1">목표 비중 100%는 전체 포트폴리오 기준으로 자동 계산할 수 없습니다.</p>
                   ) : targetBuyQuantity > 0 ? (
                     <>
                       <p className="mt-1 leading-5">
-                        현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetBuyQuantity}주</b>가 필요합니다(계산값).
+                        현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetBuyQuantity.toLocaleString()}주</b>가 필요합니다(계산값).
                       </p>
                       <p className="mt-1 tabular-nums">
                         계산 금액: {targetBuyQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRWFull(targetBuyCost)}</b>
@@ -606,20 +605,20 @@ export function HoldingCard({
                         onClick={() => setTradeQuantity(String(targetBuyQuantity))}
                         className="mt-2 border border-hairline bg-surface px-2.5 py-1.5 font-bold text-ink transition-colors hover:bg-canvas-soft"
                       >
-                        계산 {targetBuyQuantity}주 적용
+                        계산 {targetBuyQuantity.toLocaleString()}주 적용
                       </button>
                     </>
                   ) : (
                     <p className="mt-1">
-                      현재 보유 비중이 설정 비중 이상이라 계산상 필요한 수량이 없습니다.
+                      현재 보유 비중이 목표 비중 이상이라 계산상 필요한 수량이 없습니다.
                     </p>
                   )
                 ) : h.target_pct >= 100 ? (
-                  <p className="mt-1">설정 비중이 100%라 계산 매도 수량이 없습니다.</p>
+                  <p className="mt-1">목표 비중이 100%라 계산 매도 수량이 없습니다.</p>
                 ) : targetSellQuantity > 0 ? (
                   <>
                     <p className="mt-1 leading-5">
-                      현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetSellQuantity}주</b>가 필요합니다(계산값).
+                      현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetSellQuantity.toLocaleString()}주</b>가 필요합니다(계산값).
                     </p>
                     <p className="mt-1 tabular-nums">
                       계산 금액: {targetSellQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRWFull(targetSellAmount)}</b>
@@ -632,21 +631,19 @@ export function HoldingCard({
                       onClick={() => setTradeQuantity(String(targetSellQuantity))}
                       className="mt-2 border border-hairline bg-surface px-2.5 py-1.5 font-bold text-ink transition-colors hover:bg-canvas-soft"
                     >
-                      계산 {targetSellQuantity}주 적용
+                      계산 {targetSellQuantity.toLocaleString()}주 적용
                     </button>
                   </>
                 ) : (
                   <p className="mt-1">
-                    현재 보유 비중이 설정 비중 이하라 계산상 필요한 수량이 없습니다.
+                    현재 보유 비중이 목표 비중 이하라 계산상 필요한 수량이 없습니다.
                   </p>
                 )}
               </div>
             </div>
           )}
           {tradeStatus && (
-            <p className={`mt-2 text-xs font-semibold ${tradeStatus.includes("완료") ? "text-success" : "text-danger"}`}>
-              {tradeStatus}
-            </p>
+            <StatusLine className="mt-2" ok={tradeStatus.includes("완료")} message={tradeStatus} />
           )}
         </div>
       </div>
@@ -659,16 +656,16 @@ function Badge({
   variant,
 }: {
   label: string;
-  variant: "default" | "indigo" | "green" | "red" | "amber";
+  variant: "default" | "indigo" | "gain" | "loss" | "amber";
 }) {
   return (
     <span
       className={cn(
         "inline-flex items-center border px-2 py-0.5 text-xs font-medium tabular-nums",
         variant === "default" && "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
-        variant === "indigo" && "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-900/30 dark:text-indigo-400",
-        variant === "green" && "border-hairline bg-canvas-soft text-success",
-        variant === "red" && "border-danger-line bg-danger-soft text-danger",
+        variant === "indigo" && "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-900/30 dark:text-indigo-300",
+        variant === "gain" && "border-hairline bg-gain-soft text-gain",
+        variant === "loss" && "border-hairline bg-loss-soft text-loss",
         variant === "amber" && "border-caution/30 bg-caution-soft text-caution"
       )}
     >

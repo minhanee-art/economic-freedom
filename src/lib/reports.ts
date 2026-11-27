@@ -71,9 +71,9 @@ export async function loadPortfolio(userId: string): Promise<PortfolioData> {
     (s, d) => s + Number(d.amount),
     0
   );
-  // profiles가 비어 있으면 대시보드와 동일하게 기본값 30만
+  // profiles가 비어 있으면 대시보드와 동일하게 0(미설정)
   const monthlyBudget =
-    (profile as unknown as Profile | null)?.monthly_budget ?? 300000;
+    (profile as unknown as Profile | null)?.monthly_budget ?? 0;
 
   return { holdings: withPnL, active, totalValue, totalCost, pnl, pnlPct, totalDividend, monthlyBudget };
 }
@@ -94,7 +94,7 @@ function buildMonthlyMessage(d: PortfolioData): string {
     `💰 총 평가금액: <b>${formatKRW(d.totalValue)}</b>`,
     `${pnlEmoji} 총 손익: <b>${formatKRW(d.pnl)}</b> (${formatPercent(d.pnlPct)})`,
     `💵 누적 배당: ${formatKRW(d.totalDividend)}`,
-    `🗓 월 적립금: ${formatKRW(d.monthlyBudget)}`,
+    `🗓 월 적립금: ${d.monthlyBudget > 0 ? formatKRW(d.monthlyBudget) : "미설정"}`,
   ];
 
   if (categories.length > 0) {
@@ -173,7 +173,7 @@ function buildReminderMessage(d: PortfolioData): string {
     label,
     "",
     `이번 달 적립일입니다.`,
-    `💵 월 적립금: <b>${formatKRW(d.monthlyBudget)}</b>`,
+    `💵 월 적립금: <b>${d.monthlyBudget > 0 ? formatKRW(d.monthlyBudget) : "미설정"}</b>`,
     `💰 현재 총 평가금액: ${formatKRW(d.totalValue)}`,
     "",
     `아래 버튼에서 설정한 목표 비중에 따른 적립 배분 계산을 볼 수 있습니다. 👇`,

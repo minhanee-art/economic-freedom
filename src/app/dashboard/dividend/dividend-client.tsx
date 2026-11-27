@@ -2,7 +2,7 @@
 
 import { LazyDividendBarChart } from "@/components/charts/lazy";
 import { useEffect, useState, useMemo } from "react";
-import { formatKRWFull, formatKRW } from "@/lib/utils";
+import { formatKRWFull, formatKRW, missingFields } from "@/lib/utils";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
 
@@ -69,7 +69,8 @@ export function DividendClient({ holdings, initialDividends }: Props) {
   }, [dividends]);
 
   const handleAdd = async () => {
-    if (!holdingId || !amount) return;
+    const lack = missingFields([[Boolean(holdingId), "종목"], [Boolean(amount), "금액"]]);
+    if (lack.length) { setError({ message: `${lack.join("·")}을(를) 입력해 주세요.` }); return; }
     setIsAdding(true);
     setError(null);
 
@@ -212,7 +213,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
 
         <button
           onClick={handleAdd}
-          disabled={!holdingId || !amount || isAdding}
+          disabled={isAdding}
           className="bg-brand hover:bg-brand-deep w-full h-11 text-white text-sm font-semibold shadow-card transition-shadow hover:shadow-float disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {isAdding ? "추가 중..." : "배당금 추가"}
@@ -384,7 +385,7 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
                 <button
                   onClick={() => handleFetch(h)}
                   disabled={status === "loading"}
-                  className="shrink-0 h-7 px-3.5 bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="shrink-0 min-h-11 px-3.5 text-xs font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
                 >
                   {status === "loading" ? "조회 중..." : "가져오기"}
                 </button>

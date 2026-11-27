@@ -56,7 +56,15 @@ export function PasswordSection() {
     }
   };
 
-  if (hasPassword === null) return null;
+  // 불러오는 동안에도 섹션 자리를 잡아 둬 아래 섹션이 늦게 밀려 내려가지 않게 한다(설정 화면 CLS)
+  if (hasPassword === null) {
+    return (
+      <section aria-busy="true" className="min-h-84 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+        <h2 className="text-sm font-semibold">비밀번호</h2>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">불러오는 중입니다.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
@@ -115,7 +123,7 @@ export function PasswordSection() {
         <button
           type="submit"
           disabled={status.kind === "saving"}
-          className="w-full h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors disabled:opacity-60"
+          className="w-full h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft transition-colors disabled:opacity-60 dark:border-zinc-700"
         >
           {status.kind === "saving" ? "저장 중…" : hasPassword ? "비밀번호 변경" : "비밀번호 설정"}
         </button>

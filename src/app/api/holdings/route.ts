@@ -37,14 +37,14 @@ export async function POST(request: Request) {
   const shares = Number(body.shares ?? 0);
   const avgPrice = Number(body.avg_price ?? 0);
 
-  if (!code || !name || !category) return NextResponse.json({ error: "종목코드, 종목명, 대분류가 필요합니다." }, { status: 400 });
+  if (!code || !name || !category) return NextResponse.json({ error: "종목코드, 종목명, 자산군가 필요합니다." }, { status: 400 });
   if (!/^[0-9A-Za-z]{1,12}$/.test(code)) return NextResponse.json({ error: "종목코드는 숫자/영문 12자 이하여야 합니다." }, { status: 400 });
   if (name.length > 100) return NextResponse.json({ error: "종목명은 100자 이하로 입력해주세요." }, { status: 400 });
   if (!Number.isFinite(currentPrice) || currentPrice < 0 || currentPrice > INT_MAX) return NextResponse.json({ error: "현재가는 0 이상이어야 합니다." }, { status: 400 });
-  if (!Number.isFinite(targetPct) || targetPct < 0 || targetPct > 100) return NextResponse.json({ error: "설정비중은 0~100이어야 합니다." }, { status: 400 });
+  if (!Number.isFinite(targetPct) || targetPct < 0 || targetPct > 100) return NextResponse.json({ error: "목표 비중은 0~100이어야 합니다." }, { status: 400 });
   if (!Number.isInteger(shares) || shares < 0 || shares > INT_MAX) return NextResponse.json({ error: "보유수량은 0 이상 정수여야 합니다." }, { status: 400 });
   if (!Number.isFinite(avgPrice) || avgPrice < 0 || avgPrice > INT_MAX || (shares > 0 && avgPrice <= 0)) {
-    return NextResponse.json({ error: "보유수량을 입력할 때는 평단가가 0보다 커야 합니다." }, { status: 400 });
+    return NextResponse.json({ error: "보유수량을 입력할 때는 평균단가가 0보다 커야 합니다." }, { status: 400 });
   }
 
   const holdingId = randomUUID();
@@ -168,10 +168,10 @@ export async function PATCH(request: Request) {
     }
     const nextAvgPrice = Number(avg_price ?? 0);
     if (!Number.isFinite(nextAvgPrice) || nextAvgPrice < 0 || nextAvgPrice > INT_MAX || (nextShares > 0 && nextAvgPrice <= 0)) {
-      return NextResponse.json({ error: "보유수량이 있으면 평단가는 0보다 커야 합니다." }, { status: 400 });
+      return NextResponse.json({ error: "보유수량이 있으면 평균단가는 0보다 커야 합니다." }, { status: 400 });
     }
     const totalCost = nextShares * Math.round(nextAvgPrice);
-    if (totalCost > INT_MAX) return NextResponse.json({ error: "수량 × 평단가가 너무 큽니다." }, { status: 400 });
+    if (totalCost > INT_MAX) return NextResponse.json({ error: "수량 × 평균단가가 너무 큽니다." }, { status: 400 });
     existsIndex = queries.length;
     queries.push(sql`UPDATE holdings SET shares = ${nextShares} WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId} RETURNING id`);
     if (nextShares > 0) {
@@ -189,17 +189,17 @@ export async function PATCH(request: Request) {
       queries.push(sql`DELETE FROM cost_basis WHERE holding_id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`);
     }
   } else if (avg_price !== undefined) {
-    // 평단가만 바꾸는 편집 — 수량은 건드리지 않는다. 현재 수량을 앱에서 읽어 되쓰면 동시에 들어온 매도를
+    // 평균단가만 바꾸는 편집 — 수량은 건드리지 않는다. 현재 수량을 앱에서 읽어 되쓰면 동시에 들어온 매도를
     // 되돌리므로, 보유 행을 FOR UPDATE 로 잠그고 같은 문장 안에서 최신 수량으로 원가만 다시 계산한다.
     const nextAvgPrice = Number(avg_price);
     if (!Number.isFinite(nextAvgPrice) || nextAvgPrice < 0 || nextAvgPrice > INT_MAX) {
-      return NextResponse.json({ error: "보유수량이 있으면 평단가는 0보다 커야 합니다." }, { status: 400 });
+      return NextResponse.json({ error: "보유수량이 있으면 평균단가는 0보다 커야 합니다." }, { status: 400 });
     }
     if (Math.round(nextAvgPrice) <= 0) {
-      // 평단가 0 은 수량이 0일 때만 허용된다. 쓰기 전에 읽기만 해서 거른다 (이 값을 다시 쓰지는 않는다).
+      // 평균단가 0 은 수량이 0일 때만 허용된다. 쓰기 전에 읽기만 해서 거른다 (이 값을 다시 쓰지는 않는다).
       const [current] = await sql`SELECT shares FROM holdings WHERE id = ${id} AND user_id = ${session.userId} AND account_id = ${accountId}`;
       if (current && Number(current.shares) > 0) {
-        return NextResponse.json({ error: "보유수량이 있으면 평단가는 0보다 커야 합니다." }, { status: 400 });
+        return NextResponse.json({ error: "보유수량이 있으면 평균단가는 0보다 커야 합니다." }, { status: 400 });
       }
     }
     avgOnly = true;

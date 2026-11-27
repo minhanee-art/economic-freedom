@@ -137,24 +137,6 @@ async function scrollToText(value, offset = 12) {
   }, offset);
 }
 
-/**
- * 주어진 글자 요소의 위쪽이 뷰포트의 y(CSS px)에 오도록 가장 가까운 스크롤 영역을 정확히 스크롤한다.
- * (scrollIntoView 는 고정 헤더 높이를 모르므로, 헤더 아래 원하는 자리에 맞출 때 쓴다.) 반환: 맞춘 뒤의 top.
- */
-async function scrollTextToY(value, y) {
-  const handle = await text(value).elementHandle();
-  return handle.evaluate((el, targetY) => {
-    let node = el.parentElement;
-    while (node) {
-      if (node.scrollHeight > node.clientHeight && getComputedStyle(node).overflowY !== "visible") {
-        node.scrollTop += el.getBoundingClientRect().top - targetY;
-        break;
-      }
-      node = node.parentElement;
-    }
-    return el.getBoundingClientRect().top;
-  }, y);
-}
 /** 스택 화면의 고정 헤더 아래 끝(CSS px): 헤더 제목 글자를 품은, 화면 폭 전체인 가장 큰 상단 상자의 아래 끝. */
 async function headerBottom(title) {
   const bottom = await page.evaluate((label) => {

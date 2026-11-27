@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getHoldings, getCostBases, getDividends } from "@/lib/queries";
 import { sql } from "@/lib/db";
+import { NoHoldingsState } from "@/components/portfolio/no-holdings-state";
 import { PnLClient } from "./pnl-client";
 import type { PurchaseRecord } from "@/types";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
@@ -24,6 +25,19 @@ export default async function PnLPage() {
   ]);
 
   const totalDividend = dividends.reduce((s, d) => s + Number(d.amount), 0);
+
+  // 수량이 있는 종목이 없으면 손익이 전부 0원·0%가 되므로 계산 화면 대신 빈 상태를 보인다
+  if (!holdings.some((h) => Number(h.shares) > 0)) {
+    return holdings.length === 0 ? (
+      <NoHoldingsState description="손익은 기록한 매수 원가와 현재가로 계산합니다. 종목을 추가하고 이미 산 수량과 단가를 기록하면 종목별 손익이 여기에 표시됩니다." />
+    ) : (
+      <NoHoldingsState
+        title="손익을 계산할 보유 수량이 없습니다"
+        actionLabel="매수 기록"
+        description="추가한 종목이 모두 0주입니다. 이미 산 수량과 단가를 기록하면 종목별 손익이 여기에 표시됩니다."
+      />
+    );
+  }
 
   return (
     <PnLClient

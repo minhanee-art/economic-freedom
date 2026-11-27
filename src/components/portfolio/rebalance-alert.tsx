@@ -205,6 +205,20 @@ export function RebalanceAlert({
   const [showAddHolding, setShowAddHolding] = useState(false);
   const [groupMode, setGroupMode] = useState<"theme" | "all">("theme");
   const [isCollapsed, setIsCollapsed] = useState(collapsible && defaultCollapsed);
+
+  // 다른 화면의 '종목 추가'(/dashboard#holdings)로 들어오면 접힌 섹션을 펼친다
+  useEffect(() => {
+    if (!collapsible) return;
+    const openIfTargeted = () => {
+      if (window.location.hash === "#holdings") setIsCollapsed(false);
+    };
+    const id = globalThis.setTimeout(openIfTargeted, 0);
+    window.addEventListener("hashchange", openIfTargeted);
+    return () => {
+      globalThis.clearTimeout(id);
+      window.removeEventListener("hashchange", openIfTargeted);
+    };
+  }, [collapsible]);
   const [expandedHiddenCategory, setExpandedHiddenCategory] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [manualHiddenHoldingIds, setManualHiddenHoldingIds] = useState<string[]>(readStoredHiddenHoldingIds);
@@ -372,10 +386,10 @@ export function RebalanceAlert({
 
   if (categoryRows.length === 0) {
     return (
-      <div className="border border-hairline bg-white px-5 py-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+      <section id="holdings" aria-label="종목 추가" className="scroll-mt-24 border border-hairline bg-surface px-5 py-4 shadow-card dark:border-zinc-800">
         <div className="mb-4 border-b border-zinc-100 pb-4 dark:border-zinc-800">
-          <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">새 계좌 시작하기</p>
-          <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+          <h2 className="text-base font-bold text-ink">새 계좌 시작하기</h2>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             아직 이 계좌에 종목이 없습니다. 아래에서 종목을 추가하면서 대분류/소분류와 설정비중을 입력하면 테마별 비율이 바로 만들어집니다.
           </p>
         </div>
@@ -386,7 +400,7 @@ export function RebalanceAlert({
             종목 추가 권한이 없습니다.
           </p>
         )}
-      </div>
+      </section>
     );
   }
 
@@ -395,7 +409,7 @@ export function RebalanceAlert({
     : "모든 테마가 목표 비중 3%p 이내";
 
   return (
-    <section aria-labelledby="holdings-weights-title" className="border border-hairline bg-surface px-5 py-4 space-y-4 shadow-card dark:border-zinc-800">
+    <section id="holdings" aria-labelledby="holdings-weights-title" className="scroll-mt-24 border border-hairline bg-surface px-5 py-4 space-y-4 shadow-card dark:border-zinc-800">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <h2 id="holdings-weights-title" className="text-base font-bold text-ink">{title}</h2>

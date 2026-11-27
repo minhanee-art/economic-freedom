@@ -356,3 +356,11 @@ test("RebalanceAlert: 검색으로 종목을 찾아 추가한다", async () => {
   });
   assert.ok(fetchUrls.some((url) => url.includes("/api/market/search")));
 });
+
+test("RebalanceAlert: 다른 화면의 '종목 추가'(#holdings)로 들어오면 접힌 섹션을 펼친다", async () => {
+  window.location.hash = "#holdings";
+  render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} collapsible defaultCollapsed title="보유 종목과 목표 비중" />);
+  assert.ok(await screen.findByRole("button", { name: "접기" }));
+  assert.ok(document.getElementById("holdings"));
+  window.location.hash = "";
+});

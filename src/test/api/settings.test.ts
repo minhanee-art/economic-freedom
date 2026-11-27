@@ -8,7 +8,6 @@ import {
   jsonRequest,
   readJson,
 } from "@/test/api-helpers";
-import { DEFAULT_HOLDINGS } from "@/lib/constants";
 
 const session = createSessionState("user-1");
 const db = createFakeSql();
@@ -72,16 +71,16 @@ test("PATCH: 표시 이름은 50자로 자른다", async () => {
   assert.equal(String(update.values[1]).length, 50);
 });
 
-test("DELETE: 원가·종목을 지우고 기본 종목을 다시 만든다", async () => {
+test("DELETE: 현재 계좌의 종목·원가·매수 기록을 지우고 예시 종목을 다시 넣지 않는다", async () => {
   const response = await settings.DELETE(jsonRequest("DELETE"));
   assert.equal(response.status, 200);
 
-  assert.equal(db.find("DELETE FROM cost_basis").length, 1);
-  assert.equal(db.find("DELETE FROM holdings").length, 1);
-
-  const inserts = db.find("INSERT INTO holdings");
-  assert.equal(inserts.length, DEFAULT_HOLDINGS.length);
-  // values: [user, account, code, name, category, sub_category, price, target_pct]
-  assert.deepEqual(inserts[0].values.slice(0, 4), ["user-1", "acc-1", DEFAULT_HOLDINGS[0].code, DEFAULT_HOLDINGS[0].name]);
-  assert.equal(inserts[0].values[7], DEFAULT_HOLDINGS[0].target_pct);
+  // 세 문장을 한 트랜잭션으로
+  assert.equal(db.find("<transaction>").length, 1);
+  for (const fragment of ["DELETE FROM purchase_records", "DELETE FROM cost_basis", "DELETE FROM holdings"]) {
+    const [call] = db.find(fragment);
+    assert.ok(call, `${fragment} 없음`);
+    assert.deepEqual(call.values, ["user-1", "acc-1"]);
+  }
+  assert.equal(db.find("INSERT INTO holdings").length, 0, "예시 종목 묶음을 넣지 않는다");
 });

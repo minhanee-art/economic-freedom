@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { TelegramGuide } from "@/components/guide/telegram-guide";
+import { DocPage } from "@/components/guide/public-site";
 import { getBotUsername } from "@/lib/telegram-bot-username";
 
 export const metadata: Metadata = {
@@ -13,14 +13,8 @@ export const dynamic = "force-dynamic";
 
 export default function TelegramGuidePage() {
   return (
-    <main className="min-h-dvh bg-background px-4 py-12 text-foreground dark:bg-zinc-950 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
-        <Link href="/" className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-          가족연금계획
-        </Link>
-        <h1 className="mt-6 text-4xl font-black tracking-tight text-dark-header dark:text-white">텔레그램 연결 방법</h1>
-        <TelegramGuide botUsername={getBotUsername()} />
-      </div>
-    </main>
+    <DocPage title="텔레그램 연결 방법" updated="최종 업데이트: 2026년 11월 27일">
+      <TelegramGuide botUsername={getBotUsername()} />
+    </DocPage>
   );
 }

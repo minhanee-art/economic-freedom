@@ -1,8 +1,7 @@
-// 설정 API — 프로필 업데이트, 포트폴리오 리셋
+// 설정 API — 프로필 업데이트, 보유 종목 전체 삭제
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getRequestSession } from "@/lib/session";
-import { DEFAULT_HOLDINGS } from "@/lib/constants";
 import { selectRequestAccount } from "@/lib/account-selection";
 
 export async function PATCH(request: Request) {
@@ -30,20 +29,21 @@ export async function PATCH(request: Request) {
   return NextResponse.json({ ok: true });
 }
 
-/** 포트폴리오 리셋 — holdings/cost_basis 삭제 후 기본 종목 재생성 */
+/**
+ * 보유 종목 전체 삭제 — 현재 계좌의 종목을 모두 지워 빈 상태로 되돌린다. 예시 종목을 다시 넣지 않는다.
+ * 종목에 딸린 매수 항목·매도·배당 기록은 FK(ON DELETE CASCADE)로 함께 지워지므로,
+ * 항목이 모두 사라진 매수 기록 묶음(purchase_records)과 원가도 같은 트랜잭션에서 지운다.
+ */
 export async function DELETE(request: Request) {
   const session = await getRequestSession(request);
   if (!session) return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   const selected = await selectRequestAccount(request, session.userId);
   if (!selected.ok) return selected.response;
   const accountId = selected.accountId;
-  await sql`DELETE FROM cost_basis WHERE user_id = ${session.userId} AND account_id = ${accountId}`;
-  await sql`DELETE FROM holdings WHERE user_id = ${session.userId} AND account_id = ${accountId}`;
-  for (const h of DEFAULT_HOLDINGS) {
-    await sql`
-      INSERT INTO holdings (user_id, account_id, code, name, category, sub_category, current_price, target_pct)
-      VALUES (${session.userId}, ${accountId}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category ?? "기타"}, ${h.current_price ?? 0}, ${h.target_pct})
-    `;
-  }
+  await sql.transaction([
+    sql`DELETE FROM purchase_records WHERE user_id = ${session.userId} AND account_id = ${accountId}`,
+    sql`DELETE FROM cost_basis WHERE user_id = ${session.userId} AND account_id = ${accountId}`,
+    sql`DELETE FROM holdings WHERE user_id = ${session.userId} AND account_id = ${accountId}`,
+  ]);
   return NextResponse.json({ ok: true });
 }

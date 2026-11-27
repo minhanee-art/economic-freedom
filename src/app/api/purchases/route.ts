@@ -93,7 +93,14 @@ export async function POST(request: Request) {
       INSERT INTO purchase_items (record_id, holding_id, code, name, quantity, price_at_purchase, cost)
       VALUES (${recordId}, ${item.holdingId}, ${holding.code}, ${holding.name}, ${item.quantity}, ${item.price}, ${item.cost})
     `);
-    queries.push(sql`UPDATE holdings SET shares = shares + ${item.quantity} WHERE id = ${item.holdingId} AND user_id = ${session.userId} AND account_id = ${accountId}`);
+    // 현재가를 모르는 종목(앱에서 종목명·코드만으로 추가한 0원 종목)은 기록 단가를 현재가로 채운다 — 평가금액이 0원(-100%)으로 보이지 않게.
+    // 이미 현재가가 있으면 그대로 둔다(시세 갱신 값을 기록 단가로 덮지 않는다).
+    queries.push(sql`
+      UPDATE holdings
+      SET shares = shares + ${item.quantity},
+          current_price = CASE WHEN current_price > 0 THEN current_price ELSE ${item.price} END
+      WHERE id = ${item.holdingId} AND user_id = ${session.userId} AND account_id = ${accountId}
+    `);
     queries.push(sql`
       INSERT INTO cost_basis (user_id, account_id, holding_id, total_cost, total_shares)
       VALUES (${session.userId}, ${accountId}, ${item.holdingId}, ${item.cost}, ${item.quantity})

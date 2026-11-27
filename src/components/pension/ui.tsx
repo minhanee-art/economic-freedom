@@ -11,16 +11,19 @@ export const secondaryButtonClass =
   "h-9 border border-zinc-200 px-3 text-xs font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800";
 
 export function SectionCard({
+  id,
   title,
   description,
   children,
 }: {
+  /** 다른 화면(홈 첫 사용 안내)에서 #id 로 바로 이동할 때 쓰는 앵커 */
+  id?: string;
   title: string;
   description?: ReactNode;
   children: ReactNode;
 }) {
   return (
-    <section className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
+    <section id={id} className="scroll-mt-24 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
       <div>
         <h2 className="text-sm font-semibold">{title}</h2>
         {description && <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{description}</div>}

@@ -106,10 +106,10 @@ const twoHoldings = [
   }),
 ];
 
-test("RebalanceAlert: 종목이 없으면 새 계좌 시작 안내를 보여준다", async () => {
+test("RebalanceAlert: 종목이 없으면 첫 종목 추가 안내를 보여준다", async () => {
   render(<RebalanceAlert holdings={[]} categoryData={[]} />);
 
-  assert.ok(screen.getByText("새 계좌 시작하기"));
+  assert.ok(screen.getByText("첫 종목 추가"));
   assert.ok(screen.getByText("종목 추가 권한이 없습니다."));
 });
 

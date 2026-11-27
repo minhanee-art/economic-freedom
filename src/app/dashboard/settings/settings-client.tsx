@@ -851,7 +851,7 @@ function HoldingSettingCard({
             />
           </div>
           <div>
-            <label htmlFor={`holding-${h.id}-target`} className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">목표비중 (%)</label>
+            <label htmlFor={`holding-${h.id}-target`} className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">목표 비중 (%)</label>
             <input id={`holding-${h.id}-target`}
               type="number"
               step="0.5"

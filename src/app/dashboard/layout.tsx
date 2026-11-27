@@ -307,7 +307,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex min-h-full flex-col pb-bottom-nav lg:pb-0">
+    <div className="flex min-h-dvh flex-col pb-bottom-nav lg:pb-0">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-70 focus:bg-surface focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-float focus:outline-none focus:ring-2 focus:ring-brand"
@@ -324,7 +324,7 @@ export default function DashboardLayout({
             prefetch
             onClick={() => handleRouteIntent("/dashboard")}
             onMouseEnter={() => prefetchRoute("/dashboard")}
-            className={cn("shrink-0 whitespace-nowrap text-base font-bold tracking-tight sm:text-lg", focusRing)}
+            className={cn("inline-flex min-h-11 shrink-0 items-center whitespace-nowrap text-base font-bold tracking-tight sm:text-lg", focusRing)}
           >
             가족연금계획
           </Link>
@@ -333,9 +333,9 @@ export default function DashboardLayout({
             {dashboardNavGroups.map(renderGroup)}
           </nav>
 
-          <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
+          <div className="ml-auto flex min-w-0 items-center gap-2">
             {/* 계좌 선택: 불러오는 동안에도 같은 크기의 자리를 잡아 헤더가 밀리지 않게 한다 */}
-            <div className="relative flex h-11 w-32 shrink-0 items-center gap-2 min-[375px]:w-40 sm:w-48">
+            <div className="relative flex h-11 w-34 shrink-0 items-center gap-2 min-[375px]:w-40 sm:w-48">
               {accounts === null ? (
                 <span aria-hidden="true" className="h-11 flex-1 animate-pulse bg-white/10" />
               ) : accounts.length > 0 ? (

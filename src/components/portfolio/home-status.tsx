@@ -41,7 +41,7 @@ export function HomeStatus() {
     <header className="space-y-3">
       <h1 className="text-xl font-bold tracking-tight text-ink">홈</h1>
       {/* 숫자가 들어올 자리를 미리 잡아 둬 아래 패널이 밀리지 않게 한다 */}
-      <div className="min-h-[7.5rem] text-sm leading-relaxed text-ink sm:min-h-[5.5rem]" aria-live="polite">
+      <div className="min-h-54 text-sm leading-relaxed text-ink sm:min-h-22" aria-live="polite">
         {state.kind === "loading" && (
           <p className="text-zinc-500 dark:text-zinc-400">올해 세액공제와 은퇴 현금흐름을 불러오는 중입니다.</p>
         )}
@@ -59,7 +59,7 @@ export function HomeStatus() {
   );
 }
 
-const NUMBER_CLASS = "mt-1 text-[1.75rem] font-semibold leading-tight tracking-tight tabular-nums text-ink";
+const NUMBER_CLASS = "mt-1 text-number-lg font-semibold leading-tight tracking-tight tabular-nums text-ink";
 
 function StatusLine({ summary }: { summary: PensionSummaryLite }) {
   const tax = homeTaxCreditStatus(summary);

@@ -439,6 +439,15 @@ export function BuyClient({
         <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
           사용자가 설정한 목표 비중에 따른 계산 결과이며 투자 권유가 아닙니다.
         </p>
+        {/* 자동 시세 조회 상태 — 자리를 늘 잡아 두어 나타났다 사라질 때 아래 내용이 밀리지 않게 한다 */}
+        <p
+          role="status"
+          className={`mt-1 min-h-5 text-xs font-medium ${
+            priceStatus.includes("실패") ? "text-danger" : priceStatus.includes("중") ? "text-zinc-500 dark:text-zinc-400" : "text-success"
+          }`}
+        >
+          {priceStatus}
+        </p>
       </div>
 
       {saveError && <InlineError message={saveError.message} onRetry={saveError.retry} onDismiss={() => setSaveError(null)} />}
@@ -448,17 +457,6 @@ export function BuyClient({
         </div>
       )}
 
-      {priceStatus && (
-        <div className={`px-4 py-2.5 text-sm font-medium shadow-card ${
-          priceStatus.includes("실패")
-            ? "bg-danger-soft text-danger border border-danger-line"
-            : priceStatus.includes("중")
-              ? "bg-canvas-soft text-zinc-500 border border-hairline dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-              : "bg-canvas-soft text-success border border-hairline"
-        }`}>
-          {priceStatus}
-        </div>
-      )}
 
       {/* 투자금액 + 수수료 설정 */}
       <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-card transition-shadow hover:shadow-float">

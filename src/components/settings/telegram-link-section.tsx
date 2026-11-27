@@ -116,7 +116,7 @@ export function TelegramLinkSection() {
   // 불러오는 동안에도 섹션 자리를 잡아 둔다(설정 화면 CLS)
   if (!status) {
     return (
-      <section aria-busy="true" className="min-h-[11rem] border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
+      <section aria-busy="true" className="min-h-44 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <h2 className="text-sm font-semibold">텔레그램 연결</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">불러오는 중입니다.</p>
       </section>

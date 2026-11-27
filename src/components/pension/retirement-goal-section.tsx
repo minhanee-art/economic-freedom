@@ -310,7 +310,7 @@ export function RetirementGoalSection({
           <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">좁은 화면에서는 만원 단위로 줄여 보여 줍니다. 표가 넓으면 좌우로 밀어 보세요.</p>
 
           <div tabIndex={0} role="region" aria-label="나이별 예상 월 현금흐름 표" className="overflow-x-auto">
-            <table className="w-full min-w-[30rem] text-xs tabular-nums sm:min-w-[42rem]">
+            <table className="w-full min-w-120 text-xs tabular-nums sm:min-w-168">
 
             <caption className="sr-only">나이별 예상 월 현금흐름: 국민연금, 퇴직연금, 개인연금, 배당, 합계, 목표 대비 부족액</caption>
               <thead className="text-zinc-500 dark:text-zinc-400">

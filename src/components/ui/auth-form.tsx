@@ -294,7 +294,7 @@ function AuthShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh flex-1 flex-col bg-background dark:bg-zinc-950">
       <header className="bg-dark-header text-white">
         <div className="mx-auto flex h-16 max-w-280 items-center px-4 sm:px-6">
-          <Link href="/" className="text-lg font-bold tracking-tight">
+          <Link href="/" className="inline-flex min-h-11 items-center text-lg font-bold tracking-tight">
             가족연금계획
           </Link>
         </div>

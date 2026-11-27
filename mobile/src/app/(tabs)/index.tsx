@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
+import { EmptyHoldings } from "@/components/EmptyHoldings";
 import { MetricCard } from "@/components/MetricCard";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
@@ -35,7 +36,15 @@ function HomeContent({ summary }: { summary: PortfolioSummary }) {
   const monthlyCashflow = summary.expectedAnnualDividend / 12;
   const cashflowProgress =
     summary.targetMonthlyCashflow > 0 ? Math.round((monthlyCashflow / summary.targetMonthlyCashflow) * 100) : 0;
-  const isPositive = totalPnL >= 0;
+  // 원가가 없으면(매수 기록 없음) 손익은 계산하지 않은 것이므로 방향 색을 쓰지 않는다. 0원도 중립.
+  const hasCost = summary.totalCost > 0;
+  const pnlColor = !hasCost || totalPnL === 0 ? colors.inkMuted : totalPnL > 0 ? colors.positive : colors.negative;
+
+  if (summary.holdings.length === 0) {
+    return (
+      <EmptyHoldings description="이 계좌에 종목을 추가하고 이미 산 수량과 단가를 기록하면 평가금액·손익·배당 현금흐름이 여기에 계산됩니다." />
+    );
+  }
 
   return (
     <>
@@ -43,16 +52,16 @@ function HomeContent({ summary }: { summary: PortfolioSummary }) {
         <Text style={styles.heroLabel}>총 평가금액</Text>
         <Text style={styles.heroValue}>{formatKRW(summary.totalValue)}</Text>
         <View style={styles.pnlPill}>
-          <Text style={[styles.pnlText, { color: isPositive ? colors.positive : colors.negative }]}>
-            {formatKRW(totalPnL)} {formatPercent(totalPnLPct)}
+          <Text style={[styles.pnlText, { color: pnlColor }]}>
+            {hasCost ? `${formatKRW(totalPnL)} ${formatPercent(totalPnLPct)}` : "매수 기록 전 · 손익 없음"}
           </Text>
         </View>
       </View>
 
       <View style={styles.metricGrid}>
-        <MetricCard label="누적 배당" value={formatKRW(summary.totalDividend)} trend="up" />
+        <MetricCard label="누적 배당" value={formatKRW(summary.totalDividend)} />
         <MetricCard label="월 적립금" value={formatKRW(summary.monthlyBudget)} />
-        <MetricCard label="월 현금흐름" value={formatKRW(monthlyCashflow)} caption={`목표 대비 ${cashflowProgress}%`} trend="up" />
+        <MetricCard label="월 현금흐름" value={formatKRW(monthlyCashflow)} caption={`목표 대비 ${cashflowProgress}%`} />
         <MetricCard label="보유 종목" value={`${heldHoldings(summary.holdings).length}개`} />
       </View>
 

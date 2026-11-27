@@ -127,7 +127,7 @@ test("이미 연결된 Google 계정은 그 계정으로 로그인하고 현재 
   assert.equal(writes().length, 0, "기존 연결 계정은 아무것도 바꾸지 않는다");
 });
 
-test("새 사용자: 정규화한 이메일로 만들고 기본 데이터를 넣는다", async () => {
+test("새 사용자: 정규화한 이메일로 만들고 프로필만 넣는다 — 종목은 만들지 않는다(빈 계정)", async () => {
   const rows: Row[] = [];
   db.setHandler(usersTable(rows));
   const response = await callback.GET(callbackRequest());
@@ -135,6 +135,7 @@ test("새 사용자: 정규화한 이메일로 만들고 기본 데이터를 넣
   assert.equal(await tokenVersion(response), 0);
   assert.deepEqual(db.find("INSERT INTO users")[0].values, ["victim@example.com", "g-victim"]);
   assert.equal(db.find("INSERT INTO profiles").length, 1);
+  assert.equal(db.find("INSERT INTO holdings").length, 0, "Google 가입도 예시 종목을 넣지 않는다");
 });
 
 // ── 계정 선점 차단 ─────────────────────────────

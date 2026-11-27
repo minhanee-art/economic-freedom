@@ -1,7 +1,7 @@
 import type { Holding } from "@/types";
 
 /**
- * 보유 수량이 0(이하)인 종목 — 가입 시 만든 기본 종목(수량 미지정)이나 전량 매도한 행 — 을 가른다.
+ * 보유 수량이 0(이하)인 종목 — 추가만 하고 아직 매수 기록이 없는 종목이나 전량 매도한 행 — 을 가른다.
  * 서버 응답은 그대로 두고 화면에서만 나눈다. 수량을 모르는 종목(shares 없음)은 보유 중으로 본다.
  */
 export function isHeld(holding: Holding): boolean {

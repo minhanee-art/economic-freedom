@@ -153,6 +153,37 @@ test("POST: 목록에 없는 대분류는 주식으로 처리한다", async () =
   assert.equal(insert.values[5], "주식");
 });
 
+test("POST: 종목명과 종목코드만 보내도(모바일 종목 추가) 분류를 추론해 0주로 만든다", async () => {
+  db.setHandler((query) => (query.includes("FROM holdings") ? [{ id: "h-new" }] : []));
+
+  const response = await route.POST(jsonRequest("POST", { code: "069500", name: "KODEX 200" }));
+  assert.equal(response.status, 201);
+  const [insert] = db.find("INSERT INTO holdings");
+  // values: [id, user_id, account_id, code, name, category, sub_category, current_price, shares, target_pct]
+  assert.deepEqual(insert.values.slice(3, 5), ["069500", "KODEX 200"]);
+  assert.ok(insert.values[5], "대분류가 비어 있으면 안 된다");
+  assert.deepEqual(insert.values.slice(7), [0, 0, 0]);
+  assert.equal(db.find("INSERT INTO purchase_records").length, 0);
+});
+
+test("POST: 종목코드 형식이 틀리면 400이고 아무것도 쓰지 않는다", async () => {
+  for (const code of ["30 5050", "305050;", "가나다", "1234567890123"]) {
+    db.reset();
+    const response = await route.POST(jsonRequest("POST", { code, name: "테스트" }));
+    assert.equal(response.status, 400, code);
+    assert.equal(db.find("INSERT INTO holdings").length, 0);
+  }
+});
+
+test("POST: 같은 계좌에 같은 종목코드가 있으면 409", async () => {
+  db.sql.transaction = async () => {
+    throw Object.assign(new Error("duplicate key"), { code: "23505" });
+  };
+  const response = await route.POST(jsonRequest("POST", { code: "305050", name: "ACE 코스피" }));
+  assert.equal(response.status, 409);
+  assert.match((await readJson<{ error: string }>(response)).error, /이미/);
+});
+
 test("PATCH: id가 없으면 400", async () => {
   const response = await route.PATCH(jsonRequest("PATCH", { current_price: 1000 }));
   assert.equal(response.status, 400);

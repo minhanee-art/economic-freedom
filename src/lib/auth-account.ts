@@ -1,7 +1,6 @@
 // 이메일/비밀번호 계정 공통 로직 — 웹(/api/auth/*)과 모바일(/api/mobile/auth/*)이 같은 검증·레이트리밋을 쓴다.
 import bcrypt from "bcryptjs";
 import { sql } from "@/lib/db";
-import { DEFAULT_HOLDINGS } from "@/lib/constants";
 import { authRateLimit, clientIp } from "@/lib/rate-limit";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 import { ensureSessionVersionSchema, toSessionVersion } from "@/lib/session-version";
@@ -39,7 +38,8 @@ export function hashPassword(password: string): Promise<string> {
 export type SignupResult = { ok: true; user: { id: string; email: string; sessionVersion: number } } | AuthFailure;
 
 /**
- * 이메일/비밀번호 가입 — 검증 → IP 레이트리밋 → 중복 확인 → users·기본 종목·프로필 생성.
+ * 이메일/비밀번호 가입 — 검증 → IP 레이트리밋 → 중복 확인 → users·기본 계좌·프로필 생성.
+ * 종목은 만들지 않는다 — 새 계정은 빈 상태로 시작하고, 사용자가 직접 종목을 추가한다.
  * 토큰 발급과 응답 형태(쿠키/본문)는 호출하는 라우트가 정한다.
  */
 export async function signupWithPassword(request: Request, input: { email?: unknown; password?: unknown }): Promise<SignupResult> {
@@ -76,16 +76,8 @@ export async function signupWithPassword(request: Request, input: { email?: unkn
 
   const userId = String(insertedUsers[0].id);
   const sessionVersion = toSessionVersion(insertedUsers[0].session_version);
-  const accountId = await getActivePortfolioAccountId(userId);
-
-  // 기본 종목 자동 생성
-  for (const h of DEFAULT_HOLDINGS) {
-    await sql`
-      INSERT INTO holdings (user_id, account_id, code, name, category, sub_category, current_price, target_pct)
-      VALUES (${userId}, ${accountId}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category}, ${h.current_price ?? 0}, ${h.target_pct})
-      ON CONFLICT DO NOTHING
-    `;
-  }
+  // 기본 계좌("내 계좌")만 만든다. 종목은 넣지 않는다(빈 계정으로 시작).
+  await getActivePortfolioAccountId(userId);
 
   // 기본 프로필 생성
   await sql`

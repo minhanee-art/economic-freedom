@@ -182,6 +182,7 @@ export function RetirementGoalSection({
 
   return (
     <SectionCard
+      id="retirement-goal"
       title="은퇴 목표와 예상 월 현금흐름"
       description="국민연금(1층)·퇴직연금(2층)·개인연금(3층)과 연금계좌 밖 계좌의 배당을 합쳐 목표 월 생활비와 비교합니다."
     >

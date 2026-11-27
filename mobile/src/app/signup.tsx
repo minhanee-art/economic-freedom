@@ -66,7 +66,10 @@ export default function SignupScreen() {
           autoComplete="email"
           autoCorrect={false}
           keyboardType="email-address"
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="name@example.com"
           value={email}
           error={errors.email}
@@ -78,7 +81,10 @@ export default function SignupScreen() {
           ref={passwordRef}
           label="비밀번호"
           autoComplete="new-password"
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
           revealable
           value={password}
           error={errors.password}
@@ -90,7 +96,10 @@ export default function SignupScreen() {
           ref={confirmRef}
           label="비밀번호 확인"
           autoComplete="new-password"
-          onChangeText={setPasswordConfirm}
+          onChangeText={(text) => {
+            setPasswordConfirm(text);
+            if (errors.passwordConfirm) setErrors((prev) => ({ ...prev, passwordConfirm: undefined }));
+          }}
           revealable
           value={passwordConfirm}
           error={errors.passwordConfirm ?? mismatch}

@@ -185,7 +185,7 @@ function AccountContent({ summary }: { summary: PortfolioSummary }) {
       </Card>
 
       <Card title="자산 구성">
-        {categories.length === 0 ? <Text style={[type.body, styles.muted]}>보유자산을 입력하면 자산 구성이 표시됩니다.</Text> : null}
+        {categories.length === 0 ? <Text style={[type.body, styles.muted]}>종목을 추가하고 매수 기록을 남기면 자산 구성이 표시됩니다.</Text> : null}
         {categories.slice(0, 5).map((item) => (
           <View key={item.name} style={styles.balanceRow}>
             <View style={styles.balanceHead}>

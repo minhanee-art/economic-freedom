@@ -58,7 +58,10 @@ export default function LoginScreen() {
           autoComplete="email"
           autoCorrect={false}
           keyboardType="email-address"
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="name@example.com"
           value={email}
           error={errors.email}
@@ -70,7 +73,10 @@ export default function LoginScreen() {
           ref={passwordRef}
           label="비밀번호"
           autoComplete="current-password"
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
           revealable
           value={password}
           error={errors.password}

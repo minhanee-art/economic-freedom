@@ -258,7 +258,7 @@ export default function RecordPurchaseScreen() {
                     // 목록의 삭제는 잉크색 테두리 버튼 — 빨강은 손익(이익)과 겹치므로 확인 단계(대화상자)에만 쓴다.
                     variant="secondary"
                     compact
-                    accessibilityLabel={`${record.date} 매수 기록 삭제`}
+                    accessibilityLabel={`${record.date} ${formatKRWFull(record.totalSpent)} 매수 기록 삭제`}
                     busy={deletingId === record.id}
                     busyLabel="삭제 중"
                     disabled={deletingId !== null || isSubmitting}

@@ -51,9 +51,9 @@ beforeEach(() => {
   }) as typeof fetch;
 });
 
-test("ETF 비교: 상단에 참고 정보·추천 아님 고지, 기본 정렬은 이름순이며 거래량·거래대금은 정렬 기준으로 고를 수 있다", async () => {
+test("ETF 비교: 상단에 참고 정보·투자 권유 아님 고지, 기본 정렬은 이름순이며 거래량·거래대금은 정렬 기준으로 고를 수 있다", async () => {
   render(<CompareClient holdings={[]} />);
-  assert.ok(screen.getByText(/참고 정보이며 종목 추천이 아닙니다/));
+  assert.ok(screen.getByText(/참고 정보이며 투자 권유가 아닙니다/));
 
   const sort = screen.getByLabelText("정렬") as HTMLSelectElement;
   assert.equal(sort.value, "name");
@@ -97,7 +97,7 @@ test("시장 현황: 거래량 순위 목록 없이 주요 지수와 내 보유 
   assert.ok(screen.getByRole("heading", { name: "주요 지수" }));
   assert.ok(screen.getByRole("heading", { name: "내 보유 종목 시세" }));
   assert.equal(screen.queryByText(/거래량 TOP|TOP 10/), null);
-  assert.ok(screen.getByText(/종목 추천이 아닙니다/));
+  assert.ok(screen.getByText(/투자 권유가 아닙니다/));
   assert.ok(screen.getByText("21,430원"));
   assert.equal(screen.queryByText("코드 없는 종목"), null);
   assert.equal(calls.some((c) => c.url.includes("/api/market/volume")), false);

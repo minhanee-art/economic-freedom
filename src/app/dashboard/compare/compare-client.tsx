@@ -360,7 +360,7 @@ export function CompareClient({ holdings }: Props) {
         <div className="min-w-0">
           <h1 className="text-xl font-bold tracking-tight text-ink">ETF 종목 비교</h1>
           <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            공개 시세를 나란히 놓고 보는 참고 정보이며 종목 추천이 아닙니다. 주문은 실행되지 않습니다.
+            공개 시세를 나란히 놓고 보는 참고 정보이며 투자 권유가 아닙니다. 주문은 실행되지 않습니다.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -473,7 +473,7 @@ export function CompareClient({ holdings }: Props) {
             </p>
           </div>
 
-          <div className="max-h-64 overflow-y-auto space-y-1">
+          <div tabIndex={0} role="region" aria-label="ETF 검색 결과" className="max-h-112 overflow-y-auto space-y-1">
             {isSearching ? (
               <p className="py-4 text-center text-sm text-zinc-500 dark:text-zinc-400">검색 중...</p>
             ) : searchResults.length === 0 ? (

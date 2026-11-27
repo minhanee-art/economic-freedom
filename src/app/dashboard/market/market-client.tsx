@@ -191,7 +191,7 @@ export function MarketClient({ holdings }: { holdings: MarketHolding[] }) {
       <section>
         <h2 className="text-lg font-bold text-ink tracking-tight">ETF 관련 뉴스</h2>
         <p className="mt-1 mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          검색어로 찾은 외부 언론 기사 링크입니다. 이 서비스의 의견이나 종목 추천이 아닙니다.
+          검색어로 찾은 외부 언론 기사 링크입니다. 이 서비스의 의견이나 투자 권유가 아닙니다.
         </p>
 
         <div className="flex gap-2 mb-3 overflow-x-auto pb-1">

@@ -1,196 +1,164 @@
+import { useCallback } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/Card";
+import { Card, Rows, ValueRow } from "@/components/Card";
 import { EmptyHoldings } from "@/components/EmptyHoldings";
-import { MetricCard } from "@/components/MetricCard";
+import { Notice, ProgressBar, RETIREMENT_WEB_PATH, ScreenTitle, WebLinkButton } from "@/components/Parts";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
+import { usePensionSummary } from "@/hooks/usePensionSummary";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
-import { colors, radius, spacing } from "@/styles/theme";
-import type { PortfolioSummary } from "@/types";
-import { formatKRW, formatPercent } from "@/utils/format";
-import { heldHoldings } from "@/utils/holdings";
+import { colors, spacing, type } from "@/styles/theme";
+import type { PensionSummary, PortfolioSummary } from "@/types";
+import { formatKRW, formatPercent, formatSignedKRW, pnlArrow, pnlColor } from "@/utils/format";
 
+/**
+ * 홈. 첫 숫자는 이 제품만의 것: 올해 세액공제 남은 한도, 은퇴 시점 예상 월 현금흐름 대 목표(둘 다 서버 연금 요약 값, 가족 합산).
+ * 그 아래에 고른 계좌의 평가금액·손익·자산 구성을 둔다.
+ */
 export default function HomeScreen() {
-  const { summary, accounts, selectedAccountId, selectAccount, isLoading, error, refresh } = usePortfolioSummary();
+  const portfolio = usePortfolioSummary();
+  const pension = usePensionSummary();
+  const { summary, accounts, selectedAccountId, selectAccount, isLoading, error } = portfolio;
+  const refreshPortfolio = portfolio.refresh;
+  const refreshPension = pension.refresh;
+  const refresh = useCallback(async () => {
+    await Promise.all([refreshPortfolio(), refreshPension()]);
+  }, [refreshPortfolio, refreshPension]);
 
   return (
-    <AppShell refreshing={isLoading} onRefresh={refresh}>
-      <View style={styles.topBar}>
-        <View>
-          <Text style={styles.appName}>가족연금계획</Text>
-          <Text style={styles.accountName}>{summary?.account?.name ?? "내 포트폴리오"}</Text>
-        </View>
+    <AppShell refreshing={isLoading || pension.isLoading} onRefresh={refresh}>
+      <ScreenTitle>가족연금계획</ScreenTitle>
+
+      {pension.summary ? (
+        <PensionOverview pension={pension.summary} portfolio={summary} />
+      ) : pension.failed ? (
+        <Notice>연금 요약을 불러오지 못했습니다. 당겨서 새로고침하면 다시 시도합니다.</Notice>
+      ) : null}
+
+      <View style={styles.accountSection}>
+        <Text style={type.heading} accessibilityRole="header">
+          {summary?.account?.name ?? "계좌"}
+        </Text>
+        <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
       </View>
 
-      <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
-
-      {summary ? <HomeContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
+      {summary ? <AccountContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
     </AppShell>
   );
 }
 
-function HomeContent({ summary }: { summary: PortfolioSummary }) {
-  const totalPnL = summary.totalPnL ?? summary.totalValue - summary.totalCost;
-  const totalPnLPct = summary.totalPnLPct ?? (summary.totalCost > 0 ? (totalPnL / summary.totalCost) * 100 : 0);
-  const monthlyCashflow = summary.expectedAnnualDividend / 12;
-  const cashflowProgress =
-    summary.targetMonthlyCashflow > 0 ? Math.round((monthlyCashflow / summary.targetMonthlyCashflow) * 100) : 0;
-  // 원가가 없으면(매수 기록 없음) 손익은 계산하지 않은 것이므로 방향 색을 쓰지 않는다. 0원도 중립.
-  const hasCost = summary.totalCost > 0;
-  const pnlColor = !hasCost || totalPnL === 0 ? colors.inkMuted : totalPnL > 0 ? colors.positive : colors.negative;
+function PensionOverview({ pension, portfolio }: { pension: PensionSummary; portfolio: PortfolioSummary | null }) {
+  const { taxCredit, retirement } = pension;
+  const cashflow = retirement.cashflow;
+  const family = (taxCredit?.byOwner.length ?? 0) > 1;
+  // 목표를 저장하지 않은 계정에는 서버 기본값(300만원)을 목표처럼 보이지 않는다.
+  const savedTarget = portfolio && portfolio.targetMonthlyCashflowIsDefault === false ? portfolio.targetMonthlyCashflow : null;
+  const goalMissing = retirement.missingFields.includes("targetMonthly");
 
+  return (
+    <>
+      <Card title={`${pension.year}년 세액공제`} aside={family ? "가족 합산" : undefined}>
+        {taxCredit ? (
+          <>
+            <View style={styles.headline}>
+              <Text style={type.label}>남은 공제 한도</Text>
+              <Text style={type.numberLg}>{formatKRW(taxCredit.progress.remainingCreditRoom)}</Text>
+            </View>
+            <ProgressBar pct={taxCredit.progress.progressPct} label="공제 한도 대비 납입 진행률" />
+            <Text style={[type.label, styles.tabular]}>
+              한도 대비 납입 {taxCredit.progress.progressPct.toFixed(1)}% · 예상 공제액 {formatKRW(taxCredit.progress.estimatedCredit)}
+            </Text>
+          </>
+        ) : (
+          <>
+            <Text style={[type.body, styles.muted]}>
+              {pension.taxCreditUnavailableReason === "only_excluded_owner_accounts"
+                ? "연금 계좌가 모두 자녀·기타 명의라 세액공제를 계산하지 않았습니다."
+                : "연금저축·IRP·DC·ISA 계좌가 없어 세액공제를 계산하지 않았습니다."}
+            </Text>
+            <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 연금 계좌 등록" />
+          </>
+        )}
+      </Card>
+
+      <Card title="은퇴 시점 예상 월 현금흐름" aside={cashflow ? `${cashflow.atRetirement.age}세` : undefined}>
+        {cashflow ? (
+          <>
+            <View style={styles.headline}>
+              <Text style={type.numberLg}>월 {formatKRW(cashflow.atRetirement.total)}</Text>
+              <Text style={[type.label, styles.tabular]}>
+                {savedTarget !== null ? `목표 월 ${formatKRW(savedTarget)} 대비 ` : "목표 대비 "}
+                {cashflow.coveragePctAtRetirement}%
+              </Text>
+            </View>
+            <ProgressBar pct={cashflow.coveragePctAtRetirement} label="은퇴 목표 대비 충족률" />
+            <Text style={type.caption}>공적·퇴직·개인연금과 배당을 합친 추정값입니다. 항목별 금액은 연금 탭에 있습니다.</Text>
+          </>
+        ) : (
+          <>
+            <Text style={type.numberLg}>{goalMissing ? "목표 미설정" : "계산 전"}</Text>
+            <Text style={[type.body, styles.muted]}>
+              {goalMissing
+                ? "목표 월 생활비·은퇴 나이·출생연도를 입력하면 은퇴 시점 현금흐름을 계산합니다."
+                : "은퇴 목표가 모두 입력되지 않아 계산하지 않았습니다."}
+            </Text>
+            <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 은퇴 목표 입력" />
+          </>
+        )}
+      </Card>
+    </>
+  );
+}
+
+function AccountContent({ summary }: { summary: PortfolioSummary }) {
   if (summary.holdings.length === 0) {
     return (
       <EmptyHoldings description="이 계좌에 종목을 추가하고 이미 산 수량과 단가를 기록하면 평가금액·손익·배당 현금흐름이 여기에 계산됩니다." />
     );
   }
+  const totalPnL = summary.totalPnL ?? summary.totalValue - summary.totalCost;
+  const totalPnLPct = summary.totalPnLPct ?? (summary.totalCost > 0 ? (totalPnL / summary.totalCost) * 100 : 0);
+  // 원가가 없으면(매수 기록 없음) 손익은 계산하지 않은 것이므로 방향 색을 쓰지 않는다. 0원도 중립.
+  const hasCost = summary.totalCost > 0;
+  const categories = summary.categories ?? [];
 
   return (
     <>
-      <View style={styles.hero}>
-        <Text style={styles.heroLabel}>총 평가금액</Text>
-        <Text style={styles.heroValue}>{formatKRW(summary.totalValue)}</Text>
-        <View style={styles.pnlPill}>
-          <Text style={[styles.pnlText, { color: pnlColor }]}>
-            {hasCost ? `${formatKRW(totalPnL)} ${formatPercent(totalPnLPct)}` : "매수 기록 전 · 손익 없음"}
-          </Text>
-        </View>
-      </View>
-
-      <View style={styles.metricGrid}>
-        <MetricCard label="누적 배당" value={formatKRW(summary.totalDividend)} />
-        <MetricCard label="월 적립금" value={formatKRW(summary.monthlyBudget)} />
-        <MetricCard label="월 현금흐름" value={formatKRW(monthlyCashflow)} caption={`목표 대비 ${cashflowProgress}%`} />
-        <MetricCard label="보유 종목" value={`${heldHoldings(summary.holdings).length}개`} />
-      </View>
-
-      <Card title="은퇴 현금흐름" action={`${cashflowProgress}%`}>
-        <Text style={styles.cardHeadline}>목표 월 {formatKRW(summary.targetMonthlyCashflow)}</Text>
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${Math.min(Math.max(cashflowProgress, 0), 100)}%` }]} />
-        </View>
-        <Text style={styles.cardText}>배당과 분배금 중심으로 은퇴 현금흐름 달성률을 추적합니다.</Text>
+      <Card>
+        <Rows>
+          <ValueRow label="총 평가금액" value={formatKRW(summary.totalValue)} strong />
+          <ValueRow
+            label="손익"
+            value={hasCost ? `${pnlArrow(totalPnL)} ${formatSignedKRW(totalPnL)} (${formatPercent(totalPnLPct)})`.trim() : "매수 기록 전"}
+            valueColor={hasCost ? pnlColor(totalPnL) : colors.inkMuted}
+          />
+          <ValueRow label="누적 배당" value={formatKRW(summary.totalDividend)} />
+        </Rows>
       </Card>
 
       <Card title="자산 구성">
-        {(summary.categories ?? []).slice(0, 4).map((item) => (
+        {categories.length === 0 ? <Text style={[type.body, styles.muted]}>보유자산을 입력하면 자산 구성이 표시됩니다.</Text> : null}
+        {categories.slice(0, 5).map((item) => (
           <View key={item.name} style={styles.balanceRow}>
-            <Text style={styles.balanceName}>{item.name}</Text>
-            <View style={styles.balanceTrack}>
-              <View style={[styles.balanceFill, { width: `${Math.min(item.currentPct, 100)}%` }]} />
+            <View style={styles.balanceHead}>
+              <Text style={[type.body, styles.balanceName]}>{item.name}</Text>
+              <Text style={type.number}>{item.currentPct.toFixed(1)}%</Text>
             </View>
-            <Text style={styles.balancePct}>{item.currentPct.toFixed(1)}%</Text>
+            <ProgressBar pct={item.currentPct} label={`${item.name} 비중`} />
           </View>
         ))}
-        {(summary.categories ?? []).length === 0 ? <Text style={styles.cardText}>보유자산을 입력하면 자산 구성이 표시됩니다.</Text> : null}
       </Card>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  topBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.lg,
-  },
-  appName: {
-    color: colors.ink,
-    fontSize: 24,
-    fontWeight: "900",
-    letterSpacing: -0.5,
-  },
-  accountName: {
-    marginTop: spacing.xs,
-    color: colors.inkMuted,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  hero: {
-    gap: spacing.md,
-    borderRadius: 30,
-    backgroundColor: colors.brandDark,
-    padding: spacing.xl,
-  },
-  heroLabel: {
-    color: "rgba(255,255,255,0.66)",
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  heroValue: {
-    color: colors.surface,
-    fontSize: 38,
-    fontWeight: "900",
-    letterSpacing: -1.2,
-  },
-  pnlPill: {
-    alignSelf: "flex-start",
-    borderRadius: radius.pill,
-    backgroundColor: "rgba(255,255,255,0.92)",
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  pnlText: {
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  metricGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.md,
-    marginVertical: spacing.lg,
-  },
-  cardHeadline: {
-    color: colors.ink,
-    fontSize: 18,
-    fontWeight: "900",
-  },
-  cardText: {
-    color: colors.inkMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  progressTrack: {
-    height: 10,
-    overflow: "hidden",
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-  },
-  balanceRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-  },
-  balanceName: {
-    width: 72,
-    color: colors.ink,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  balanceTrack: {
-    flex: 1,
-    height: 8,
-    overflow: "hidden",
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
-  },
-  balanceFill: {
-    height: "100%",
-    borderRadius: radius.pill,
-    backgroundColor: colors.primary,
-  },
-  balancePct: {
-    width: 48,
-    color: colors.inkMuted,
-    textAlign: "right",
-    fontSize: 12,
-    fontWeight: "800",
-  },
+  headline: { gap: spacing.xs },
+  muted: { color: colors.inkMuted },
+  tabular: { fontVariant: ["tabular-nums"] },
+  accountSection: { gap: spacing.sm, marginTop: spacing.sm },
+  balanceRow: { gap: spacing.xs },
+  balanceHead: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", gap: spacing.md },
+  balanceName: { flexShrink: 1 },
 });

@@ -1,20 +1,31 @@
 import { Link, router } from "expo-router";
-import { useState } from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { useRef, useState } from "react";
+import { Text, type TextInput } from "react-native";
 import { loginWithEmail } from "@/api/auth";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { TextField } from "@/components/Field";
+import { FormError, ScreenTitle } from "@/components/Parts";
 import { saveSession } from "@/storage/session";
-import { formStyles as styles } from "@/styles/forms";
-import { colors } from "@/styles/theme";
+import { type } from "@/styles/theme";
+
+type Errors = { email?: string; password?: string };
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
+  const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
+    const found: Errors = {};
+    if (!email.trim()) found.email = "이메일을 입력해주세요.";
+    if (!password) found.password = "비밀번호를 입력해주세요.";
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
     setIsSubmitting(true);
     setError("");
     try {
@@ -28,53 +39,46 @@ export default function LoginScreen() {
     }
   };
 
-  const disabled = isSubmitting || !email.trim() || !password;
-
   return (
     <AppShell>
-      <Text style={styles.title}>가족연금계획</Text>
-      <Text style={styles.subtitle}>로그인하면 내 포트폴리오와 배당 현금흐름을 확인할 수 있습니다.</Text>
+      <ScreenTitle>가족연금계획</ScreenTitle>
+      <Text style={type.label}>로그인하면 내 포트폴리오와 배당 현금흐름을 확인할 수 있습니다.</Text>
 
-      <Card title="로그인">
-        <View style={styles.field}>
-          <Text style={styles.label}>이메일</Text>
-          <TextInput
-            autoCapitalize="none"
-            autoComplete="email"
-            autoCorrect={false}
-            keyboardType="email-address"
-            onChangeText={setEmail}
-            placeholder="name@example.com"
-            placeholderTextColor={colors.inkSubtle}
-            style={styles.input}
-            value={email}
-          />
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.label}>비밀번호</Text>
-          <TextInput
-            autoComplete="current-password"
-            onChangeText={setPassword}
-            placeholder="비밀번호"
-            placeholderTextColor={colors.inkSubtle}
-            secureTextEntry
-            style={styles.input}
-            value={password}
-          />
-        </View>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable accessibilityRole="button" disabled={disabled} onPress={handleLogin} style={[styles.button, disabled && styles.buttonDisabled]}>
-          <Text style={styles.buttonText}>{isSubmitting ? "로그인 중" : "로그인"}</Text>
-        </Pressable>
-        <Text style={styles.subtitle}>
+      <Card>
+        <TextField
+          label="이메일"
+          autoCapitalize="none"
+          autoComplete="email"
+          autoCorrect={false}
+          keyboardType="email-address"
+          onChangeText={setEmail}
+          placeholder="name@example.com"
+          value={email}
+          error={errors.email}
+          returnKeyType="next"
+          submitBehavior="submit"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+        />
+        <TextField
+          ref={passwordRef}
+          label="비밀번호"
+          autoComplete="current-password"
+          onChangeText={setPassword}
+          secureTextEntry
+          value={password}
+          error={errors.password}
+          returnKeyType="go"
+          onSubmitEditing={handleLogin}
+        />
+        {error ? <FormError>{error}</FormError> : null}
+        <Button label="로그인" busy={isSubmitting} busyLabel="로그인 중" onPress={handleLogin} />
+        <Text style={type.caption}>
           Google로 가입했다면 웹에서 Google로 로그인한 뒤 설정에서 비밀번호를 만들면 앱에서 로그인할 수 있습니다.
         </Text>
       </Card>
 
       <Link href="/signup" asChild>
-        <Pressable style={styles.linkButton}>
-          <Text style={styles.linkText}>계정이 없으신가요? 회원가입</Text>
-        </Pressable>
+        <Button label="계정이 없으신가요? 회원가입" variant="link" />
       </Link>
     </AppShell>
   );

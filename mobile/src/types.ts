@@ -54,6 +54,8 @@ export type PortfolioSummary = {
   totalDividend: number;
   monthlyBudget: number;
   targetMonthlyCashflow: number;
+  /** 사용자가 목표 월 생활비를 저장하지 않아 서버 기본값(300만원)을 보낸 경우 true. 이전 서버는 보내지 않는다. */
+  targetMonthlyCashflowIsDefault?: boolean;
   expectedAnnualDividend: number;
   categories?: CategoryBalance[];
   holdings: Holding[];

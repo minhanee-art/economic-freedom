@@ -1,13 +1,15 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, Text, TextInput, View } from "react-native";
+import { Linking, Text } from "react-native";
 import { deleteAccount, getPasswordStatus } from "@/api/auth";
 import { ApiError, webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
+import { TextField } from "@/components/Field";
+import { FormError } from "@/components/Parts";
 import { clearSession, handleUnauthorized, loadSession } from "@/storage/session";
-import { formStyles as styles } from "@/styles/forms";
-import { colors } from "@/styles/theme";
+import { colors, type } from "@/styles/theme";
 import { confirmDestructive } from "@/utils/confirm";
 
 export default function DeleteAccountScreen() {
@@ -17,6 +19,7 @@ export default function DeleteAccountScreen() {
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldError, setFieldError] = useState("");
   const guideUrl = webUrl("/account-deletion");
 
   useEffect(() => {
@@ -72,6 +75,12 @@ export default function DeleteAccountScreen() {
   };
 
   const confirmDelete = () => {
+    // 버튼을 처음부터 막지 않는다 — 비어 있으면 칸 아래에 이유를 보인다.
+    if (hasPassword === false ? !email.trim() : !password) {
+      setFieldError(hasPassword === false ? "가입한 이메일 주소를 입력해주세요." : "현재 비밀번호를 입력해주세요.");
+      return;
+    }
+    setFieldError("");
     confirmDestructive({
       title: "정말 계정을 삭제할까요?",
       message: "계정과 모든 포트폴리오 데이터가 영구 삭제되며 되돌릴 수 없습니다.",
@@ -80,59 +89,57 @@ export default function DeleteAccountScreen() {
     });
   };
 
-  const disabled = isSubmitting || hasPassword === null || (hasPassword ? !password : !email.trim());
-
   return (
     <AppShell>
-      <Text style={styles.title}>계정 삭제</Text>
-      <Text style={styles.subtitle}>계정을 삭제하면 저장된 모든 데이터가 영구적으로 사라지며 복구할 수 없습니다.</Text>
+      <Text style={[type.body, { color: colors.danger }]}>계정을 삭제하면 저장된 모든 데이터가 영구적으로 사라지며 복구할 수 없습니다.</Text>
 
       <Card title={hasPassword === false ? "이메일 확인" : "비밀번호 확인"}>
         {hasPassword === false ? (
-          <View style={styles.field}>
-            <Text style={styles.label}>계정 이메일</Text>
-            <TextInput
-              autoCapitalize="none"
-              autoComplete="email"
-              autoCorrect={false}
-              keyboardType="email-address"
-              onChangeText={setEmail}
-              placeholder="가입한 이메일 주소"
-              placeholderTextColor={colors.inkSubtle}
-              style={styles.input}
-              value={email}
-            />
-          </View>
+          <TextField
+            label="계정 이메일"
+            autoCapitalize="none"
+            autoComplete="email"
+            autoCorrect={false}
+            keyboardType="email-address"
+            onChangeText={(text) => {
+              setEmail(text);
+              setFieldError("");
+            }}
+            placeholder="가입한 이메일 주소"
+            value={email}
+            error={fieldError}
+            returnKeyType="done"
+            onSubmitEditing={confirmDelete}
+          />
         ) : (
-          <View style={styles.field}>
-            <Text style={styles.label}>비밀번호</Text>
-            <TextInput
-              autoComplete="current-password"
-              editable={hasPassword !== null}
-              onChangeText={setPassword}
-              placeholder="현재 비밀번호"
-              placeholderTextColor={colors.inkSubtle}
-              secureTextEntry
-              style={styles.input}
-              value={password}
-            />
-          </View>
+          <TextField
+            label="비밀번호"
+            autoComplete="current-password"
+            editable={hasPassword !== null}
+            onChangeText={(text) => {
+              setPassword(text);
+              setFieldError("");
+            }}
+            placeholder="현재 비밀번호"
+            secureTextEntry
+            value={password}
+            error={fieldError}
+            returnKeyType="done"
+            onSubmitEditing={confirmDelete}
+          />
         )}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable
-          accessibilityRole="button"
-          disabled={disabled}
+        {error ? <FormError>{error}</FormError> : null}
+        <Button
+          label="계정 영구 삭제"
+          variant="danger"
+          busy={isSubmitting || hasPassword === null}
+          busyLabel={isSubmitting ? "삭제 중" : "확인 중"}
           onPress={confirmDelete}
-          style={[styles.button, styles.dangerButton, disabled && styles.buttonDisabled]}
-        >
-          <Text style={styles.buttonText}>{isSubmitting ? "삭제 중" : "계정 영구 삭제"}</Text>
-        </Pressable>
+        />
       </Card>
 
       {guideUrl ? (
-        <Pressable accessibilityRole="link" style={styles.linkButton} onPress={() => Linking.openURL(guideUrl)}>
-          <Text style={styles.linkText}>계정 삭제 안내 보기</Text>
-        </Pressable>
+        <Button label="계정 삭제 안내 보기" variant="link" accessibilityRole="link" onPress={() => Linking.openURL(guideUrl)} />
       ) : null}
     </AppShell>
   );

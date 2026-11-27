@@ -1,6 +1,9 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { colors } from "@/styles/theme";
+import { setupWebDocument } from "@/styles/web-document";
+
+setupWebDocument();
 
 export default function RootLayout() {
   return (
@@ -11,6 +14,7 @@ export default function RootLayout() {
           headerStyle: { backgroundColor: colors.canvas },
           headerShadowVisible: false,
           headerTintColor: colors.ink,
+          headerTitleStyle: { fontWeight: "600", fontSize: 17 },
           contentStyle: { backgroundColor: colors.canvas },
         }}
       >

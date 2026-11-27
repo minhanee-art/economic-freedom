@@ -4,10 +4,12 @@ import Constants from "expo-constants";
 import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 import { webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
-import { Card } from "@/components/Card";
+import { Button } from "@/components/Button";
+import { Card, Rows, ValueRow } from "@/components/Card";
 import { PasswordCard } from "@/components/PasswordCard";
+import { ScreenTitle } from "@/components/Parts";
 import { clearSession, loadSession } from "@/storage/session";
-import { colors, radius, spacing } from "@/styles/theme";
+import { colors, spacing, touchTarget, type } from "@/styles/theme";
 import type { AuthSession } from "@/types";
 
 export default function SettingsScreen() {
@@ -31,43 +33,37 @@ export default function SettingsScreen() {
 
   return (
     <AppShell>
-      <Text style={styles.title}>설정</Text>
-      <Text style={styles.subtitle}>계정과 앱 정보를 관리합니다.</Text>
+      <ScreenTitle>설정</ScreenTitle>
 
       <Card title="계정">
-        <InfoRow label="상태" value={session ? "연결됨" : "로그아웃됨"} />
-        <InfoRow label="이메일" value={session?.user.email ?? "로그인 필요"} />
+        <Text style={type.body} selectable>
+          {session?.user.email ?? "로그인하지 않았습니다"}
+        </Text>
         {session ? (
-          <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleLogout}>
-            <Text style={styles.secondaryButtonText}>로그아웃</Text>
-          </Pressable>
+          <Button label="로그아웃" variant="secondary" onPress={handleLogout} />
         ) : (
           <Link href="/login" asChild>
-            <Pressable style={styles.primaryButton}>
-              <Text style={styles.primaryButtonText}>로그인하기</Text>
-            </Pressable>
+            <Button label="로그인하기" />
           </Link>
         )}
       </Card>
 
       {session ? <PasswordCard session={session} onSessionChange={setSession} /> : null}
 
-      <Card title="앱 정보">
-        <InfoRow label="앱 이름" value="가족연금계획" />
-        <InfoRow label="버전" value={Constants.expoConfig?.version ?? "-"} />
-      </Card>
-
       <Card title="약관 및 안내">
-        <LinkRow label="개인정보처리방침" url={webUrl("/privacy")} />
-        <LinkRow label="계정 삭제 안내" url={webUrl("/account-deletion")} />
+        <Rows>
+          <LinkRow label="개인정보처리방침" url={webUrl("/privacy")} />
+          <LinkRow label="계정 삭제 안내" url={webUrl("/account-deletion")} />
+          <ValueRow label="앱 버전" value={Constants.expoConfig?.version ?? "-"} />
+        </Rows>
       </Card>
 
       {session ? (
-        <Link href="/delete-account" asChild>
-          <Pressable style={styles.dangerButton}>
-            <Text style={styles.dangerButtonText}>계정 삭제</Text>
-          </Pressable>
-        </Link>
+        <View style={styles.danger}>
+          <Link href="/delete-account" asChild>
+            <Button label="계정 삭제" variant="dangerLink" accessibilityRole="link" />
+          </Link>
+        </View>
       ) : null}
     </AppShell>
   );
@@ -76,88 +72,27 @@ export default function SettingsScreen() {
 function LinkRow({ label, url }: { label: string; url: string | null }) {
   if (!url) return null;
   return (
-    <Pressable accessibilityRole="link" onPress={() => Linking.openURL(url)} style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.linkValue}>열기 ›</Text>
+    <Pressable
+      accessibilityRole="link"
+      accessibilityHint="브라우저에서 엽니다"
+      onPress={() => Linking.openURL(url)}
+      android_ripple={{ color: colors.ripple }}
+      style={({ pressed }) => [styles.linkRow, pressed && styles.linkRowPressed]}
+    >
+      <Text style={type.body}>{label}</Text>
+      <Text style={[type.label, { color: colors.primary }]}>열기</Text>
     </Pressable>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View style={styles.infoRow}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={styles.infoValue}>{value}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  title: {
-    color: colors.ink,
-    fontSize: 28,
-    fontWeight: "900",
-  },
-  subtitle: {
-    marginBottom: spacing.lg,
-    color: colors.inkMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  infoRow: {
+  linkRow: {
+    minHeight: touchTarget + 4,
     flexDirection: "row",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
   },
-  infoLabel: {
-    color: colors.inkMuted,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-  infoValue: {
-    flex: 1,
-    color: colors.ink,
-    textAlign: "right",
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  primaryButton: {
-    marginTop: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.ink,
-    padding: spacing.lg,
-  },
-  primaryButtonText: {
-    color: colors.surface,
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  secondaryButton: {
-    marginTop: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.surfaceMuted,
-    padding: spacing.lg,
-  },
-  secondaryButtonText: {
-    color: colors.ink,
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "900",
-  },
-  linkValue: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: "900",
-  },
-  dangerButton: {
-    marginTop: spacing.md,
-    padding: spacing.lg,
-  },
-  dangerButtonText: {
-    color: colors.negative,
-    textAlign: "center",
-    fontSize: 15,
-    fontWeight: "900",
-  },
+  linkRowPressed: { backgroundColor: colors.surfaceMuted },
+  danger: { alignItems: "center" },
 });

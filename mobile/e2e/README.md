@@ -16,6 +16,7 @@ Playwright 는 저장소 의존성에 넣지 않고 `$TMPDIR/pension-mobile-e2e-
 
 결과는 `mobile/e2e/artifacts/`(gitignore)에 남습니다: 단계별 스크린샷, `results.json`(단계 결과·콘솔 오류/경고·실패 요청·
 모든 API 요청의 계좌 헤더와 상태 코드), `next.log`, `expo.log`. 스크립트가 끝나면(실패·중단 포함) 서버·Expo·컨테이너를 모두 정리합니다.
+`E2E_SCRIPT` 로 `mobile/e2e/` 아래의 다른 스크립트를 고를 수 있습니다(기본 `smoke.mjs`).
 `E2E_KEEP_UP=1` 을 주면 테스트 뒤 서버를 띄워 둔 채 기다렸다가 Enter 로 정리합니다(직접 화면을 볼 때).
 
 ## 구성
@@ -25,6 +26,7 @@ Playwright 는 저장소 의존성에 넣지 않고 `$TMPDIR/pension-mobile-e2e-
 | `scripts/mobile-e2e/run.sh` | Postgres(postgres:16, `neon-schema.sql`) → Next 개발 서버 → CORS 프록시 → Expo web → Playwright 순서로 띄우고 정리 |
 | `scripts/mobile-e2e/neon-pg-shim.mjs` | 서버는 Neon HTTP 드라이버(`neon()`)라 로컬 Postgres 에 직접 붙지 못한다. `NODE_OPTIONS=--import` 로 주입해 드라이버의 HTTP 요청(`https://api.<host>/sql`)을 `pg` 로 실행한다. 앱 코드는 바꾸지 않는다 |
 | `scripts/mobile-e2e/cors-proxy.mjs` | 서버가 CORS 헤더를 보내지 않으므로 브라우저(웹 타깃)에서만 필요한 프록시. 네이티브 앱은 CORS 를 적용하지 않는다 |
+| `mobile/e2e/screenshots.mjs` | 스토어(Play) 휴대전화 스크린샷 8장 촬영 + 캡션 합성. `E2E_SCRIPT=screenshots.mjs E2E_SCREENSHOT_DIR=<폴더> ./scripts/mobile-e2e/run.sh` — 자세한 내용은 `docs/store/screenshots.md` |
 | `mobile/e2e/smoke.mjs` | 회원가입 → **탭바 레이아웃** → **신규 계정(0주 종목) 매수·배당 기록** → 로그인 → 다섯 탭 → 계좌 전환(헤더·유지) → 매수 추가/삭제 → 배당 추가/삭제 → 연금 요약 → **명의자별 세액공제** → 비밀번호 변경 → 로그아웃 → 재로그인 → 계정 삭제 (총 25단계) |
 
 서버 환경변수는 모두 더미 값이며 `env -i` 로 띄워 `.env.local` 이나 운영 값을 읽지 않습니다(`TZ=UTC` 로 Vercel 과 같은 시간대).

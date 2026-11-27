@@ -2,6 +2,7 @@ import test, { after, before, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 
 import { setupDom } from "@/test/dom";
+import type { RetirementGoalRow } from "@/lib/pension-data";
 
 let render: typeof import("@testing-library/react").render;
 let screen: typeof import("@testing-library/react").screen;
@@ -39,7 +40,7 @@ const accounts = [
   { id: "a2", name: "일반", owner_type: "self", account_type: "general" as const, value: 0, annual_dividend: 1_200_000 },
 ];
 
-const emptyGoal = {
+const emptyGoal: RetirementGoalRow = {
   targetMonthly: null,
   retirementAge: null,
   birthYear: null,
@@ -151,7 +152,7 @@ test("배우자 총급여 구간을 미입력으로 되돌리면 null로 저장�
 // ── 배우자 항목: 기본으로 숨기고, 배우자 데이터가 있거나 '배우자 정보 추가'를 누르면 보인다 ──
 
 /** 서버가 받은 항목을 저장한 목표로 돌려주는 스텁 */
-function echoGoalFetch(base: typeof emptyGoal) {
+function echoGoalFetch(base: RetirementGoalRow) {
   globalThis.fetch = (async (url: string, init?: RequestInit) => {
     const body = init?.body ? JSON.parse(String(init.body)) : undefined;
     requests.push({ url, method: init?.method ?? "GET", body });

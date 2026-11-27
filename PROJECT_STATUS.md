@@ -42,6 +42,6 @@
 ## 남은 일 / 확인이 필요한 것
 - Play Console 내부 테스트 업로드와 스토어 등록 (코드에서는 진행 여부를 확인할 수 없음)
 - EAS production 빌드는 이 문서 작성 시점에 실행·검증하지 않았음
-- `supabase/migrations/`는 예전 기록으로 남아 있고 현재 런타임은 Supabase를 쓰지 않음(코드·스크립트 참조 없음, 주석·문서에서만 언급). 삭제 여부는 별도 결정 필요
+- `supabase/migrations/`(예전 Supabase 시절 기록)는 삭제함. 계좌(account_id) 스키마는 `neon-schema.sql`에 반영됨
 - `mobile/npm ci`의 reanimated peer 충돌은 `mobile/.npmrc`(`legacy-peer-deps=true`)와 lockfile 정리로 해결. EAS 빌드 자체는 실행해 확인하지 않음
 - `mobile/src/hooks/usePortfolioSummary.ts`에 lint 경고 1건(`react-hooks/set-state-in-effect`)

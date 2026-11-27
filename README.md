@@ -114,6 +114,5 @@ src/
 mobile/                      # Expo 앱 (app.json, eas.json, src/)
 scripts/                     # test.mjs, verify-snapshot-db.sh
 neon-schema.sql              # 현재 DB 스키마
-supabase/migrations/         # 예전 Supabase 시절의 마이그레이션 기록(현재 런타임은 사용하지 않음)
 docs/                        # 모바일 앱·Play Store 계획서
 ```

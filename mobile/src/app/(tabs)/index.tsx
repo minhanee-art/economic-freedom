@@ -1,8 +1,10 @@
+import { router } from "expo-router";
 import { useCallback } from "react";
 import { StyleSheet, View } from "react-native";
 import { Text } from "@/components/AppText";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
+import { Button } from "@/components/Button";
 import { Card, Rows, ValueRow } from "@/components/Card";
 import { EmptyHoldings } from "@/components/EmptyHoldings";
 import { Notice, ProgressBar, RETIREMENT_WEB_PATH, ScreenTitle, WebLinkButton } from "@/components/Parts";
@@ -26,10 +28,20 @@ export default function HomeScreen() {
   const refresh = useCallback(async () => {
     await Promise.all([refreshPortfolio(), refreshPension()]);
   }, [refreshPortfolio, refreshPension]);
+  // 처음 쓰는 계정(이 계좌에 종목이 없고 연금 계산값도 아직 없음): 앱에서 바로 할 수 있는 '종목 추가'를
+  // 웹 안내 카드들보다 먼저 보이고, 무엇을 어디서 입력하는지 3단계로 알린다.
+  const firstRun =
+    summary !== null &&
+    summary.holdings.length === 0 &&
+    pension.summary !== null &&
+    pension.summary.taxCredit === null &&
+    pension.summary.retirement.cashflow === null;
 
   return (
     <AppShell refreshing={isLoading || pension.isLoading} onRefresh={refresh}>
       <ScreenTitle>가족연금계획</ScreenTitle>
+
+      {firstRun ? <FirstRunGuide /> : null}
 
       {pension.summary ? (
         <PensionOverview pension={pension.summary} portfolio={summary} />
@@ -44,8 +56,42 @@ export default function HomeScreen() {
         <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
       </View>
 
-      {summary ? <AccountContent summary={summary} /> : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
+      {summary ? (
+        firstRun ? (
+          <Text style={[type.body, styles.muted]}>이 계좌에는 아직 종목이 없습니다. 위의 1단계부터 시작하세요.</Text>
+        ) : (
+          <AccountContent summary={summary} />
+        )
+      ) : (
+        <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />
+      )}
     </AppShell>
+  );
+}
+
+const FIRST_RUN_STEPS: { title: string; body: string }[] = [
+  { title: "종목 추가", body: "가지고 있는 종목의 이름과 종목코드를 이 계좌에 추가합니다." },
+  { title: "매수 기록", body: "이미 산 수량과 단가를 기록하면 평가금액·손익·배당이 계산됩니다." },
+  { title: "연금 계좌와 은퇴 목표", body: "웹의 연금 설계 화면에서 입력하면 세액공제와 은퇴 시점 현금흐름이 여기에 표시됩니다." },
+];
+
+/** 빈 계정의 첫 화면 안내. 1·2단계는 앱에서, 3단계는 웹에서 한다. 주 버튼은 지금 할 수 있는 1단계 하나. */
+function FirstRunGuide() {
+  return (
+    <Card title="처음 시작하기">
+      <View style={styles.steps}>
+        {FIRST_RUN_STEPS.map((step, index) => (
+          <View key={step.title} style={styles.step}>
+            <Text style={[type.number, styles.stepNo]}>{index + 1}</Text>
+            <View style={styles.stepText}>
+              <Text style={[type.body, styles.stepTitle]}>{step.title}</Text>
+              <Text style={[type.label, styles.stepBody]}>{step.body}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+      <Button label="종목 추가" onPress={() => router.push("/add-holding")} />
+    </Card>
   );
 }
 
@@ -156,6 +202,12 @@ function AccountContent({ summary }: { summary: PortfolioSummary }) {
 
 const styles = StyleSheet.create({
   headline: { gap: spacing.xs },
+  steps: { gap: spacing.md },
+  step: { flexDirection: "row", gap: spacing.md },
+  stepNo: { width: 16, color: colors.primary },
+  stepText: { flex: 1, gap: 2 },
+  stepTitle: { fontWeight: "600" },
+  stepBody: { lineHeight: 20 },
   muted: { color: colors.inkMuted },
   tabular: { fontVariant: ["tabular-nums"] },
   accountSection: { gap: spacing.sm, marginTop: spacing.sm },

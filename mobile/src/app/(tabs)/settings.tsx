@@ -38,7 +38,7 @@ export default function SettingsScreen() {
         <InfoRow label="상태" value={session ? "연결됨" : "로그아웃됨"} />
         <InfoRow label="이메일" value={session?.user.email ?? "로그인 필요"} />
         {session ? (
-          <Pressable style={styles.secondaryButton} onPress={handleLogout}>
+          <Pressable accessibilityRole="button" style={styles.secondaryButton} onPress={handleLogout}>
             <Text style={styles.secondaryButtonText}>로그아웃</Text>
           </Pressable>
         ) : (

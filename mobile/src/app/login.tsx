@@ -63,7 +63,7 @@ export default function LoginScreen() {
           />
         </View>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable disabled={disabled} onPress={handleLogin} style={[styles.button, disabled && styles.buttonDisabled]}>
+        <Pressable accessibilityRole="button" disabled={disabled} onPress={handleLogin} style={[styles.button, disabled && styles.buttonDisabled]}>
           <Text style={styles.buttonText}>{isSubmitting ? "로그인 중" : "로그인"}</Text>
         </Pressable>
         <Text style={styles.subtitle}>

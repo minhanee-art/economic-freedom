@@ -46,7 +46,7 @@ export function HoldingPicker({
           <Pressable
             key={holding.id}
             accessibilityRole="button"
-            accessibilityState={{ selected: active }}
+            aria-selected={active}
             onPress={() => onSelect(holding.id)}
             style={[styles.item, active && styles.itemActive]}
           >

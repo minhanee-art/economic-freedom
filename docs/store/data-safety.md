@@ -20,7 +20,7 @@
 | 매수 기록·매도 기록 | 웹, 앱(매수 기록 입력 `mobile/src/app/record-purchase.tsx`) | `purchase_records`, `purchase_items`, `sell_items` | 앱: 매수 기록 입력·최근 기록 조회(`/api/purchases`)·**개별 삭제**(`DELETE /api/purchases/{id}`, 최근 기록의 '삭제' 버튼 + 확인 창, `mobile/src/app/record-purchase.tsx`, `mobile/src/api/records.ts`) | 서버가 날짜·수량 등 입력을 검증(`src/lib/record-validation.ts`). 삭제하면 그 기록이 더했던 보유 수량·원가를 되돌림. 이후 같은 종목 매도 기록이 있거나 보유 수량·원가 기록이 맞지 않으면 서버가 409로 거절하고 아무것도 바꾸지 않음(`src/app/api/purchases/[id]/route.ts`) |
 | 배당 기록·배당 캘린더·메모 | 웹, 앱(배당 수령 기록 입력·삭제 `record-dividend.tsx`) | `dividends`, `dividend_calendar` | 앱: 조회·입력·삭제(`/api/dividends`) | 자유 입력 메모 포함(웹) |
 | 연금 납입액·연금 수동 입력(국민연금·퇴직연금·연금보험 월 수령액, 본인/배우자) | 웹 | `pension_contributions`, `pension_income_sources` | 앱이 연금 탭에서 **조회**(`/api/pension/*`, 읽기 전용) | |
-| 은퇴 목표·은퇴 나이·출생연도·배우자 출생연도·기대수익률·급여 구간·월 적립금 | 웹 | `profiles` 컬럼 | 앱: 목표 월 현금흐름·월 적립금, 연금 설계 요약(`/api/pension/summary`) 조회 | 출생연도·급여 구간은 민감도 높음 |
+| 은퇴 목표·은퇴 나이·출생연도·배우자 출생연도·기대수익률·급여 구간·월 적립금 | 웹 | `profiles` 컬럼 | 앱이 **원값을 받음**: `GET /api/pension/goal` 응답의 목표·은퇴 나이·**본인·배우자 출생연도**·기대수익률·**급여 구간**을 그대로 받아 화면 상태로 가짐(`mobile/src/api/pension.ts` `getRetirementPlan`·`EMPTY_GOAL`, 서버 `src/app/api/pension/goal/route.ts`). 연금 요약(`/api/pension/summary`)에도 같은 `goal` 객체가 들어 있음(`src/lib/pension-summary.ts`). 앱은 읽기만 하고 서버로 보내지 않음. 기기 저장소에는 세션·선택 계좌만 저장(`mobile/src/storage/` 에 `session.ts`·`account.ts`)하며 이 값은 저장하지 않음(코드상) | 출생연도·급여 구간은 민감도 높음 |
 | 자녀 이름·생년월일, 증여/입금 기록, 신고 여부·메모 | 웹 | `children`, `child_gifts`, `child_holdings` | 앱 미조회 | **제3자(자녀) 개인정보를 이용자가 입력**함 → 확인 필요: 방침 반영 |
 | 관심종목 | 웹 | `watchlist` | 앱 미조회 | |
 | 텔레그램 chat_id, 연결 확인 시각 | 웹 설정 > 텔레그램 연결에서 연결 코드를 발급(`POST /api/telegram-link`)하고 이용자가 그 코드를 봇에 보내면 웹훅이 **그 메시지의 chat.id**를 저장(`src/lib/telegram-link.ts`). 이용자가 chat_id를 직접 입력하는 경로는 없음(`PATCH`로 저장하는 API 삭제됨, `src/test/api/telegram-link.test.ts`) | `portfolio_accounts.telegram_chat_id`, `telegram_chat_verified_at` (계좌 단위) | **아니오** (`mobile/src`에 텔레그램 관련 코드 없음) | 웹 전용 기능. 화면에는 chat_id 끝 4자리만 표시 |
@@ -92,7 +92,7 @@ OpenAI 프롬프트는 '정보 정리 도구' 규칙(매매 권유·전문가 �
 
 - 앱 내: 설정 탭 → 계정 삭제 → 비밀번호 확인 → 확인 대화상자 → 영구 삭제 (`mobile/src/app/(tabs)/settings.tsx`, `delete-account.tsx`). 서버는 `DELETE /api/me` (`src/app/api/me/route.ts`)에서 속도 제한(IP+사용자)과 비밀번호(Google 전용 계정은 이메일) 확인 후 `DELETE FROM users` 한 줄로 삭제하며, 모든 데이터 테이블이 `ON DELETE CASCADE`(`neon-schema.sql`)로 연결돼 함께 삭제됩니다.
 - 개별 데이터: 모바일 앱의 매수 기록 화면에서 최근 매수 기록을 한 건씩 삭제할 수 있고(확인 창 있음), 배당 수령 기록도 앱에서 삭제할 수 있습니다. 매수 기록을 삭제하면 그 기록이 더했던 보유 수량·원가가 되돌아갑니다. 이후 같은 종목 매도 기록이 있는 등 정확히 되돌릴 수 없으면 서버가 거절하고 아무것도 바꾸지 않습니다(`src/app/api/purchases/[id]/route.ts`, `mobile/src/app/record-purchase.tsx`). 이것은 계정 삭제를 대신하지 않습니다.
-- 텔레그램 연결 해제: 웹 설정 > 텔레그램 연결에서 계좌별로 해제(`DELETE /api/telegram-link`). 확인된 chat_id·확인 시각·미확인 chat_id·그 계좌의 미사용 연결 코드를 지웁니다(`src/lib/telegram-link.ts` `unlinkTelegram`). 모바일 앱에는 이 화면이 없습니다. 계정 삭제 때는 `telegram_link_codes`도 `ON DELETE CASCADE`로 함께 삭제됩니다(`src/lib/telegram-link.ts`).
+- 텔레그램 연결 해제: 웹 설정 > 텔레그램 연결에서 계좌별로 해제(`DELETE /api/telegram-link`). 확인된 chat_id·확인 시각·미확인 chat_id를 지우고, 그 사용자·계좌의 **연결 코드 행을 전부**(미사용·사용됨·만료 포함) 지웁니다(`src/lib/telegram-link.ts` `unlinkTelegram` 의 `DELETE … WHERE user_id AND account_id`, 218행. 같은 파일 주석은 '미사용 코드'라 적었으나 구현은 조건 없이 지움). 모바일 앱에는 이 화면이 없습니다. 계정 삭제 때는 `telegram_link_codes`도 `ON DELETE CASCADE`로 함께 삭제됩니다(`src/lib/telegram-link.ts`).
 - 웹: 설정 화면 맨 아래 '계정 삭제'(방침·삭제 안내 페이지 기준. 웹 설정 화면 구현 자체는 읽지 않음 — **확인 필요**).
 - 웹 링크(Play 필수): `/account-deletion` (`src/app/account-deletion/page.tsx`). 보조로 이메일 요청 안내 포함(`NEXT_PUBLIC_SUPPORT_EMAIL`).
 - 주의: 앱 내 삭제 화면은 **비밀번호 입력만** 지원합니다. 모바일에는 Google 로그인이 없으므로 현재 앱 이용자는 모두 비밀번호 계정이지만, 웹에서 Google로만 가입한 계정(비밀번호 없음)이 앱에 로그인할 방법은 없습니다.
@@ -130,8 +130,9 @@ OpenAI 프롬프트는 '정보 정리 도구' 규칙(매매 권유·전문가 �
 | 개인 정보 → **사용자 ID** | 예 | 아니오(5-4) | 필수 | 앱 기능, 계정 관리 | 서버가 발급하는 계정 UUID(`users.id`), 세션 토큰(JWT)에 포함(`src/lib/session.ts`). 앱에는 `expo-secure-store` 로 저장(`mobile/src/storage/session.ts`) |
 | 개인 정보 → **이름** | **A: 수집하지 않음.** B(모바일 Google 로그인 도입): 예 — Google 이름이 표시 이름으로 저장됨(웹 콜백 기준 `src/app/api/auth/google/callback/route.ts`, 모바일 구현은 아직 없음) | B: 아니오 | B: 선택 | B: 계정 관리 | 모바일 앱에는 이름 입력 화면이 없음(`signup.tsx`) |
 | 개인 정보 → 비밀번호(전용 항목 없음) | 예(서버에 **bcrypt 해시만** 저장) | 아니오 | 필수 | 계정 관리 | `auth-account.ts`. Play 양식에 비밀번호 항목이 없어 어느 범주로 신고할지 **확인 필요**(보수적으로는 '개인 정보 → 기타 정보'에 포함하는 방법 검토) |
-| 재무 정보 → **기타 재무 정보** | 예 | 아니오 | 앱의 핵심 기능이라 사실상 필수(입력하지 않으면 빈 화면) | 앱 기능 | 보유 종목·수량·평균단가/원가, 매수·매도·배당 기록, 연금 입력값과 은퇴 목표(앱은 일부만 조회·일부 입력). 앱이 서버로 보내는 것: 매수 기록(`/api/purchases` POST·DELETE), 배당 기록(`/api/dividends` POST·DELETE). 조회: `/api/mobile/portfolio-summary`, `/api/pension/*`. 범주가 '기타 재무 정보'가 맞는지 **확인 필요**(결제 정보·구매 내역·신용 점수는 해당 없음) |
-| 개인 정보 → **기타 정보**(출생연도 등) | **서버에는 저장됨**(출생연도·배우자 출생연도·자녀 생년월일, 웹에서 입력). 모바일 앱이 **보내지는** 않고 연금 설계 요약을 받아서 보여 줄 뿐 | 아니오 | 선택(웹 입력) | 앱 기능 | 앱은 연금 요약 응답으로 이 값들에서 계산된 결과를 받음(`/api/pension/summary`). 앱이 원값을 수집하는 것은 아니므로 **신고 여부를 보수적으로 판단할 것**(수집으로 보고 '기타 정보 / 앱 기능 / 선택'으로 적는 쪽이 안전) |
+| 재무 정보 → **기타 재무 정보** | 예 | 아니오 | **선택으로 판정**(근거는 아래 '필수/선택 판정'). 보수적 대안: 필수 | 앱 기능 | 보유 종목·수량·평균단가/원가, 매수·매도·배당 기록, 연금 입력값과 은퇴 목표(앱은 일부만 조회·일부 입력). 앱이 서버로 보내는 것: 매수 기록(`/api/purchases` POST·DELETE), 배당 기록(`/api/dividends` POST·DELETE). 조회: `/api/mobile/portfolio-summary`, `/api/pension/*`. 범주가 '기타 재무 정보'가 맞는지 **확인 필요**(결제 정보·구매 내역·신용 점수는 해당 없음) |
+| 개인 정보 → **기타 정보**(본인·배우자 출생연도) | 앱이 **서버에서 받아 화면 상태로 가짐**(`mobile/src/api/pension.ts` `getRetirementPlan`: `GET /api/pension/goal`; `src/app/api/pension/goal/route.ts`; `src/lib/pension-summary.ts` 의 `goal`). 앱이 서버로 **보내지는 않음** — 입력(수집)은 웹에서 이미 일어남. 자녀 생년월일은 앱이 받지 않음(앱 API 에 없음) | 아니오 | 선택(웹 입력, 가입에 불필요) | 앱 기능 | 이전 초안의 "앱은 원값을 받지 않고 계산 결과만 받는다"는 **틀렸음**(정정). 유형은 개인 정보 → 기타 정보. Play 가 '앱이 받아서 보여 주기만 하는 데이터'를 수집으로 보는지는 **확인 필요**하므로 **수집으로 신고하는 쪽을 기본**으로 함 |
+| 재무 정보 → 기타 재무 정보(급여 구간·기대수익률·목표 월 현금흐름·월 적립금) | 위와 같음: 앱이 `goal` 로 받아 표시·계산에 사용(`retirement.tsx` 의 '출생연도' 라벨, 세액공제 계산의 급여 구간 가정 표시) | 아니오 | 선택(웹 입력) | 앱 기능 | 같은 이유로 위 '기타 재무 정보' 행에 포함해 신고 |
 | 앱 활동·앱 정보 및 성능·위치·연락처·사진·파일·기기 ID·광고 ID | **수집하지 않음** | – | – | – | 1절 '수집하지 않는 것' (권한 선언 없음 `mobile/app.json`, 분석·크래시·광고 SDK 없음 `mobile/package.json`) |
 | IP 주소(로그인 제한용) | 서버가 요청에서 추출해 레이트리밋 키로만 사용(Upstash 설정 시 저장, 10분 슬라이딩 윈도우) | 아니오(5-4) | 자동 | 보안(사기·남용 방지) | `src/lib/rate-limit.ts`(`prefix: "rl:auth"`), 모바일 로그인 키 `mobile-login:{ip}:{email}`. Play 가 이를 별도 유형(예: 위치/기기 식별자)으로 보는지 **확인 필요**. 별도 신고를 하지 않을 때는 방침 3항에 이미 기재돼 있음 |
 
@@ -158,7 +159,25 @@ Play 안내(요약 기준, 원문 재확인 필요)에서 **공유(share)** 는 
 | 네이버 금융·Yahoo·Google 뉴스·한국투자증권 | 종목코드·종목명·검색어만(이용자 식별 정보 없음) | **아니오** — 모바일 앱은 이 API 를 직접 부르지 않고 `/api/mobile/portfolio-summary` 는 외부 fetch 없이 DB 값을 씀(`src/app/api/mobile/portfolio-summary/route.ts` import 확인) | 해당 없음. 웹의 `/api/prices` 는 종목코드만 보내며 이것이 포트폴리오 정보로 간주되는지 **확인 필요** | `src/app/api/prices/route.ts` |
 | jsDelivr(글꼴) | 웹 브라우저 IP | 아니오(웹만) | 해당 없음 | `src/app/layout.tsx` |
 
-**종합 답: 공유 = 아니오.** 이용자 데이터를 광고·판매 목적으로 보내지 않으며, Vercel·Neon·Upstash 는 서비스 제공자 처리로 판단합니다. 이 판단이 틀릴 경우(공유로 분류되면) 이메일·사용자 ID·재무 정보의 '공유' 칸과 방침 3항을 함께 고쳐야 합니다.
+**종합 답: 공유 = 아니오 — 단, 아래 전제 조건을 사용자가 제출 전에 확인한다는 조건부 답입니다.** 코드로 확인되는 것은 "무엇이 어디로 나가는가"까지이고(이용자 데이터를 광고·판매 목적으로 보내는 코드는 없음), Vercel·Neon·Upstash 가 Play 의 '서비스 제공자' 예외에 해당하는지는 코드로 입증되지 않습니다.
+
+**제출 전 사용자가 확인할 전제 조건**
+1. Vercel·Neon·Upstash 와의 약관·DPA(데이터 처리 계약)가 "개발자를 대신해 처리하며 자기 목적으로 쓰지 않는다"는 내용인지 각 업체의 현재 약관으로 확인(계약·약관 열람은 이 작업에서 하지 않음 — **미확인**).
+2. Play 안내 원문의 '공유' 예외 문구(서비스 제공자·사용자 요청·익명화)가 위 요약과 같은지 확인.
+3. 하나라도 충족되지 않으면 이메일·사용자 ID·재무 정보·(IP)의 '공유' 칸을 '예'로 바꾸고 방침 3항을 함께 고쳐야 합니다.
+
+### 5-4a. 필수/선택 판정 (질문 2)
+
+Play 양식의 '필수/선택' 정의는 양식 도움말에 따라 확인해야 하며 이 문서에서는 열어 보지 않았습니다(**확인 필요**). 일반적 의미로 "필수 = 그 데이터 없이는 앱(해당 기능)이 동작하지 않거나 이용자가 수집을 끌 수 없음, 선택 = 이용자가 제공 여부를 고를 수 있음"으로 보고 판정했습니다. 정의가 다르면 아래 '보수적 대안' 칸을 쓰세요.
+
+| 유형 | 판정 | 근거(코드) | 보수적 대안 |
+|---|---|---|---|
+| 이메일 | **필수** | 가입에 필요(`signupWithPassword` 가 이메일 정규화 실패 시 400, `src/lib/auth-account.ts:45`) | – |
+| 사용자 ID | **필수** | 가입 시 서버가 자동 생성(`INSERT INTO users … RETURNING id`, `auth-account.ts:70`) | – |
+| 비밀번호(해시) | **필수** | 가입 검증(`validateNewPassword`, `auth-account.ts:48`) | – |
+| 재무 정보(보유·매수·배당·연금 입력) | **선택** | 가입에 재무 입력이 없음 — 가입은 이메일·비밀번호만 받고 기본 종목 12종은 수량 0으로 서버가 만들며 프로필은 서버 기본값(`monthly_budget` 300000)으로 생성(`auth-account.ts:84-94`(기본 종목 84, 프로필 92)). 매수·배당 기록 입력과 연금 입력은 이용자가 고르는 행동 | 앱의 핵심 용도라 '필수'로 신고하는 쪽이 더 보수적일 수 있음(어느 쪽이 맞는지 정의 확인 후 결정) |
+| 출생연도·급여 구간 등 | **선택** | 웹에서 이용자가 입력(가입 불필요) | – |
+| IP(레이트리밋) | 이용자가 끌 수 없는 자동 수집 → **필수**에 가깝게 | `src/lib/rate-limit.ts` | Play 가 별도 유형으로 보지 않으면 신고 대상 아님(확인 필요) |
 
 ### 5-5. 제출 전 남은 확인
 

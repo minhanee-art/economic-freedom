@@ -5,6 +5,7 @@
 #   - src/test/auth-hardening.db.test.ts   (세션 버전 토큰 폐기, Google 첫 연결 선점 차단, 계좌 지정 소유권)
 #   - src/test/pension.db.test.ts          (연금 설계 테이블·쿼리)
 #   - src/test/purchase-delete.db.test.ts  (매수 기록 개별 삭제 — 보유 수량·원가 되돌림)
+#   - src/test/trade-goal-concurrency.db.test.ts (동시 매도 원자성, 은퇴 목표 부분 수정)
 #   ./scripts/verify-snapshot-db.sh
 set -euo pipefail
 
@@ -39,7 +40,7 @@ if ! docker exec "$CONTAINER" pg_isready -U "$DB_USER" -d "$DB_NAME" >/dev/null 
   exit 1
 fi
 
-for test_file in src/test/portfolio-returns.db.test.ts src/test/account-delete.db.test.ts src/test/auth-hardening.db.test.ts src/test/pension.db.test.ts src/test/purchase-delete.db.test.ts; do
+for test_file in src/test/portfolio-returns.db.test.ts src/test/account-delete.db.test.ts src/test/auth-hardening.db.test.ts src/test/pension.db.test.ts src/test/purchase-delete.db.test.ts src/test/trade-goal-concurrency.db.test.ts; do
   # 테스트마다 스키마를 비워 서로의 테이블 정의가 섞이지 않게 한다.
   docker exec "$CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -q \
     -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;" >/dev/null

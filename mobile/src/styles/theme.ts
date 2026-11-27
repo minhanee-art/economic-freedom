@@ -7,7 +7,7 @@ import type { TextStyle } from "react-native";
  *   다크 모드를 붙일 때 `themes.dark` 를 채우고 `colors` 를 고르는 지점만 바꾸면 되도록 한 곳에 모았다.
  * - 손익은 한국 관습: 상승·이익 = gain(빨강), 하락·손실 = loss(파랑). 숫자에는 항상 부호나 ▲▼ 를 함께 쓴다.
  *   오류·삭제는 danger 로, 손익 빨강과 섞지 않는다(위험은 색 하나로만 표시하지 않고 문구·테두리를 함께 쓴다).
- * 대비(흰 면 기준): ink 15:1, inkMuted 5.1:1(canvas 위 4.8:1), placeholder 4.7:1, caution 5.9:1(cautionSoft 위 5.6:1), gain 5.4:1, loss 5.8:1,
+ * 대비(흰 면 기준): ink 15:1, inkMuted 5.1:1(canvas 위 4.8:1), placeholder 4.7:1, caution 5.9:1(cautionSoft 위 5.5:1), gain 5.4:1, loss 5.8:1,
  * danger 6.1:1(dangerSoft 위), disabledInk 5.8:1(disabled 면 위), lineStrong(입력 테두리) 3.2:1.
  */
 const light = {
@@ -33,7 +33,7 @@ const light = {
   dangerLine: "#fecdca",
   // 호박색: 손익 빨강(gain)·위험 빨강(danger)과 색상이 겹치지 않게(웹 caution 과 같은 값으로 맞춘다)
   caution: "#8a5a00",
-  cautionSoft: "#fff7ed",
+  cautionSoft: "#fdf6e3",
   success: "#047857",
   disabled: "#e3e8ee",
   disabledInk: "#4a5870",

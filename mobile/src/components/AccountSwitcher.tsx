@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { colors, radius, spacing, touchTarget, type } from "@/styles/theme";
 import type { AccountSummary } from "@/types";
 

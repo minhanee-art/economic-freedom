@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { Text, View, type TextInput } from "react-native";
+import { View, type TextInput } from "react-native";
+import { Text } from "@/components/AppText";
 import { ApiError } from "@/api/client";
 import { createHolding, normalizeHoldingInput } from "@/api/holdings";
 import { AppShell } from "@/components/AppShell";

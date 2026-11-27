@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { StyleSheet, Text, View, type TextInput } from "react-native";
+import { StyleSheet, View, type TextInput } from "react-native";
+import { Text } from "@/components/AppText";
 import { ApiError } from "@/api/client";
 import { createDividend, deleteDividend, listDividends } from "@/api/records";
 import { AppShell } from "@/components/AppShell";

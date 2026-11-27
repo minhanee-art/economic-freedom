@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Linking, Text } from "react-native";
+import { Linking } from "react-native";
+import { Text } from "@/components/AppText";
 import { deleteAccount, getPasswordStatus } from "@/api/auth";
 import { ApiError, webUrl } from "@/api/client";
 import { AppShell } from "@/components/AppShell";
@@ -93,8 +94,15 @@ export default function DeleteAccountScreen() {
     <AppShell>
       <Text style={[type.body, { color: colors.danger }]}>계정을 삭제하면 저장된 모든 데이터가 영구적으로 사라지며 복구할 수 없습니다.</Text>
 
-      <Card title={hasPassword === false ? "이메일 확인" : "비밀번호 확인"}>
-        {hasPassword === false ? (
+      <Card title={hasPassword === null ? "본인 확인" : hasPassword === false ? "이메일 확인" : "비밀번호 확인"}>
+        {hasPassword === null ? (
+          // 확인 방법(비밀번호/이메일)을 불러오는 동안은 입력칸·버튼을 그리지 않고 자리만 잡는 문구를 둔다.
+          error ? null : (
+            <Text style={[type.body, { color: colors.inkMuted }]} accessibilityLiveRegion="polite">
+              본인 확인 방법을 불러오는 중입니다.
+            </Text>
+          )
+        ) : hasPassword === false ? (
           <TextField
             label="계정 이메일"
             autoCapitalize="none"
@@ -115,7 +123,6 @@ export default function DeleteAccountScreen() {
           <TextField
             label="비밀번호"
             autoComplete="current-password"
-            editable={hasPassword !== null}
             onChangeText={(text) => {
               setPassword(text);
               setFieldError("");
@@ -129,13 +136,9 @@ export default function DeleteAccountScreen() {
           />
         )}
         {error ? <FormError>{error}</FormError> : null}
-        <Button
-          label="계정 영구 삭제"
-          variant="danger"
-          busy={isSubmitting || hasPassword === null}
-          busyLabel={isSubmitting ? "삭제 중" : "확인 중"}
-          onPress={confirmDelete}
-        />
+        {hasPassword === null ? null : (
+          <Button label="계정 영구 삭제" variant="danger" busy={isSubmitting} busyLabel="삭제 중" onPress={confirmDelete} />
+        )}
       </Card>
 
       {guideUrl ? (

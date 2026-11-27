@@ -1,5 +1,6 @@
 import { useCallback } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+import { Text } from "@/components/AppText";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card, Rows, ValueRow } from "@/components/Card";

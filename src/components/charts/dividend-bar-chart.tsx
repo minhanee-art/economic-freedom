@@ -8,7 +8,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { formatKRW } from "@/lib/utils";
+import { formatKRW, formatKRWAxis } from "@/lib/utils";
 
 interface ChartData {
   month: string;
@@ -26,13 +26,13 @@ export function DividendBarChart({ data }: DividendBarChartProps) {
         <BarChart data={data}>
           <XAxis
             dataKey="month"
-            tick={{ fontSize: 11, fill: "#64748d" }}
+            tick={{ fontSize: 12, fill: "#64748d" }}
             axisLine={{ stroke: "#e3e8ee" }}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 11, fill: "#64748d" }}
-            tickFormatter={(v) => formatKRW(v)}
+            tick={{ fontSize: 12, fill: "#64748d" }}
+            tickFormatter={(v) => formatKRWAxis(v)}
             width={50}
             axisLine={false}
             tickLine={false}
@@ -42,12 +42,12 @@ export function DividendBarChart({ data }: DividendBarChartProps) {
             formatter={(value) => formatKRW(Number(value))}
             contentStyle={{
               fontSize: 12,
-              borderRadius: 12,
+              borderRadius: 0,
               border: "1px solid #e3e8ee",
               boxShadow: "0 8px 24px rgba(0, 55, 112, 0.08)",
             }}
           />
-          <Bar dataKey="amount" fill="#533afd" radius={[6, 6, 0, 0]} />
+          <Bar dataKey="amount" fill="#533afd" />
         </BarChart>
       </ResponsiveContainer>
     </div>

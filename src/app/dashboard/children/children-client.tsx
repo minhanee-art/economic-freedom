@@ -53,40 +53,40 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-bold">자녀 계좌 관리</h2>
-        <p className="text-sm text-zinc-400 mt-0.5">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
           자녀별 증여·정부지원금 입금·보유 종목을 관리하고 증여세 공제한도를 추적하세요.
         </p>
       </div>
 
       {/* 자녀 추가 */}
-      <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+      <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
         <h3 className="text-sm font-semibold">자녀 추가</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-zinc-500 mb-1">이름</label>
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이름</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="예: 김민준"
-              className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 mb-1">생년월일</label>
+            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">생년월일</label>
             <input
               type="date"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
-              className="w-full h-10 rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-zinc-200 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
         </div>
-        {error && <p className="text-xs text-red-500">{error}</p>}
+        {error && <p className="text-xs text-danger">{error}</p>}
         <button
           onClick={handleAdd}
           disabled={!name.trim() || !birthDate || isAdding}
-          className="w-full h-10 rounded-lg bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "자녀 추가"}
         </button>
@@ -94,19 +94,19 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
       {/* 자녀 목록 */}
       {children.length === 0 ? (
-        <p className="text-sm text-zinc-400 py-8 text-center">등록된 자녀가 없습니다.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">등록된 자녀가 없습니다.</p>
       ) : (
         <div className="space-y-3">
           {children.map((c) => (
-            <div key={c.id} className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+            <div key={c.id} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3">
                 <Link href={`/dashboard/children/${c.id}`} className="flex-1">
                   <p className="text-sm font-semibold">{c.name}</p>
-                  <p className="text-xs text-zinc-400">만 {getAge(c.birth_date)}세 · {c.birth_date}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">만 {getAge(c.birth_date)}세 · {c.birth_date}</p>
                 </Link>
                 <button
                   onClick={() => handleDelete(c.id)}
-                  className="text-zinc-300 hover:text-red-500 transition-colors shrink-0 ml-3"
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors shrink-0 ml-3"
                   aria-label="삭제"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

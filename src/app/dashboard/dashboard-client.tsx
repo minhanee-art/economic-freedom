@@ -12,7 +12,7 @@ import { computeDailyChange, computeDividendYields, type DividendRecordLite } fr
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
 import { CategoryPieChart } from "@/components/charts/category-pie-chart";
 import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
-import { cn, formatKRW } from "@/lib/utils";
+import { cn, formatKRW, formatSignedKRW } from "@/lib/utils";
 import { extraNavItems } from "@/lib/dashboard-navigation";
 import type { DividendCalendarRow } from "@/lib/queries";
 import { CATEGORIES } from "@/lib/constants";
@@ -517,8 +517,8 @@ export function DashboardClient({
         <div
           className={`border px-4 py-2.5 text-sm font-medium ${
             refreshResult.includes("실패")
-              ? "bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
-              : "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+              ? "bg-danger-soft text-danger border-danger-line"
+              : "bg-surface text-success border-hairline dark:border-zinc-800"
           }`}
         >
           {refreshResult}
@@ -530,7 +530,7 @@ export function DashboardClient({
           <div className="relative space-y-5">
             <div className="border-b border-zinc-200 pb-5 dark:border-zinc-800">
               <div className="max-w-3xl">
-                <div className="mb-4 inline-flex items-center gap-2 border border-dark-header bg-dark-header px-3 py-2 text-xs font-bold text-white shadow-[6px_6px_0_rgba(83,58,253,0.16)] dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-200">
+                <div className="mb-4 inline-flex items-center gap-2 border border-dark-header bg-dark-header px-3 py-2 text-xs font-bold text-white dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-200">
                   <span className="flex h-6 w-6 items-center justify-center border border-white/20 bg-white/10">
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.8 11.2 3a1.15 1.15 0 0 1 1.6 0L21 10.8M5.2 9.5v9.1c0 .77.63 1.4 1.4 1.4h3.15v-4.25c0-.69.56-1.25 1.25-1.25h2c.69 0 1.25.56 1.25 1.25V20h3.15c.77 0 1.4-.63 1.4-1.4V9.5" />
@@ -554,8 +554,8 @@ export function DashboardClient({
               <HomeStat label="평가금액" value={formatKRW(totalValue)} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
               <HomeStat
                 label="총 손익"
-                value={formatKRW(totalPnL)}
-                tone={totalPnL >= 0 ? "up" : "down"}
+                value={formatSignedKRW(totalPnL)}
+                tone={totalPnL > 0 ? "up" : totalPnL < 0 ? "down" : "neutral"}
                 sub={`${totalPnLPct >= 0 ? "+" : ""}${totalPnLPct.toFixed(2)}%`}
                 onRefresh={handleRefresh}
                 isRefreshing={isRefreshing}
@@ -581,7 +581,7 @@ export function DashboardClient({
                 </div>
                 <Link
                   href="/dashboard/dividend"
-                  className="shrink-0 border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-600 transition-colors hover:bg-emerald-100 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300"
+                  className="shrink-0 border border-hairline bg-canvas-soft px-3 py-1.5 text-xs font-bold text-success transition-colors hover:bg-canvas-soft"
                 >
                   배당 관리
                 </Link>
@@ -706,14 +706,14 @@ function HomeStat({
       <p
         className={cn(
           "mt-1 text-lg font-bold tabular-nums tracking-tight",
-          tone === "up" && "text-emerald-600 dark:text-emerald-400",
-          tone === "down" && "text-red-600 dark:text-red-400",
+          tone === "up" && "text-gain",
+          tone === "down" && "text-loss",
           tone === "neutral" && "text-zinc-950 dark:text-white"
         )}
       >
         {value}
       </p>
-      {sub && <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-400">{sub}</p>}
+      {sub && <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">{sub}</p>}
     </div>
   );
 }
@@ -769,14 +769,14 @@ function ReturnSummaryCard({
         ))}
       </div>
 
-      <div className="mt-3 flex flex-col gap-1 text-2xs font-semibold text-zinc-400 dark:text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-3 flex flex-col gap-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
         <span>
           {summary
             ? `${summary.accountName} · 기준일 ${summary.asOfDate}`
             : "수익률 스냅샷을 불러오는 중입니다."}
         </span>
         {status && (
-          <span className={status.includes("실패") ? "text-red-500" : "text-emerald-600 dark:text-emerald-300"}>
+          <span role={status.includes("실패") ? "alert" : "status"} className={status.includes("실패") ? "text-danger" : "text-success"}>
             {status}
           </span>
         )}
@@ -788,27 +788,27 @@ function ReturnSummaryCard({
 function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
   const pct = period?.returnPct;
   const amount = period?.returnAmount;
-  const tone = pct === null || pct === undefined ? "neutral" : pct >= 0 ? "up" : "down";
+  const tone = pct === null || pct === undefined || pct === 0 ? "neutral" : pct > 0 ? "up" : "down";
   return (
     <div className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/70">
-      <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">{period?.label ?? "수익률"}</p>
+      <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">{period?.label ??"수익률"}</p>
       <p
         className={cn(
           "mt-1 text-xl font-black tabular-nums tracking-tight",
-          tone === "up" && "text-emerald-600 dark:text-emerald-300",
-          tone === "down" && "text-red-600 dark:text-red-300",
-          tone === "neutral" && "text-zinc-400 dark:text-zinc-500"
+          tone === "up" && "text-gain",
+          tone === "down" && "text-loss",
+          tone === "neutral" && "text-zinc-500 dark:text-zinc-400"
         )}
       >
         {pct === null || pct === undefined ? "-" : `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`}
       </p>
-      <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-400 dark:text-zinc-500">
+      <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">
         {amount === null || amount === undefined
           ? "기준 스냅샷 없음"
-          : `${amount >= 0 ? "+" : ""}${formatKRW(amount)}`}
+          : formatSignedKRW(amount)}
       </p>
       {period?.snapshotDate && (
-        <p className="mt-1 text-3xs font-semibold text-zinc-400 dark:text-zinc-500">
+        <p className="mt-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
           비교 기준 {period.snapshotDate}
         </p>
       )}
@@ -820,14 +820,14 @@ function EconomicEventCard({ event }: { event: EconomicEvent }) {
   return (
     <div className="border border-zinc-200 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-card dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-indigo-500/30">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-2xs font-bold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
           {formatEventDate(event.date)}
         </span>
         <span
           className={cn(
-            "border px-2.5 py-1 text-2xs font-bold",
+            "border px-2.5 py-1 text-xs font-bold",
             (event.type.includes("배당") || event.type.includes("실적")) &&
-              "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
+              "border-hairline bg-canvas-soft text-success",
             !event.type.includes("배당") && !event.type.includes("실적") &&
               "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
           )}
@@ -837,7 +837,7 @@ function EconomicEventCard({ event }: { event: EconomicEvent }) {
       </div>
       <p className="text-sm font-bold text-zinc-950 dark:text-white">{event.title}</p>
       <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{event.note}</p>
-      <p className="mt-2 text-2xs font-semibold text-zinc-400">{event.source}</p>
+      <p className="mt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">{event.source}</p>
     </div>
   );
 }

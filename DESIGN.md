@@ -1,144 +1,98 @@
 ---
-version: alpha
-name: Stripi-Inspired-design-analysis
-description: An inspired interpretation of Stripi's design language — a financial-infrastructure brand built on a deep navy ink, an electric indigo primary, and a recurring atmospheric gradient mesh that occupies the upper third of nearly every marketing page. The system pairs the proprietary Sohne family at thin (300) weights with negative letter-spacing for editorial-density display headlines, and uses tabular-figure body type where money and numerics matter. Buttons are tight-radius pills, cards live on near-white surfaces, and the dashboard track flips polarity to a familiar dark-app shell.
+version: 1.0
+name: 가족연금계획 (Family Pension Plan)
+description: 가족의 연금·배당·매수 기록을 입력받아 세액공제 진행률, 은퇴 시점 현금흐름, 목표 비중과의 차이를 계산해 보여주는 기록·계산 도구. 투자 자문이나 매매 권유를 하지 않는다. 남색 머리띠와 흰 면, 각진 모서리, 한 가지 브랜드 인디고, 표처럼 정렬된 숫자로 '장부' 같은 인상을 만든다. 손익 색은 한국 관습(상승·이익 빨강, 하락·손실 파랑)을 따르고 부호를 항상 함께 쓴다.
 
 colors:
-  primary: "#533afd"
-  primary-deep: "#4434d4"
-  primary-press: "#2e2b8c"
-  primary-soft: "#665efd"
-  primary-bg-subdued-hover: "#b9b9f9"
-  brand-dark-900: "#1c1e54"
+  brand: "#533afd"
+  brand-deep: "#4434d4"
+  brand-soft: "#665efd"
+  brand-dark: "#1c1e54"
+  on-brand: "#ffffff"
   ink: "#0d253d"
-  ink-secondary: "#273951"
-  ink-mute: "#64748d"
-  ink-mute-2: "#61718a"
-  on-primary: "#ffffff"
+  ink-mute: "#5f6f88"
   canvas: "#ffffff"
   canvas-soft: "#f6f9fc"
-  canvas-cream: "#f5e9d4"
   hairline: "#e3e8ee"
-  hairline-input: "#a8c3de"
-  ruby: "#ea2261"
-  magenta: "#f96bee"
-  lemon: "#9b6829"
-  shadow-blue: "#003770"
+  gain: "#d01f2e"
+  gain-soft: "#fdf2f2"
+  loss: "#1f5ed6"
+  loss-soft: "#eef4fe"
+  heat-gain-strong: "#8a1620"
+  heat-gain: "#b3202c"
+  heat-loss: "#1f55c4"
+  heat-loss-strong: "#173e8f"
+  danger: "#b42318"
+  danger-soft: "#fef3f2"
+  danger-line: "#fecdca"
+  caution: "#9a3412"
+  caution-soft: "#fff7ed"
+  success: "#047857"
+  chart-target: "#8792a2"
+  dark-ink: "#f4f4f5"
+  dark-ink-mute: "#a1a1aa"
+  dark-canvas: "#09090b"
+  dark-surface: "#18181b"
+  dark-hairline: "#27272a"
+  dark-gain: "#ff7b7b"
+  dark-loss: "#6aa6ff"
+  dark-danger: "#fda29b"
+  dark-caution: "#fbbf24"
+  dark-success: "#6ee7b7"
 
 typography:
-  display-xxl:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 56px
-    fontWeight: 300
-    lineHeight: 1.03
-    letterSpacing: -1.4px
-    fontFeature: ss01
-  display-xl:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 48px
-    fontWeight: 300
-    lineHeight: 1.15
-    letterSpacing: -0.96px
-    fontFeature: ss01
-  display-lg:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 32px
-    fontWeight: 300
-    lineHeight: 1.1
-    letterSpacing: -0.64px
-    fontFeature: ss01
-  display-md:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 26px
-    fontWeight: 300
-    lineHeight: 1.12
-    letterSpacing: -0.26px
-    fontFeature: ss01
-  heading-lg:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 22px
-    fontWeight: 300
-    lineHeight: 1.1
-    letterSpacing: -0.22px
-    fontFeature: ss01
-  heading-md:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 20px
-    fontWeight: 300
-    lineHeight: 1.4
-    letterSpacing: -0.2px
-    fontFeature: ss01
-  heading-sm:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
+  title-lg:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 24px
+    fontWeight: 700
+    lineHeight: 1.3
+    letterSpacing: -0.02em
+  title-md:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
     fontSize: 18px
-    fontWeight: 300
+    fontWeight: 700
+    lineHeight: 1.35
+    letterSpacing: -0.01em
+  title-sm:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 14px
+    fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: 0
-    fontFeature: ss01
-  body-lg:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 16px
-    fontWeight: 300
-    lineHeight: 1.4
-    letterSpacing: 0
-    fontFeature: ss01
   body-md:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 15px
-    fontWeight: 300
-    lineHeight: 1.4
-    letterSpacing: 0
-    fontFeature: ss01
-  body-tabular:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 14px
-    fontWeight: 300
-    lineHeight: 1.4
-    letterSpacing: -0.42px
-    fontFeature: tnum
-  button-md:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 1.0
-    letterSpacing: 0
-    fontFeature: ss01
-  button-sm:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 1.0
-    letterSpacing: 0
-    fontFeature: ss01
-  caption:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 13px
+    lineHeight: 1.6
+  body-sm:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 12px
     fontWeight: 400
-    lineHeight: 1.4
-    letterSpacing: -0.39px
+    lineHeight: 1.6
+  number-lg:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 28px
+    fontWeight: 600
+    lineHeight: 1.2
+    letterSpacing: -0.02em
     fontFeature: tnum
-  micro:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 11px
-    fontWeight: 300
+  number-md:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 14px
+    fontWeight: 600
     lineHeight: 1.4
-    letterSpacing: 0
-    fontFeature: ss01
-  micro-cap:
-    fontFamily: "sohne-var, 'SF Pro Display', system-ui, -apple-system, sans-serif"
-    fontSize: 10px
-    fontWeight: 400
-    lineHeight: 1.15
-    letterSpacing: 0.1px
-    fontFeature: ss01
+    fontFeature: tnum
+  label:
+    fontFamily: "Pretendard, system-ui, -apple-system, sans-serif"
+    fontSize: 12px
+    fontWeight: 500
+    lineHeight: 1.4
 
 rounded:
-  xs: 4px
-  sm: 6px
-  md: 8px
-  lg: 12px
-  xl: 16px
-  pill: 9999px
+  none: 0px
+  surface: 0px
+  control: 0px
+  app-sm: 8px
+  app-md: 12px
 
 spacing:
   xxs: 2px
@@ -151,337 +105,236 @@ spacing:
   huge: 64px
 
 components:
-  button-primary-pill:
-    backgroundColor: "{colors.primary}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.button-md}"
-    rounded: "{rounded.pill}"
-    padding: 8px 16px
-  button-primary-pill-pressed:
-    backgroundColor: "{colors.primary-press}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.button-md}"
-    rounded: "{rounded.pill}"
-    padding: 8px 16px
+  header:
+    backgroundColor: "{colors.brand-dark}"
+    textColor: "{colors.on-brand}"
+    typography: "{typography.title-sm}"
+    rounded: "{rounded.none}"
+    padding: 8px 24px
+  panel:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.ink}"
+    typography: "{typography.body-md}"
+    rounded: "{rounded.surface}"
+    padding: 20px
+  button-primary:
+    backgroundColor: "{colors.brand}"
+    textColor: "{colors.on-brand}"
+    typography: "{typography.title-sm}"
+    rounded: "{rounded.control}"
+    padding: 10px 16px
   button-secondary:
     backgroundColor: "{colors.canvas}"
-    textColor: "{colors.primary}"
-    typography: "{typography.button-md}"
-    rounded: "{rounded.pill}"
-    padding: 8px 16px
-  button-on-dark:
-    backgroundColor: "{colors.brand-dark-900}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.button-md}"
-    rounded: "{rounded.pill}"
-    padding: 8px 16px
+    textColor: "{colors.ink}"
+    typography: "{typography.title-sm}"
+    rounded: "{rounded.control}"
+    padding: 10px 16px
+  button-danger:
+    backgroundColor: "{colors.danger}"
+    textColor: "{colors.on-brand}"
+    typography: "{typography.title-sm}"
+    rounded: "{rounded.control}"
+    padding: 10px 16px
   text-input:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink}"
     typography: "{typography.body-md}"
-    rounded: "{rounded.sm}"
-    padding: 8px 12px
-  text-input-focused:
+    rounded: "{rounded.control}"
+    padding: 10px 12px
+  pnl-gain:
     backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.sm}"
-    padding: 8px 12px
-  card-feature-light:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  card-pricing:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  card-pricing-featured:
-    backgroundColor: "{colors.brand-dark-900}"
-    textColor: "{colors.on-primary}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  card-cream-band:
-    backgroundColor: "{colors.canvas-cream}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.lg}"
-    padding: 32px
-  card-dashboard-mockup:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-tabular}"
-    rounded: "{rounded.lg}"
-    padding: 24px
-  pill-tag-soft:
-    backgroundColor: "{colors.primary-bg-subdued-hover}"
-    textColor: "{colors.primary-deep}"
-    typography: "{typography.micro-cap}"
-    rounded: "{rounded.pill}"
-    padding: 4px 8px
-  nav-bar-on-mesh:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.ink}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.xs}"
-    padding: 16px 24px
-  link-on-light:
-    backgroundColor: "{colors.canvas}"
-    textColor: "{colors.primary}"
-    typography: "{typography.body-md}"
-    rounded: "{rounded.xs}"
+    textColor: "{colors.gain}"
+    typography: "{typography.number-md}"
+    rounded: "{rounded.none}"
     padding: 0px
-  footer-light:
+  pnl-loss:
+    backgroundColor: "{colors.canvas}"
+    textColor: "{colors.loss}"
+    typography: "{typography.number-md}"
+    rounded: "{rounded.none}"
+    padding: 0px
+  notice-danger:
+    backgroundColor: "{colors.danger-soft}"
+    textColor: "{colors.danger}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.none}"
+    padding: 10px 12px
+  notice-caution:
+    backgroundColor: "{colors.caution-soft}"
+    textColor: "{colors.caution}"
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.none}"
+    padding: 10px 12px
+  footer:
     backgroundColor: "{colors.canvas}"
     textColor: "{colors.ink-mute}"
-    typography: "{typography.caption}"
-    rounded: "{rounded.xs}"
-    padding: 64px 24px
+    typography: "{typography.body-sm}"
+    rounded: "{rounded.none}"
+    padding: 16px 24px
 ---
 
 ## Overview
 
-Stripi's design language opens with the gradient mesh. A wide horizontal band of pastel cream, sherbet orange, lavender, electric indigo, and ruby pink occupies the upper third of nearly every marketing page — the brand's instantly-recognizable atmospheric backdrop. Type and product UI mockups float above it on `{colors.canvas}` (white), with the gradient acting as both decoration and visual anchor. The lower portion of the page returns to white, with feature explanations on `{colors.canvas-soft}` (a barely-tinted cool off-white) and dashboard product mockups composited as faux IDE/console panels in deep navy.
+가족연금계획은 **기록하고 계산하는 도구**다. 사용자가 이미 한 거래(매수·매도·배당 수령·연금 납입)를 적으면, 제품은 그 기록으로 세액공제 진행률, 은퇴 시점 예상 월 현금흐름, 목표 비중과의 차이를 계산해 보여준다. 주문을 실행하지 않고, 종목을 권하지 않으며, 계산은 모두 참고용이다.
 
-The color system has two primary roles. **Indigo** (`{colors.primary}` — `#533afd`) is the brand's signature CTA color, used sparingly: one filled pill per band. **Deep navy** (`{colors.ink}` — `#0d253d`) is the universal body text color and the fill of dashboard mockups, the featured pricing tier, and the dark-app surfaces on the dashboard track. Ruby (`{colors.ruby}`) and magenta (`{colors.magenta}`) appear inside the gradient mesh and as accent dots in product UI mockups; they are not used as button colors.
+그래서 화면의 인상은 **장부**에 가깝다. 남색 머리띠(헤더) 아래 흰 면이 놓이고, 숫자는 표처럼 오른쪽 정렬·고정폭 숫자로 줄을 맞춘다. 장식으로 시선을 끌지 않고, 사용자가 확인하려는 숫자(남은 공제 한도, 목표 대비 월 현금흐름, 손익)가 가장 먼저 읽히게 한다.
 
-Typography is built around **Sohne** at weight 300 with negative letter-spacing — the brand's editorial-density display signature. Display sizes (32–56px) use -1.4px to -0.64px tracking; body sizes use 0; tabular caption sizes (where money and numerics matter) use the OpenType `tnum` feature plus a tightening -0.36 to -0.42px tracking. The `ss01` stylistic set is enabled across all roles.
-
-**Key Characteristics:**
-- Gradient-mesh backdrop on every marketing hero — cream/orange/lavender/indigo/ruby horizontally washed across the upper third of the page.
-- Single-indigo CTA hierarchy: filled `{colors.primary}` pill is the only filled button on marketing surfaces.
-- Sohne thin (weight 300) display tier with negative tracking from -1.4px to -0.2px depending on size.
-- Tabular-figure body type (`tnum`) for any cell containing money or numerics — the brand's quiet financial-data signal.
-- Dark-app dashboard track: deep navy product UI mockups sit composited above the white canvas, frequently with rendered code or dashboard tables inside.
-- Pill-shaped buttons (`{rounded.pill}` 9999px) with tight `8px 16px` padding — short, decisive, transactional.
-- Cream-band feature cards (`{colors.canvas-cream}`) introduce a warm interlude between blue/white sections without breaking the brand's chromatic logic.
+- 사용 장면: 30~50대가 월말·연말에 데스크톱이나 폰으로 기록을 넣고 진행 상황을 확인한다. 밝은 실내가 기본이라 라이트 모드가 기준이고, 다크 모드는 같은 토큰의 반대 값으로 지원한다.
+- 어조: 사실을 말하고 권하지 않는다. "~하세요(매수 권유)", "추천" 같은 표현은 쓰지 않는다(문구 테스트가 막는다). 주문처럼 읽히는 말 대신 기록 용어를 쓴다: 기록 저장, 기록 금액, 기록 단가, 매도 기록.
 
 ## Colors
 
-> **Source pages:** home (`/`), `/payments`, `/pricing`, `dashboard.stripe.com/register/payments`.
+### 브랜드
+- `brand` #533afd — 주 버튼, 현재 선택, 링크, 포커스 링. 한 화면에 채운 주 버튼은 하나가 원칙.
+- `brand-dark` #1c1e54 — 헤더 면, 앱 아이콘 배경. 웹과 앱이 같은 값을 쓴다.
+- 브랜드 색을 본문 글자색으로 쓰지 않는다(링크 제외).
 
-### Brand & Accent
-- **Indigo** (`{colors.primary}` — `#533afd`): The brand's signature CTA color. Filled-pill button, link emphasis, gradient anchor.
-- **Indigo Deep** (`{colors.primary-deep}` — `#4434d4`): A deeper indigo used in gradient mid-stops and as the press-state warmer alternative.
-- **Indigo Press** (`{colors.primary-press}` — `#2e2b8c`): Pressed-state lift of the primary.
-- **Indigo Soft** (`{colors.primary-soft}` — `#665efd`): A lighter indigo used in product-UI accents and chart highlights.
-- **Indigo Subdued** (`{colors.primary-bg-subdued-hover}` — `#b9b9f9`): Pale indigo fill used as soft tag background.
-- **Brand Dark 900** (`{colors.brand-dark-900}` — `#1c1e54`): The deep navy used on the featured pricing tier and dashboard chrome.
-- **Ruby** (`{colors.ruby}` — `#ea2261`): Gradient accent and chart highlight; never a button.
-- **Magenta** (`{colors.magenta}` — `#f96bee`): Brighter pink stop in gradient meshes.
-- **Lemon** (`{colors.lemon}` — `#9b6829`): Warm sherbet stop in gradient backdrops.
+### 잉크·면 (테마에 따라 바뀜)
+| 토큰 | 라이트 | 다크 | 용도 |
+|---|---|---|---|
+| `ink` | #0d253d | #f4f4f5 | 본문·숫자 |
+| `ink-mute` | #5f6f88 | #a1a1aa | 보조 글자(흰 면·canvas-soft 위 4.5:1 이상) |
+| `surface` | #ffffff | #18181b | 패널 면 |
+| `canvas-soft` | #f6f9fc | #09090b | 페이지 바탕 |
+| `hairline` | #e3e8ee | #27272a | 구분선·테두리 |
 
-### Surface
-- **Canvas** (`{colors.canvas}` — `#ffffff`): Default page background.
-- **Canvas Soft** (`{colors.canvas-soft}` — `#f6f9fc`): Cool-tinted off-white used on feature bands beneath the gradient hero.
-- **Canvas Cream** (`{colors.canvas-cream}` — `#f5e9d4`): Warm cream used as a feature-band fill — the brand's chromatic interlude.
-- **Hairline** (`{colors.hairline}` — `#e3e8ee`): 1px borders on cards and tables.
-- **Hairline Input** (`{colors.hairline-input}` — `#a8c3de`): Slightly cooler hairline used on form inputs.
+웹에서는 `--color-ink` 등이 `:root`/`.dark`의 변수를 가리키므로 `text-ink`만 쓰면 다크에서도 읽힌다. 데이터·라벨 글자에 `zinc-400`(흰 바탕 2.6:1)을 쓰지 않는다. 회색 보조 글자는 `zinc-500`(라이트, #696972) / `zinc-400`(다크)이 최소다.
 
-### Text
-- **Ink** (`{colors.ink}` — `#0d253d`): Default body text color across the brand. Deep navy, never pure black.
-- **Ink Secondary** (`{colors.ink-secondary}` — `#273951`): Secondary text on white.
-- **Ink Mute** (`{colors.ink-mute}` — `#64748d`): Helper text, captions, table labels.
-- **Ink Mute 2** (`{colors.ink-mute-2}` — `#61718a`): Near-equivalent to ink-mute used in nav.
-- **On Primary** (`{colors.on-primary}` — `#ffffff`): Text on indigo / dark-navy surfaces.
+### 손익 — 한국 관습
+| 토큰 | 라이트 | 다크 | 뜻 |
+|---|---|---|---|
+| `gain` | #d01f2e | #ff7b7b | 상승·이익 (빨강) |
+| `loss` | #1f5ed6 | #6aa6ff | 하락·손실 (파랑) |
+| `gain-soft` / `loss-soft` | #fdf2f2 / #eef4fe | #2a1a1c / #18202e | 옅은 바탕 |
+| `heat-gain-strong` … `heat-loss-strong` | #8a1620 #b3202c #1f55c4 #173e8f | 같음 | 히트맵 칸(흰 글자 6.6:1 이상) |
 
-### Semantic
-The brand does not use a separate semantic color palette in the marketing system — error / success states live in dashboard-product UI specifically.
+- 손익 숫자에는 **항상** `+`/`-` 부호나 ▲▼를 함께 쓴다. 색만으로 방향을 전하지 않는다.
+- 보합(0)은 `ink-mute`.
+- 웹 코드에서는 `pnlTextClass(value)`(src/lib/utils.ts)만 쓴다. 화면에서 `emerald`·`red`·`blue`를 손익에 직접 쓰지 않는다.
+- 매수·매도 기록 버튼은 손익 색을 쓰지 않는다(매수 기록 = 브랜드, 매도 기록 = 일반 테두리 버튼). 기록은 주문이 아니다.
+
+### 상태 — 손익과 섞지 않는다
+| 토큰 | 라이트 | 다크 | 뜻 |
+|---|---|---|---|
+| `danger` / `danger-soft` / `danger-line` | #b42318 / #fef3f2 / #fecdca | #fda29b / #2b1615 / #7a271a | 삭제·오류·되돌릴 수 없는 작업 |
+| `caution` / `caution-soft` | #9a3412 / #fff7ed | #fbbf24 / #2a2010 | 주의: 목표 비중 초과, 예산 초과, 한도 초과, 추정값 |
+| `success` | #047857 | #6ee7b7 | "저장했습니다" 같은 상태 문구에만. 숫자에는 쓰지 않는다 |
+
+- 위험·오류의 빨강은 손익의 빨강과 색상이 가깝다. 그래서 **위험은 색 하나로 표시하지 않는다**: 테두리(`danger-line`), 선 아이콘, 무엇이 어떻게 되는지 적은 문구, `role="alert"`를 함께 쓴다. 손익 빨강은 언제나 부호가 붙은 숫자에만 나온다.
+- 목표 비중 초과는 손실이 아니다. `caution` 글자 + "초과" 문구로, 부족은 일반 잉크 + "부족" 문구로 표시한다.
+- 배당 금액은 수입 기록이지 손익이 아니다. 일반 `ink`, 굵기 600, 고정폭 숫자.
+
+### 차트 색
+- 비교 시리즈·자산군은 브랜드 인디고를 첫 색으로, 나머지는 흰 바탕 3:1 이상인 색을 쓴다. 손익과 헷갈리지 않게 시리즈 색에 순수 빨강·파랑을 넣지 않는다.
+- 목표 막대·보조선은 `chart-target` #8792a2(3:1 이상) + 점선.
 
 ## Typography
 
-### Font Family
+- 글꼴은 **Pretendard 하나**. 제목·라벨·본문·숫자를 모두 Pretendard로 쓴다. 종목코드·날짜도 고정폭 글꼴 대신 Pretendard + `tabular-nums`.
+- 굵기 규칙: 본문 400, 라벨 500, 소제목·숫자 600, 화면 제목 700. 800/900(`font-black`)은 새로 쓰지 않는다.
+- 최소 글자 크기 12px. 10·11px 토큰(`text-2xs`·`text-3xs`)은 없앴다.
+- 한글 라벨에 `uppercase`·넓은 자간(`tracking-wide` 등)을 쓰지 않는다. 자간은 제목에서만 -0.01~-0.02em.
+- 숫자 열·금액은 `tabular-nums`. 설명문은 줄높이 1.6 이상(`leading-relaxed`).
+- 한글은 어절 단위로 줄바꿈한다(`word-break: keep-all`, 전역).
 
-The display and UI tier is **Sohne** (proprietary, licensed from Klim Type Foundry) at weights 300 (thin) and 400 (regular). The variable font (`sohne-var`) is loaded with `font-feature-settings: "ss01"` enabled globally — the stylistic set substitutes a single-story `a` and other character variants that are part of the brand's typographic signature.
+## Money
 
-When Sohne is unavailable, fall back to **SF Pro Display** at thin weights, then system-ui. For maximum brand fidelity, **Inter** (open-source) at weight 300 with `font-feature-settings: "ss01"` and `letter-spacing: -1.4px` on display sizes approximates the rhythm closely.
+금액 표기는 세 가지뿐이다. 웹은 `src/lib/utils.ts`의 함수만 쓴다.
 
-### Hierarchy
+| 쓰임 | 형식 | 예 | 웹 함수 |
+|---|---|---|---|
+| 요약 숫자 (패널 머리, 한 줄 상태, 차트 툴팁) | 억·만원, 만원 단위 반올림 | `1억 6,289만원`, `1,628만원`, `9,500원` | `formatKRW` |
+| 표·목록·입력 옆·기록 상세 | 원 단위 전체 + 천 단위 쉼표 | `162,890,500원` | `formatKRWFull` |
+| 차트 축 눈금 (자리가 아주 좁을 때만) | 짧은 단위, "원" 생략 | `1.6억`, `450만` | `formatKRWAxis` |
 
-| Token | Size | Weight | Line Height | Letter Spacing | Use |
-|---|---|---|---|---|---|
-| `{typography.display-xxl}` | 56px | 300 | 1.03 | -1.4px | Hero headline |
-| `{typography.display-xl}` | 48px | 300 | 1.15 | -0.96px | Section opener |
-| `{typography.display-lg}` | 32px | 300 | 1.1 | -0.64px | Card title / sub-section |
-| `{typography.display-md}` | 26px | 300 | 1.12 | -0.26px | Compact card title |
-| `{typography.heading-lg}` | 22px | 300 | 1.1 | -0.22px | Pricing tier name |
-| `{typography.heading-md}` | 20px | 300 | 1.4 | -0.2px | Section sub-heading |
-| `{typography.heading-sm}` | 18px | 300 | 1.4 | 0 | Mini-section label |
-| `{typography.body-lg}` | 16px | 300 | 1.4 | 0 | Marketing body lead |
-| `{typography.body-md}` | 15px | 300 | 1.4 | 0 | Default UI body |
-| `{typography.body-tabular}` | 14px | 300 | 1.4 | -0.42px | Money / numeric tables (uses `tnum`) |
-| `{typography.button-md}` | 16px | 400 | 1.0 | 0 | Pill button label |
-| `{typography.button-sm}` | 14px | 400 | 1.0 | 0 | Compact pill label |
-| `{typography.caption}` | 13px | 400 | 1.4 | -0.39px | Helper, table labels |
-| `{typography.micro}` | 11px | 300 | 1.4 | 0 | Fine print |
-| `{typography.micro-cap}` | 10px | 400 | 1.15 | 0.1px | All-caps eyebrow |
-
-### Principles
-- **Thin weight is the brand.** Display tiers always render at weight 300. Bumping to 400+ removes the brand's editorial air.
-- **Negative tracking on display.** -1.4px at 56px, scaling proportionally down to -0.2px at 20px. The negative tracking is the brand's typographic signature.
-- **Tabular figures for money.** Any cell rendering currency, transaction amounts, or numeric counts uses `font-feature-settings: "tnum"` plus a tightening tracking. The brand quietly signals its financial DNA through this micro-detail.
-- **`ss01` globally.** Apply `font-feature-settings: "ss01"` to the body element so the stylistic-set substitution is on for every text role.
-
-### Note on Font Substitutes
-Sohne is proprietary. Use **Inter** (open-source via Google Fonts) at weight 300 with `letter-spacing: -1.4px` and `font-feature-settings: "ss01"` for display tiers — Inter is the closest open-source analogue. For body sizes, Inter at 300 weight with `font-feature-settings: "tnum"` (where applicable) is the canonical substitute. Avoid Helvetica or system-ui defaults — they're heavier than the brand needs.
+- 방향이 있는 금액(손익, 전일 대비)은 양수에 `+`를 붙인다: `formatSignedKRW`. 음수는 `-`.
+- `₩` 기호는 쓰지 않는다. 단위는 숫자 뒤 "원".
+- 금액 입력칸은 입력 중에도 천 단위 쉼표를 보여 주고(`formatAmountInput`), 저장할 때는 숫자만 보낸다(`parseAmountInput`). 단위 "원"은 칸 안 오른쪽에 둔다.
+- **모바일 앱도 같은 규칙**을 따른다: `mobile/src/utils/format.ts`의 `₩162,890,500` 형식을 위 표에 맞춰 `162,890,500원`(목록·상세)과 `1억 6,289만원`(홈 요약)으로 바꾼다. 반올림은 만원 단위 반올림(`Math.round(abs / 10000)`), 1만원 미만은 원 단위 전체.
 
 ## Layout
 
-### Spacing System
-- **Base unit**: 8px (with 2 / 4 / 12 sub-tokens for fine work).
-- **Tokens**: `{spacing.xxs}` 2px · `{spacing.xs}` 4px · `{spacing.sm}` 8px · `{spacing.md}` 12px · `{spacing.lg}` 16px · `{spacing.xl}` 24px · `{spacing.xxl}` 32px · `{spacing.huge}` 64px.
-- **Section padding**: 64–96px on marketing surfaces; 32–48px on dashboard / product surfaces.
-- **Card internal padding**: 32px on feature cards; 24px on dashboard mockups.
-
-### Grid & Container
-- Marketing pages center in a ~1200px container with the gradient mesh extending edge-to-edge above.
-- Pricing collapses 4-up → 2-up → 1-up at 1024 / 768 breakpoints.
-- Dashboard product mockups use their own internal grids (12-col tables, 3-col card grids) rendered as static composites.
-
-### Whitespace Philosophy
-The gradient mesh occupies the upper third of the page; the white canvas below is generously padded. Section gaps tend toward 96px, with content tightening to 32px on dashboard / pricing pages where users compare and act.
+- 데스크톱 본문 최대 폭 1120px(`max-w-280`), 좌우 여백 16/24px.
+- 모바일 폭(768px 미만)은 하단 탭 5개 + 고정 헤더. 본문 하단에 탭 높이만큼 여백을 둔다.
+- 패널은 한 겹: 패널 안에 다시 테두리 상자를 겹치지 않는다(구분선이나 여백으로 묶는다).
+- 간격은 4px 배수. 같은 묶음 안은 8~12px, 묶음 사이는 20~24px.
 
 ## Elevation & Depth
 
-| Level | Treatment | Use |
-|---|---|---|
-| 0 | Flat | Default surface |
-| 1 | `box-shadow: rgba(0,55,112,0.08) 0 1px 3px` | Card lift on white |
-| 2 | `box-shadow: rgba(0,55,112,0.08) 0 8px 24px, rgba(0,55,112,0.04) 0 2px 6px` | Floating panels, dashboard mockup chrome |
-| 3 | Gradient mesh backdrop | The brand's primary depth medium — atmospheric color rather than literal shadow |
-
-### Decorative Depth
-The gradient mesh IS the depth system. Implemented as a layered SVG or large background image rather than CSS gradients (the actual mesh has organic blob shapes that aren't CSS-renderable). The mesh provides the brand's signature lift; literal shadows are reserved for product-UI mockups and stay subtle.
+- 그림자는 두 단계뿐: `shadow-card`(0 1px 3px, 8%)와 `shadow-float`(드롭다운·대화상자). 둘 다 블러가 있다.
+- 블러 없는 오프셋 블록 그림자, 색 발광(오프셋 0 + 색 그림자), 유리 효과는 쓰지 않는다.
+- 테두리와 넓은 그림자를 한 요소에 겹치지 않는다. 패널은 1px `hairline` 테두리 + `shadow-card`까지만.
 
 ## Shapes
 
-### Border Radius Scale
-
-| Token | Value | Use |
-|---|---|---|
-| `{rounded.xs}` | 4px | Hairline tags, table chrome |
-| `{rounded.sm}` | 6px | Form inputs |
-| `{rounded.md}` | 8px | Compact cards, alerts |
-| `{rounded.lg}` | 12px | Pricing cards, feature cards |
-| `{rounded.xl}` | 16px | Dashboard product mockup chrome |
-| `{rounded.pill}` | 9999px | All buttons, tag pills |
-
-### Photography Geometry
-The brand uses **product UI mockups** more than photography. Dashboard composites render as faux IDE/terminal/dashboard chrome inside `{rounded.lg}` 12px containers with a subtle `box-shadow`. Real photography appears in customer logo strips and the rare case-study card; treated as inset 4:3 with no shadow.
+- **각진 모서리(반경 0)가 제품의 기준 모양이다.** 웹 대시보드의 패널·버튼·입력·칩·막대는 모두 반경 0. `rounded-*` 클래스를 쓰지 않는 것이 기본이고, 의도를 드러낼 때는 토큰 `rounded-surface`/`rounded-control`(둘 다 0)을 쓴다. 예전의 `.dashboard-sharp { border-radius: 0 !important }` 덮어쓰기는 없앴다.
+- 공개 페이지(랜딩·로그인·정책)도 같은 각진 모양으로 맞춘다.
+- 모바일 앱은 플랫폼 관습상 작은 반경을 허용한다: 버튼·입력 `app-sm` 8px, 카드 `app-md` 12px. 알약 모양은 탭·칩 같은 작은 컨트롤에만.
+- 원은 색 점(범례·카테고리 표시)에서도 쓰지 않고 정사각 점을 쓴다.
 
 ## Components
 
-### Buttons
+- **버튼**: 주 버튼(브랜드 채움, 흰 글자), 보조 버튼(흰 면 + hairline 테두리 + 잉크 글자), 위험 버튼(`danger` 채움 — 확인 대화상자 안에서만). 높이 40~44px, 터치 영역 44px 이상.
+- **선택 상태**: 색 1종(브랜드). 칩·토글·탭의 선택은 브랜드 채움 또는 브랜드 테두리. 초록·검정 선택색을 섞지 않는다.
+- **입력**: 흰 면, hairline 테두리, 포커스 시 브랜드 링. 라벨은 칸 위에 `<label htmlFor>`로 연결.
+- **알림 문구**: 오류는 `danger` 테두리 + 원인과 다시 시도 방법, `role="alert"`. 성공은 `success` 글자 한 줄, `role="status"`.
+- **카테고리 표시**: 카드 왼쪽 색 띠 대신 정사각 색 점 + 글자 라벨.
+- **아이콘**: 내비와 같은 1.5~2px 선 아이콘(SVG, `aria-hidden`). 이모지를 아이콘으로 쓰지 않는다.
 
-**`button-primary-pill`** — the dominant CTA system-wide.
-- Background `{colors.primary}`, text `{colors.on-primary}`, type `{typography.button-md}`, padding `{spacing.sm} {spacing.lg}` (8px 16px), rounded `{rounded.pill}` 9999px.
-- Pressed state `button-primary-pill-pressed` shifts background to `{colors.primary-press}`.
+## Dark Mode
 
-**`button-secondary`** — outline-style alternative.
-- Background `{colors.canvas}`, text `{colors.primary}`, 1px solid `{colors.primary}` border, same pill geometry.
+- 테마는 설정의 라이트/다크/시스템. `<html class="dark">`로 전환하고, 토큰(`ink`, `ink-mute`, `surface`, `hairline`, `gain`, `loss`, `danger`, `caution`, `success`)이 자동으로 다크 값으로 바뀐다.
+- 다크 바탕은 `#09090b`(페이지)·`#18181b`(패널). 다크에서도 12px 글자 4.5:1 이상을 지킨다(위 표의 다크 값은 모두 #18181b 위 6.6:1 이상).
+- 모바일 앱은 아직 라이트만 지원한다. 다크를 붙일 때 위 표의 다크 값을 그대로 쓴다.
 
-**`button-on-dark`** — used on dashboard / dark surfaces.
-- Background `{colors.brand-dark-900}`, text `{colors.on-primary}`, same pill geometry.
+## Shared Values (Web ↔ App)
 
-### Cards & Containers
+앱(`mobile/src/styles/theme.ts`)이 맞출 값:
 
-**`card-feature-light`** — feature explanation card on white.
-- Background `{colors.canvas}`, padding `{spacing.xxl}`, rounded `{rounded.lg}` 12px, 1px `{colors.hairline}` border, optional Level 1 shadow.
+| 앱 토큰 | 값 | 웹 대응 |
+|---|---|---|
+| `brandDark` | #1c1e54 | `brand-dark` |
+| `primary` | #533afd | `brand` |
+| `primarySoft` | #f1f0ff | `indigo-50` |
+| `ink` | #0d253d | `ink` |
+| `inkMuted` | #5f6f88 | `ink-mute` |
+| `canvas` | #f6f9fc | `canvas-soft` |
+| `surface` | #ffffff | `surface` |
+| `line` | #e3e8ee | `hairline` |
+| `gain` (기존 `positive`) | #d01f2e | `gain` |
+| `loss` (기존 `negative`) | #1f5ed6 | `loss` |
+| `danger` | #b42318 | `danger` |
+| `caution` (기존 `warning`) | #9a3412 | `caution` |
+| `success` | #047857 | `success` |
 
-**`card-pricing`** — standard pricing tier.
-- Background `{colors.canvas}`, padding `{spacing.xxl}`, rounded `{rounded.lg}`, 1px `{colors.hairline}` border. Title `{typography.heading-lg}`, price `{typography.display-md}`, body `{typography.body-md}`, CTA pinned bottom as `button-primary-pill`.
-
-**`card-pricing-featured`** — the inverted dark featured tier.
-- Background `{colors.brand-dark-900}`, text `{colors.on-primary}`, otherwise identical structure to `card-pricing`. The deep-navy fill is the brand's distinctive featured-tier choice.
-
-**`card-cream-band`** — warm interlude card.
-- Background `{colors.canvas-cream}`, text `{colors.ink}`, padding `{spacing.xxl}`, rounded `{rounded.lg}`. Used to break up the indigo / white rhythm with warmth.
-
-**`card-dashboard-mockup`** — composited dashboard / product UI screenshot.
-- Background `{colors.canvas}`, type `{typography.body-tabular}` (with `tnum`), padding `{spacing.xl}` 24px, rounded `{rounded.lg}` 12px, Level 2 shadow. Often contains nested mini-mockups: code preview + dashboard table + chart card.
-
-### Inputs & Forms
-
-**`text-input`** — standard form field.
-- Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.md}` (8px 12px), rounded `{rounded.sm}` 6px, 1px `{colors.hairline-input}` border.
-- Focus state `text-input-focused`: border swaps to `{colors.primary}`.
-
-### Navigation
-
-**`nav-bar-on-mesh`** — top nav floating over the gradient hero.
-- Background `{colors.canvas}` (or transparent depending on scroll), text `{colors.ink}`, padding `{spacing.lg} {spacing.xl}`. Logo wordmark on the left, primary nav center, sign-in + filled `button-primary-pill` on the right.
-
-### Pills, Tags, and Chips
-
-**`pill-tag-soft`** — subdued indigo tag.
-- Background `{colors.primary-bg-subdued-hover}`, text `{colors.primary-deep}`, type `{typography.micro-cap}`, padding `4px 8px`, rounded `{rounded.pill}`.
-
-### Signature Components
-
-**Gradient Mesh Backdrop** — pastel cream → sherbet orange → lavender → indigo → ruby pink stops blurred horizontally across the upper third of the page. Implemented as SVG or a large background image — not a flat CSS gradient (the real mesh has organic blob shapes).
-
-**Composited Dashboard Mockup** — multi-layer faux-product-UI compositions: an IDE panel on the left, a dashboard table center, a chart card on the right, all rendered at small scale inside `{rounded.lg}` containers with subtle Level 2 shadows. The composite is the brand's most-photographed feature.
-
-**Tabular-Figure Money Type** — every number rendering money, count, or transaction value uses `font-feature-settings: "tnum"`. The brand's quiet signal that it's a financial-infrastructure platform.
-
-**`link-on-light`** — inline links on light surfaces.
-- Text `{colors.primary}` rendered in `{typography.body-md}`, no underline by default.
-
-**`footer-light`** — site-wide footer.
-- Background `{colors.canvas}`, text `{colors.ink-mute}`, type `{typography.caption}`, padding `{spacing.huge} {spacing.xl}` (64px 24px). Holds 4–6 columns of link groups, social icons, and a small legal row.
+- 손익 규칙(빨강 상승·파랑 하락·부호 병기), 금액 표기 규칙, 기록 용어, 탭 구성(홈/자산/배당/연금/설정)은 웹과 앱이 같다.
+- 앱의 숫자에도 `fontVariant: ["tabular-nums"]`를 쓴다.
 
 ## Do's and Don'ts
 
 ### Do
-- Reserve `{colors.primary}` for filled CTAs and inline link emphasis — it should appear sparingly, one filled button per band.
-- Apply the gradient mesh to every marketing hero; bare-canvas heroes feel off-brand.
-- Render display tiers at weight 300 with negative letter-spacing — the thin tracking is the typographic signature.
-- Use `font-feature-settings: "tnum"` on every money / numeric cell.
-- Apply `font-feature-settings: "ss01"` globally on the body element.
-- Pair every feature explanation with a composited product UI mockup; the brand's argument is "look at the actual product."
+- 첫 화면의 첫 숫자는 이 제품만의 것으로: 올해 세액공제 한도 진행률과 남은 금액, 은퇴 시점 예상 월 현금흐름 대 목표.
+- 손익 숫자에는 부호나 ▲▼를 항상 붙이고 `gain`/`loss` 토큰만 쓴다.
+- 금액은 세 가지 표기(요약·전체·축) 중 하나로만 쓴다.
+- 계산 결과 옆에 "참고용" 가정과 계산식을 붙인다.
+- 삭제 확인에는 무엇이 지워지고 무엇이 되돌아가는지 적는다.
 
 ### Don't
-- Don't bump display weight above 300 — at 400 the brand's editorial air collapses.
-- Don't add new accent colors outside the documented gradient stops (cream / orange / lavender / indigo / ruby / magenta).
-- Don't use the indigo `{colors.primary}` as a body-text color — it's a CTA and link color, not a type color at body size.
-- Don't shrink button padding below `8px 16px` — the tight pill is part of the brand's transactional feel.
-- Don't render money cells without `tnum` — it breaks the quiet financial-data signature.
-- Don't replace the pill shape with rounded-rectangles for buttons.
+- 그라디언트 면·그라디언트 글자·발광 그림자·유리 효과를 쓰지 않는다.
+- 이모지를 아이콘으로 쓰지 않는다.
+- 제목 위 작은 배지(eyebrow)·장식용 배지·동기부여 문구를 넣지 않는다.
+- '큰 숫자 + 작은 라벨' 지표 타일을 같은 숫자로 두 번 보여주지 않는다.
+- 카드 안에 카드를 넣지 않는다.
+- 카드 왼쪽 색 띠를 쓰지 않는다(색 점 + 라벨로).
+- 한글 라벨에 대문자 변환·넓은 자간을 쓰지 않는다.
+- 손익에 초록을 쓰지 않는다.
+- 위험을 빨강 색 하나로만 표시하지 않는다(테두리·아이콘·문구를 함께).
+- "추천", "매수하세요" 같은 권유 표현, "주문" 같은 실행 용어를 쓰지 않는다.
+- 12px보다 작은 글자, 흰 바탕 4.5:1 미만의 데이터 글자를 쓰지 않는다.
 
 ## Responsive Behavior
 
-### Breakpoints
-
-| Name | Width | Key Changes |
-|---|---|---|
-| Wide | ≥ 1440px | Full gradient mesh edge-to-edge; dashboard composite at full scale |
-| Desktop | 1024–1440px | Default content max-width; pricing 4-up |
-| Tablet | 768–1023px | Pricing 2-up; dashboard composite simplifies to 2 panels |
-| Mobile | < 768px | Pricing 1-up; hamburger nav; display drops 56 → 36px |
-
-### Touch Targets
-- Pill buttons hit ≥ 40×40px on mobile via padding scaling. On smaller screens, buttons size up to 44×44px to maintain WCAG AAA.
-- Form fields stay at 40px minimum height.
-
-### Collapsing Strategy
-- Display tiers stair-step 56 → 48 → 32 → 26 → 22px through the breakpoints.
-- Gradient mesh re-tiles on mobile to preserve the wash without disappearing.
-- Dashboard composites simplify to single-panel mockups on mobile; the multi-layer composition only renders at desktop+.
-- Pricing tiers stair-step 4-up → 2-up → 1-up.
-
-### Image Behavior
-Product UI composites use `srcset` with art-direction crops at major breakpoints. Mobile crops focus on the most actionable inner panel; desktop crops show the full multi-layer composition.
-
-## Iteration Guide
-
-1. Focus on ONE component at a time.
-2. Reference component names and tokens directly (`{colors.primary}`, `{button-primary-pill}-pressed`, `{rounded.pill}`).
-3. Run `npx @google/design.md lint DESIGN.md` after edits.
-4. Add new variants as separate entries.
-5. Default body to `{typography.body-md}` (15px); use `{typography.body-tabular}` for any money / numeric cell.
-6. Apply `ss01` globally on the body; apply `tnum` per-element on numeric content.
-7. The gradient mesh is non-negotiable on marketing heroes — bare-canvas heroes break the brand.
+- 기준 폭: 390px(폰), 768px(하단 탭 → 상단 내비 전환은 1024px), 1440px.
+- 320px에서도 가로 넘침이 없어야 한다. 입력 행은 `min-w-0` + 줄바꿈.
+- 고정 헤더·하단 탭이 포커스된 요소를 가리지 않게 `scroll-padding`을 둔다.
+- 터치 대상 44×44px 이상, 대상 사이 8px 이상.

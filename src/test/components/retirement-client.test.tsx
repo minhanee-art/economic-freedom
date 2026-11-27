@@ -62,7 +62,7 @@ test("세금 화면에 참고용 문구와 예상 공제액을 보여준다", ()
   );
   assert.ok(screen.getAllByText(/참고용이며 실제 세액과 다를 수 있습니다/).length >= 1);
   // 400만원 × 16.5%
-  assert.ok(screen.getByText("₩660,000"));
+  assert.ok(screen.getByText("660,000원"));
   assert.ok(screen.getByText(/내 연금 알아보기/));
   assert.ok(screen.getByText(/목표 월 생활비·은퇴 나이·출생연도를 저장하면/));
 });
@@ -81,7 +81,7 @@ test("목표가 있으면 은퇴 시점 현금흐름과 부족액을 계산한�
   );
   // 60세: 국민연금 100만 + 연금저축 1,000만÷240개월 ≈ 41,667 + 배당 10만
   assert.ok(screen.getAllByText(/참고용이며 실제 세액과 다를 수 있습니다/).length >= 2);
-  assert.ok(screen.getByText(/60세 예상 월 114.2만/));
+  assert.ok(screen.getByText(/60세 예상 월 114만원/));
 });
 
 test("총급여 구간을 바꾸면 은퇴 목표 API로 저장한다", async () => {
@@ -126,9 +126,9 @@ test("배우자 총급여 구간을 은퇴 목표와 함께 저장하고, 저장
   assert.equal((requests[0].body as { spouseSalaryBracket: unknown }).spouseSalaryBracket, "low");
 
   // 저장 후: 배우자 400만원 × 16.5% = 66만원, 가정 안내 사라짐
-  await waitFor(() => assert.ok(screen.getByText(/배우자: .*예상 공제액 ₩660,000 · 공제율 16\.5%/)));
+  await waitFor(() => assert.ok(screen.getByText(/배우자: .*예상 공제액 660,000원 · 공제율 16\.5%/)));
   assert.equal(screen.queryByText(/배우자 소득 구간 미입력/), null);
-  assert.ok(screen.getByText("₩1,320,000"), "가족 합계 예상 공제액");
+  assert.ok(screen.getByText("1,320,000원"), "가족 합계 예상 공제액");
 });
 
 test("배우자 총급여 구간을 미입력으로 되돌리면 null로 저장한다", async () => {

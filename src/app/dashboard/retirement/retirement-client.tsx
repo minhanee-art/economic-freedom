@@ -46,7 +46,7 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-bold">연금 설계</h2>
-        <p className="text-sm text-zinc-400 mt-0.5">
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
           가족의 연금계좌 납입, 국민연금·퇴직연금 예상액, 은퇴 목표를 한곳에서 정리하세요.
         </p>
       </div>
@@ -73,7 +73,7 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
         spouseSalaryBracket={goal.spouseSalaryBracket}
         onSalaryBracketChange={changeSalaryBracket}
       />
-      {bracketError && <p className="text-xs text-red-500">{bracketError}</p>}
+      {bracketError && <p className="text-xs text-danger">{bracketError}</p>}
 
       <IncomeSourcesSection sources={sources} onChange={setSources} showSpouse={spouseOpen} />
 

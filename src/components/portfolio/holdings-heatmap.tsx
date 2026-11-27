@@ -11,11 +11,12 @@ import {
 } from "@/lib/dashboard-insights";
 
 const TONE_CLASS: Record<HeatmapTone, string> = {
-  "gain-strong": "bg-emerald-800 text-white dark:bg-emerald-700",
-  gain: "bg-emerald-600 text-white dark:bg-emerald-800",
+  // 한국 관습: 상승 = 빨강 계열, 하락 = 파랑 계열. 칸 안 글자에는 부호(+/-)가 함께 붙는다.
+  "gain-strong":"bg-heat-gain-strong text-white",
+  gain: "bg-heat-gain text-white",
   flat: "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-50",
-  loss: "bg-red-600 text-white dark:bg-red-800",
-  "loss-strong": "bg-red-800 text-white dark:bg-red-700",
+  loss: "bg-heat-loss text-white",
+  "loss-strong":"bg-heat-loss-strong text-white",
 };
 
 const LEGEND: { tone: HeatmapTone; label: string }[] = [
@@ -45,8 +46,8 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
       className="border border-hairline bg-white p-5 shadow-card dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h3 className="text-sm font-semibold">종목 히트맵</h3>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">면적 = 평가금액 비중 · 색 = 수익률</p>
+        <h3 className="text-sm font-semibold text-ink">종목 히트맵</h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400">면적 = 평가금액 비중 · 색 = 수익률(빨강 상승, 파랑 하락)</p>
       </div>
 
       <div className="relative h-80 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-950 sm:h-96" role="list">

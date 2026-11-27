@@ -72,9 +72,9 @@ test("HoldingCard: 종목·금액·비중 뱃지를 렌더한다", async () => {
 
   assert.ok(screen.getByText("KODEX 200"));
   assert.ok(screen.getByText("티커 305050"));
-  assert.ok(screen.getByText("10만"), "평가금액");
-  assert.ok(screen.getByText("10주 × ₩10,000"));
-  assert.ok(screen.getByText("₩9,000"), "평단가");
+  assert.ok(screen.getByText("10만원"), "평가금액");
+  assert.ok(screen.getByText("10주 × 10,000원"));
+  assert.ok(screen.getByText("9,000원"), "평단가");
   assert.ok(screen.getByText("+11.1%"), "수익률");
   assert.ok(screen.getByText("설정 50.0%"));
   assert.ok(screen.getByText("현재 보유 40.0%"));

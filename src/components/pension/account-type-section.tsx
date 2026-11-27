@@ -70,7 +70,7 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
           <li key={account.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
             <div>
               <p className="text-sm font-medium">{account.name}</p>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
                 {OWNER_LABELS[account.owner_type] ?? "기타"} · 평가액 {formatKRW(account.value)}
               </p>
             </div>
@@ -119,8 +119,8 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
           </button>
         </div>
       </div>
-      <p className="text-xs text-zinc-400">새로 만든 계좌는 상단 계좌 선택에서 현재 계좌로 바뀝니다.</p>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">새로 만든 계좌는 상단 계좌 선택에서 현재 계좌로 바뀝니다.</p>
+      {error && <p className="text-xs text-danger">{error}</p>}
     </SectionCard>
   );
 }

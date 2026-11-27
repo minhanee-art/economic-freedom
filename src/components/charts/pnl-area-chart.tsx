@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { formatKRW } from "@/lib/utils";
+import { formatKRW, formatKRWAxis } from "@/lib/utils";
 
 interface ChartData {
   date: string;
@@ -38,12 +38,12 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
           </defs>
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 11 }}
+            tick={{ fontSize: 12 }}
             tickFormatter={(v) => v.slice(5)} // MM-DD
           />
           <YAxis
-            tick={{ fontSize: 11 }}
-            tickFormatter={(v) => formatKRW(v)}
+            tick={{ fontSize: 12 }}
+            tickFormatter={(v) => formatKRWAxis(v)}
             width={55}
           />
           <Tooltip
@@ -51,7 +51,7 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
             labelFormatter={(label) => `${label}`}
             contentStyle={{
               fontSize: 12,
-              borderRadius: 12,
+              borderRadius: 0,
               border: "1px solid #e3e8ee",
               boxShadow:
                 "0 8px 24px rgba(0, 55, 112, 0.08), 0 2px 6px rgba(0, 55, 112, 0.04)",
@@ -59,7 +59,7 @@ export function PnLAreaChart({ data }: PnLAreaChartProps) {
             }}
           />
           <Legend
-            wrapperStyle={{ fontSize: 11 }}
+            wrapperStyle={{ fontSize: 12 }}
             formatter={(value) =>
               value === "invested" ? "누적 투입" : "평가금액"
             }

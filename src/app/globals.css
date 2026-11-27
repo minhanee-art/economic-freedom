@@ -6,7 +6,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* Stripe-inspired indigo scale (brand primary #533afd) */
+  /* 인디고 단계 (브랜드 주색 #533afd) */
   --color-indigo-50:  #f1f0ff;
   --color-indigo-100: #e5e3ff;
   --color-indigo-200: #b9b9f9;
@@ -18,18 +18,46 @@
   --color-indigo-900: #1c1e54;
   --color-indigo-950: #15173f;
 
-  /* Stripe brand tokens */
+  /* 브랜드 — 웹·앱 공통(DESIGN.md 'Colors') */
   --color-brand: #533afd;
   --color-brand-deep: #4434d4;
   --color-brand-soft: #665efd;
   --color-brand-dark: #1c1e54;
-  --color-ink: #0d253d;
-  --color-ink-mute: #64748d;
-  --color-hairline: #e3e8ee;
-  --color-canvas-soft: #f6f9fc;
   --color-dark-header: #1c1e54;
 
-  /* Soft elevation shadows (Stripe Level 1 / Level 2) */
+  /* 잉크·면 — 테마에 따라 바뀐다(:root / .dark 에서 값 정의) */
+  --color-ink: var(--ink);
+  --color-ink-mute: var(--ink-mute);
+  --color-hairline: var(--hairline);
+  --color-canvas-soft: var(--canvas-soft);
+  --color-surface: var(--surface);
+
+  /* 손익 — 한국 관습: 상승·이익 = 빨강, 하락·손실 = 파랑. 숫자에는 항상 +/− 부호나 ▲▼ 를 함께 쓴다. */
+  --color-gain: var(--gain);
+  --color-gain-soft: var(--gain-soft);
+  --color-loss: var(--loss);
+  --color-loss-soft: var(--loss-soft);
+  /* 히트맵 칸 채움(흰 글자 4.5:1 이상) */
+  --color-heat-gain-strong: #8a1620;
+  --color-heat-gain: #b3202c;
+  --color-heat-loss: #1f55c4;
+  --color-heat-loss-strong: #173e8f;
+
+  /* 상태 — 손익 색과 섞지 않는다. 위험·오류는 색만이 아니라 테두리·아이콘·문구로 표시. */
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-line: var(--danger-line);
+  --color-danger-fill: #b42318;
+  --color-caution: var(--caution);
+  --color-caution-soft: var(--caution-soft);
+  --color-success: var(--success);
+
+  /* 반경 — 대시보드의 기준 모양은 각진 모서리(0). rounded-* 를 쓰지 않는 것이 기본이고,
+     의도를 드러내야 할 때만 rounded-surface / rounded-control 을 쓴다. */
+  --radius-surface: 0px;
+  --radius-control: 0px;
+
+  /* 그림자 — 블러가 있는 부드러운 두 단계만 쓴다(오프셋 블록 그림자·발광 금지) */
   --shadow-card: 0 1px 3px rgba(0, 55, 112, 0.08);
   --shadow-float: 0 8px 24px rgba(0, 55, 112, 0.08), 0 2px 6px rgba(0, 55, 112, 0.04);
 
@@ -39,34 +67,52 @@
 :root {
   --background: #f6f9fc;
   --foreground: #0d253d;
+  --ink: #0d253d;
+  --ink-mute: #5f6f88;
+  --hairline: #e3e8ee;
+  --canvas-soft: #f6f9fc;
+  --surface: #ffffff;
+  --gain: #d01f2e;
+  --gain-soft: #fdf2f2;
+  --loss: #1f5ed6;
+  --loss-soft: #eef4fe;
+  --danger: #b42318;
+  --danger-soft: #fef3f2;
+  --danger-line: #fecdca;
+  --caution: #9a3412;
+  --caution-soft: #fff7ed;
+  --success: #047857;
 }
 
 .dark {
   --background: #0a0a0a;
   --foreground: #ededed;
+  --ink: #f4f4f5;
+  --ink-mute: #a1a1aa;
+  --hairline: #27272a;
+  --canvas-soft: #09090b;
+  --surface: #18181b;
+  --gain: #ff7b7b;
+  --gain-soft: #2a1a1c;
+  --loss: #6aa6ff;
+  --loss-soft: #18202e;
+  --danger: #fda29b;
+  --danger-soft: #2b1615;
+  --danger-line: #7a271a;
+  --caution: #fbbf24;
+  --caution-soft: #2a2010;
+  --success: #6ee7b7;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
-  /* Stripe stylistic-set signature; ss01 globally, tnum via tabular-nums utility */
+  /* 숫자 열은 tabular-nums 유틸리티로 고정폭 숫자를 켠다 */
   font-feature-settings: "ss01";
-}
-
-.dashboard-sharp,
-.dashboard-sharp * {
-  border-radius: 0 !important;
-}
-
-/* 히어로 패널 그라디언트 (인라인 style 대신 클래스로 고정)
-   #1c1e54 = --color-dark-header, #2e2b8c = --color-indigo-700, #533afd = --color-brand */
-.hero-gradient {
-  background-image: linear-gradient(135deg, #1c1e54 0%, #2e2b8c 55%, #533afd 100%);
-}
-
-.hero-gradient-compact {
-  background-image: linear-gradient(135deg, #1c1e54 0%, #2e2b8c 100%);
+  /* 한글은 어절 단위로 줄바꿈하고, 긴 숫자·영문만 필요할 때 끊는다 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 데이터에서 오는 동적 색/폭을 CSS 커스텀 프로퍼티로 주입할 때 쓰는 유틸리티 */
@@ -82,20 +128,8 @@ body {
   color: var(--series-fg);
 }
 
-/* pnl 종목 카드 좌측 색상 바 (이익/손실) */
-.pnl-bar-up {
-  background-color: #10b981;
-}
-
-.pnl-bar-down {
-  background-color: #ef4444;
-}
-
 /* 앱이 실제로 쓰는 기본 팔레트 단계 (값은 Tailwind 기본값과 동일) */
 @theme {
-  /* 12px 스케일 아래의 작은 캡션 크기 (기존 off-scale 11px/10px 값 유지) */
-  --text-2xs: 11px;
-  --text-3xs: 10px;
   --color-white: #ffffff;
   --color-slate-500: #64748b;
   --color-indigo-tint: #eef2ff;
@@ -147,7 +181,7 @@ body {
   --color-zinc-200: oklch(92% 0.004 286.32);
   --color-zinc-300: oklch(87.1% 0.006 286.286);
   --color-zinc-400: oklch(70.5% 0.015 286.067);
-  --color-zinc-500: oklch(55.2% 0.016 285.938);
+  --color-zinc-500: #696972; /* Tailwind 기본(#71717b)보다 한 단계 어둡게: zinc-100 위 12px 글자 4.5:1 */
   --color-zinc-600: oklch(44.2% 0.017 285.786);
   --color-zinc-700: oklch(37% 0.013 285.805);
   --color-zinc-800: oklch(27.4% 0.006 286.033);

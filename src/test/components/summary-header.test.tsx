@@ -39,14 +39,14 @@ test("SummaryHeader: 평가금액·손익·배당·적립금을 보여준다", a
     />
   );
 
-  assert.ok(screen.getByText("110만"), "총 평가금액");
-  assert.ok(screen.getByText("10만"), "총 손익");
+  assert.ok(screen.getByText("110만원"), "총 평가금액");
+  assert.ok(screen.getByText("+10만원"), "총 손익");
   assert.ok(screen.getByText("+10.00%"), "손익률");
-  assert.ok(screen.getByText("3만"), "누적 배당");
-  assert.ok(screen.getByText("50만"), "월 적립금");
+  assert.ok(screen.getByText("3만원"), "누적 배당");
+  assert.ok(screen.getByText("50만원"), "월 적립금");
 });
 
-test("SummaryHeader: 손실이면 음수와 빨간색 클래스를 쓴다", async () => {
+test("SummaryHeader: 손실이면 음수 부호와 하락(파랑) 토큰 클래스를 쓴다", async () => {
   render(
     <SummaryHeader
       totalValue={900_000}
@@ -58,8 +58,8 @@ test("SummaryHeader: 손실이면 음수와 빨간색 클래스를 쓴다", asyn
     />
   );
 
-  const pnl = screen.getByText("-10만");
-  assert.match(pnl.className, /text-red-300/);
+  const pnl = screen.getByText("-10만원");
+  assert.match(pnl.className, /text-loss/);
   assert.ok(screen.getByText("-10.00%"));
 });
 
@@ -167,7 +167,7 @@ test("SummaryHeader: 전일 대비 금액과 비율, 기준이 없으면 안내"
     />
   );
   const el = screen.getByTestId("daily-change");
-  assert.match(el.textContent ?? "", /전일 대비 -1만 \(-0\.90%\)/);
+  assert.match(el.textContent ?? "", /전일 대비 -1만원 \(-0\.90%\)/);
   assert.match(el.textContent ?? "", /매수·입출금 포함/);
 
   cleanup();

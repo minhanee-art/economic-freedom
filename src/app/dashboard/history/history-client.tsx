@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatFullKRW, formatKRW } from "@/lib/utils";
+import { formatKRWFull, formatKRW } from "@/lib/utils";
 import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
 import { ImportClient } from "./import-client";
 
@@ -76,30 +76,30 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
     <div className="space-y-5">
       {/* 누적 통계 */}
       <div
-        className="hero-gradient rounded-2xl px-6 py-6 text-white shadow-float"
+        className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800"
       >
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1">
+            <p className="text-xs font-medium text-ink-mute mb-1">
               총 투입금액
             </p>
-            <p className="text-xl font-semibold tabular-nums tracking-tight">
+            <p className="text-base font-semibold tabular-nums tracking-tight text-ink sm:text-xl">
               {formatKRW(totalSpent)}
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1">
+            <p className="text-xs font-medium text-ink-mute mb-1">
               매수 횟수
             </p>
-            <p className="text-xl font-semibold tabular-nums tracking-tight">
+            <p className="text-base font-semibold tabular-nums tracking-tight text-ink sm:text-xl">
               {totalRecords}회
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1">
+            <p className="text-xs font-medium text-ink-mute mb-1">
               회당 평균
             </p>
-            <p className="text-xl font-semibold tabular-nums tracking-tight">
+            <p className="text-base font-semibold tabular-nums tracking-tight text-ink sm:text-xl">
               {formatKRW(monthlyAvg)}
             </p>
           </div>
@@ -109,7 +109,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       {/* 가져오기 버튼 */}
       <button
         onClick={() => setShowImport(true)}
-        className="w-full h-11 rounded-full border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-card hover:shadow-float hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
+        className="w-full h-11 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-card hover:shadow-float hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all"
       >
         증권사 거래내역 가져오기 (CSV)
       </button>
@@ -125,7 +125,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
 
       {/* 기록 리스트 */}
       {records.length === 0 ? (
-        <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-card py-12 text-center">
+        <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-card py-12 text-center">
           <p className="text-sm text-ink-mute dark:text-zinc-400">
             아직 매수 기록이 없습니다.
           </p>
@@ -145,7 +145,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
             <button
               onClick={loadMore}
               disabled={isLoadingMore}
-              className="w-full h-11 rounded-full border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-semibold text-ink-mute dark:text-zinc-400 shadow-card hover:shadow-float hover:bg-canvas-soft dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
+              className="w-full h-11 border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-semibold text-ink-mute dark:text-zinc-400 shadow-card hover:shadow-float hover:bg-canvas-soft dark:hover:bg-zinc-800 transition-all disabled:opacity-50"
             >
               {isLoadingMore ? "불러오는 중..." : "더 보기"}
             </button>
@@ -168,20 +168,20 @@ function RecordCard({
   const items = record.purchase_items ?? [];
 
   return (
-    <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
+    <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float">
       {/* 헤더 */}
       <div className="flex items-center justify-between px-4 py-3 bg-canvas-soft dark:bg-zinc-800/50 border-b border-hairline dark:border-zinc-800">
         <span className="text-sm font-semibold text-ink dark:text-zinc-100 tabular-nums">{record.date}</span>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
-            {formatFullKRW(record.total_spent)}
+          <span className="inline-flex items-center bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+            {formatKRWFull(record.total_spent)}
           </span>
           <button
             type="button"
             onClick={onDelete}
             disabled={isDeleting}
             aria-label={`${record.date} 매수 기록 삭제`}
-            className="text-xs font-medium text-zinc-400 hover:text-red-500 transition-colors disabled:opacity-50"
+            className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors disabled:opacity-50"
           >
             {isDeleting ? "삭제 중" : "삭제"}
           </button>
@@ -194,13 +194,13 @@ function RecordCard({
           <div key={item.id} className="flex items-center px-4 py-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-ink dark:text-zinc-100">{item.name}</p>
-              <p className="text-xs text-zinc-400 tabular-nums">{item.code}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{item.code}</p>
             </div>
             <div className="text-right shrink-0 ml-3">
               <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{item.quantity}주</p>
-              <p className="text-xs text-zinc-400 tabular-nums">
-                ₩{item.price_at_purchase.toLocaleString()} × {item.quantity} ={" "}
-                {formatFullKRW(item.cost)}
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+                {formatKRWFull(item.price_at_purchase)} × {item.quantity} ={" "}
+                {formatKRWFull(item.cost)}
               </p>
             </div>
           </div>

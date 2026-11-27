@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
-import { formatKRW, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
@@ -249,12 +249,7 @@ export function HoldingCard({
   }
 
   return (
-    <div className="flex overflow-hidden border border-hairline bg-white shadow-card transition-all hover:-translate-y-0.5 hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
-      {/* 카테고리 색상 바 */}
-      <div
-        className="dot-bg w-1.5 shrink-0"
-        style={{ "--dot-bg": getCategoryColor(h.category) } as CSSProperties}
-      />
+    <div className="flex overflow-hidden border border-hairline bg-white shadow-card transition-shadow hover:shadow-float dark:border-zinc-800 dark:bg-zinc-900">
 
       <div className="flex-1 space-y-3 px-4 py-3">
         {/* 상단: 종목명 + 코드 */}
@@ -266,13 +261,13 @@ export function HoldingCard({
                   "inline-flex items-center border px-2.5 py-1 text-sm font-black tabular-nums shadow-card",
                   displayCode
                     ? "border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-200"
-                    : "border-red-200 bg-red-50 text-red-600 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300"
+                    : "border-danger-line bg-danger-soft text-danger"
                 )}
               >
                 {displayCode ? `티커 ${displayCode}` : "티커 미등록"}
               </span>
               {isCodeInferred && (
-                <span className="border border-amber-200 bg-amber-50 px-2 py-1 text-2xs font-bold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                <span className="border border-caution/30 bg-caution-soft px-2 py-1 text-xs font-bold text-caution">
                   이름 기준 추정
                 </span>
               )}
@@ -280,11 +275,11 @@ export function HoldingCard({
             <p className="mt-2 break-keep text-base font-black leading-6 text-zinc-950 dark:text-white">
               {displayName}
             </p>
-            <p className="mt-1 text-2xs font-semibold leading-4 text-zinc-400 dark:text-zinc-500">
+            <p className="mt-1 text-xs font-semibold leading-4 text-zinc-500 dark:text-zinc-400">
               원문: {h.name}
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <span className="text-2xs font-bold text-zinc-400 dark:text-zinc-500">테마</span>
+              <span className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 dark:text-zinc-400"><span aria-hidden="true" className="dot-bg inline-block h-2 w-2" style={{"--dot-bg": getCategoryColor(h.category) } as CSSProperties} />테마</span>
               <select
                 value={h.category}
                 onChange={(e) => saveCategory(e.target.value)}
@@ -296,54 +291,50 @@ export function HoldingCard({
                   <option key={category} value={category}>{category}</option>
                 ))}
               </select>
-              <span className="text-2xs font-semibold text-zinc-400 dark:text-zinc-500">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                 {isSavingCategory ? "저장 중" : h.sub_category}
               </span>
             </div>
           </div>
           <div className="sm:text-right">
             <p className="text-sm font-semibold tabular-nums">{formatKRW(h.current_value)}</p>
-            <p className="text-xs text-zinc-400 tabular-nums">
-              {h.shares}주 × ₩{h.current_price.toLocaleString()}
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+              {h.shares}주 × {formatKRWFull(h.current_price)}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">평단가</p>
+            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">평단가</p>
             <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
-              {avgPrice > 0 ? `₩${avgPrice.toLocaleString()}` : "-"}
+              {avgPrice > 0 ? formatKRWFull(avgPrice) : "-"}
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">수익률</p>
+            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">수익률</p>
             <p className={`mt-0.5 text-xs font-black tabular-nums ${
               !hasPnL
-                ? "text-zinc-400 dark:text-zinc-500"
-                : h.profit_loss_pct >= 0
-                ? "text-emerald-600 dark:text-emerald-300"
-                : "text-red-600 dark:text-red-300"
+                ? "text-zinc-500 dark:text-zinc-400"
+                : pnlTextClass(h.profit_loss_pct)
             }`}>
               {profitLossPctLabel}
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">평가손익</p>
+            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">평가손익</p>
             <p className={`mt-0.5 text-xs font-black tabular-nums ${
               !hasPnL
-                ? "text-zinc-400 dark:text-zinc-500"
-                : h.profit_loss >= 0
-                ? "text-emerald-600 dark:text-emerald-300"
-                : "text-red-600 dark:text-red-300"
+                ? "text-zinc-500 dark:text-zinc-400"
+                : pnlTextClass(h.profit_loss)
             }`}>
-              {hasPnL ? `${h.profit_loss >= 0 ? "+" : ""}${formatKRW(h.profit_loss)}` : "-"}
+              {hasPnL ? formatSignedKRW(h.profit_loss) : "-"}
             </p>
           </div>
           <div className="border border-zinc-100 bg-zinc-50 px-2 py-1.5 dark:border-zinc-800 dark:bg-zinc-950/50">
-            <p className="text-3xs font-bold text-zinc-400 dark:text-zinc-500">현재가</p>
+            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">현재가</p>
             <p className="mt-0.5 text-xs font-black tabular-nums text-zinc-800 dark:text-zinc-100">
-              ₩{h.current_price.toLocaleString()}
+              {formatKRWFull(h.current_price)}
             </p>
           </div>
         </div>
@@ -384,7 +375,7 @@ export function HoldingCard({
                 aria-label={`${h.name} 설정 비중`}
                 className="h-8 w-20 border border-zinc-200 bg-white px-2 text-right text-sm font-bold tabular-nums text-ink focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
               />
-              <span className="text-xs font-semibold text-zinc-500">%</span>
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">%</span>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
@@ -397,7 +388,7 @@ export function HoldingCard({
             </div>
           </div>
           <div className="h-2 overflow-hidden bg-zinc-200 dark:bg-zinc-800">
-            <div className="bar-w h-full bg-zinc-400 dark:bg-zinc-500" style={{ "--bar-w": `${targetPct}%` } as CSSProperties} />
+            <div className="bar-w h-full bg-zinc-400 dark:bg-zinc-500" style={{"--bar-w": `${targetPct}%` } as CSSProperties} />
           </div>
 
           <div className="mb-2 mt-3 flex items-center justify-between gap-3 text-xs font-semibold">
@@ -405,7 +396,7 @@ export function HoldingCard({
             <span className="tabular-nums text-indigo-600 dark:text-indigo-300">{h.actual_pct.toFixed(1)}%</span>
           </div>
           <div className="h-2 overflow-hidden bg-indigo-100 dark:bg-indigo-950">
-            <div className="bar-w h-full bg-indigo-500" style={{ "--bar-w": `${actualPct}%` } as CSSProperties} />
+            <div className="bar-w h-full bg-indigo-500" style={{"--bar-w": `${actualPct}%` } as CSSProperties} />
           </div>
         </div>
 
@@ -438,7 +429,7 @@ export function HoldingCard({
             <button
               type="button"
               onClick={() => setTradeAction(tradeAction === "buy" ? null : "buy")}
-              className="h-9 border border-emerald-200 bg-emerald-50 px-3 text-xs font-bold text-emerald-600 transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/15 dark:text-emerald-300"
+              className="h-9 border border-indigo-200 bg-indigo-50 px-3 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-200"
             >
               바로 매수
             </button>
@@ -446,7 +437,7 @@ export function HoldingCard({
               type="button"
               onClick={() => setTradeAction(tradeAction === "sell" ? null : "sell")}
               disabled={h.shares <= 0}
-              className="h-9 border border-red-200 bg-red-50 px-3 text-xs font-bold text-red-600 transition-colors hover:bg-red-100 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:border-red-500/30 dark:bg-red-500/15 dark:text-red-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+              className="h-9 border border-hairline bg-surface px-3 text-xs font-bold text-ink transition-colors hover:bg-canvas-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-400 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
             >
               바로 매도
             </button>
@@ -469,33 +460,33 @@ export function HoldingCard({
           </div>
 
           {showDetailsEditor && (
-            <div className="mt-3 border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/30 dark:bg-amber-500/10">
-              <p className="mb-2 text-xs font-black text-amber-700 dark:text-amber-200">품번 / 상품명 / 수량 / 평단가 정정</p>
+            <div className="mt-3 border border-caution/30 bg-caution-soft p-3">
+              <p className="mb-2 text-xs font-black text-caution">품번 / 상품명 / 수량 / 평단가 정정</p>
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-[120px_1fr_96px_120px_auto] lg:items-end">
                 <label className="block">
-                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">품번/종목번호</span>
+                  <span className="mb-1 block text-xs font-semibold text-caution">품번/종목번호</span>
                   <input
                     type="text"
                     value={codeDraft}
                     onChange={(e) => setCodeDraft(e.target.value)}
                     placeholder="예: 360750"
                     disabled={isSavingDetails}
-                    className="h-9 w-full border border-amber-200 bg-white px-2 text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="h-9 w-full border border-caution/30 bg-white px-2 text-sm font-bold tabular-nums focus:border-caution/30 focus:outline-none focus:ring-1 focus:ring-caution disabled:opacity-60 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </label>
                 <label className="col-span-2 block lg:col-span-1">
-                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">상품명</span>
+                  <span className="mb-1 block text-xs font-semibold text-caution">상품명</span>
                   <input
                     type="text"
                     value={nameDraft}
                     onChange={(e) => setNameDraft(e.target.value)}
                     placeholder="예: TIGER 미국나스닥100"
                     disabled={isSavingDetails}
-                    className="h-9 w-full border border-amber-200 bg-white px-2 text-sm font-bold focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="h-9 w-full border border-caution/30 bg-white px-2 text-sm font-bold focus:border-caution/30 focus:outline-none focus:ring-1 focus:ring-caution disabled:opacity-60 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">보유수량</span>
+                  <span className="mb-1 block text-xs font-semibold text-caution">보유수량</span>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -507,11 +498,11 @@ export function HoldingCard({
                     }}
                     onChange={(e) => setSharesDraft(e.target.value)}
                     disabled={isSavingDetails}
-                    className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="h-9 w-full border border-caution/30 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-caution/30 focus:outline-none focus:ring-1 focus:ring-caution disabled:opacity-60 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-1 block text-2xs font-semibold text-amber-700 dark:text-amber-200">평단가</span>
+                  <span className="mb-1 block text-xs font-semibold text-caution">평단가</span>
                   <input
                     type="number"
                     inputMode="numeric"
@@ -523,23 +514,23 @@ export function HoldingCard({
                     }}
                     onChange={(e) => setAvgPriceDraft(e.target.value)}
                     disabled={isSavingDetails}
-                    className="h-9 w-full border border-amber-200 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 disabled:opacity-60 dark:border-amber-500/40 dark:bg-zinc-900 dark:text-zinc-100"
+                    className="h-9 w-full border border-caution/30 bg-white px-2 text-right text-sm font-bold tabular-nums focus:border-caution/30 focus:outline-none focus:ring-1 focus:ring-caution disabled:opacity-60 dark:bg-zinc-900 dark:text-zinc-100"
                   />
                 </label>
                 <button
                   type="button"
                   onClick={saveDetails}
                   disabled={isSavingDetails}
-                  className="col-span-2 h-9 border border-amber-600 bg-amber-600 px-3 text-xs font-black text-white transition-colors hover:bg-amber-700 disabled:opacity-60 lg:col-span-1"
+                  className="col-span-2 h-9 border border-caution/30 bg-caution px-3 text-xs font-black text-white transition-colors hover:bg-caution disabled:opacity-60 lg:col-span-1"
                 >
                   {isSavingDetails ? "저장 중" : "정정 저장"}
                 </button>
               </div>
-              <p className="mt-2 text-xs leading-5 text-amber-700 dark:text-amber-200">
+              <p className="mt-2 text-xs leading-5 text-caution">
                 거래내역 전체 재계산이 아니라 현재 표시값과 평단 기준 원가를 정정합니다. 보유수량이 있으면 평단가는 0보다 커야 합니다.
               </p>
               {detailsStatus && (
-                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-emerald-600 dark:text-emerald-300" : "text-red-500"}`}>
+                <p className={`mt-2 text-xs font-semibold ${detailsStatus.includes("완료") ? "text-success " : "text-danger"}`}>
                   {detailsStatus}
                 </p>
               )}
@@ -579,25 +570,17 @@ export function HoldingCard({
                   type="button"
                   onClick={executeTrade}
                   disabled={isTrading}
-                  className={`col-span-2 h-9 border px-3 text-xs font-bold text-white transition-colors disabled:opacity-60 sm:col-span-1 ${
-                    tradeAction === "buy"
-                      ? "border-emerald-600 bg-emerald-600 hover:bg-emerald-700"
-                      : "border-red-600 bg-red-600 hover:bg-red-700"
-                  }`}
+                  className={`col-span-2 h-9 border px-3 text-xs font-bold text-white transition-colors disabled:opacity-60 sm:col-span-1 border-brand bg-brand hover:bg-brand-deep`}
                 >
                   {isTrading ? "처리중" : `${tradeAction === "buy" ? "매수" : "매도"} 확정`}
                 </button>
               </div>
-              <p className="mt-2 text-xs text-zinc-400 tabular-nums">
-                입력 합계: {enteredQuantity}주 × ₩{Math.round(Number(tradePrice) || 0).toLocaleString()} = {formatKRW(enteredTradeAmount)}
+              <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+                입력 합계: {enteredQuantity}주 × {formatKRWFull(Math.round(Number(tradePrice) || 0))} = {formatKRW(enteredTradeAmount)}
               </p>
 
               <div
-                className={`mt-3 border p-3 text-xs ${
-                  tradeAction === "buy"
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
-                    : "border-red-200 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
-                }`}
+                className="mt-3 border border-hairline bg-canvas-soft p-3 text-xs text-ink"
               >
                 <p className="font-black">목표 비중 계산 (사용자 설정 기준)</p>
                 {!validTradePrice ? (
@@ -613,7 +596,7 @@ export function HoldingCard({
                         현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetBuyQuantity}주</b>가 필요합니다(계산값).
                       </p>
                       <p className="mt-1 tabular-nums">
-                        계산 금액: {targetBuyQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetBuyCost)}</b>
+                        계산 금액: {targetBuyQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRW(targetBuyCost)}</b>
                       </p>
                       <p className="mt-1 tabular-nums">
                         반영 시 예상 비중 약 {projectedPctAfterTargetBuy.toFixed(1)}%
@@ -621,7 +604,7 @@ export function HoldingCard({
                       <button
                         type="button"
                         onClick={() => setTradeQuantity(String(targetBuyQuantity))}
-                        className="mt-2 border border-emerald-300 bg-white px-2.5 py-1.5 font-bold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200"
+                        className="mt-2 border border-hairline bg-surface px-2.5 py-1.5 font-bold text-ink transition-colors hover:bg-canvas-soft"
                       >
                         계산 {targetBuyQuantity}주 적용
                       </button>
@@ -639,7 +622,7 @@ export function HoldingCard({
                       현재 {h.actual_pct.toFixed(1)}% → 설정 {h.target_pct.toFixed(1)}%에 맞추려면 약 <b className="tabular-nums">{targetSellQuantity}주</b>가 필요합니다(계산값).
                     </p>
                     <p className="mt-1 tabular-nums">
-                      계산 금액: {targetSellQuantity}주 × ₩{Math.round(tradeUnitPrice || 0).toLocaleString()} = <b>{formatKRW(targetSellAmount)}</b>
+                      계산 금액: {targetSellQuantity}주 × {formatKRWFull(Math.round(tradeUnitPrice || 0))} = <b>{formatKRW(targetSellAmount)}</b>
                     </p>
                     <p className="mt-1 tabular-nums">
                       반영 시 예상 비중 약 {projectedPctAfterTargetSell.toFixed(1)}%
@@ -647,7 +630,7 @@ export function HoldingCard({
                     <button
                       type="button"
                       onClick={() => setTradeQuantity(String(targetSellQuantity))}
-                      className="mt-2 border border-red-300 bg-white px-2.5 py-1.5 font-bold text-red-700 transition-colors hover:bg-red-100 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-200"
+                      className="mt-2 border border-hairline bg-surface px-2.5 py-1.5 font-bold text-ink transition-colors hover:bg-canvas-soft"
                     >
                       계산 {targetSellQuantity}주 적용
                     </button>
@@ -661,7 +644,7 @@ export function HoldingCard({
             </div>
           )}
           {tradeStatus && (
-            <p className={`mt-2 text-xs font-semibold ${tradeStatus.includes("완료") ? "text-emerald-600 dark:text-emerald-300" : "text-red-500"}`}>
+            <p className={`mt-2 text-xs font-semibold ${tradeStatus.includes("완료") ? "text-success " : "text-danger"}`}>
               {tradeStatus}
             </p>
           )}
@@ -684,9 +667,9 @@ function Badge({
         "inline-flex items-center border px-2 py-0.5 text-xs font-medium tabular-nums",
         variant === "default" && "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
         variant === "indigo" && "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-900/30 dark:text-indigo-400",
-        variant === "green" && "border-emerald-100 bg-emerald-50 text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-900/30 dark:text-emerald-400",
-        variant === "red" && "border-red-100 bg-red-50 text-red-600 dark:border-red-500/20 dark:bg-red-900/30 dark:text-red-400",
-        variant === "amber" && "border-amber-100 bg-amber-50 text-amber-600 dark:border-amber-500/20 dark:bg-amber-900/30 dark:text-amber-400"
+        variant === "green" && "border-hairline bg-canvas-soft text-success",
+        variant === "red" && "border-danger-line bg-danger-soft text-danger",
+        variant === "amber" && "border-caution/30 bg-caution-soft text-caution"
       )}
     >
       {label}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { formatFullKRW, formatKRW } from "@/lib/utils";
+import { formatKRWFull, formatKRW } from "@/lib/utils";
 import { DividendBarChart } from "@/components/charts/dividend-bar-chart";
 
 interface HoldingOption {
@@ -113,26 +113,26 @@ export function DividendClient({ holdings, initialDividends }: Props) {
     <div className="space-y-5">
       {/* 요약 카드 */}
       <div
-        className="hero-gradient rounded-2xl px-6 py-6 text-white shadow-float"
+        className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800"
       >
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1.5">총 누적 배당</p>
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">{formatKRW(totalAmount)}</p>
+            <p className="text-xs font-medium text-ink-mute mb-1.5">총 누적 배당</p>
+            <p className="text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-2xl">{formatKRW(totalAmount)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1.5">{thisYear}년 배당</p>
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">{formatKRW(yearAmount)}</p>
+            <p className="text-xs font-medium text-ink-mute mb-1.5">{thisYear}년 배당</p>
+            <p className="text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-2xl">{formatKRW(yearAmount)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-indigo-200 mb-1.5">배당 횟수</p>
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">{dividends.length}회</p>
+            <p className="text-xs font-medium text-ink-mute mb-1.5">배당 횟수</p>
+            <p className="text-lg font-semibold tabular-nums tracking-tight text-ink sm:text-2xl">{dividends.length}회</p>
           </div>
         </div>
       </div>
 
       {/* 입력 폼 */}
-      <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
+      <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
         <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">배당금 추가</h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -141,7 +141,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
             <select
               value={holdingId}
               onChange={(e) => setHoldingId(e.target.value)}
-              className="w-full h-10 rounded-lg border border-hairline bg-white px-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-hairline bg-white px-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
               <option value="">종목 선택</option>
               {holdings.map((h) => (
@@ -165,7 +165,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
                 setAmount(v ? parseInt(v).toLocaleString() : "");
               }}
               placeholder="0"
-              className="w-full h-10 rounded-lg border border-hairline bg-white px-3 text-sm text-right tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-hairline bg-white px-3 text-sm text-right tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
 
@@ -175,7 +175,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full h-10 rounded-lg border border-hairline bg-white px-3 text-sm tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-hairline bg-white px-3 text-sm tabular-nums transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
 
@@ -188,7 +188,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
               placeholder="예: 분기배당"
-              className="w-full h-10 rounded-lg border border-hairline bg-white px-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="w-full h-10 border border-hairline bg-white px-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
         </div>
@@ -196,7 +196,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
         <button
           onClick={handleAdd}
           disabled={!holdingId || !amount || isAdding}
-          className="hero-gradient w-full h-11 rounded-xl text-white text-sm font-semibold shadow-card transition-shadow hover:shadow-float disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+          className="bg-brand hover:bg-brand-deep w-full h-11 text-white text-sm font-semibold shadow-card transition-shadow hover:shadow-float disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {isAdding ? "추가 중..." : "배당금 추가"}
         </button>
@@ -209,7 +209,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
 
       {/* 월별 차트 */}
       {monthlyData.length > 0 && (
-        <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
+        <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
           <h3 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">월별 배당금</h3>
           <DividendBarChart data={monthlyData} />
         </div>
@@ -221,7 +221,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
           배당 내역 ({dividends.length})
         </h3>
         {dividends.length === 0 ? (
-          <p className="text-sm text-zinc-400 py-8 text-center">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">
             아직 배당 기록이 없습니다.
           </p>
         ) : (
@@ -229,23 +229,23 @@ export function DividendClient({ holdings, initialDividends }: Props) {
             {dividends.map((d) => (
               <div
                 key={d.id}
-                className="flex items-center rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-card transition-shadow hover:shadow-float"
+                className="flex items-center border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-card transition-shadow hover:shadow-float"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold truncate">
                     {d.holding_name ?? "알 수 없음"}
                   </p>
-                  <p className="text-xs text-zinc-400 tabular-nums">
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
                     {d.date}
                     {d.memo && ` · ${d.memo}`}
                   </p>
                 </div>
-                <p className="text-sm font-semibold tabular-nums text-amber-600 dark:text-amber-400 mx-3">
-                  {formatFullKRW(d.amount)}
+                <p className="text-sm font-semibold tabular-nums text-ink mx-3">
+                  {formatKRWFull(d.amount)}
                 </p>
                 <button
                   onClick={() => handleDelete(d.id)}
-                  className="text-zinc-300 hover:text-red-500 transition-colors shrink-0"
+                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors shrink-0"
                 >
                   <svg
                     className="w-4 h-4"
@@ -329,21 +329,21 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
 
   const statusColor: Record<FetchStatus, string> = {
     idle: "",
-    loading: "text-zinc-400",
-    done: "text-emerald-600 dark:text-emerald-400",
-    empty: "text-zinc-400",
-    error: "text-red-500",
+    loading: "text-zinc-500 dark:text-zinc-400",
+    done: "text-success",
+    empty: "text-zinc-500 dark:text-zinc-400",
+    error: "text-danger",
   };
 
   return (
-    <section className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
+    <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">📥 분배금 자동조회</h3>
-        <span className="text-2xs text-ink-mute">보유 종목 × 주당분배금</span>
+        <span className="text-xs text-ink-mute">보유 종목 × 주당분배금</span>
       </div>
 
       {holdings.length === 0 ? (
-        <p className="text-xs text-zinc-400 text-center py-2">보유 종목이 없습니다.</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">보유 종목이 없습니다.</p>
       ) : (
         <ul className="space-y-2">
           {holdings.map((h) => {
@@ -352,19 +352,19 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
             return (
               <li
                 key={h.id}
-                className="flex items-center gap-3 rounded-xl border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2"
+                className="flex items-center gap-3 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{h.name}</p>
-                  <p className="text-2xs text-zinc-400 font-mono tabular-nums">{h.code} · {h.shares.toLocaleString()}주</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums tabular-nums">{h.code} · {h.shares.toLocaleString()}주</p>
                 </div>
                 {msg && (
-                  <span className={`text-2xs tabular-nums ${statusColor[status]}`}>{msg}</span>
+                  <span className={`text-xs tabular-nums ${statusColor[status]}`}>{msg}</span>
                 )}
                 <button
                   onClick={() => handleFetch(h)}
                   disabled={status === "loading"}
-                  className="shrink-0 h-7 px-3.5 rounded-full bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="shrink-0 h-7 px-3.5 bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
                   {status === "loading" ? "조회 중..." : "가져오기"}
                 </button>

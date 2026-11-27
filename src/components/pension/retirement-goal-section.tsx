@@ -5,7 +5,7 @@ import type { IncomeSourceRow, RetirementGoalRow } from "@/lib/pension-data";
 import { ACCOUNT_OWNER_LABELS, computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
 import { pensionIncomeTaxRate, type PensionRuleSet, type SalaryBracket } from "@/lib/pension-rules";
 import type { SpousePresence } from "@/lib/spouse-presence";
-import { formatFullKRW, formatKRW } from "@/lib/utils";
+import { formatAmountInput, formatKRWFull, formatKRW, parseAmountInput } from "@/lib/utils";
 import type { PlanningAccount } from "./account-type-section";
 import {
   Field,
@@ -187,7 +187,7 @@ export function RetirementGoalSection({
     >
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Field label="목표 월 생활비(원)">
-          <input inputMode="numeric" value={form.targetMonthly} onChange={(e) => set("targetMonthly", e.target.value)} placeholder="3000000" className={inputClass} />
+          <input inputMode="numeric" value={formatAmountInput(form.targetMonthly)} onChange={(e) => set("targetMonthly", parseAmountInput(e.target.value))} placeholder="예: 3,000,000" className={inputClass} />
         </Field>
         <Field label="은퇴 나이">
           <input inputMode="numeric" value={form.retirementAge} onChange={(e) => set("retirementAge", e.target.value)} placeholder="60" className={inputClass} />
@@ -201,8 +201,8 @@ export function RetirementGoalSection({
       </div>
 
       {spouseOpen ? (
-        <fieldset className="space-y-2 rounded-lg border border-zinc-100 p-3 dark:border-zinc-800">
-          <legend className="px-1 text-xs font-semibold text-zinc-500">배우자 정보</legend>
+        <fieldset className="space-y-2 border border-zinc-100 p-3 dark:border-zinc-800">
+          <legend className="px-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">배우자 정보</legend>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Field label="배우자 출생연도(선택)">
               <input inputMode="numeric" value={form.spouseBirthYear} onChange={(e) => set("spouseBirthYear", e.target.value)} className={inputClass} />
@@ -223,7 +223,7 @@ export function RetirementGoalSection({
             </Field>
           </div>
           {spouseLinkedData.length > 0 && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 이 항목은 배우자 정보 제거로 지워지지 않습니다.
             </p>
           )}
@@ -244,16 +244,16 @@ export function RetirementGoalSection({
         <button onClick={save} disabled={isSaving} className={primaryButtonClass}>
           {isSaving ? "저장 중..." : "목표 저장"}
         </button>
-        {message && <span className="text-xs text-zinc-500">{message}</span>}
-        {error && <span className="text-xs text-red-500">{error}</span>}
+        {message && <span className="text-xs text-zinc-500 dark:text-zinc-400">{message}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </div>
 
       {!cashflow || !at ? (
-        <p className="text-sm text-zinc-400">목표 월 생활비·은퇴 나이·출생연도를 저장하면 예상 현금흐름을 계산합니다.</p>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">목표 월 생활비·은퇴 나이·출생연도를 저장하면 예상 현금흐름을 계산합니다.</p>
       ) : (
         <div className="space-y-3">
           <div className="space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-500">
+            <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
               <span>
                 {at.age}세 예상 월 {formatKRW(at.total)} / 목표 {formatKRW(goal.targetMonthly ?? 0)}
               </span>
@@ -272,7 +272,7 @@ export function RetirementGoalSection({
               hint={cashflow.firstCoveredAge === null ? "목표를 채우는 나이 없음" : `${cashflow.firstCoveredAge}세부터 목표 충족`}
             />
           </div>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-zinc-500 dark:text-zinc-400">
             올해 {cashflow.currentAge}세 · 은퇴까지 {cashflow.yearsToRetirement}년 · 연금계좌 평가액은 연 {goal.expectedReturnPct ?? 0}%로
             굴려 명의자별로{" "}
             {(cashflow.annuities.some((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
@@ -289,7 +289,7 @@ export function RetirementGoalSection({
             {formatKRW(cashflow.projectedBalances.retirement)}, 연금저축·IRP {formatKRW(cashflow.projectedBalances.private)})
           </p>
           {cashflow.excludedAccounts.length > 0 && (
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
               현금흐름에서 뺀 계좌:{" "}
               {cashflow.excludedAccounts
                 .map((e) => {
@@ -303,7 +303,7 @@ export function RetirementGoalSection({
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs tabular-nums">
-              <thead className="text-zinc-500">
+              <thead className="text-zinc-500 dark:text-zinc-400">
                 <tr className="border-b border-zinc-100 dark:border-zinc-800">
                   <th className="py-1.5 text-left font-medium">나이</th>
                   <th className="py-1.5 text-right font-medium">국민연금</th>
@@ -323,8 +323,8 @@ export function RetirementGoalSection({
                     <td className="py-1.5 text-right">{formatKRW(row.layers.private)}</td>
                     <td className="py-1.5 text-right">{formatKRW(row.layers.dividend)}</td>
                     <td className="py-1.5 text-right font-semibold">{formatKRW(row.total)}</td>
-                    <td className={`py-1.5 text-right ${row.shortfall > 0 ? "text-red-500" : "text-zinc-400"}`}>
-                      {row.shortfall > 0 ? formatFullKRW(row.shortfall) : "-"}
+                    <td className={`py-1.5 text-right ${row.shortfall > 0 ? "text-danger" : "text-zinc-500 dark:text-zinc-400"}`}>
+                      {row.shortfall > 0 ? formatKRWFull(row.shortfall) : "-"}
                     </td>
                   </tr>
                 ))}

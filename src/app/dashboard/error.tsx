@@ -16,8 +16,8 @@ export default function DashboardError({
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-20 text-center">
-      <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-hairline bg-white px-8 py-10 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-3xl dark:bg-red-900/20">
+      <div className="flex w-full max-w-md flex-col items-center gap-5 border border-hairline bg-white px-8 py-10 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+        <span className="flex h-14 w-14 items-center justify-center bg-danger-soft text-3xl">
           ⚠️
         </span>
         <div>
@@ -30,7 +30,7 @@ export default function DashboardError({
         </div>
         <button
           onClick={reset}
-          className="h-10 rounded-full bg-indigo-600 px-6 text-sm font-semibold text-white shadow-card transition-all hover:bg-indigo-700 hover:shadow-float"
+          className="h-10 bg-indigo-600 px-6 text-sm font-semibold text-white shadow-card transition-all hover:bg-indigo-700 hover:shadow-float"
         >
           다시 시도
         </button>

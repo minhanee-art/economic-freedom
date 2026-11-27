@@ -144,9 +144,9 @@ export default function DashboardLayout({
   }, [normalizedQuery]);
 
   return (
-    <div className="dashboard-sharp flex min-h-full flex-col pb-24 md:pb-0">
+    <div className="flex min-h-full flex-col pb-24 md:pb-0">
       {isNavigating && (
-        <div className="fixed inset-x-0 top-0 z-[60] h-1 bg-indigo-500 shadow-[0_0_12px_rgba(83,58,253,0.45)]" />
+        <div className="fixed inset-x-0 top-0 z-[60] h-1 bg-indigo-500" />
       )}
       <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm shadow-indigo-950/20">
         <div className="relative mx-auto flex min-h-16 max-w-280 items-center gap-3 px-4 py-2 sm:px-6">
@@ -176,7 +176,7 @@ export default function DashboardLayout({
                       "inline-flex h-10 items-center gap-1 border border-transparent px-3 text-sm font-semibold transition-colors",
                       isGroupActive
                         ? "border-white/15 bg-white/10 text-white"
-                        : "text-zinc-300 hover:border-white/10 hover:bg-white/10 hover:text-white"
+                        : "text-zinc-500 dark:text-zinc-400 hover:border-white/10 hover:bg-white/10 hover:text-white"
                     )}
                   >
                     {group.label}
@@ -276,7 +276,7 @@ export default function DashboardLayout({
                 <div className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] border border-zinc-200 bg-white p-3 text-ink shadow-float dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
                   <label className="sr-only" htmlFor="dashboard-menu-search">메뉴 검색</label>
                   <div className="flex items-center gap-2 border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-                    <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
                     </svg>
                     <input
@@ -284,12 +284,12 @@ export default function DashboardLayout({
                       value={menuQuery}
                       onChange={(event) => setMenuQuery(event.target.value)}
                       placeholder="예: 배당, 기록, ETF"
-                      className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-400"
+                      className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-500"
                     />
                   </div>
                   <div className="mt-3 max-h-[55dvh] space-y-1 overflow-y-auto">
                     {filteredMenuItems.length === 0 ? (
-                      <p className="px-3 py-6 text-center text-sm text-zinc-500">검색 결과가 없습니다.</p>
+                      <p className="px-3 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">검색 결과가 없습니다.</p>
                     ) : (
                       filteredMenuItems.map((item) => (
                         <Link
@@ -322,11 +322,11 @@ export default function DashboardLayout({
             </div>
 
             {isAuthenticated && displayName && (
-              <span className="text-sm text-zinc-300 hidden sm:block">{displayName}</span>
+              <span className="text-sm text-zinc-500 dark:text-zinc-400 hidden sm:block">{displayName}</span>
             )}
             <button
               onClick={handleAuthButton}
-              className="border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+              className="border border-white/10 px-3 py-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
             >
               {isAuthenticated ? "로그아웃" : "로그인"}
             </button>
@@ -363,10 +363,10 @@ export default function DashboardLayout({
                 onTouchStart={() => prefetchRoute(item.href)}
                 onMouseEnter={() => prefetchRoute(item.href)}
                 className={cn(
-                  "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-2xs font-semibold transition-all active:scale-95",
+                  "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-xs font-semibold transition-all active:scale-95",
                   isActive
                     ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
-                    : "text-zinc-400 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-700 dark:hover:border-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
+                    : "text-zinc-500 dark:text-zinc-400 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-700 dark:hover:border-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
                 )}
               >
                 <span className={cn("border border-transparent p-1", isActive && "border-zinc-200 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900")}>{item.icon}</span>

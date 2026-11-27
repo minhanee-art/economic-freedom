@@ -2,7 +2,7 @@
 
 import type { Holding, CostBasis, PurchaseRecord } from "@/types";
 import type { CSSProperties } from "react";
-import { formatKRW, formatPercent, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPercent, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { PnLAreaChart } from "@/components/charts/pnl-area-chart";
 
@@ -97,46 +97,44 @@ export function PnLClient({
   return (
     <div className="space-y-5">
       {/* 총 수익 현황 */}
-      <div
-        className="hero-gradient rounded-2xl px-6 py-6 text-white shadow-float"
-      >
+      <div className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800">
         <div className="grid grid-cols-2 gap-5">
           <div>
-            <p className="text-xs font-medium text-indigo-200 mb-1">총 투입금액</p>
+            <p className="text-xs font-medium text-ink-mute mb-1">총 투입금액</p>
             <p className="text-lg font-semibold tabular-nums tracking-tight">{formatKRW(totalCost)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-200 mb-1">현재 평가금액</p>
+            <p className="text-xs font-medium text-ink-mute mb-1">현재 평가금액</p>
             <p className="text-lg font-semibold tabular-nums tracking-tight">{formatKRW(totalValue)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-200 mb-1">평가손익</p>
+            <p className="text-xs font-medium text-ink-mute mb-1">평가손익</p>
             <p
               className={cn(
                 "text-lg font-semibold tabular-nums tracking-tight",
-                totalPnL >= 0 ? "text-emerald-300" : "text-red-300"
+                pnlTextClass(totalPnL)
               )}
             >
-              {formatKRW(totalPnL)}
+              {formatSignedKRW(totalPnL)}
             </p>
             <p
               className={cn(
                 "text-xs tabular-nums",
-                totalPnL >= 0 ? "text-emerald-300/70" : "text-red-300/70"
+                pnlTextClass(totalPnL)
               )}
             >
               {formatPercent(totalPnLPct)}
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-indigo-200 mb-1">누적 배당</p>
+            <p className="text-xs font-medium text-ink-mute mb-1">누적 배당</p>
             <p className="text-lg font-semibold tabular-nums tracking-tight">{formatKRW(totalDividend)}</p>
           </div>
         </div>
       </div>
 
       {isEmpty ? (
-        <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center shadow-card">
+        <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center shadow-card">
           <p className="text-sm text-ink-mute dark:text-zinc-400">
             보유 종목이 없습니다. 매수 후 손익이 표시됩니다.
           </p>
@@ -145,7 +143,7 @@ export function PnLClient({
         <>
           {/* 추이 차트 */}
           {chartData.length >= 2 && (
-            <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
+            <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
               <h3 className="text-sm font-semibold text-ink mb-3">
                 투입 vs 평가 추이
               </h3>
@@ -154,7 +152,7 @@ export function PnLClient({
           )}
 
           {/* 자산군별 손익 요약 */}
-          <div className="rounded-2xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
+          <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
             <h3 className="text-sm font-semibold text-ink mb-3">자산군별 손익</h3>
             <div className="grid grid-cols-2 gap-3">
               {Array.from(categoryMap.entries()).map(([cat, data]) => {
@@ -163,10 +161,10 @@ export function PnLClient({
                 return (
                   <div
                     key={cat}
-                    className="flex items-start gap-2 rounded-xl border border-hairline dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800 px-3 py-2.5"
+                    className="flex items-start gap-2 border border-hairline dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800 px-3 py-2.5"
                   >
                     <span
-                      className="dot-bg w-2.5 h-2.5 rounded-full mt-1 shrink-0"
+                      className="dot-bg w-2.5 h-2.5 mt-1 shrink-0"
                       style={{ "--dot-bg": getCategoryColor(cat) } as CSSProperties}
                     />
                     <div className="min-w-0">
@@ -174,17 +172,15 @@ export function PnLClient({
                       <p
                         className={cn(
                           "text-sm font-semibold tabular-nums",
-                          data.pnl >= 0
-                            ? "text-emerald-600 dark:text-emerald-400"
-                            : "text-red-600 dark:text-red-400"
+                          pnlTextClass(data.pnl)
                         )}
                       >
-                        {formatKRW(data.pnl)}{" "}
+                        {formatSignedKRW(data.pnl)}{" "}
                         <span className="text-xs font-normal tabular-nums">
                           ({formatPercent(pct)})
                         </span>
                       </p>
-                      <p className="text-2xs text-zinc-400 tabular-nums">
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
                         {formatKRW(data.cost)} → {formatKRW(data.value)}
                       </p>
                     </div>
@@ -203,16 +199,13 @@ export function PnLClient({
               {pnlList.map((h) => (
                 <div
                   key={h.id}
-                  className="flex rounded-xl border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float"
+                  className="flex border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-card transition-shadow hover:shadow-float"
                 >
-                  <div
-                    className={cn("w-1.5 shrink-0", h.profitLoss >= 0 ? "pnl-bar-up" : "pnl-bar-down")}
-                  />
                   <div className="flex-1 px-4 py-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-semibold text-ink">{h.name}</p>
-                        <p className="text-xs text-zinc-400 tabular-nums">
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
                           {h.code} · {h.shares}주
                         </p>
                       </div>
@@ -220,32 +213,28 @@ export function PnLClient({
                         <p
                           className={cn(
                             "text-sm font-semibold tabular-nums",
-                            h.profitLoss >= 0
-                              ? "text-emerald-600 dark:text-emerald-400"
-                              : "text-red-600 dark:text-red-400"
+                            pnlTextClass(h.profitLoss)
                           )}
                         >
-                          {formatKRW(h.profitLoss)}
+                          {formatSignedKRW(h.profitLoss, true)}
                         </p>
                         <p
                           className={cn(
                             "text-xs tabular-nums",
-                            h.profitLoss >= 0
-                              ? "text-emerald-500"
-                              : "text-red-500"
+                            pnlTextClass(h.profitLoss)
                           )}
                         >
                           {formatPercent(h.profitLossPct)}
                         </p>
                       </div>
                     </div>
-                    <div className="mt-1.5 flex gap-3 text-xs text-zinc-400 tabular-nums">
+                    <div className="mt-1.5 flex gap-3 text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
                       <span>
-                        평균단가 ₩{h.avgPrice.toLocaleString()}
+                        평균단가 {formatKRWFull(h.avgPrice)}
                       </span>
                       <span>→</span>
                       <span>
-                        현재가 ₩{h.currentPrice.toLocaleString()}
+                        현재가 {formatKRWFull(h.currentPrice)}
                       </span>
                     </div>
                   </div>

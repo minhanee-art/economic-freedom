@@ -19,27 +19,27 @@ export function GiftProgressCard({ birthDate, gifts }: Props) {
   const over = used > limit;
 
   return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2">
-      <div className="flex items-center justify-between text-xs text-zinc-500">
+    <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-2">
+      <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">
         <span>
           {minor ? "미성년자" : "성년"} · 만 {age}세 · 10년 공제한도 {formatKRW(limit)}
         </span>
-        <span className={over ? "text-red-500 font-semibold" : "text-zinc-400"}>
+        <span className={over ? "text-danger font-semibold" : "text-zinc-500 dark:text-zinc-400"}>
           {over ? "한도 초과" : `잔여 ${formatKRW(remaining)}`}
         </span>
       </div>
-      <div className="h-2 rounded-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+      <div className="h-2 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         <div
-          className={`bar-w h-full rounded-full transition-all ${over ? "bg-red-500" : "bg-indigo-500"}`}
+          className={`bar-w h-full transition-all ${over ? "bg-danger-fill" : "bg-indigo-500"}`}
           style={{ "--bar-w": `${pct}%` } as CSSProperties}
         />
       </div>
-      <p className="text-xs text-zinc-400">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
         최근 10년 누적 증여액 {formatKRW(used)} / {formatKRW(limit)}
         <span className="block mt-0.5">정부지원금·비증여 입금은 공제한도 계산에서 제외합니다.</span>
       </p>
       {over && (
-        <p className="text-xs text-red-500">
+        <p className="text-xs text-danger">
           공제한도를 초과했습니다. 초과분에 대해 증여세 신고·납부가 필요할 수 있어요. 아래 &quot;증여세 신고 가이드&quot;를 확인하세요.
         </p>
       )}

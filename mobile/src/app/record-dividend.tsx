@@ -38,6 +38,7 @@ export default function RecordDividendScreen() {
 
   const holdings = useMemo(() => summary?.holdings ?? [], [summary]);
   const holding = holdings.find((item) => item.id === holdingId) ?? null;
+  const noHoldings = summary != null && holdings.length === 0;
   // 다른 계좌에서 불러온 목록은 보여주지 않는다.
   const records = loaded && loaded.accountId === selectedAccountId ? loaded.list : [];
   const account = accounts.find((item) => item.id === selectedAccountId);
@@ -159,62 +160,70 @@ export default function RecordDividendScreen() {
         }}
         error={errors.holding}
       />
-      <TextField
-        label="수령 금액(원)"
-        inputMode="numeric"
-        keyboardType="number-pad"
-        placeholder="세후 입금액, 예: 12000"
-        onChangeText={(text) => {
-          setAmount(text);
-          clearError("amount");
-        }}
-        value={amount}
-        error={errors.amount}
-        returnKeyType="next"
-        submitBehavior="submit"
-        onSubmitEditing={() => dateRef.current?.focus()}
-      />
-      <DateField
-        ref={dateRef}
-        label="수령일"
-        value={date}
-        onChange={(next) => {
-          setDate(next);
-          clearError("date");
-        }}
-        error={errors.date}
-        returnKeyType="done"
-        onSubmitEditing={handleSubmit}
-      />
-      {hasSameDay ? <Notice tone="caution">같은 종목·같은 날짜의 기록이 이미 있으면 새 금액으로 덮어씁니다.</Notice> : null}
-      {error ? <FormError>{error}</FormError> : null}
-      {done ? <StatusMessage>{done}</StatusMessage> : null}
-      <Button label="기록 저장" busy={isSubmitting} busyLabel="저장 중" disabled={deletingId !== null} onPress={handleSubmit} />
+      {/* 종목이 없는 계좌는 위의 빈 상태(종목 추가)만 보인다 — 고를 종목이 없는데 입력칸·저장 버튼을 두지 않는다. */}
+      {noHoldings ? null : (
+        <>
+          <TextField
+            label="수령 금액(원)"
+            inputMode="numeric"
+            keyboardType="number-pad"
+            placeholder="세후 입금액, 예: 12000"
+            onChangeText={(text) => {
+              setAmount(text);
+              clearError("amount");
+            }}
+            value={amount}
+            error={errors.amount}
+            returnKeyType="next"
+            submitBehavior="submit"
+            onSubmitEditing={() => dateRef.current?.focus()}
+          />
+          <DateField
+            ref={dateRef}
+            label="수령일"
+            value={date}
+            onChange={(next) => {
+              setDate(next);
+              clearError("date");
+            }}
+            error={errors.date}
+            returnKeyType="done"
+            onSubmitEditing={handleSubmit}
+          />
+          {hasSameDay ? <Notice tone="caution">같은 종목·같은 날짜의 기록이 이미 있으면 새 금액으로 덮어씁니다.</Notice> : null}
+          {error ? <FormError>{error}</FormError> : null}
+          {done ? <StatusMessage>{done}</StatusMessage> : null}
+          <Button label="기록 저장" busy={isSubmitting} busyLabel="저장 중" disabled={deletingId !== null} onPress={handleSubmit} />
 
-      <Card title="최근 배당 수령 기록">
-        {recordsError ? <FormError>{recordsError}</FormError> : null}
-        {records.length === 0 && !recordsError ? <Text style={type.caption}>아직 기록이 없습니다.</Text> : null}
-        <Rows>
-          {records.map((record) => (
-            <View key={record.id} style={styles.recordRow}>
-              <View style={styles.recordMain}>
-                <Text style={type.body}>{record.holdingName ?? "종목"}</Text>
-                <Text style={[type.caption, styles.tabular]}>
-                  {record.date} · {formatKRWFull(record.amount)}
-                </Text>
-              </View>
-              <Button
-                label="삭제"
-                variant="dangerLink"
-                busy={deletingId === record.id}
-                busyLabel="삭제 중"
-                disabled={deletingId !== null || isSubmitting}
-                onPress={() => confirmDelete(record)}
-              />
-            </View>
-          ))}
-        </Rows>
-      </Card>
+          <Card title="최근 배당 수령 기록">
+            {recordsError ? <FormError>{recordsError}</FormError> : null}
+            {records.length === 0 && !recordsError ? <Text style={type.caption}>아직 기록이 없습니다.</Text> : null}
+            <Rows>
+              {records.map((record) => (
+                <View key={record.id} style={styles.recordRow}>
+                  <View style={styles.recordMain}>
+                    <Text style={type.body}>{record.holdingName ?? "종목"}</Text>
+                    <Text style={[type.caption, styles.tabular]}>
+                      {record.date} · {formatKRWFull(record.amount)}
+                    </Text>
+                  </View>
+                  <Button
+                    label="삭제"
+                    // 목록의 삭제는 잉크색 테두리 버튼 — 빨강은 손익(이익)과 겹치므로 확인 단계(대화상자)에만 쓴다.
+                    variant="secondary"
+                    compact
+                    accessibilityLabel={`${record.date} ${record.holdingName ?? "종목"} 배당 기록 삭제`}
+                    busy={deletingId === record.id}
+                    busyLabel="삭제 중"
+                    disabled={deletingId !== null || isSubmitting}
+                    onPress={() => confirmDelete(record)}
+                  />
+                </View>
+              ))}
+            </Rows>
+          </Card>
+        </>
+      )}
     </AppShell>
   );
 }

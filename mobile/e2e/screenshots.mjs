@@ -137,6 +137,24 @@ async function scrollToText(value, offset = 12) {
   }, offset);
 }
 
+/** 스택 화면의 고정 헤더 아래 끝(CSS px): 헤더 제목 글자를 품은, 화면 폭 전체인 가장 큰 상단 상자의 아래 끝. */
+async function headerBottom(title) {
+  const bottom = await page.evaluate((label) => {
+    const el = [...document.querySelectorAll("*")].find(
+      (n) => n.offsetParent !== null && n.childElementCount === 0 && n.textContent.trim() === label && n.getBoundingClientRect().top < 100
+    );
+    if (!el) return null;
+    let best = el.getBoundingClientRect().bottom;
+    for (let node = el.parentElement; node; node = node.parentElement) {
+      const r = node.getBoundingClientRect();
+      if (r.top <= 0 && r.width >= window.innerWidth - 1 && r.height < 160) best = Math.max(best, r.bottom);
+    }
+    return best;
+  }, title);
+  if (bottom === null) throw new Error(`헤더 제목 '${title}' 을 찾지 못함`);
+  return bottom;
+}
+
 /** 입력란 포커스 테두리가 찍히지 않도록 포커스를 뺀다. */
 async function blur() {
   await page.evaluate(() => document.activeElement?.blur?.());
@@ -368,20 +386,30 @@ async function selectAccountChip(name) {
   );
 }
 
-// 5 매수 기록 추가 (입력 후 기록 금액이 보이는 상태) — 종목이 적은 배우자 계좌로 찍어 안내문·입력·기록 금액이 한 화면에 들어오게 한다
+// 5 매수 기록 추가 (입력 후 기록 금액이 보이는 상태) — 종목이 하나인 '내 연금저축' 계좌로 찍어
+//   안내문("주문이 실행되지 않습니다")부터 '기록 저장' 버튼 아래 끝까지 한 화면에 들어오게 한다(종목 2개면 저장 버튼이 잘린다).
 await openTab("자산");
 await expectText(/^종목 \d+개$/);
-await selectAccountChip("배우자 계좌");
+await selectAccountChip("내 연금저축");
 await expectText("TIGER 미국S&P500");
 await button("매수 기록 추가").click();
 await expectText("이미 한 거래를 기록합니다");
 await expectText("기록할 계좌");
-await expectText("배우자 계좌 · 배우자");
+await expectText("내 연금저축 · 본인");
 await visible(page.getByRole("radio", { name: /TIGER 미국S&P500/ })).first().click();
 await fillInputs(["100", "21500", today]);
 await expectText("기록 금액 2,150,000원");
 await blur();
 await scrollTop();
+{
+  // 구도 확인: 안내문과 저장 버튼이 모두 뷰포트 안에 온전히 있어야 한다.
+  const intro = await text("이미 한 거래를 기록합니다").boundingBox();
+  const save = await button("기록 저장").boundingBox();
+  const top = await headerBottom("매수 기록 추가");
+  if (!intro || !save || intro.y < top || save.y + save.height > VIEWPORT.height - 4) {
+    throw new Error(`5번 구도: 안내문 y=${intro?.y}, 헤더 아래 ${top}, 저장 버튼 아래 끝 ${save ? save.y + save.height : "?"} (뷰포트 ${VIEWPORT.height})`);
+  }
+}
 await shot(5);
 await page.goBack();
 
@@ -394,7 +422,22 @@ await expectText("이미 한 거래를 기록합니다");
 await expectText("내 계좌 · 본인");
 await expectText("최근 매수 기록");
 await expectText("TIGER 미국배당다우존스 300주");
-await scrollToText("최근 매수 기록", 8);
+{
+  // 목록이 화면 끝에서 끝나므로 카드 제목을 헤더 바로 아래까지 올릴 만큼 스크롤할 수 없다(그래서 예전에는 위쪽
+  // '기록 저장' 버튼이 반쯤 걸려 찍혔다). 대신 '기록 저장' 버튼 전체가 헤더 아래 8px 에 오게 두고 그 아래로 목록을 보인다.
+  const top = await headerBottom("매수 기록 추가");
+  const saveButton = await button("기록 저장").elementHandle();
+  await saveButton.evaluate((el, targetY) => {
+    for (let node = el.parentElement; node; node = node.parentElement) {
+      if (node.scrollHeight > node.clientHeight && getComputedStyle(node).overflowY !== "visible") {
+        node.scrollTop += el.getBoundingClientRect().top - targetY;
+        break;
+      }
+    }
+  }, top + 8);
+  const save = await button("기록 저장").boundingBox();
+  if (!save || save.y < top || save.y > top + 16) throw new Error(`6번 구도: '기록 저장' 버튼 위 끝 ${save?.y} (헤더 아래 ${top}에서 0~16px 이어야 함)`);
+}
 await shot(6);
 await page.goBack();
 

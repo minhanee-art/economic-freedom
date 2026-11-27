@@ -90,15 +90,6 @@ async function expectText(value, timeout = 30000, exact = false) {
   await text(value, exact).waitFor({ state: "visible", timeout });
 }
 
-/** 주어진 글자를 포함한 가장 안쪽 행에서 버튼을 찾는다(문서 순서상 가장 안쪽 요소가 마지막). */
-function rowButton(rowText, name) {
-  return visible(page.locator("div"))
-    .filter({ hasText: rowText })
-    .filter({ has: page.getByRole("button", { name, exact: true }) })
-    .last()
-    .getByRole("button", { name, exact: true });
-}
-
 async function openTab(label) {
   // 새로고침 직후에는 탭바가 아직 없을 수 있어 나타날 때까지 기다린 뒤 고른다(없는 채로 링크를 찾다 시간 초과되지 않게).
   await visible(page.getByRole("tab")).first().waitFor({ state: "visible", timeout: 60000 });
@@ -323,7 +314,16 @@ await step("신규 계정: 홈은 빈 상태(종목 0개, 가짜 손익·추세 
   for (const fake of ["+0.00%", "목표 대비 0%", "총 평가금액"]) {
     assert((await visible(page.getByText(fake)).count()) === 0, `빈 계정 홈에 '${fake}'가 보임`);
   }
-  s.notes.push("종목 0개, 홈에 '아직 종목이 없습니다'");
+  // 첫 사용 안내: 앱에서 할 수 있는 '종목 추가'(3단계 안내 안의 주 버튼)가 '웹에서 …' 버튼들보다 먼저 온다.
+  await expectText("처음 시작하기");
+  const order = await page.evaluate(() => {
+    const names = [...document.querySelectorAll('[role="button"],[role="link"],button,a')]
+      .filter((el) => el.offsetParent !== null)
+      .map((el) => (el.getAttribute("aria-label") || el.textContent || "").trim());
+    return { add: names.indexOf("종목 추가"), web: names.findIndex((n) => n.startsWith("웹에서")) };
+  });
+  assert(order.add >= 0 && (order.web < 0 || order.add < order.web), `빈 홈에서 '종목 추가'(${order.add})가 '웹에서 …'(${order.web})보다 뒤에 있음`);
+  s.notes.push("종목 0개, 홈에 '처음 시작하기' 3단계 안내와 '종목 추가'가 웹 안내보다 먼저");
   await shot("fresh-home-empty");
 });
 
@@ -353,6 +353,9 @@ await step("신규 계정: 배당·매수 기록 화면의 종목 목록은 '종
     await expectText("기록할 계좌");
     await expectText("종목을 먼저 추가하면 여기서 골라 기록할 수 있습니다");
     assert((await visible(page.getByRole("button", { name: "종목 추가", exact: true })).count()) >= 1, `${tabLabel}: 빈 상태에 '종목 추가'가 없음`);
+    // 고를 종목이 없으면 입력칸·저장 버튼은 숨긴다(빈 상태만).
+    assert((await visible(page.getByRole("button", { name: "기록 저장", exact: true })).count()) === 0, `${tabLabel}: 종목이 없는데 '기록 저장'이 보임`);
+    assert((await visible(page.locator("input")).count()) === 0, `${tabLabel}: 종목이 없는데 입력칸이 보임`);
     s.notes.push(`${tabLabel}: 종목 목록 빈 상태 확인`);
     await shot(`fresh-${tabLabel === "자산" ? "purchase" : "dividend"}-picker-empty`);
   }
@@ -573,7 +576,8 @@ await step("매수 기록 추가 → 목록 표시(내 계좌)", async (s) => {
 
 await step("매수 기록 삭제", async () => {
   const del = waitApi("/api/purchases/", "DELETE");
-  await rowButton(`${today} · 33,000원`, "삭제").click();
+  // 목록의 삭제 버튼은 대상을 이름에 담는다("2026-11-27 33,000원 매수 기록 삭제") — 날짜·금액으로 이 기록만 고른다.
+  await button(`${today} 33,000원 매수 기록 삭제`).click();
   const res = await del;
   assert(res.status() === 200, `삭제 응답 ${res.status()}`);
   await expectText("매수 기록을 삭제했습니다");
@@ -598,7 +602,7 @@ await step("배당 기록 추가 → 목록 표시 → 삭제", async () => {
   await expectText(`${today} · 4,321원`);
   await shot("dividend-added");
   const del = waitApi("/api/dividends", "DELETE");
-  await button("삭제").click();
+  await visible(page.getByRole("button", { name: new RegExp(`^${today} .* 배당 기록 삭제$`) })).first().click();
   assert((await del).ok(), "배당 기록 삭제 실패");
   await expectText("아직 기록이 없습니다.");
   await shot("dividend-deleted");

@@ -20,6 +20,7 @@
 # 환경변수(선택): E2E_DB_PORT(55461) E2E_NEXT_PORT(3461) E2E_PROXY_PORT(3462) E2E_EXPO_PORT(8461)
 #                 E2E_OUT(mobile/e2e/artifacts — 스크린샷·results.json·서버 로그, .gitignore 처리)
 #                 PLAYWRIGHT_DIR, PLAYWRIGHT_VERSION(1.60.0), E2E_KEEP_UP=1(테스트 뒤 서버를 남겨 두고 Enter 로 정리)
+#                 E2E_SCRIPT(mobile/e2e/ 아래에서 실행할 스크립트, 기본 smoke.mjs. 스토어 스크린샷: screenshots.mjs — 출력 위치는 E2E_SCREENSHOT_DIR)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -28,6 +29,11 @@ NEXT_PORT="${E2E_NEXT_PORT:-3461}"
 PROXY_PORT="${E2E_PROXY_PORT:-3462}"
 EXPO_PORT="${E2E_EXPO_PORT:-8461}"
 OUT="${E2E_OUT:-$ROOT/mobile/e2e/artifacts}"
+E2E_SCRIPT="${E2E_SCRIPT:-smoke.mjs}"
+case "$E2E_SCRIPT" in
+  */*|*..*|"") echo "E2E_SCRIPT 는 mobile/e2e/ 바로 아래의 파일 이름이어야 합니다: $E2E_SCRIPT" >&2; exit 1 ;;
+esac
+if [ ! -f "$ROOT/mobile/e2e/$E2E_SCRIPT" ]; then echo "mobile/e2e/$E2E_SCRIPT 가 없습니다." >&2; exit 1; fi
 PLAYWRIGHT_VERSION="${PLAYWRIGHT_VERSION:-1.60.0}"
 PLAYWRIGHT_DIR="${PLAYWRIGHT_DIR:-${TMPDIR:-/tmp}/pension-mobile-e2e-playwright}"
 CONTAINER="pension-mobile-e2e-$$"
@@ -110,7 +116,7 @@ wait_http "http://localhost:$EXPO_PORT/" "Expo web" 180
 # 첫 번들은 요청 시점에 만든다 — 미리 한 번 받아 둔다.
 curl -s -o /dev/null --max-time 300 "http://localhost:$EXPO_PORT/" || true
 
-echo "▶ 5/5 Playwright 스모크 테스트"
+echo "▶ 5/5 Playwright: $E2E_SCRIPT"
 if [ ! -d "$PLAYWRIGHT_DIR/node_modules/playwright" ]; then
   mkdir -p "$PLAYWRIGHT_DIR"
   npm install --prefix "$PLAYWRIGHT_DIR" --no-save --no-audit --no-fund "playwright@$PLAYWRIGHT_VERSION" >/dev/null
@@ -122,7 +128,7 @@ E2E_APP_URL="http://localhost:$EXPO_PORT" \
 E2E_API_URL="http://127.0.0.1:$PROXY_PORT" \
 E2E_DIRECT_API_URL="http://127.0.0.1:$NEXT_PORT" \
 E2E_OUT="$OUT" PLAYWRIGHT_DIR="$PLAYWRIGHT_DIR" \
-  node "$ROOT/mobile/e2e/smoke.mjs"
+  node "$ROOT/mobile/e2e/$E2E_SCRIPT"
 status=$?
 set -e
 

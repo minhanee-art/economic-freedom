@@ -32,10 +32,13 @@ export function HoldingPicker({
   holdings,
   selectedId,
   onSelect,
+  loaded = true,
 }: {
   holdings: Holding[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** 종목 목록(요약 응답)을 받았는지. 받기 전에는 빈 상태를 그리지 않는다(종목이 있는 계좌에서 잠깐 '종목 없음'이 보이지 않게). */
+  loaded?: boolean;
 }) {
   const { held, notHeld, startExpanded } = splitHoldingsForPicker(holdings);
   // 사용자가 직접 펼치거나 접기 전에는 목록 상태(보유 중 종목 유무)를 따른다.
@@ -43,8 +46,9 @@ export function HoldingPicker({
   const expanded = userExpanded ?? startExpanded;
 
   if (holdings.length === 0) {
+    if (!loaded) return null;
     return (
-      <EmptyHoldings description="기록할 종목이 없습니다. 종목을 먼저 추가하면 이 목록에서 고를 수 있습니다." />
+      <EmptyHoldings description="이 계좌에 종목을 먼저 추가하면 여기서 골라 기록할 수 있습니다." />
     );
   }
   const shownNotHeld = visibleNotHeld(notHeld, expanded, selectedId);

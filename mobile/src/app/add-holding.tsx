@@ -35,8 +35,8 @@ export default function AddHoldingScreen() {
 
     submitLock.current = true;
     setIsSubmitting(true);
+    // 직전에 추가한 종목 안내(매수 기록으로 이동)는 다음 추가가 성공할 때까지 남긴다
     setError("");
-    setAdded(null);
     try {
       const { id } = await createHolding(session.token, selectedAccountId, checked.value);
       setAdded({ id, ...checked.value });

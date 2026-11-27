@@ -207,7 +207,8 @@ await fillInputs([EMAIL, PASSWORD, PASSWORD]);
 const signup = waitApi("/api/mobile/auth/signup", "POST");
 await button("회원가입").click();
 if ((await signup).status() !== 201) throw new Error("가입 실패");
-await expectText("총 평가금액");
+// 새 계정은 종목 없이 시작한다(홈 빈 상태). 예시 종목은 아래에서 API 로 넣는다.
+await expectText("아직 종목이 없습니다");
 const session = await page.evaluate(() => JSON.parse(window.localStorage.getItem("economic-freedom-session") ?? "null"));
 const token = session?.token;
 if (!token) throw new Error("세션 토큰 없음");
@@ -223,14 +224,19 @@ const spouseId = await makeAccount("배우자 계좌", "spouse", "general");
 const pensionSelfId = await makeAccount("내 연금저축", "self", "pension_savings");
 const pensionSpouseId = await makeAccount("배우자 IRP", "spouse", "irp");
 
-// 내 계좌: 가입 때 만들어진 기본 종목(0주) 중 5개만 남기고 수량을 넣는다. 시세는 기본 종목의 current_price 를 그대로 쓴다(외부 호출 없음).
-const KEEP = ["305050", "161510", "458730", "316300", "319640"];
-const defaults = await must("종목 조회", api("/api/holdings", { accountId: mainId }));
-const byCode = new Map(defaults.map((h) => [h.code, h]));
-for (const h of defaults) {
-  if (!KEEP.includes(h.code)) await must("기본 종목 정리", api("/api/holdings", { method: "DELETE", accountId: mainId, body: { id: h.id } }));
-}
-for (const code of KEEP) if (!byCode.has(code)) throw new Error(`기본 종목 ${code} 없음`);
+// 내 계좌: 예시 종목 5개를 0주로 만들고 아래 매수 기록으로 수량을 채운다. 시세는 current_price 를 직접 넣는다(외부 호출 없음).
+// (예전에는 가입 때 자동 생성되던 기본 종목에서 골랐다 — 새 계정은 이제 빈 상태로 시작한다.)
+const EXAMPLE_HOLDINGS = [
+  { code: "305050", name: "ACE 코스피", category: "주식", sub_category: "국장", current_price: 57490, target_pct: 13 },
+  { code: "161510", name: "PLUS 고배당주", category: "주식", sub_category: "배당", current_price: 25120, target_pct: 10 },
+  { code: "458730", name: "TIGER 미국배당다우존스", category: "주식", sub_category: "배당", current_price: 14635, target_pct: 10 },
+  { code: "316300", name: "ACE 싱가포르리츠", category: "리츠", sub_category: "리츠", current_price: 14245, target_pct: 5 },
+  { code: "319640", name: "TIGER 골드선물(H)", category: "원자재", sub_category: "금", current_price: 27810, target_pct: 7 },
+];
+for (const body of EXAMPLE_HOLDINGS) await must("예시 종목", api("/api/holdings", { method: "POST", accountId: mainId, body }));
+const created = await must("종목 조회", api("/api/holdings", { accountId: mainId }));
+const byCode = new Map(created.map((h) => [h.code, h]));
+for (const { code } of EXAMPLE_HOLDINGS) if (!byCode.has(code)) throw new Error(`예시 종목 ${code} 없음`);
 
 // 매수 기록(과거 날짜). 일부 종목은 평균 매입가가 현재가보다 높아 평가손실이 난다.
 const days = (n) => kstDate(-n);

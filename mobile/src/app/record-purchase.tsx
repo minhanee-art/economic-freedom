@@ -158,7 +158,7 @@ export default function RecordPurchaseScreen() {
       <View style={{ gap: 16 }}>
         <View style={styles.field}>
           <Text style={styles.label}>종목</Text>
-          <HoldingPicker holdings={holdings} selectedId={holdingId} onSelect={setHoldingId} />
+          <HoldingPicker holdings={holdings} loaded={summary != null} selectedId={holdingId} onSelect={setHoldingId} />
         </View>
         <View style={styles.field}>
           <Text style={styles.label}>수량(주)</Text>

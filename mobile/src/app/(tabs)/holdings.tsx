@@ -19,14 +19,17 @@ export default function HoldingsScreen() {
 
       <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
 
-      <View style={styles.actions}>
-        <Pressable accessibilityRole="button" onPress={() => router.push("/record-purchase")} style={styles.recordButton}>
-          <Text style={styles.recordButtonText}>매수 기록 추가</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={() => router.push("/add-holding")} style={styles.addButton}>
-          <Text style={styles.addButtonText}>종목 추가</Text>
-        </Pressable>
-      </View>
+      {/* 종목이 있을 때만 보인다. 종목이 없는 계좌는 아래 빈 상태가 '종목 추가'를 한 번만 보인다(매수 기록은 종목이 생긴 뒤에) */}
+      {!summary || summary.holdings.length === 0 ? null : (
+        <View style={styles.actions}>
+          <Pressable accessibilityRole="button" onPress={() => router.push("/record-purchase")} style={styles.recordButton}>
+            <Text style={styles.recordButtonText}>매수 기록 추가</Text>
+          </Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.push("/add-holding")} style={styles.addButton}>
+            <Text style={styles.addButtonText}>종목 추가</Text>
+          </Pressable>
+        </View>
+      )}
 
       {summary ? null : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
       {summary && summary.holdings.length === 0 ? (

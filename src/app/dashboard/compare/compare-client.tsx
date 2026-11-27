@@ -428,9 +428,9 @@ export function CompareClient({ holdings }: Props) {
                 key={t}
                 onClick={() => handleTheme(t)}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                  "inline-flex min-h-10 items-center px-3 text-xs font-medium whitespace-nowrap transition-colors",
                   activeTheme === t
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "border border-brand bg-brand text-white"
                     : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
@@ -447,7 +447,7 @@ export function CompareClient({ holdings }: Props) {
                 className={cn(
                   "px-3 py-1 text-xs font-medium transition-colors",
                   sortBy === o.value
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "border border-brand bg-brand text-white"
                     : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
@@ -526,7 +526,7 @@ export function CompareClient({ holdings }: Props) {
                 className={cn(
                   "px-3 py-1.5 text-xs font-medium transition-colors",
                   period === p.value
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "border border-brand bg-brand text-white"
                     : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >

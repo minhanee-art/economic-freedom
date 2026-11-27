@@ -317,14 +317,14 @@ export function RebalanceAlert({
 
   function renderHoldingVisibilityControl(holding: HoldingWithPnL, isHidden = false) {
     return (
-      <label className="flex items-center justify-between gap-3 border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-400">
+      <label className="flex min-h-11 items-center justify-between gap-3 border border-hairline bg-surface px-3 py-2 text-xs font-semibold text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
         <span>{isHidden ? "숨김 목록에 있음" : "목록에서 숨기기"}</span>
         <span className="inline-flex items-center gap-2">
           <input
             type="checkbox"
             checked={manualHiddenHoldingIdSet.has(holding.id)}
             onChange={(e) => setHoldingManuallyHidden(holding.id, e.target.checked)}
-            className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
+            className="h-5 w-5 accent-brand"
           />
           <span>{isHidden ? "숨김" : "숨김"}</span>
         </span>

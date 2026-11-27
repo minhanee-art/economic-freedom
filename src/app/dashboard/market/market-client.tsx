@@ -266,7 +266,7 @@ export function MarketClient() {
                 key={keyword}
                 onClick={() => fetchNews(keyword)}
                 className={cn(
-                  "px-3.5 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
+                  "inline-flex min-h-10 items-center px-3.5 text-xs font-medium whitespace-nowrap transition-colors",
                   newsQuery === keyword
                     ? "bg-indigo-600 text-white shadow-card"
                     : "bg-white border border-hairline text-zinc-600 hover:border-indigo-200 hover:text-indigo-600 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800"

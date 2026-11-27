@@ -156,8 +156,9 @@ input,
   min-height: 2.75rem;
 }
 /* 대시보드의 누르는 대상: 보이는 크기와 상관없이 44×44px 이상(칩·탭·보조 버튼 포함).
-   글 안에 섞인 인라인 링크(display:inline)는 줄 높이를 깨지 않도록 제외된다(min-height 가 적용되지 않음). */
-#main-content :is(button, [role="button"], [role="tab"], a[class*="inline-flex"], a[class*="flex "]):not(.sr-only) {
+   글 안에 섞인 인라인 링크(display:inline)는 줄 높이를 깨지 않도록 제외된다(min-height 가 적용되지 않음).
+   예외: 히트맵 칸(data-heat-tile) — 면적이 곧 비중이라 44px 로 키우면 칸끼리 겹친다. 이 정보는 아래 목록으로도 닿는다. */
+#main-content :is(button, [role="button"], [role="tab"], a[class*="inline-flex"], a[class*="flex "]):not(.sr-only, [data-heat-tile]) {
   min-height: 2.75rem;
   min-width: 2.75rem;
 }
@@ -279,4 +280,20 @@ input,
 .recharts-cartesian-axis-tick text,
 .recharts-polar-angle-axis-tick text {
   fill: var(--ink-mute);
+}
+
+/* 히트맵 칸: 포커스·선택 표시는 어두운 선+흰 선 이중 테두리(어떤 칸 색·테마 위에서도 한쪽은 3:1 이상).
+   "기타" 묶음 칸은 보합 색 위에 빗금을 얹어 보합 종목과 구별한다(색 값은 그대로). */
+[data-heat-tile]:focus-visible,
+[data-heat-tile][aria-pressed="true"] {
+  box-shadow: inset 0 0 0 2px var(--color-zinc-900), inset 0 0 0 4px var(--color-white);
+}
+[data-heat-tile]:focus-visible {
+  outline: none;
+}
+[data-heat-hatch] {
+  background-image: repeating-linear-gradient(135deg, rgb(0 0 0 / 0.28) 0 2px, transparent 2px 7px);
+}
+.dark [data-heat-hatch] {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.25) 0 2px, transparent 2px 7px);
 }

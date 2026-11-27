@@ -193,3 +193,110 @@ test("히트맵: 기타 칸을 누르면 수익률 없이 이름·비중만 보�
     resetArea();
   }
 });
+
+test("히트맵: 처음 2종목이었다가 14종목이 되면 그때 크기를 재서 실제 비율로 배치한다", () => {
+  setArea(1030, 224);
+  try {
+    const { rerender } = render(<HoldingsHeatmap holdings={uneven.slice(0, 2)} />);
+    assert.equal(screen.queryByRole("list"), null);
+    rerender(<HoldingsHeatmap holdings={uneven} />);
+    // 실제 비율(≈4.6)로 배치하면 가장 큰 칸이 전체 높이를 쓴다. 폰 비율(1.6)이면 그렇지 않다
+    const first = screen.getByLabelText(/^종목0 비중/).closest("[role=listitem]") as HTMLElement;
+    assert.equal(first.style.height, "100%");
+    assert.ok(screen.getByText("종목0"));
+  } finally {
+    resetArea();
+  }
+});
+
+test("히트맵: 3→2→3종목으로 바뀌어도 ResizeObserver 를 붙이고 떼어 낸다", () => {
+  const live = new Set<unknown>();
+  let created = 0;
+  class FakeRO {
+    constructor() { created += 1; }
+    observe(el: unknown) { live.add(el); }
+    disconnect() { live.clear(); }
+  }
+  const g = globalThis as unknown as { ResizeObserver?: unknown };
+  const prev = g.ResizeObserver;
+  g.ResizeObserver = FakeRO;
+  try {
+    const { rerender } = render(<HoldingsHeatmap holdings={holdings} />);
+    assert.equal(live.size, 1);
+    rerender(<HoldingsHeatmap holdings={holdings.slice(0, 2)} />);
+    assert.equal(live.size, 0, "그리지 않을 때는 감시를 뗀다");
+    rerender(<HoldingsHeatmap holdings={holdings} />);
+    assert.equal(live.size, 1, "다시 그리면 새 요소를 감시한다");
+    assert.ok(created >= 2);
+  } finally {
+    g.ResizeObserver = prev;
+  }
+});
+
+test("히트맵: 이름이 칸 안에 없는 종목(수익률만 나오는 칸 포함)은 모두 아래 목록에 있다", () => {
+  for (const [w, h] of [[248, 192], [318, 192], [1030, 224]]) {
+    setArea(w, h);
+    try {
+      render(<HoldingsHeatmap holdings={uneven} />);
+      const list = screen.getByRole("list", { name: "비중이 작은 종목" }).textContent ?? "";
+      for (const btn of screen.getAllByRole("button")) {
+        const label = btn.getAttribute("aria-label") ?? "";
+        const name = label.split(" 비중")[0];
+        if (name.startsWith("기타")) continue;
+        const nameShown = (btn.textContent ?? "").includes(name);
+        assert.ok(nameShown || list.includes(name), `${w}px: ${name} 의 이름을 볼 곳이 없다`);
+      }
+    } finally {
+      resetArea();
+      cleanup();
+    }
+  }
+});
+
+test("히트맵: 기타 칸은 한 줄 자리에 이름, 범례에 기타 항목, 목록에 '기타' 표시", () => {
+  setArea(1030, 224);
+  try {
+    render(<HoldingsHeatmap holdings={uneven} />);
+    const other = screen.getByLabelText(/^기타 4종목/);
+    assert.ok((other.textContent ?? "").includes("기타 4종목"));
+    assert.ok(other.hasAttribute("data-heat-hatch"));
+    assert.ok(screen.getByText(/기타\(2% 미만 묶음/));
+    const list = screen.getByRole("list", { name: "비중이 작은 종목" });
+    assert.equal((list.textContent ?? "").split("· 기타").length - 1, 4);
+  } finally {
+    resetArea();
+  }
+});
+
+test("히트맵: 고른 종목이 사라지면 선택을 지운다(다시 나타나도 되살아나지 않는다)", () => {
+  const { rerender } = render(<HoldingsHeatmap holdings={holdings} />);
+  fireEvent.click(screen.getByLabelText(/^KODEX 200 비중/));
+  assert.ok(screen.getByText(/KODEX 200 · 비중/));
+  rerender(<HoldingsHeatmap holdings={holdings.slice(0, 2)} />);
+  rerender(<HoldingsHeatmap holdings={holdings} />);
+  assert.equal(screen.queryByText(/KODEX 200 · 비중/), null);
+  assert.equal(screen.getByLabelText(/^KODEX 200 비중/).getAttribute("aria-pressed"), "false");
+});
+
+test("히트맵: 칸은 대시보드의 44px 최소 크기 규칙에서 빠진다(다른 버튼은 그대로)", async () => {
+  const { readFileSync } = await import("node:fs");
+  const css = readFileSync("src/app/globals.css", "utf8");
+  assert.match(css, /#main-content :is\(button[^{]*\):not\(\.sr-only, \[data-heat-tile\]\)/);
+  render(<HoldingsHeatmap holdings={holdings} />);
+  for (const b of screen.getAllByRole("button")) assert.ok(b.hasAttribute("data-heat-tile"));
+});
+
+test("히트맵: 고른 종목이 값이 줄어 기타로 묶이면 선택을 지운다", () => {
+  const base = [
+    make({ id: "a", name: "가", current_value: 500 }),
+    make({ id: "b", name: "나", current_value: 300 }),
+    make({ id: "c", name: "다", current_value: 190 }),
+    make({ id: "d", name: "라", current_value: 12 }),
+  ];
+  const { rerender } = render(<HoldingsHeatmap holdings={base} />);
+  fireEvent.click(screen.getByLabelText(/^라 비중/));
+  assert.ok(screen.getByText(/^라 · 비중/));
+  // 라(1.2%)와 마(1.0%)가 2% 미만 둘 → 기타로 묶인다
+  rerender(<HoldingsHeatmap holdings={[...base, make({ id: "e", name: "마", current_value: 10 })]} />);
+  assert.equal(screen.queryByText(/^라 · 비중/), null);
+});

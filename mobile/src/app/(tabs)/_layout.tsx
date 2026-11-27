@@ -3,9 +3,13 @@ import type { ColorValue } from "react-native";
 import { TabIcon, type TabIconName } from "@/components/TabIcon";
 import { colors } from "@/styles/theme";
 
-const icon =
-  (name: TabIconName) =>
-  ({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) => <TabIcon name={name} color={color} size={size} focused={focused} />;
+type TabBarIconProps = { color: ColorValue; size: number; focused: boolean };
+
+function icon(name: TabIconName) {
+  return function TabBarIcon(props: TabBarIconProps) {
+    return <TabIcon name={name} {...props} />;
+  };
+}
 
 export default function TabLayout() {
   return (

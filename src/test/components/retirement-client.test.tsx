@@ -46,6 +46,7 @@ const emptyGoal = {
   spouseBirthYear: null,
   expectedReturnPct: null,
   salaryBracket: "low" as const,
+  spouseSalaryBracket: null,
 };
 
 test("세금 화면에 참고용 문구와 예상 공제액을 보여준다", () => {
@@ -89,4 +90,60 @@ test("총급여 구간을 바꾸면 은퇴 목표 API로 저장한다", async ()
   fireEvent.click(screen.getByLabelText(/총급여 5,500만원 초과/));
   await waitFor(() => assert.equal(requests.length, 1));
   assert.deepEqual(requests[0], { url: "/api/pension/goal", method: "PATCH", body: { salaryBracket: "high" } });
+});
+
+test("배우자 총급여 구간을 은퇴 목표와 함께 저장하고, 저장 후 배우자 공제율에 반영한다", async () => {
+  // 서버가 저장한 목표를 그대로 돌려주는 스텁
+  globalThis.fetch = (async (url: string, init?: RequestInit) => {
+    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    requests.push({ url, method: init?.method ?? "GET", body });
+    return new Response(JSON.stringify({ goal: { ...emptyGoal, ...body } }), { status: 200 });
+  }) as typeof fetch;
+  const familyAccounts = [
+    { id: "a1", name: "내 연금저축", owner_type: "self", account_type: "pension_savings" as const, value: 0, annual_dividend: 0 },
+    { id: "b1", name: "배우자 연금저축", owner_type: "spouse", account_type: "pension_savings" as const, value: 0, annual_dividend: 0 },
+  ];
+  render(
+    <RetirementClient
+      year={2026}
+      initialAccounts={familyAccounts}
+      initialContributions={{ a1: 4_000_000, b1: 4_000_000 }}
+      initialSources={[]}
+      initialGoal={emptyGoal}
+    />
+  );
+  // 미입력: 배우자는 13.2%로 가정하고 안내한다
+  assert.ok(screen.getByText(/배우자: .*공제율 13\.2%.*배우자 소득 구간 미입력 — 낮은 공제율로 가정/));
+
+  const select = screen.getByRole("combobox", { name: /배우자 총급여 구간/ }) as HTMLSelectElement;
+  assert.equal(select.value, "");
+  fireEvent.change(select, { target: { value: "low" } });
+  fireEvent.click(screen.getByRole("button", { name: "목표 저장" }));
+  await waitFor(() => assert.equal(requests.length, 1));
+  assert.equal(requests[0].url, "/api/pension/goal");
+  assert.equal(requests[0].method, "PATCH");
+  assert.equal((requests[0].body as { spouseSalaryBracket: unknown }).spouseSalaryBracket, "low");
+
+  // 저장 후: 배우자 400만원 × 16.5% = 66만원, 가정 안내 사라짐
+  await waitFor(() => assert.ok(screen.getByText(/배우자: .*예상 공제액 ₩660,000 · 공제율 16\.5%/)));
+  assert.equal(screen.queryByText(/배우자 소득 구간 미입력/), null);
+  assert.ok(screen.getByText("₩1,320,000"), "가족 합계 예상 공제액");
+});
+
+test("배우자 총급여 구간을 미입력으로 되돌리면 null로 저장한다", async () => {
+  render(
+    <RetirementClient
+      year={2026}
+      initialAccounts={accounts}
+      initialContributions={{}}
+      initialSources={[]}
+      initialGoal={{ ...emptyGoal, spouseSalaryBracket: "high" }}
+    />
+  );
+  const select = screen.getByRole("combobox", { name: /배우자 총급여 구간/ }) as HTMLSelectElement;
+  assert.equal(select.value, "high");
+  fireEvent.change(select, { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "목표 저장" }));
+  await waitFor(() => assert.equal(requests.length, 1));
+  assert.equal((requests[0].body as { spouseSalaryBracket: unknown }).spouseSalaryBracket, null);
 });

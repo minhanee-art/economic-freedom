@@ -66,7 +66,7 @@ export async function createPgTestDb(connectionString: string): Promise<PgTestDb
   return { sql, pool };
 }
 
-/** 스냅샷 기능이 건드리는 테이블만 실제 스키마와 같게 만든다 (supabase/migrations 기준). */
+/** 스냅샷 기능이 건드리는 테이블만 실제 스키마와 같게 만든다 (neon-schema.sql 기준). */
 export async function ensureSnapshotTestSchema(sql: PgSql): Promise<void> {
   await sql`
     CREATE EXTENSION IF NOT EXISTS pgcrypto

@@ -12,7 +12,7 @@
 | ☐ | 비공개 테스트 요건 | **2023-11-13 이후 생성된 개인 계정**은 비공개(closed) 테스트에서 **12명 이상이 14일 연속 옵트인** 후 프로덕션 신청. 신청서에 테스트 피드백 요약 포함, 검토는 보통 7일 이내. 조직 계정은 이 페이지에서 다루지 않음. 내부 테스트는 요건 없음 | https://support.google.com/googleplay/android-developer/answer/14151465 (원문 확인) |
 | ☐ | 앱 번들 | `eas.json`의 production은 `app-bundle`. 현재 `submit.production.android.track`은 `internal` | `mobile/eas.json` |
 | ☐ | 타깃 API 레벨 | 페이지 문구: 2026-08-31부터 신규 앱·업데이트는 **Android 16(API 36) 이상** 타깃, 연장 기한 2026-11-01도 이미 지남. 현재 Expo SDK 57 / RN 0.86 빌드가 API 36을 타깃하는지 **확인 필요**(빌드 산출물 검사) | https://support.google.com/googleplay/android-developer/answer/11926878 (원문 확인) |
-| ☐ | 패키지 이름 등록 | 정책 마감일 페이지에 "Android developer verification용 패키지 이름 등록" 항목(마감 2026-09-30)이 있음. 이 앱의 패키지 `kr.kimvibe.economicfreedom` 등록 여부 **확인 필요** | https://support.google.com/googleplay/android-developer/answer/9876714 (요약 기준, 내용 재확인 필요) |
+| ☐ | 패키지 이름 등록 | 정책 마감일 페이지에 "Android developer verification용 패키지 이름 등록" 항목(마감 2026-09-30)이 있음. 이 앱의 패키지 `family.pension.plan` 등록 여부 **확인 필요** | https://support.google.com/googleplay/android-developer/answer/9876714 (요약 기준, 내용 재확인 필요) |
 | ☐ | 콘텐츠 등급 | App content → 콘텐츠 등급 설문(IARC), 이메일 입력, 앱 변경 시 재작성. 선행: 광고 여부 선언, 앱 액세스 안내, 개인정보처리방침 | https://support.google.com/googleplay/android-developer/answer/9859655 (원문 확인) |
 | ☐ | 타깃 연령 | 연령대 선택(5세 이하…18세 이상). 방침은 만 18세 이상 대상(`src/app/privacy/page.tsx` 6항). "18세 이상만 선택 + Restrict Minor Access" 옵션이 있음. 아동 포함 시 Families 정책 적용 | https://support.google.com/googleplay/android-developer/answer/9867159 (원문 확인) |
 | ☐ | 금융 기능 신고 | App content → Financial features. **금융 기능이 없는 앱도 양식 작성 필요**("My app doesn't provide any financial features"). 옵션에 "Stock trading and portfolio management", "Financial advice" 있음. 추적 전용 앱이 해당하는지는 페이지에 없음 → `review-notes.md` 3-3 | https://support.google.com/googleplay/android-developer/answer/13849271 (원문 확인). 정책 본문: https://support.google.com/googleplay/android-developer/answer/9876821 |
@@ -28,7 +28,7 @@
 | ☐ | 항목 | 내용 | 출처 / 확인 상태 |
 |---|---|---|---|
 | ☐ | Apple Developer Program | 연 99 USD. 개인은 거주 지역 성년·2단계 인증 Apple 계정, 조직은 법인과 D-U-N-S(정부 기관 제외) 필요 | https://developer.apple.com/programs/enroll/ (원문 확인) |
-| ☐ | 번들 ID·앱 이름 | 번들 ID `kr.kimvibe.economicfreedom`(첫 빌드 업로드 후 변경 불가). 앱 이름 2~30자, 부제 30자 이내 | `mobile/app.json`, https://developer.apple.com/help/app-store-connect/reference/app-information (앞부분 원문). 키워드 100바이트 한도는 **미확인(기억 기준)** |
+| ☐ | 번들 ID·앱 이름 | 번들 ID `family.pension.plan`(첫 빌드 업로드 후 변경 불가). 앱 이름 2~30자, 부제 30자 이내 | `mobile/app.json`, https://developer.apple.com/help/app-store-connect/reference/app-information (앞부분 원문). 키워드 100바이트 한도는 **미확인(기억 기준)** |
 | ☐ | TestFlight | 내부 테스터 최대 100명(App Store Connect 사용자), 외부 최대 10,000명. 외부 테스터 첫 빌드는 베타 앱 심사 필요, 빌드는 최대 90일 테스트 가능. **iOS 빌드는 `eas.json`에 submit.ios 설정이 없고 iOS 빌드를 만든 적이 있는지 확인 필요** | https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview (앞부분 원문, 한도 수치는 요약 기준) |
 | ☐ | 심사 가이드라인 2.1 | 로그인이 있으면 데모 계정(백엔드 켜 둔 상태)이나 데모 모드를 제공. 충돌·미완성 빌드 거절 | https://developer.apple.com/app-store/review/guidelines/ (원문 확인) |
 | ☐ | 가이드라인 4.2 최소 기능 | "useful, unique, 'app-like'"이어야 함. 현재 앱은 조회 전용이 아니라 계좌 전환, 연금 설계 요약(읽기 전용), 매수·배당 기록 입력, 비밀번호 변경을 지원함(2026-11-27 코드 확인). 다만 은퇴 목표·연금 소득원 입력은 웹에만 있음. 거절 시 대응 계획을 미리 정할 것 | 위 가이드라인 페이지(원문 확인) |
@@ -77,7 +77,7 @@
 |---|---|---|
 | 모바일 Google 로그인 지원 여부 | `data-safety.md` 1절 Google 식별자 행의 "모바일 앱에는 Google 로그인 없음", 4절 삭제 주의, `review-notes.md` 4절 마지막 줄, 이 문서 B절 4.8 항목. 현재 코드(`mobile/src/app/login.tsx`)는 이메일만 | **결정 대기** — 현재 문장은 코드 사실 그대로 두고 지어내지 않음 |
 | 공개 문의 이메일 | 이 문서 C절 1번, 방침 8항, Play·App Store 연락처 칸, 계정 삭제 안내 | **결정 대기** |
-| 패키지 ID(`kr.kimvibe.economicfreedom`) 변경 여부 | 이 문서 A절 '패키지 이름 등록'·B절 '번들 ID' 행(첫 업로드 뒤 변경 불가) | **결정 대기** — 현재 `mobile/app.json` 값을 그대로 적음 |
+| 패키지 ID(`family.pension.plan`) | 이 문서 A절 '패키지 이름 등록'·B절 '번들 ID' 행(첫 업로드 뒤 변경 불가) | **결정됨: family.pension.plan (2026-11-27)** — 변경 결과는 `eas-readiness.md` 4절 |
 
 ## F. 사용자가 직접 할 일 (순서대로)
 

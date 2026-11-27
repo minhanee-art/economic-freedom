@@ -3,7 +3,7 @@
 #   - src/test/portfolio-returns.db.test.ts (getPortfolioReturnSummary)
 #   - src/test/account-delete.db.test.ts   (DELETE /api/me 계정 삭제)
 #   - src/test/auth-hardening.db.test.ts   (세션 버전 토큰 폐기, Google 첫 연결 선점 차단, 계좌 지정 소유권)
-#   - src/test/pension.db.test.ts          (연금 설계 테이블·쿼리)
+#   - src/test/pension.db.test.ts          (연금 설계 테이블·쿼리, 배우자 총급여 구간 컬럼 보장)
 #   - src/test/purchase-delete.db.test.ts  (매수 기록 개별 삭제 — 보유 수량·원가 되돌림)
 #   - src/test/telegram-link.db.test.ts    (텔레그램 연결 코드 — 만료·1회용·세션 폐기·소유 확인된 chat_id만 발송 대상)
 #   - src/test/purchases-date.db.test.ts   (GET /api/purchases 의 date가 TZ와 무관한 YYYY-MM-DD 문자열)

@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS child_holdings (
 );
 
 -- 인덱스
-CREATE UNIQUE INDEX IF NOT EXISTS idx_holdings_user_code ON holdings(user_id, code);
+-- (idx_holdings_user_code 는 계좌별 유니크 idx_holdings_user_account_code 로 대체됨 — 12절 참고)
 CREATE INDEX IF NOT EXISTS idx_purchase_records_user_date ON purchase_records(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_dividends_user_date ON dividends(user_id, date);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_cost_basis_user_holding ON cost_basis(user_id, holding_id);
@@ -210,6 +210,25 @@ ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS telegram_chat_id TEXT;
 -- 'pension_savings'(연금저축) | 'irp' | 'dc' | 'isa' | 'general'(일반, 기존 계좌 기본값) | 'child'(자녀)
 ALTER TABLE portfolio_accounts ADD COLUMN IF NOT EXISTS account_type TEXT NOT NULL DEFAULT 'general';
 
+-- 계좌별 데이터 분리: 각 테이블의 account_id (src/lib/portfolio-accounts.ts ensurePortfolioAccountSchema 와 같은 문장).
+-- NOT NULL 은 강제하지 않음 — 기존 행은 코드가 기본 계좌('내 계좌')로 채운다.
+ALTER TABLE holdings ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+ALTER TABLE cost_basis ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+ALTER TABLE purchase_records ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+ALTER TABLE dividends ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+ALTER TABLE sell_items ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+ALTER TABLE watchlist ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+ALTER TABLE dividend_calendar ADD COLUMN IF NOT EXISTS account_id UUID REFERENCES portfolio_accounts(id) ON DELETE CASCADE;
+DROP INDEX IF EXISTS idx_holdings_user_code;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_holdings_user_account_code ON holdings(user_id, account_id, code);
+CREATE INDEX IF NOT EXISTS idx_holdings_user_account ON holdings(user_id, account_id);
+CREATE INDEX IF NOT EXISTS idx_purchase_records_user_account_date ON purchase_records(user_id, account_id, date);
+CREATE INDEX IF NOT EXISTS idx_dividends_user_account_date ON dividends(user_id, account_id, date);
+CREATE INDEX IF NOT EXISTS idx_watchlist_user_account ON watchlist(user_id, account_id);
+CREATE INDEX IF NOT EXISTS idx_dividend_calendar_user_account_date ON dividend_calendar(user_id, account_id, date);
+ALTER TABLE watchlist DROP CONSTRAINT IF EXISTS watchlist_user_id_name_key;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_watchlist_user_account_name ON watchlist(user_id, account_id, name);
+
 -- 13. pension_contributions (계좌별 연간 납입액 — 세액공제 진행률 계산용)
 CREATE TABLE IF NOT EXISTS pension_contributions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -247,6 +266,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_year INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_birth_year INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS expected_return_pct NUMERIC(5,2);
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS salary_bracket TEXT; -- 'low'(총급여 5,500만원 이하) | 'high'
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_salary_bracket TEXT; -- 배우자 총급여 구간, 값은 salary_bracket 과 같음. NULL = 미입력
 
 -- 15. 텔레그램 채팅 소유 확인(연결 코드) — 코드(src/lib/telegram-link.ts ensureTelegramLinkSchema)에서도
 --     같은 정의를 IF NOT EXISTS로 보장한다.

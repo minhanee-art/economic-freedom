@@ -9,13 +9,13 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "kr.kimvibe.economicfreedom",
+      "bundleIdentifier": "family.pension.plan",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "kr.kimvibe.economicfreedom",
+      "package": "family.pension.plan",
       "versionCode": 4,
       "adaptiveIcon": {
         "backgroundColor": "#1c1e54",

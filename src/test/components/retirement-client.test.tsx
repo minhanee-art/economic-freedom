@@ -8,6 +8,7 @@ let render: typeof import("@testing-library/react").render;
 let screen: typeof import("@testing-library/react").screen;
 let fireEvent: typeof import("@testing-library/react").fireEvent;
 let cleanup: typeof import("@testing-library/react").cleanup;
+let within: typeof import("@testing-library/react").within;
 let waitFor: typeof import("@testing-library/react").waitFor;
 let RetirementClient: typeof import("@/app/dashboard/retirement/retirement-client").RetirementClient;
 
@@ -17,7 +18,7 @@ let requests: { url: string; method: string; body: unknown }[] = [];
 before(async () => {
   setupDom();
   const rtl = await import("@testing-library/react");
-  ({ render, screen, fireEvent, cleanup, waitFor } = rtl);
+  ({ render, screen, fireEvent, cleanup, waitFor, within } = rtl);
   ({ RetirementClient } = await import("@/app/dashboard/retirement/retirement-client"));
 });
 
@@ -160,18 +161,21 @@ function echoGoalFetch(base: RetirementGoalRow) {
   }) as typeof fetch;
 }
 
-const realConfirm = globalThis.confirm;
+// 배우자 정보 제거 확인은 브라우저 confirm() 이 아니라 자체 확인 대화상자(alertdialog)다
 let confirmMessages: string[] = [];
+let confirmAnswer = true;
 function stubConfirm(answer: boolean) {
   confirmMessages = [];
-  globalThis.confirm = ((message?: string) => {
-    confirmMessages.push(String(message));
-    return answer;
-  }) as typeof confirm;
+  confirmAnswer = answer;
 }
-after(() => {
-  globalThis.confirm = realConfirm;
-});
+async function clickRemoveSpouse() {
+  fireEvent.click(screen.getByRole("button", { name: "배우자 정보 제거" }));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  const dialog = screen.queryByRole("alertdialog");
+  if (!dialog) return;
+  confirmMessages.push(dialog.textContent ?? "");
+  fireEvent.click(within(dialog).getByRole("button", { name: confirmAnswer ? "배우자 정보 지우기" : "취소" }));
+}
 
 const spouseAccount = { id: "b1", name: "배우자 IRP", owner_type: "spouse", account_type: "irp" as const, value: 0, annual_dividend: 0 };
 const spouseSource = {
@@ -227,12 +231,12 @@ test("'배우자 정보 추가'를 누르면 배우자 입력란이 보이고, �
   assert.ok(screen.getByLabelText(/배우자 출생연도/));
 });
 
-test("저장된 값 없이 추가만 했다면 '배우자 정보 제거'는 확인 없이 접기만 한다", () => {
+test("저장된 값 없이 추가만 했다면 '배우자 정보 제거'는 확인 없이 접기만 한다", async () => {
   stubConfirm(true);
   render(<RetirementClient year={2026} initialAccounts={accounts} initialContributions={{}} initialSources={[]} initialGoal={emptyGoal} />);
   fireEvent.click(screen.getByRole("button", { name: "배우자 정보 추가" }));
   fireEvent.change(screen.getByLabelText(/배우자 출생연도/), { target: { value: "1982" } });
-  fireEvent.click(screen.getByRole("button", { name: "배우자 정보 제거" }));
+  await clickRemoveSpouse();
   assert.equal(confirmMessages.length, 0);
   assert.equal(requests.length, 0);
   assert.equal(screen.queryByLabelText(/배우자 출생연도/), null);
@@ -268,7 +272,7 @@ test("'배우자 정보 제거'는 확인을 받은 뒤 배우자 출생연도·
   echoGoalFetch(saved);
   stubConfirm(true);
   render(<RetirementClient year={2026} initialAccounts={accounts} initialContributions={{}} initialSources={[]} initialGoal={saved} />);
-  fireEvent.click(screen.getByRole("button", { name: "배우자 정보 제거" }));
+  await clickRemoveSpouse();
   assert.equal(confirmMessages.length, 1);
   assert.match(confirmMessages[0], /배우자 출생연도와 배우자 총급여 구간을 지웁니다/);
   await waitFor(() => assert.equal(requests.length, 1));
@@ -282,7 +286,7 @@ test("'배우자 정보 제거'는 확인을 받은 뒤 배우자 출생연도·
   assert.ok(screen.getByText("배우자 출생연도·총급여 구간을 지웠습니다."));
 });
 
-test("제거 확인을 취소하면 아무것도 저장하지 않는다", () => {
+test("제거 확인을 취소하면 아무것도 저장하지 않는다", async () => {
   stubConfirm(false);
   render(
     <RetirementClient
@@ -293,7 +297,7 @@ test("제거 확인을 취소하면 아무것도 저장하지 않는다", () => 
       initialGoal={{ ...emptyGoal, spouseBirthYear: 1982 }}
     />
   );
-  fireEvent.click(screen.getByRole("button", { name: "배우자 정보 제거" }));
+  await clickRemoveSpouse();
   assert.equal(confirmMessages.length, 1);
   assert.equal(requests.length, 0);
   assert.equal((screen.getByLabelText(/배우자 출생연도/) as HTMLInputElement).value, "1982");
@@ -313,7 +317,7 @@ test("배우자 명의 계좌가 남아 있으면 확인창과 화면에 안내�
     />
   );
   assert.ok(screen.getByText(/배우자 명의 계좌 1개가 있어 배우자 정보를 표시합니다/));
-  fireEvent.click(screen.getByRole("button", { name: "배우자 정보 제거" }));
+  await clickRemoveSpouse();
   assert.match(confirmMessages[0], /배우자 명의 계좌 1개는 지우지 않고 그대로 남습니다/);
   await waitFor(() => assert.equal(requests.length, 1));
   assert.deepEqual(requests[0].body, { spouseBirthYear: null, spouseSalaryBracket: null });

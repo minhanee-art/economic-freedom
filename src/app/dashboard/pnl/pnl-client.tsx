@@ -1,10 +1,10 @@
 "use client";
 
+import { LazyPnLAreaChart } from "@/components/charts/lazy";
 import type { Holding, CostBasis, PurchaseRecord } from "@/types";
 import type { CSSProperties } from "react";
 import { formatKRW, formatKRWFull, formatPercent, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
-import { PnLAreaChart } from "@/components/charts/pnl-area-chart";
 
 interface HoldingPnL {
   id: string;
@@ -148,7 +148,7 @@ export function PnLClient({
               <h2 className="text-sm font-semibold text-ink mb-3">
                 투입 vs 평가 추이
               </h2>
-              <PnLAreaChart data={chartData} />
+              <LazyPnLAreaChart data={chartData} />
             </div>
           )}
 

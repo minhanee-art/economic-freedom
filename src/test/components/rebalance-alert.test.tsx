@@ -290,6 +290,10 @@ test("RebalanceAlert: 보유 0주 종목은 목록에서 삭제할 수 있다", 
 
   const removeButtons = await screen.findAllByRole("button", { name: "목록에서 삭제" });
   fireEvent.click(removeButtons[0]);
+  // 브라우저 confirm() 대신 삭제 대상을 적은 확인 대화상자
+  const dialog = await screen.findByRole("alertdialog", { name: /KODEX 200 TR/ });
+  assert.equal(document.activeElement?.textContent, "취소", "열리면 취소에 초점");
+  fireEvent.click(within(dialog).getByRole("button", { name: "목록에서 삭제" }));
 
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert.deepEqual(deleteCalls, ["h0"]);

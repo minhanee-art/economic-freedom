@@ -104,8 +104,8 @@ export function ContributionSection({
       <fieldset className="space-y-1">
         <legend className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">본인 총급여 구간</legend>
         {(["low", "high"] as SalaryBracket[]).map((b) => (
-          <label key={b} className="flex items-center gap-2 text-sm">
-            <input type="radio" name="salary-bracket" checked={bracket === b} onChange={() => onSalaryBracketChange(b)} />
+          <label key={b} className="flex min-h-11 items-center gap-3 text-sm">
+            <input type="radio" className="h-5 w-5 accent-brand" name="salary-bracket" checked={bracket === b} onChange={() => onSalaryBracketChange(b)} />
             {rateLabel(b)}
           </label>
         ))}
@@ -148,7 +148,7 @@ export function ContributionSection({
           })}
         </ul>
       )}
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
 
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">

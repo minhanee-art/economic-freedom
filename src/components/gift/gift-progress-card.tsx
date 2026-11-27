@@ -30,7 +30,7 @@ export function GiftProgressCard({ birthDate, gifts }: Props) {
       </div>
       <div className="h-2 bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         <div
-          className={`bar-w h-full transition-all ${over ? "bg-caution" : "bg-indigo-500"}`}
+          className={`bar-w h-full transition-colors ${over ? "bg-caution" : "bg-indigo-500"}`}
           style={{ "--bar-w": `${pct}%` } as CSSProperties}
         />
       </div>

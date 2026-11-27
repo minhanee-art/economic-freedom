@@ -280,6 +280,10 @@ components:
 - **알림 문구**: 오류는 `danger` 테두리 + 원인과 다시 시도 방법, `role="alert"`. 성공은 `success` 글자 한 줄, `role="status"`.
 - **카테고리 표시**: 카드 왼쪽 색 띠 대신 정사각 색 점 + 글자 라벨.
 - **아이콘**: 내비와 같은 1.5~2px 선 아이콘(SVG, `aria-hidden`). 이모지를 아이콘으로 쓰지 않는다.
+- **확인 대화상자**: 브라우저 `confirm()`·`alert()`·`prompt()`를 쓰지 않는다. 삭제 확인은 `useConfirmDialog`(src/components/dashboard/confirm-dialog.tsx) — 제목에 삭제 대상, 본문에 무엇이 함께 지워지는지, 첫 초점은 '취소', Esc·바깥 클릭으로 닫힘. 실패는 `InlineError`(role=alert, 원인 + 다시 시도).
+- **아이콘 버튼**: 보이는 크기와 상관없이 누르는 영역 44×44px, `aria-label`에 대상 이름(예: "2026-11-15 배당 기록 삭제").
+- **표**: `th scope`, 화면 낭독용 `caption`, 가로 스크롤 영역에는 이름과 안내.
+- **차트**: 래퍼에 요약 `aria-label`, 계열 이름은 한글, 목표·보조 계열은 `chart-target` 점선. 동작 줄이기를 켜면 애니메이션을 끈다. recharts 는 `next/dynamic` 으로 지연 로딩.
 
 ## Dark Mode
 
@@ -331,6 +335,11 @@ components:
 - 위험을 빨강 색 하나로만 표시하지 않는다(테두리·아이콘·문구를 함께).
 - "추천", "매수하세요" 같은 권유 표현, "주문" 같은 실행 용어를 쓰지 않는다.
 - 12px보다 작은 글자, 흰 바탕 4.5:1 미만의 데이터 글자를 쓰지 않는다.
+
+## Motion
+
+- 상태 변화(열림·선택·저장 완료)에만 150~250ms 전환. `transition-all` 대신 `transition-colors` 등 필요한 속성만.
+- `prefers-reduced-motion: reduce`면 전역에서 전환·애니메이션을 끄고, 차트 진입 애니메이션도 끈다.
 
 ## Responsive Behavior
 

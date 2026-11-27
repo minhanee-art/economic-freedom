@@ -121,7 +121,7 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
         </div>
       </div>
       <p className="text-xs text-zinc-500 dark:text-zinc-400">새로 만든 계좌는 상단 계좌 선택에서 현재 계좌로 바뀝니다.</p>
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
     </SectionCard>
   );
 }

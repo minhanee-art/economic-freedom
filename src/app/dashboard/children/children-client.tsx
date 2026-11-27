@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { failureMessage } from "@/components/dashboard/inline-error";
 import type { ChildRow, ChildGiftRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
 import { getAge } from "@/lib/gift-tax";
@@ -17,6 +19,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
   const [birthDate, setBirthDate] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
+  const { confirm, dialog } = useConfirmDialog();
 
   const giftsByChild = (childId: string) => gifts.filter((g) => g.child_id === childId);
 
@@ -43,16 +46,28 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("이 자녀 프로필과 입금/증여 기록·보유 종목을 모두 삭제하시겠습니까?")) return;
-    const res = await fetch(`/api/children/${id}`, { method: "DELETE" });
-    if (res.ok) setChildren(children.filter((c) => c.id !== id));
-    else alert("삭제 실패");
+    const child = children.find((c) => c.id === id);
+    const ok = await confirm({
+      title: `${child?.name ?? "이 자녀"} 프로필을 삭제하시겠습니까?`,
+      body: "이 자녀 프로필과 입금/증여 기록·보유 종목을 모두 삭제합니다. 되돌릴 수 없습니다.",
+      confirmLabel: "프로필 삭제",
+    });
+    if (!ok) return;
+    setError("");
+    try {
+      const res = await fetch(`/api/children/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`서버 응답 ${res.status}`);
+      setChildren(children.filter((c) => c.id !== id));
+    } catch (err) {
+      setError(failureMessage(`${child?.name ?? "자녀"} 프로필을 삭제`, err));
+    }
   };
 
   return (
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-ink">자녀 계좌 관리</h1>
+        {dialog}
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
           자녀별 증여·정부지원금 입금·보유 종목을 관리하고 증여세 공제한도를 추적하세요.
         </p>
@@ -63,8 +78,8 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
         <h2 className="text-sm font-semibold">자녀 추가</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이름</label>
-            <input
+            <label htmlFor="child-form-1" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이름</label>
+            <input id="child-form-1"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -73,8 +88,8 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">생년월일</label>
-            <input
+            <label htmlFor="child-form-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">생년월일</label>
+            <input id="child-form-2"
               type="date"
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
@@ -82,7 +97,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
             />
           </div>
         </div>
-        {error && <p className="text-xs text-danger">{error}</p>}
+        {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
           disabled={!name.trim() || !birthDate || isAdding}
@@ -105,11 +120,12 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">만 {getAge(c.birth_date)}세 · {c.birth_date}</p>
                 </Link>
                 <button
+                  type="button"
                   onClick={() => handleDelete(c.id)}
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors shrink-0 ml-3"
-                  aria-label="삭제"
+                  className="ml-1 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
+                  aria-label={`${c.name} 프로필 삭제`}
                 >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <svg aria-hidden="true" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                   </svg>
                 </button>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
@@ -49,8 +51,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
     (profile?.monthly_budget ?? 300000).toLocaleString()
   );
   const [saveStatus, setSaveStatus] = useState("");
-  const [dangerModal, setDangerModal] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<{ message: string; retry?: () => void } | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   // 새 종목 추가
   const [showAdd, setShowAdd] = useState(false);
@@ -106,7 +108,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       if (!res.ok) throw new Error();
       flash("프로필 저장됨");
     } catch {
-      alert("저장 실패");
+      setError({ message: failureMessage("프로필을 저장", new Error("")), retry: saveProfile });
     }
   };
 
@@ -173,7 +175,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       setShowAdd(false);
       flash("종목 추가됨");
     } catch (err) {
-      alert(`추가 실패: ${(err as Error).message}`);
+      setError({ message: failureMessage("추가", err) });
     } finally {
       setIsAdding(false);
     }
@@ -183,47 +185,51 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const handleDeleteHolding = async (id: string) => {
     const h = holdings.find((h) => h.id === id);
     if (!h || h.shares > 0) return;
-    if (!confirm(`"${h.name}"을(를) 삭제하시겠습니까?`)) return;
+    const ok = await confirm({ title: `"${h.name}"을(를) 삭제하시겠습니까?`, confirmLabel: "종목 삭제" });
+    if (!ok) return;
 
     const res = await fetch("/api/holdings", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    if (!res.ok) { alert("삭제 실패"); } else {
+    if (!res.ok) { setError({ message: failureMessage(`${h.name}을(를) 삭제`, new Error(`서버 응답 ${res.status}`)) }); } else {
       setHoldings(holdings.filter((h) => h.id !== id));
       flash("종목 삭제됨");
     }
   };
 
-  // 위험 구역 액션
-  const handleDangerAction = async () => {
-    if (!dangerModal) return;
-    setIsDeleting(true);
-
+  // 데이터 삭제 — 확인 문구는 무엇이 지워지는지 그대로 알린다
+  const DANGER_TEXT: Record<"reset" | "purchases" | "dividends", string> = {
+    reset: "현재 계좌의 보유 종목을 모두 삭제합니다. 이 종목들의 매수·매도·배당 기록과 원가 데이터도 함께 지워집니다. 이 작업은 되돌릴 수 없습니다.",
+    purchases: "모든 매수 기록, 보유수량, 원가 데이터가 초기화됩니다. 이 작업은 되돌릴 수 없습니다.",
+    dividends: "모든 배당금 수령 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다.",
+  };
+  const handleDangerAction = async (kind: "reset" | "purchases" | "dividends") => {
+    const ok = await confirm({ title: "정말 삭제하시겠습니까?", body: DANGER_TEXT[kind], confirmLabel: "삭제 확정" });
+    if (!ok) return;
+    setError(null);
     try {
-      if (dangerModal === "purchases") {
+      if (kind === "purchases") {
         const res = await fetch("/api/danger/purchases", { method: "DELETE" });
-        if (!res.ok) throw new Error("삭제 실패");
+        if (!res.ok) throw new Error(`서버 응답 ${res.status}`);
         flash("매수 기록 전체 삭제됨");
         router.refresh();
-      } else if (dangerModal === "dividends") {
+      } else if (kind === "dividends") {
         const res = await fetch("/api/danger/dividends", { method: "DELETE" });
-        if (!res.ok) throw new Error("삭제 실패");
+        if (!res.ok) throw new Error(`서버 응답 ${res.status}`);
         flash("배당 기록 전체 삭제됨");
-      } else if (dangerModal === "reset") {
+      } else {
         const res = await fetch("/api/settings", { method: "DELETE" });
-        if (!res.ok) throw new Error("보유 종목 삭제 실패");
+        if (!res.ok) throw new Error(`서버 응답 ${res.status}`);
         flash("보유 종목 전체 삭제됨");
         router.refresh();
       }
     } catch (err) {
-      alert(`실패: ${(err as Error).message}`);
-    } finally {
-      setIsDeleting(false);
-      setDangerModal(null);
+      setError({ message: failureMessage("삭제", err), retry: () => handleDangerAction(kind) });
     }
   };
+
 
 
   // 배당 캘린더
@@ -251,7 +257,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       setCalNote("");
       flash("일정 추가됨");
     } catch (err) {
-      alert(`추가 실패: ${(err as Error).message}`);
+      setError({ message: failureMessage("추가", err) });
     } finally {
       setIsAddingCal(false);
     }
@@ -259,7 +265,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
   const handleDeleteCalendar = async (id: string) => {
     const res = await fetch(`/api/dividend-calendar/${id}`, { method: "DELETE" });
-    if (!res.ok) { alert("삭제 실패"); return; }
+    if (!res.ok) { setError({ message: failureMessage("삭제", new Error(`서버 응답 ${res.status}`)) }); return; }
     setCalendar((prev) => prev.filter((c) => c.id !== id));
     flash("일정 삭제됨");
   };
@@ -287,7 +293,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       setWlCode("");
       flash("종목 추가됨");
     } catch (err) {
-      alert(`추가 실패: ${(err as Error).message}`);
+      setError({ message: failureMessage("추가", err) });
     } finally {
       setIsAddingWl(false);
     }
@@ -295,7 +301,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
   const handleDeleteWatchlist = async (id: string) => {
     const res = await fetch(`/api/watchlist/${id}`, { method: "DELETE" });
-    if (!res.ok) { alert("삭제 실패"); return; }
+    if (!res.ok) { setError({ message: failureMessage("삭제", new Error(`서버 응답 ${res.status}`)) }); return; }
     setWatchlist((prev) => prev.filter((w) => w.id !== id));
     flash("종목 삭제됨");
   };
@@ -308,6 +314,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   return (
     <div className="space-y-6">
       <h1 className="text-xl font-bold tracking-tight text-ink">설정</h1>
+      {error && <InlineError message={error.message} onRetry={error.retry} onDismiss={() => setError(null)} />}
       {/* 저장 상태 토스트 */}
       {saveStatus && (
         <div className="fixed top-4 right-4 z-50 bg-brand text-white px-4 py-2 text-sm font-medium shadow-float animate-fade-in">
@@ -320,8 +327,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         <h2 className="text-sm font-semibold">프로필</h2>
 
         <div>
-          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500">(Google 계정, 변경 불가)</span></label>
+          <label htmlFor="settings-email" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500">(Google 계정, 변경 불가)</span></label>
           <input
+            id="settings-email"
             type="text"
             value={profile?.email ?? ""}
             readOnly
@@ -330,8 +338,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">표시 이름</label>
-          <input
+          <label htmlFor="settings-field-1" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">표시 이름</label>
+          <input id="settings-field-1"
             type="text"
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -341,10 +349,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         </div>
 
         <div>
-          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-            월 투자금액 (원)
-          </label>
-          <input
+          <label htmlFor="settings-field-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">월 투자금액 (원)</label>
+          <input id="settings-field-2"
             type="text"
             inputMode="numeric"
             value={budgetInput}
@@ -424,10 +430,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           <div className="border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10 p-5 space-y-3 shadow-card">
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-                  종목코드
-                </label>
-                <input
+                <label htmlFor="settings-field-3" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">종목코드</label>
+                <input id="settings-field-3"
                   type="text"
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value)}
@@ -436,10 +440,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-                  종목명
-                </label>
-                <input
+                <label htmlFor="settings-field-4" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">종목명</label>
+                <input id="settings-field-4"
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
@@ -448,10 +450,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 />
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-                  대분류
-                </label>
-                <select
+                <label htmlFor="settings-field-5" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">대분류</label>
+                <select id="settings-field-5"
                   value={newCategory}
                   onChange={(e) => setNewCategory(e.target.value)}
                   className="w-full h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
@@ -464,10 +464,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 </select>
               </div>
               <div>
-                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-                  소분류
-                </label>
-                <input
+                <label htmlFor="settings-field-6" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">소분류</label>
+                <input id="settings-field-6"
                   type="text"
                   value={newSubCategory}
                   onChange={(e) => setNewSubCategory(e.target.value)}
@@ -476,10 +474,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 />
               </div>
               <div className="col-span-2">
-                <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">
-                  현재가 (원)
-                </label>
-                <input
+                <label htmlFor="settings-field-7" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">현재가 (원)</label>
+                <input id="settings-field-7"
                   type="text"
                   inputMode="numeric"
                   value={newPrice}
@@ -550,12 +546,14 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="text"
               value={wlName}
               onChange={(e) => setWlName(e.target.value)}
+              aria-label="감정분석 종목명"
               placeholder="종목명 (예: 삼성전자, SCHD ETF)"
               className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <select
               value={wlMarket}
               onChange={(e) => setWlMarket(e.target.value as "KR" | "US")}
+              aria-label="시장"
               className="h-11 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
               <option value="KR">한국(KR)</option>
@@ -567,6 +565,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="text"
               value={wlCode}
               onChange={(e) => setWlCode(e.target.value)}
+              aria-label={wlMarket === "KR" ? "종목코드" : "심볼"}
               onKeyDown={(e) => e.key === "Enter" && handleAddWatchlist()}
               placeholder={wlMarket === "KR" ? "종목코드 (예: 069500)" : "심볼 (예: SCHD)"}
               className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
@@ -596,10 +595,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{w.code}</span>
                 )}
                 <button
+                  type="button"
                   onClick={() => handleDeleteWatchlist(w.id)}
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors text-xs"
+                  aria-label={`${w.name} 감정분석 종목 삭제`}
+                  className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                 >
-                  ✕
+                  <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
                 </button>
               </li>
             ))}
@@ -621,11 +622,13 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="date"
               value={calDate}
               onChange={(e) => setCalDate(e.target.value)}
+              aria-label="일정 날짜"
               className="min-w-0 flex-1 basis-36 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <select
               value={calType}
               onChange={(e) => setCalType(e.target.value)}
+              aria-label="일정 종류"
               className="h-11 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
               <option value="ex-date">배당락일</option>
@@ -639,6 +642,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="text"
               value={calStock}
               onChange={(e) => setCalStock(e.target.value)}
+              aria-label="일정 종목명"
               placeholder="종목명 (예: 삼성전자)"
               className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
@@ -646,6 +650,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               type="text"
               value={calNote}
               onChange={(e) => setCalNote(e.target.value)}
+              aria-label="일정 메모(선택)"
               onKeyDown={(e) => e.key === "Enter" && handleAddCalendar()}
               placeholder="메모 (예: 2024년 결산배당)"
               className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
@@ -676,13 +681,15 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
                 <li key={c.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
                   <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 w-20 shrink-0">{c.date}</span>
                   <span className="text-xs text-zinc-500 dark:text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
-                  <span className="flex-1 text-sm truncate">{c.stock}</span>
+                  <span className="flex-1 text-sm truncate" title={c.stock}>{c.stock}</span>
                   {c.note && <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-25">{c.note}</span>}
                   <button
+                    type="button"
                     onClick={() => handleDeleteCalendar(c.id)}
-                    className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors text-xs"
+                    aria-label={`${c.date} ${c.stock} 일정 삭제`}
+                    className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                   >
-                    ✕
+                    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
                   </button>
                 </li>
               );
@@ -752,53 +759,22 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           <DangerButton
             label="보유 종목 전체 삭제"
             desc="현재 계좌의 종목을 모두 지워 빈 상태로 만듭니다"
-            onClick={() => setDangerModal("reset")}
+            onClick={() => handleDangerAction("reset")}
           />
           <DangerButton
             label="매수 기록 전체 삭제"
             desc="모든 매수 기록과 보유수량이 초기화됩니다"
-            onClick={() => setDangerModal("purchases")}
+            onClick={() => handleDangerAction("purchases")}
           />
           <DangerButton
             label="배당 기록 전체 삭제"
             desc="모든 배당금 기록이 삭제됩니다"
-            onClick={() => setDangerModal("dividends")}
+            onClick={() => handleDangerAction("dividends")}
           />
         </div>
       </section>
 
-      {/* 위험 확인 모달 */}
-      {dangerModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-sm border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
-            <h2 className="text-lg font-bold text-danger">정말 삭제하시겠습니까?</h2>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              {dangerModal === "reset" &&
-                "현재 계좌의 보유 종목을 모두 삭제합니다. 이 종목들의 매수·매도·배당 기록과 원가 데이터도 함께 지워집니다. 이 작업은 되돌릴 수 없습니다."}
-              {dangerModal === "purchases" &&
-                "모든 매수 기록, 보유수량, 원가 데이터가 초기화됩니다. 이 작업은 되돌릴 수 없습니다."}
-              {dangerModal === "dividends" &&
-                "모든 배당금 수령 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다."}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setDangerModal(null)}
-                disabled={isDeleting}
-                className="flex-1 h-11 border border-hairline dark:border-zinc-700 text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDangerAction}
-                disabled={isDeleting}
-                className="flex-1 h-11 bg-danger-fill text-white text-sm font-semibold hover:bg-danger-fill/90 disabled:opacity-50 shadow-card transition-colors"
-              >
-                {isDeleting ? "처리 중..." : "삭제 확정"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {dialog}
 
       <AccountDeleteSection />
     </div>
@@ -826,10 +802,12 @@ function HoldingSettingCard({
           </div>
           {h.shares === 0 && (
             <button
+              type="button"
               onClick={() => onDelete(h.id)}
-              className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors"
+              aria-label={`${h.name} 종목 삭제`}
+              className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
             >
-              <svg
+              <svg aria-hidden="true"
                 className="w-4 h-4"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -848,10 +826,8 @@ function HoldingSettingCard({
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">
-              현재가 (원)
-            </label>
-            <input
+            <label htmlFor={`holding-${h.id}-price`} className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">현재가 (원)</label>
+            <input id={`holding-${h.id}-price`}
               type="text"
               inputMode="numeric"
               defaultValue={h.current_price.toLocaleString()}
@@ -863,10 +839,8 @@ function HoldingSettingCard({
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">
-              목표비중 (%)
-            </label>
-            <input
+            <label htmlFor={`holding-${h.id}-target`} className="block text-xs text-zinc-500 dark:text-zinc-400 mb-0.5">목표비중 (%)</label>
+            <input id={`holding-${h.id}-target`}
               type="number"
               step="0.5"
               min="0"

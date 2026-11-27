@@ -1,6 +1,7 @@
 "use client";
 // 리밸런싱 알림 — 테마별 비중 현황 및 개별 종목 조언
 
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { CSSProperties } from "react";
 import type { CostBasis, Holding, HoldingWithPnL } from "@/types";
@@ -316,14 +317,14 @@ export function RebalanceAlert({
 
   function renderHoldingVisibilityControl(holding: HoldingWithPnL, isHidden = false) {
     return (
-      <label className="flex items-center justify-between gap-3 border border-zinc-200 bg-white px-3 py-2 text-xs font-bold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/60 dark:text-zinc-400">
+      <label className="flex min-h-11 items-center justify-between gap-3 border border-hairline bg-surface px-3 py-2 text-xs font-semibold text-zinc-600 dark:border-zinc-800 dark:text-zinc-400">
         <span>{isHidden ? "숨김 목록에 있음" : "목록에서 숨기기"}</span>
         <span className="inline-flex items-center gap-2">
           <input
             type="checkbox"
             checked={manualHiddenHoldingIdSet.has(holding.id)}
             onChange={(e) => setHoldingManuallyHidden(holding.id, e.target.checked)}
-            className="h-4 w-4 accent-zinc-900 dark:accent-zinc-100"
+            className="h-5 w-5 accent-brand"
           />
           <span>{isHidden ? "숨김" : "숨김"}</span>
         </span>
@@ -1223,6 +1224,7 @@ function HiddenHoldingManager({
   isSavingTargetPct?: boolean;
 }) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const { confirm, dialog } = useConfirmDialog();
   const [status, setStatus] = useState("");
   const hiddenReasons = [
     isManuallyHidden ? "직접 숨김" : null,
@@ -1232,7 +1234,8 @@ function HiddenHoldingManager({
 
   async function deleteHolding() {
     if (!onDeleteHolding || holding.shares > 0) return;
-    if (!confirm(`"${holding.name}"을(를) 종목 목록에서 삭제할까요?`)) return;
+    const ok = await confirm({ title: `"${holding.name}"을(를) 종목 목록에서 삭제할까요?`, confirmLabel: "목록에서 삭제" });
+    if (!ok) return;
     setIsDeleting(true);
     setStatus("");
     try {
@@ -1279,6 +1282,7 @@ function HiddenHoldingManager({
         isSavingTargetPct={isSavingTargetPct}
       />
       {status && <p className="px-1 text-xs font-semibold text-danger">{status}</p>}
+      {dialog}
     </div>
   );
 }

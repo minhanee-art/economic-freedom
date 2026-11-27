@@ -361,7 +361,7 @@ export function CompareClient({ holdings }: Props) {
           )}
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-all hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
+            className="border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-colors hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
           >
             {showSearch ? "검색 닫기" : "종목 검색"}
           </button>
@@ -377,12 +377,14 @@ export function CompareClient({ holdings }: Props) {
               className="dot-bg inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white shadow-card"
               style={{ "--dot-bg": SERIES_COLORS[i] } as CSSProperties}
             >
-              {s.name.length > 10 ? s.name.slice(0, 10) + "…" : s.name}
+              <span title={s.name}>{s.name.length > 10 ? s.name.slice(0, 10) + "…" : s.name}</span>
               <button
+                type="button"
                 onClick={() => removeFromCompare(s.code)}
-                className="hover:opacity-70 text-white/80"
+                aria-label={`${s.name} 비교에서 빼기`}
+                className="-my-2 -mr-2 inline-flex h-11 w-11 items-center justify-center text-white hover:opacity-80"
               >
-                ×
+                <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M6 6l12 12M18 6 6 18" /></svg>
               </button>
             </span>
           ))}
@@ -405,13 +407,13 @@ export function CompareClient({ holdings }: Props) {
             </p>
           )}
           <div className="relative">
-            <svg
+            <svg aria-hidden="true"
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 dark:text-zinc-400"
               fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
             </svg>
-            <input
+            <input aria-label="ETF 이름 또는 종목코드 검색"
               type="text"
               value={searchQuery}
               onChange={(e) => handleSearch(e.target.value)}
@@ -426,9 +428,9 @@ export function CompareClient({ holdings }: Props) {
                 key={t}
                 onClick={() => handleTheme(t)}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium whitespace-nowrap transition-colors",
+                  "inline-flex min-h-10 items-center px-3 text-xs font-medium whitespace-nowrap transition-colors",
                   activeTheme === t
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "border border-brand bg-brand text-white"
                     : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
@@ -445,7 +447,7 @@ export function CompareClient({ holdings }: Props) {
                 className={cn(
                   "px-3 py-1 text-xs font-medium transition-colors",
                   sortBy === o.value
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "border border-brand bg-brand text-white"
                     : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
@@ -524,7 +526,7 @@ export function CompareClient({ holdings }: Props) {
                 className={cn(
                   "px-3 py-1.5 text-xs font-medium transition-colors",
                   period === p.value
-                    ? "bg-indigo-600 text-white shadow-sm"
+                    ? "border border-brand bg-brand text-white"
                     : "border border-hairline bg-white text-zinc-500 dark:text-zinc-400 hover:bg-indigo-50 hover:text-indigo-600 dark:bg-zinc-800 dark:border-zinc-700"
                 )}
               >
@@ -534,15 +536,17 @@ export function CompareClient({ holdings }: Props) {
           </div>
 
           {/* 비교 테이블 */}
-          <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-x-auto shadow-card">
+          <p className="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden" aria-hidden="true">표가 넓으면 좌우로 밀어 보세요</p>
+          <div tabIndex={0} role="region" aria-label="ETF 비교 표" className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-x-auto shadow-card">
             <table className="w-full text-sm">
+            <caption className="sr-only">선택한 ETF 항목별 비교</caption>
               <thead>
                 <tr className="border-b border-hairline dark:border-zinc-800">
-                  <th className="px-3 py-3 text-left text-xs text-zinc-500 dark:text-zinc-400 font-semibold sticky left-0 bg-white dark:bg-zinc-900 z-10">
+                  <th scope="col" className="px-3 py-3 text-left text-xs text-zinc-500 dark:text-zinc-400 font-semibold sticky left-0 bg-white dark:bg-zinc-900 z-10">
                     항목
                   </th>
                   {selected.map((s, i) => (
-                    <th key={s.code} className="series-fg px-3 py-3 text-right min-w-35" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>
+                    <th scope="col" key={s.code} className="series-fg px-3 py-3 text-right min-w-35" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>
                       <span className="block text-sm font-extrabold tabular-nums">{s.code}</span>
                       <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-normal break-keep">
                         {s.name}
@@ -796,9 +800,9 @@ function CRow({
 }) {
   return (
     <tr>
-      <td className="px-3 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 sticky left-0 bg-white dark:bg-zinc-900 z-10 whitespace-nowrap">
+      <th scope="row" className="px-3 py-2.5 text-left text-xs font-normal text-zinc-500 dark:text-zinc-400 sticky left-0 bg-white dark:bg-zinc-900 z-10 whitespace-nowrap">
         {label}
-      </td>
+      </th>
       {vals.map((v, i) => (
         <td key={i} className={cn("px-3 py-2.5 text-right text-xs tabular-nums", bold ? "font-bold" : "font-medium", colors?.[i])}>
           {v}

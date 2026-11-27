@@ -62,6 +62,13 @@ const LAW_INCOME_TAX_2025 = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=267581&
 const LAW_INCOME_TAX_DECREE = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=290841&efYd=20261001&chrClsCd=010202&ancYnChk=0";
 const LAW_SPECIAL_TAX = "https://www.law.go.kr/LSW/lsInfoR.do?lsiSeq=284389&efYd=20260918&chrClsCd=010202&ancYnChk=0";
 
+/**
+ * 연금계좌에서 연금수령을 개시할 수 있는 최소 나이 — 소득세법 시행령 §40의2③1
+ * ("가입자가 55세 이후 연금계좌취급자에게 연금수령 개시를 신청한 후 인출할 것"), LAW_INCOME_TAX_DECREE 본문에서 2026-11-27 확인.
+ * 같은 항 2호의 '가입일부터 5년 경과' 요건은 계좌 가입일을 저장하지 않아 계산에 반영하지 않는다.
+ */
+export const PENSION_WITHDRAWAL_MIN_AGE = 55;
+
 /** 국세 세율에 지방소득세(국세의 10%)를 더한 값 — 지방세법 미검증 */
 function withLocalTax(nationalRate: number): number {
   return Math.round(nationalRate * 1.1 * 10000) / 10000;
@@ -76,6 +83,7 @@ function sourcesFor(incomeTaxLawUrl: string): RuleSource[] {
     { topic: "ISA 연 2,000만원·총 1억원, 비과세 200·400만원, 초과분 9% (조세특례제한법 제91조의18)", url: LAW_SPECIAL_TAX, verified: true },
     { topic: "연금소득세 나이별 5%·4%·3%, 종신계약 세율 (소득세법 제129조①5의2)", url: incomeTaxLawUrl, verified: true },
     { topic: "사적연금 분리과세 기준 연 1,500만원 (소득세법 제14조③9), 초과 시 15% 분리과세 선택 (제64조의4)", url: incomeTaxLawUrl, verified: true },
+    { topic: "연금수령 요건: 55세 이후 연금수령 개시 신청·가입 5년 경과 (소득세법 시행령 제40조의2③1·2)", url: LAW_INCOME_TAX_DECREE, verified: true },
     { topic: "지방소득세 포함 세율(16.5%·13.2%, 5.5%·4.4%·3.3%, 9.9%, 16.5%) — 국세×1.1로 계산, 지방세법 미확인", url: "https://www.law.go.kr/법령/지방세법", verified: false },
   ];
 }

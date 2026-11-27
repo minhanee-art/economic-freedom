@@ -17,7 +17,9 @@ export async function GET(request: Request) {
   const limit = Number(searchParams.get("limit") ?? 20);
 
   const records = await sql`
-    SELECT pr.*, json_agg(pi ORDER BY pi.id) FILTER (WHERE pi.id IS NOT NULL) AS purchase_items
+    SELECT pr.id, pr.user_id, pr.account_id, pr.total_spent, pr.total_value_after,
+           pr.date::text AS date, pr.created_at,
+           json_agg(pi ORDER BY pi.id) FILTER (WHERE pi.id IS NOT NULL) AS purchase_items
     FROM purchase_records pr
     LEFT JOIN purchase_items pi ON pi.record_id = pr.id
     WHERE pr.user_id = ${session.userId} AND pr.account_id = ${accountId}

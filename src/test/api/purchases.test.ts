@@ -181,3 +181,19 @@ test("DELETE: 성공하면 200과 갱신된 보유 수량·원가", async () => 
   assert.match(call.query, /DELETE FROM purchase_records/);
   assert.equal(db.calls.filter((c) => c.query !== "<transaction>").length, 1);
 });
+
+test("GET: date를 SQL에서 ::text로 뽑고(시간대 무관), 응답의 date는 문자열 그대로 나간다", async () => {
+  db.setHandler((query) =>
+    query.includes("FROM purchase_records pr")
+      ? [{ id: R1, date: "2025-03-01", total_spent: 30_015, purchase_items: null }]
+      : [{ count: 1 }]
+  );
+  const response = await purchases.GET(authRequest("GET", { cookie: "t" }));
+  assert.equal(response.status, 200);
+  const body = await readJson<{ records: { date: string }[] }>(response);
+  assert.equal(body.records[0].date, "2025-03-01");
+
+  const [call] = db.find("FROM purchase_records pr");
+  assert.match(call.query, /pr\.date::text AS date/);
+  assert.doesNotMatch(call.query, /pr\.\*/, "pr.*는 DATE를 JS Date로 바꿔 시간대에 따라 하루 밀릴 수 있다");
+});

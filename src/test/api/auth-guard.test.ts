@@ -51,7 +51,7 @@ before(async () => {
   const idParams = { params: Promise.resolve({ id: "item-1" }) };
 
   cases.push(
-    { name: "GET /me", run: () => me.GET() },
+    { name: "GET /me", run: () => me.GET(jsonRequest("GET")) },
     { name: "GET /holdings", run: () => holdings.GET(jsonRequest("GET")) },
     { name: "POST /holdings", run: () => holdings.POST(jsonRequest("POST", { code: "305050", name: "ACE 코스피" })) },
     { name: "PATCH /holdings", run: () => holdings.PATCH(jsonRequest("PATCH", { id: "h1" })) },

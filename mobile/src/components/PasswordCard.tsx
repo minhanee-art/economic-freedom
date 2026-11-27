@@ -1,6 +1,7 @@
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { View, type TextInput } from "react-native";
+import { Text } from "@/components/AppText";
 import { changePassword, getPasswordStatus } from "@/api/auth";
 import { ApiError } from "@/api/client";
 import { Button } from "@/components/Button";
@@ -8,7 +9,7 @@ import { Card } from "@/components/Card";
 import { TextField } from "@/components/Field";
 import { FormError, StatusMessage } from "@/components/Parts";
 import { handleUnauthorized, saveSession } from "@/storage/session";
-import { spacing } from "@/styles/theme";
+import { colors, spacing, type } from "@/styles/theme";
 import type { AuthSession } from "@/types";
 
 type Errors = { current?: string; next?: string; confirm?: string };
@@ -31,6 +32,9 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
     if (await handleUnauthorized(sentToken)) router.replace("/login");
   };
 
+  // 상태 조회를 다시 시도할 때 올린다(조회 실패 시 '다시 확인').
+  const [statusAttempt, setStatusAttempt] = useState(0);
+
   useEffect(() => {
     let cancelled = false;
     getPasswordStatus(session.token)
@@ -45,7 +49,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
     return () => {
       cancelled = true;
     };
-  }, [session.token]);
+  }, [session.token, statusAttempt]);
 
   const reset = () => {
     setCurrent("");
@@ -100,11 +104,30 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
   return (
     <Card title="비밀번호">
       {done ? <StatusMessage>{done}</StatusMessage> : null}
-      {!open ? (
+      {hasPassword === null ? (
+        // 불러오는 동안은 누를 수 없는 버튼 모양을 그리지 않고 자리만 잡는 문구를 둔다.
+        error ? (
+          <>
+            <FormError>{`비밀번호 상태를 확인하지 못했습니다. ${error}`}</FormError>
+            <Button
+              label="다시 확인"
+              variant="secondary"
+              compact
+              onPress={() => {
+                setError("");
+                setStatusAttempt((n) => n + 1);
+              }}
+            />
+          </>
+        ) : (
+          <Text style={[type.body, { color: colors.inkMuted }]} accessibilityLiveRegion="polite">
+            비밀번호 설정 여부를 확인하는 중입니다.
+          </Text>
+        )
+      ) : !open ? (
         <Button
-          label={hasPassword === null ? "확인 중" : title}
+          label={title}
           variant="secondary"
-          busy={hasPassword === null}
           onPress={() => {
             setOpen(true);
             setDone("");
@@ -161,7 +184,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
           />
         </View>
       )}
-      {!open && error ? <FormError>{error}</FormError> : null}
+      {hasPassword !== null && !open && error ? <FormError>{error}</FormError> : null}
     </Card>
   );
 }

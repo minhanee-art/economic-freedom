@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Card } from "@/components/Card";
+import { EmptyHoldings } from "@/components/EmptyHoldings";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { colors, radius, spacing } from "@/styles/theme";
@@ -18,14 +19,24 @@ export default function HoldingsScreen() {
 
       <AccountSwitcher accounts={accounts} selectedAccountId={selectedAccountId} onSelect={selectAccount} />
 
-      <Pressable accessibilityRole="button" onPress={() => router.push("/record-purchase")} style={styles.recordButton}>
-        <Text style={styles.recordButtonText}>매수 기록 추가</Text>
-      </Pressable>
+      <View style={styles.actions}>
+        <Pressable accessibilityRole="button" onPress={() => router.push("/record-purchase")} style={styles.recordButton}>
+          <Text style={styles.recordButtonText}>매수 기록 추가</Text>
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.push("/add-holding")} style={styles.addButton}>
+          <Text style={styles.addButtonText}>종목 추가</Text>
+        </Pressable>
+      </View>
 
       {summary ? null : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
+      {summary && summary.holdings.length === 0 ? (
+        <EmptyHoldings description="이 계좌에 종목을 추가하면 종목별 평가금액·손익·비중이 여기에 표시됩니다." />
+      ) : null}
 
       {(summary?.holdings ?? []).map((holding) => {
-        const isPositive = holding.profitLoss >= 0;
+        // 원가가 없거나 손익이 0이면 방향 색을 쓰지 않는다
+        const pnlColor =
+          holding.totalCost <= 0 || holding.profitLoss === 0 ? colors.inkMuted : holding.profitLoss > 0 ? colors.positive : colors.negative;
         return (
           <Card key={holding.id}>
             <View style={styles.rowBetween}>
@@ -43,10 +54,10 @@ export default function HoldingsScreen() {
               </View>
               <View style={styles.pnlColumn}>
                 <Text style={styles.label}>손익</Text>
-                <Text style={[styles.pnl, { color: isPositive ? colors.positive : colors.negative }]}>
+                <Text style={[styles.pnl, { color: pnlColor }]}>
                   {formatKRW(holding.profitLoss)}
                 </Text>
-                <Text style={[styles.pnlPct, { color: isPositive ? colors.positive : colors.negative }]}>
+                <Text style={[styles.pnlPct, { color: pnlColor }]}>
                   {formatPercent(holding.profitLossPct)}
                 </Text>
               </View>
@@ -59,11 +70,30 @@ export default function HoldingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  recordButton: {
+  actions: {
+    flexDirection: "row",
+    gap: spacing.sm,
     marginBottom: spacing.lg,
+  },
+  recordButton: {
+    flex: 1,
     borderRadius: radius.pill,
     backgroundColor: colors.ink,
     padding: spacing.md,
+  },
+  addButton: {
+    flex: 1,
+    borderRadius: radius.pill,
+    borderWidth: 1,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    padding: spacing.md,
+  },
+  addButtonText: {
+    color: colors.ink,
+    textAlign: "center",
+    fontSize: 15,
+    fontWeight: "900",
   },
   recordButtonText: {
     color: colors.surface,

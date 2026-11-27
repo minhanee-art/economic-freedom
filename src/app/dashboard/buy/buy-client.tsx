@@ -519,7 +519,7 @@ export function BuyClient({
           className="flex w-full items-center justify-between"
         >
           <h2 className="text-lg font-bold text-ink dark:text-zinc-100">테마별 비중 조정</h2>
-          <span className="text-xs font-medium text-indigo-500">{showThemeEditor ? "닫기" : "열기"}</span>
+          <span className="text-xs font-medium text-indigo-500 dark:text-indigo-300">{showThemeEditor ? "닫기" : "열기"}</span>
         </button>
 
         {themeStatus && (
@@ -946,7 +946,7 @@ function BuyPlanCard({
             {isOverridden && (
               <button
                 onClick={() => onQuantityChange(algorithmQty)}
-                className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors tabular-nums"
+                className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-300 transition-colors tabular-nums"
               >
                 계산 {algorithmQty.toLocaleString()}주로 복원
               </button>
@@ -962,7 +962,7 @@ function BuyPlanCard({
                 <button
                   type="button"
                   onClick={onResetExecutionPrice}
-                  className="text-xs font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  className="text-xs font-medium text-indigo-500 hover:text-indigo-700 dark:text-indigo-300 dark:hover:text-indigo-300"
                 >
                   현재가로 복원
                 </button>

@@ -430,7 +430,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             </div>
             <button
               onClick={() => setShowAdd(!showAdd)}
-              className="border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-card transition-colors"
+              className="border border-hairline dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 dark:hover:bg-zinc-800 shadow-card transition-colors dark:text-indigo-300"
             >
               {showAdd ? "닫기" : "+ 새 종목"}
             </button>

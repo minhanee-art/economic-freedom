@@ -98,7 +98,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
             className={cn(
               "flex-1 h-9 text-sm font-medium transition-colors",
               tab === key
-                ? "bg-white dark:bg-zinc-900 text-indigo-500 shadow-sm"
+                ? "bg-white dark:bg-zinc-900 text-indigo-500 shadow-sm dark:text-indigo-300"
                 : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300"
             )}
           >
@@ -220,7 +220,7 @@ function GiftsTab({
             className={cn(
               "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "lump"
-                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
                 : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
@@ -231,7 +231,7 @@ function GiftsTab({
             className={cn(
               "flex-1 h-9 text-xs font-medium border transition-colors",
               giftType === "installment"
-                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                ? "border-indigo-500 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300"
                 : "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
             )}
           >
@@ -439,7 +439,7 @@ function GiftsTab({
                   {g.memo && ` · ${g.memo}`}
                 </p>
               </div>
-              <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mx-3">
+              <p className="text-sm font-bold text-indigo-600 dark:text-indigo-300 mx-3">
                 {formatKRWFull(g.amount)}
               </p>
               <div className="flex items-center gap-2 shrink-0">
@@ -454,7 +454,7 @@ function GiftsTab({
                       "text-xs px-2 py-1 border transition-colors",
                       g.reported
                         ? "border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400"
-                        : "border-indigo-200 dark:border-indigo-800 text-indigo-500"
+                        : "border-indigo-200 dark:border-indigo-800 text-indigo-500 dark:text-indigo-300"
                     )}
                   >
                     {g.reported ? "신고취소" : "신고완료"}

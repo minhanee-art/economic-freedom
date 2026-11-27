@@ -145,6 +145,18 @@ input,
   touch-action: manipulation;
 }
 
+/* 대시보드 입력칸: 글자 16px(iOS 가 포커스 때 화면을 확대하지 않는 크기)·높이 44px 이상.
+   @layer 밖에 두어 개별 h-8/h-9·text-sm 유틸리티보다 우선한다. 표 안 입력도 같은 기준. */
+#main-content :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="file"], [type="color"], [type="hidden"]), select, textarea) {
+  font-size: 1rem;
+  min-height: 2.75rem;
+}
+/* 자리 표시 글자도 4.5:1 이상(라이트 #5f6f88 / 다크 #a1a1aa) */
+#main-content ::placeholder {
+  color: var(--ink-mute);
+  opacity: 1;
+}
+
 /* 움직임 줄이기: 전환·애니메이션·부드러운 스크롤을 끈다(차트는 컴포넌트에서 isAnimationActive 로 함께 끔) */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -246,4 +258,10 @@ input,
   --color-zinc-800: oklch(27.4% 0.006 286.033);
   --color-zinc-900: oklch(21% 0.006 285.885);
   --color-zinc-950: oklch(14.1% 0.005 285.823);
+}
+
+/* 차트 축·극좌표 눈금 글자: 테마 토큰을 따라 다크에서도 4.5:1 이상(recharts 의 fill 속성보다 CSS 가 우선) */
+.recharts-cartesian-axis-tick text,
+.recharts-polar-angle-axis-tick text {
+  fill: var(--ink-mute);
 }

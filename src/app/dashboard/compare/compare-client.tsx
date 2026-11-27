@@ -374,7 +374,7 @@ export function CompareClient({ holdings }: Props) {
           )}
           <button
             onClick={() => setShowSearch(!showSearch)}
-            className="border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-colors hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700"
+            className="border border-hairline bg-white px-4 py-1.5 text-xs font-medium text-indigo-600 shadow-card transition-colors hover:shadow-float hover:border-indigo-200 dark:bg-zinc-900 dark:border-zinc-700 dark:text-indigo-300"
           >
             {showSearch ? "검색 닫기" : "종목 검색"}
           </button>
@@ -499,7 +499,7 @@ export function CompareClient({ holdings }: Props) {
                       <div className="flex items-center gap-1.5">
                         <p className="text-sm font-medium truncate" title={etf.name}>{etf.name}</p>
                         {isMy && (
-                          <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
+                          <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300">
                             내 종목
                           </span>
                         )}

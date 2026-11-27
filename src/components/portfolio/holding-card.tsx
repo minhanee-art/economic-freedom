@@ -396,7 +396,7 @@ export function HoldingCard({
             <span className="tabular-nums text-indigo-600 dark:text-indigo-300">{h.actual_pct.toFixed(1)}%</span>
           </div>
           <div className="h-2 overflow-hidden bg-indigo-100 dark:bg-indigo-950">
-            <div className="bar-w h-full bg-indigo-500" style={{"--bar-w": `${actualPct}%` } as CSSProperties} />
+            <div className="bar-w h-full bg-indigo-500 dark:bg-indigo-400" style={{"--bar-w": `${actualPct}%` } as CSSProperties} />
           </div>
         </div>
 
@@ -666,7 +666,7 @@ function Badge({
       className={cn(
         "inline-flex items-center border px-2 py-0.5 text-xs font-medium tabular-nums",
         variant === "default" && "border-zinc-200 bg-zinc-100 text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400",
-        variant === "indigo" && "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-900/30 dark:text-indigo-400",
+        variant === "indigo" && "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-900/30 dark:text-indigo-300",
         variant === "gain" && "border-hairline bg-gain-soft text-gain",
         variant === "loss" && "border-hairline bg-loss-soft text-loss",
         variant === "amber" && "border-caution/30 bg-caution-soft text-caution"

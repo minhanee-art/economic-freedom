@@ -220,7 +220,7 @@ export function ImportClient({ holdings, onClose }: Props) {
 
             {/* 미등록 종목 안내 */}
             {actionableRows.some((r) => !holdingMap.has(r.code)) && (
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 px-3 py-2 text-xs text-indigo-600 dark:text-indigo-400">
+              <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 px-3 py-2 text-xs text-indigo-600 dark:text-indigo-300">
                 미등록 종목이 자동으로 추가됩니다:{" "}
                 {actionableRows
                   .filter((r) => !holdingMap.has(r.code))

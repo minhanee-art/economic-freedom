@@ -345,7 +345,7 @@ export default function DashboardLayout({
                     onChange={(event) => switchAccount(event.target.value)}
                     disabled={isAccountSaving}
                     className={cn(
-                      "h-11 min-w-0 flex-1 truncate border border-white/10 bg-white/10 px-1.5 text-sm font-semibold text-white disabled:opacity-60 sm:px-2 [&_option]:bg-zinc-900",
+                      "h-11 min-w-0 flex-1 truncate border border-white/10 bg-white/10 px-1.5 text-base font-semibold text-white disabled:opacity-60 sm:px-2 [&_option]:bg-zinc-900",
                       focusRing
                     )}
                     aria-label="관리 계좌 선택"

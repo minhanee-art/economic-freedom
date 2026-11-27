@@ -114,11 +114,11 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
       description={
         <>
           국민연금공단 &lsquo;내 연금 알아보기&rsquo;, 금융감독원 통합연금포털 조회값을 옮겨 적으세요.{" "}
-          <a href="https://www.nps.or.kr" target="_blank" rel="noreferrer" className="text-indigo-500 underline">
+          <a href="https://www.nps.or.kr" target="_blank" rel="noreferrer" className="text-indigo-500 underline dark:text-indigo-300">
             국민연금공단
           </a>{" "}
           ·{" "}
-          <a href="https://100lifeplan.fss.or.kr" target="_blank" rel="noreferrer" className="text-indigo-500 underline">
+          <a href="https://100lifeplan.fss.or.kr" target="_blank" rel="noreferrer" className="text-indigo-500 underline dark:text-indigo-300">
             통합연금포털
           </a>
           <span className="block mt-0.5">

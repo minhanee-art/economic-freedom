@@ -137,7 +137,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
               </div>
               <Link
                 href={`/dashboard/children/${c.id}`}
-                className="block px-4 py-2.5 text-center text-xs font-medium text-indigo-500 border-t border-zinc-100 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+                className="block px-4 py-2.5 text-center text-xs font-medium text-indigo-500 border-t border-zinc-100 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors dark:text-indigo-300"
               >
                 입금/증여 기록 · 보유 종목 · 신고 가이드 보기 →
               </Link>

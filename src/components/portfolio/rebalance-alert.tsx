@@ -703,7 +703,7 @@ export function RebalanceAlert({
                 </div>
                 <div className="h-2 bg-indigo-100 dark:bg-indigo-950">
                   <div
-                    className={`bar-w h-full ${isAlert && isOver ? "bg-caution" : isAlert ? "bg-zinc-500" : "bg-indigo-500"}`}
+                    className={`bar-w h-full ${isAlert && isOver ? "bg-caution" : isAlert ? "bg-zinc-500" : "bg-indigo-500 dark:bg-indigo-400"}`}
                     style={{ "--bar-w": `${Math.max(0, Math.min(100, c.current))}%` } as CSSProperties}
                   />
                 </div>
@@ -896,7 +896,7 @@ function HoldingMiniChart({ holding }: { holding: HoldingWithPnL }) {
             <span className="tabular-nums">{holding.actual_pct.toFixed(1)}%</span>
           </div>
           <div className="h-2 bg-indigo-100 dark:bg-indigo-950">
-            <div className={`bar-w h-full ${hasDiff && isOver ? "bg-caution" : "bg-indigo-500"}`} style={{"--bar-w": `${currentWidth}%` } as CSSProperties} />
+            <div className={`bar-w h-full ${hasDiff && isOver ? "bg-caution" : "bg-indigo-500 dark:bg-indigo-400"}`} style={{"--bar-w": `${currentWidth}%` } as CSSProperties} />
           </div>
         </div>
       </div>

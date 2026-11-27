@@ -138,7 +138,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       {/* 가져오기 버튼 */}
       <button
         onClick={() => setShowImport(true)}
-        className="w-full h-11 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 text-sm font-semibold text-indigo-600 dark:text-indigo-400 shadow-card hover:shadow-float hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+        className="w-full h-11 border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-zinc-900 text-sm font-semibold text-indigo-600 dark:text-indigo-300 shadow-card hover:shadow-float hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
       >
         증권사 거래내역 가져오기 (CSV)
       </button>
@@ -202,7 +202,7 @@ function RecordCard({
       <div className="flex items-center justify-between px-4 py-3 bg-canvas-soft dark:bg-zinc-800/50 border-b border-hairline dark:border-zinc-800">
         <span className="text-sm font-semibold text-ink dark:text-zinc-100 tabular-nums">{record.date}</span>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 tabular-nums">
+          <span className="inline-flex items-center bg-indigo-50 dark:bg-indigo-900/30 px-3 py-0.5 text-xs font-semibold text-indigo-600 dark:text-indigo-300 tabular-nums">
             {formatKRWFull(record.total_spent)}
           </span>
           <button

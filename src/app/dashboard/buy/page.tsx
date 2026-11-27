@@ -1,8 +1,11 @@
 // 매수 계획 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getHoldings, getCostBases, getProfile, getLastPurchaseDates } from "@/lib/queries";
 import { BuyClient } from "./buy-client";
+
+export const metadata: Metadata = { title: "적립 배분 계산 · 가족연금계획" };
 
 export const dynamic = "force-dynamic";
 

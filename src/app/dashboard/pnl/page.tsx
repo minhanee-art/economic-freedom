@@ -1,4 +1,5 @@
 // 손익 분석 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getHoldings, getCostBases, getDividends } from "@/lib/queries";
@@ -6,6 +7,8 @@ import { sql } from "@/lib/db";
 import { PnLClient } from "./pnl-client";
 import type { PurchaseRecord } from "@/types";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+
+export const metadata: Metadata = { title: "자산·손익 · 가족연금계획" };
 
 export default async function PnLPage() {
   const session = await getSession();

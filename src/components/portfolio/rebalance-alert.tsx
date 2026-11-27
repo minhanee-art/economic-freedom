@@ -53,6 +53,11 @@ interface Props {
   onHoldingDetailsChange?: (holdingId: string, patch: HoldingDetailsPatch) => Promise<void>;
   savingTargetPctId?: string | null;
   savingCategoryTarget?: string | null;
+  /** 섹션 제목(h2) */
+  title?: string;
+  /** true 면 머리의 '펼치기/접기'로 본문을 접을 수 있다(홈에서 사용) */
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }
 
 const CATEGORY_THRESHOLD = 3;
@@ -74,26 +79,26 @@ export interface CandlePoint {
 }
 
 const CATEGORY_SORT_OPTIONS: { value: CategorySort; label: string }[] = [
-  { value: "diff", label: "차이 큰순" },
-  { value: "target-desc", label: "설정↓" },
-  { value: "target-asc", label: "설정↑" },
-  { value: "current-desc", label: "현재↓" },
-  { value: "current-asc", label: "현재↑" },
-  { value: "name-asc", label: "테마명↑" },
-  { value: "name-desc", label: "테마명↓" },
+  { value: "diff", label: "목표와 차이 큰 순" },
+  { value: "target-desc", label: "설정 비중 높은 순" },
+  { value: "target-asc", label: "설정 비중 낮은 순" },
+  { value: "current-desc", label: "현재 비중 높은 순" },
+  { value: "current-asc", label: "현재 비중 낮은 순" },
+  { value: "name-asc", label: "테마명 가나다순" },
+  { value: "name-desc", label: "테마명 역순" },
 ];
 
 const HOLDING_SORT_OPTIONS: { value: HoldingSort; label: string }[] = [
-  { value: "return-desc", label: "수익률순" },
-  { value: "code-asc", label: "티커순" },
-  { value: "name-asc", label: "종목명↑" },
-  { value: "name-desc", label: "종목명↓" },
-  { value: "shares-desc", label: "보유수량↓" },
-  { value: "shares-asc", label: "보유수량↑" },
+  { value: "return-desc", label: "수익률 높은 순" },
+  { value: "code-asc", label: "종목코드 순" },
+  { value: "name-asc", label: "종목명 가나다순" },
+  { value: "name-desc", label: "종목명 역순" },
+  { value: "shares-desc", label: "보유수량 많은 순" },
+  { value: "shares-asc", label: "보유수량 적은 순" },
 ];
 
 const HOLDING_VIEW_OPTIONS: { value: HoldingViewMode; label: string }[] = [
-  { value: "wide", label: "상세+차트" },
+  { value: "wide", label: "상세와 차트" },
   { value: "grid", label: "상세" },
   { value: "chart", label: "간단" },
 ];
@@ -192,11 +197,14 @@ export function RebalanceAlert({
   onHoldingDetailsChange,
   savingTargetPctId,
   savingCategoryTarget,
+  title = "테마별 비중 현황",
+  collapsible = false,
+  defaultCollapsed = false,
 }: Props) {
   const [showAdvice, setShowAdvice] = useState(false);
   const [showAddHolding, setShowAddHolding] = useState(false);
-  const [showThemeWeights, setShowThemeWeights] = useState(true);
-  const [showHoldingsOnly, setShowHoldingsOnly] = useState(false);
+  const [groupMode, setGroupMode] = useState<"theme" | "all">("theme");
+  const [isCollapsed, setIsCollapsed] = useState(collapsible && defaultCollapsed);
   const [expandedHiddenCategory, setExpandedHiddenCategory] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [manualHiddenHoldingIds, setManualHiddenHoldingIds] = useState<string[]>(readStoredHiddenHoldingIds);
@@ -382,78 +390,80 @@ export function RebalanceAlert({
     );
   }
 
+  const headerSummary = categoryAlerts.length > 0
+    ? `목표와 3%p 이상 차이 나는 테마 ${categoryAlerts.length}개`
+    : "모든 테마가 목표 비중 3%p 이내";
+
   return (
-    <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-5 py-4 space-y-4 shadow-card">
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+    <section aria-labelledby="holdings-weights-title" className="border border-hairline bg-surface px-5 py-4 space-y-4 shadow-card dark:border-zinc-800">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-sm font-semibold">테마별 비중 현황</p>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-            개별 종목 설정 비중의 합계가 테마 설정 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다.
+          <h2 id="holdings-weights-title" className="text-base font-bold text-ink">{title}</h2>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            {isCollapsed
+              ? `종목 ${holdings.length}개 · ${headerSummary}`
+              : "개별 종목 설정 비중의 합계가 테마 설정 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다."}
           </p>
         </div>
-        <div className="grid w-full grid-cols-2 gap-1.5 sm:grid-cols-4 xl:w-auto xl:min-w-130">
-          <button
-            type="button"
-            onClick={() => setShowThemeWeights((value) => !value)}
-            aria-pressed={showThemeWeights}
-            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors ${
-              showThemeWeights
-                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            }`}
-          >
-            <span className="text-xs">{showThemeWeights ? "●" : "○"}</span>
-            테마
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowHoldingsOnly((value) => !value)}
-            aria-pressed={showHoldingsOnly}
-            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors ${
-              showHoldingsOnly
-                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-            }`}
-          >
-            <span className="text-xs">{showHoldingsOnly ? "●" : "○"}</span>
-            종목
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAddHolding((value) => !value)}
-            disabled={!onAddHolding}
-            aria-pressed={showAddHolding}
-            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors disabled:opacity-50 ${
-              showAddHolding
-                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
-            }`}
-          >
-            <span>{showAddHolding ? "−" : "+"}</span>
-            종목추가
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowAdvice((value) => !value)}
-            aria-pressed={showAdvice}
-            className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-xs font-black shadow-card transition-colors ${
-              showAdvice
-                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-                : hasAdvice
-                ? "border-caution/30 bg-caution-soft text-caution hover:bg-caution-soft dark:border-zinc-700"
-                : "border-zinc-200 bg-white text-zinc-500 hover:bg-canvas-soft hover:text-ink dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
-            }`}
-          >
-            진단
-            {hasAdvice && (
-              <span className="border border-current px-1.5 py-0.5 text-xs tabular-nums">
-                {categoryAlerts.length + holdingAlerts.length}
-              </span>
-            )}
-          </button>
+        <div className="flex flex-wrap gap-2">
+          {!isCollapsed && (
+            <>
+              <button
+                type="button"
+                onClick={() => setShowAddHolding((value) => !value)}
+                disabled={!onAddHolding}
+                aria-haspopup="dialog"
+                className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-sm font-semibold transition-colors border-brand bg-surface text-brand hover:bg-indigo-50 disabled:opacity-50 dark:text-indigo-300 dark:hover:bg-indigo-500/10`}
+              >
+                + 신규 추가
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHiddenHoldings((value) => !value)}
+                aria-pressed={showHiddenHoldings}
+                className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-sm font-semibold transition-colors ${
+                  showHiddenHoldings
+                    ? "border-brand bg-brand text-white"
+                    : "border-hairline bg-surface text-ink hover:bg-canvas-soft dark:border-zinc-700"
+                }`}
+              >
+                숨긴 종목 {manualHiddenHoldings.length}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAdvice((value) => !value)}
+                aria-pressed={showAdvice}
+                className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-sm font-semibold transition-colors ${
+                  showAdvice
+                    ? "border-brand bg-brand text-white"
+                    : hasAdvice
+                    ? "border-caution/30 bg-caution-soft text-caution"
+                    : "border-hairline bg-surface text-ink hover:bg-canvas-soft dark:border-zinc-700"
+                }`}
+              >
+                진단
+                {hasAdvice && (
+                  <span className="tabular-nums">· {categoryAlerts.length + holdingAlerts.length}</span>
+                )}
+              </button>
+            </>
+          )}
+          {collapsible && (
+            <button
+              type="button"
+              onClick={() => setIsCollapsed((value) => !value)}
+              aria-expanded={!isCollapsed}
+              aria-controls="holdings-weights-body"
+              className={`inline-flex min-h-10 items-center justify-center gap-1.5 border px-3 py-2 text-sm font-semibold transition-colors border-hairline bg-surface text-ink hover:bg-canvas-soft dark:border-zinc-700`}
+            >
+              {isCollapsed ? "펼치기" : "접기"}
+            </button>
+          )}
         </div>
       </div>
 
+      {!isCollapsed && (
+      <div id="holdings-weights-body" className="space-y-4">
       {showAddHolding && onAddHolding && (
         <div className="fixed inset-0 z-50 flex items-end bg-zinc-950/40 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4">
           <div className="max-h-[92vh] w-full overflow-y-auto border border-zinc-200 bg-white p-4 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 sm:max-w-2xl">
@@ -478,7 +488,7 @@ export function RebalanceAlert({
       )}
 
       {showHiddenHoldings && (
-        <section className="space-y-3 border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+        <section aria-label="숨긴 종목" className="space-y-3 border-y border-hairline py-3 dark:border-zinc-800">
           <div className="flex flex-col gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">숨긴 종목</p>
@@ -520,160 +530,108 @@ export function RebalanceAlert({
         </section>
       )}
 
-      <div className="border border-zinc-100 bg-zinc-50 p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-black text-zinc-700 dark:text-zinc-200">보유종목 검색</p>
-            <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-              종목명·종목번호·테마로 검색해서 바로 설정비중 조정과 매수·매도 기록을 할 수 있습니다.
-            </p>
-          </div>
-          {holdingSearch && (
+
+      <div className="flex flex-col gap-3 border-y border-hairline py-3 dark:border-zinc-800 lg:flex-row lg:items-end">
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          보유종목 검색
+          <span className="flex h-10 items-center gap-2 border border-hairline bg-surface px-3 focus-within:border-brand focus-within:ring-1 focus-within:ring-brand dark:border-zinc-700">
+            <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
+            </svg>
+            <input
+              type="search"
+              value={holdingSearch}
+              onChange={(e) => setHoldingSearch(e.target.value)}
+              placeholder="예: 나스닥, TIGER, 360750, 배당"
+              className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-zinc-500"
+            />
+          </span>
+        </label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex">
+          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            묶음
+            <select value={groupMode} onChange={(e) => setGroupMode(e.target.value as "theme" | "all")} className="h-10 min-w-0 border border-hairline bg-surface px-2 text-sm font-medium text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700">
+              <option value="theme">테마별</option>
+              <option value="all">전체 종목</option>
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            카드 보기
+            <select value={holdingViewMode} onChange={(e) => setHoldingViewMode(e.target.value as HoldingViewMode)} className="h-10 min-w-0 border border-hairline bg-surface px-2 text-sm font-medium text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700">
+              {HOLDING_VIEW_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+            종목 정렬
+            <select value={holdingSort} onChange={(e) => setHoldingSort(e.target.value as HoldingSort)} className="h-10 min-w-0 border border-hairline bg-surface px-2 text-sm font-medium text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700">
+              {HOLDING_SORT_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          {groupMode === "theme" && (
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">
+              테마 정렬
+              <select value={categorySort} onChange={(e) => setCategorySort(e.target.value as CategorySort)} className="h-10 min-w-0 border border-hairline bg-surface px-2 text-sm font-medium text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700">
+                {CATEGORY_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+      </div>
+
+      {normalizedHoldingSearch && (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span className="font-semibold text-ink">
+              검색 결과 {searchedHoldings.length}개{searchedHoldings.length > 0 ? " · 숨김 종목 포함" : ""}
+            </span>
             <button
               type="button"
               onClick={() => setHoldingSearch("")}
-              className="self-start border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-bold text-zinc-500 transition-colors hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
+              className="min-h-10 px-2 text-xs font-semibold text-brand hover:underline dark:text-indigo-300"
             >
               검색 초기화
             </button>
-          )}
-        </div>
-        <div className="mt-3 flex items-center gap-2 border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900">
-          <svg className="h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
-          </svg>
-          <input
-            type="search"
-            value={holdingSearch}
-            onChange={(e) => setHoldingSearch(e.target.value)}
-            placeholder="예: 나스닥, TIGER, 360750, 배당"
-            className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-zinc-900 outline-none placeholder:text-zinc-500 dark:text-zinc-100"
-          />
-        </div>
-        {normalizedHoldingSearch && (
-          <div className="mt-3 space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-              <span className="font-bold text-zinc-600 dark:text-zinc-300">
-                검색 결과 {searchedHoldings.length}개
-              </span>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {searchedHoldings.length > 0 && (
-                  <span className="mr-1 text-zinc-500 dark:text-zinc-400">숨김 종목 포함</span>
-                )}
-                {HOLDING_SORT_OPTIONS.map((option) => (
-                  <button
-                    key={`search-${option.value}`}
-                    type="button"
-                    onClick={() => setHoldingSort(option.value)}
-                    className={`border px-2 py-1 font-bold transition-colors ${
-                      holdingSort === option.value
-                        ? "border-indigo-500 bg-indigo-500 text-white"
-                        : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {renderHoldingCollection(searchedHoldings, "일치하는 보유종목이 없습니다.", "search")}
           </div>
-        )}
-      </div>
+          {renderHoldingCollection(searchedHoldings, "일치하는 보유종목이 없습니다.", "search")}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-2 border border-hairline bg-canvas-soft p-3 dark:border-zinc-800 sm:grid-cols-3">
-        <div>
-          <p className="text-xs font-semibold text-ink-mute">현재 총 합계 비율</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-ink">
-            {currentTotalPct.toFixed(1)}%
-          </p>
+      <dl className="grid grid-cols-3 divide-x divide-hairline text-xs dark:divide-zinc-800">
+        <div className="pr-3">
+          <dt className="font-medium text-ink-mute">현재 총 합계 비율</dt>
+          <dd className="mt-1 text-lg font-semibold tabular-nums text-ink">{currentTotalPct.toFixed(1)}%</dd>
         </div>
-        <div className="border-t border-indigo-100 pt-2 dark:border-indigo-500/20 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
-          <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">설정 합계</p>
-          <p className="mt-1 text-base font-black tabular-nums text-zinc-800 dark:text-zinc-100">
-            {targetTotalPct.toFixed(1)}%
-          </p>
+        <div className="px-3">
+          <dt className="font-medium text-ink-mute">설정 합계</dt>
+          <dd className="mt-1 text-lg font-semibold tabular-nums text-ink">{targetTotalPct.toFixed(1)}%</dd>
         </div>
-        <div className="border-t border-indigo-100 pt-2 dark:border-indigo-500/20 sm:border-l sm:border-t-0 sm:pl-3 sm:pt-0">
-          <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">합계 차이</p>
-          <p className={`mt-1 text-base font-black tabular-nums ${
-            Math.abs(totalDiffPct) >= 0.1
-              ? totalDiffPct > 0
-                ? "text-caution"
-                : "text-ink"
-              : "text-zinc-500 dark:text-zinc-400"
+        <div className="pl-3">
+          <dt className="font-medium text-ink-mute">합계 차이</dt>
+          <dd className={`mt-1 text-lg font-semibold tabular-nums ${
+            Math.abs(totalDiffPct) >= 0.1 && totalDiffPct > 0 ? "text-caution" : "text-ink"
           }`}>
             {totalDiffPct > 0 ? "+" : ""}{totalDiffPct.toFixed(1)}%p
-          </p>
+          </dd>
         </div>
-      </div>
+      </dl>
 
-      <div className="flex flex-wrap items-center gap-1.5 border border-zinc-100 bg-zinc-50 p-2 text-xs shadow-card dark:border-zinc-800 dark:bg-zinc-950/50">
-        <span className="px-1.5 font-semibold text-zinc-500 dark:text-zinc-400">보기</span>
-        {HOLDING_VIEW_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => setHoldingViewMode(option.value)}
-            className={`border px-2.5 py-1.5 font-bold transition-colors ${
-              holdingViewMode === option.value
-                ? "border-brand bg-brand text-white"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-hairline hover:bg-canvas-soft hover:text-success dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-        <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
-        <span className="px-1.5 font-semibold text-zinc-500 dark:text-zinc-400">종목 정렬</span>
-        {HOLDING_SORT_OPTIONS.map((option) => (
-          <button
-            key={`holding-global-${option.value}`}
-            type="button"
-            onClick={() => setHoldingSort(option.value)}
-            className={`border px-2.5 py-1.5 font-bold transition-colors ${
-              holdingSort === option.value
-                ? "border-brand bg-brand text-white"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-hairline hover:bg-canvas-soft hover:text-success dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-        <span className="mx-1 h-5 w-px bg-zinc-200 dark:bg-zinc-700" />
-        <span className="px-1.5 font-semibold text-zinc-500 dark:text-zinc-400">테마 정렬</span>
-        {CATEGORY_SORT_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => setCategorySort(option.value)}
-            className={`border px-2.5 py-1.5 font-bold transition-colors ${
-              categorySort === option.value
-                ? "border-indigo-500 bg-indigo-500 text-white"
-                : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-
-      {showHoldingsOnly && (
-        <section className="space-y-3 border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-          <div className="border-b border-zinc-100 pb-3 dark:border-zinc-800">
-            <div>
-              <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">전체 종목</p>
-              <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                테마 묶음 없이 전체 보유종목 {holdingsOnlyRows.length}개를 선택한 보기·정렬 기준으로 확인합니다.
-              </p>
-            </div>
-          </div>
+      {groupMode === "all" && (
+        <section aria-label="전체 종목" className="space-y-3">
+          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+            <span className="font-semibold text-ink">전체 종목</span> · 테마 묶음 없이 전체 보유종목 {holdingsOnlyRows.length}개를 선택한 보기·정렬 기준으로 확인합니다.
+          </p>
           {renderHoldingCollection(holdingsOnlyRows, "표시할 보유종목이 없습니다.", "all-holdings")}
         </section>
       )}
 
-      {showThemeWeights ? (
-        <div className="space-y-2">
+      {groupMode === "theme" ? (
+        <div>
         {categoryRows.map((c) => {
           const isOver = c.diff > 0;
           const isAlert = c.target > 0 && Math.abs(c.diff) >= CATEGORY_THRESHOLD;
@@ -690,7 +648,7 @@ export function RebalanceAlert({
           return (
             <div
               key={c.name}
-              className="cursor-pointer border border-zinc-100 bg-zinc-50 p-3 transition-colors hover:border-indigo-200 hover:bg-indigo-50/40 dark:border-zinc-800 dark:bg-zinc-950/50 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+              className="cursor-pointer border-t border-hairline py-3 transition-colors first:border-t-0 hover:bg-canvas-soft dark:border-zinc-800"
               onClick={() => {
                 setExpandedCategory(isExpanded ? null : c.name);
                 if (isExpanded) setExpandedHiddenCategory(null);
@@ -754,29 +712,12 @@ export function RebalanceAlert({
                 >
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      {c.name} 테마 보유종목입니다. 설정 비중 수정, 바로 매수/매도까지 여기서 실행할 수 있습니다.
+                      {c.name} 테마 보유종목입니다. 설정 비중 수정과 매수·매도 기록을 여기서 할 수 있습니다.
                     </p>
-                    <div className="flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className="font-semibold text-zinc-500 dark:text-zinc-400">보유종목 정렬</span>
-                      {HOLDING_SORT_OPTIONS.map((option) => (
-                        <button
-                          key={option.value}
-                          type="button"
-                          onClick={() => setHoldingSort(option.value)}
-                          className={`border px-2.5 py-1.5 font-bold transition-colors ${
-                            holdingSort === option.value
-                              ? "border-indigo-500 bg-indigo-500 text-white"
-                              : "border-zinc-200 bg-white text-zinc-500 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800"
-                          }`}
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
                   </div>
                   {renderHoldingCollection(
                     categoryHoldings,
-                    "표시 중인 종목이 없습니다. 숨김 종목에서 설정비중을 올리거나 바로 매수로 보유수량을 만들면 표시됩니다.",
+                    "표시 중인 종목이 없습니다. 숨김 종목에서 설정비중을 올리거나 매수 기록으로 보유수량을 만들면 표시됩니다.",
                     c.name
                   )}
 
@@ -794,7 +735,7 @@ export function RebalanceAlert({
                       {isHiddenExpanded && (
                         <div className="mt-3 space-y-2">
                           <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                            보유수량 0주 또는 설정비중 0%인 종목입니다. 설정비중을 올리거나 매수하면 일반 목록에 표시되고, 보유수량 0주는 DB에서 삭제할 수 있습니다.
+                            보유수량 0주 또는 설정비중 0%인 종목입니다. 설정비중을 올리거나 매수하면 일반 목록에 표시되고, 보유수량 0주는 종목 목록에서 삭제할 수 있습니다.
                           </p>
                           {hiddenCategoryHoldings.map((h) => (
                             <HiddenHoldingManager
@@ -820,15 +761,7 @@ export function RebalanceAlert({
           );
         })}
         </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setShowThemeWeights(true)}
-          className="w-full border border-dashed border-zinc-300 bg-zinc-50 px-4 py-3 text-sm font-bold text-zinc-500 transition-colors hover:border-zinc-400 hover:bg-white hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-400 dark:hover:border-zinc-500 dark:hover:bg-zinc-900 dark:hover:text-zinc-100"
-        >
-          테마 비중 숨김 · 클릭해서 다시 보기 ({categoryRows.length}개)
-        </button>
-      )}
+      ) : null}
 
       {showAdvice && (
         <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3">
@@ -904,32 +837,9 @@ export function RebalanceAlert({
           )}
         </div>
       )}
-      <div className="fixed bottom-4 right-4 z-40 flex flex-col gap-2 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => setShowHiddenHoldings((value) => !value)}
-          className={`min-h-11 border px-4 py-2 text-sm font-black shadow-lg transition-colors ${
-            showHiddenHoldings
-              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-              : "border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
-          }`}
-        >
-          숨긴 종목 {manualHiddenHoldings.length}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowAddHolding((value) => !value)}
-          disabled={!onAddHolding}
-          className={`min-h-11 border px-4 py-2 text-sm font-black shadow-lg transition-colors disabled:opacity-50 ${
-            showAddHolding
-              ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
-              : "border-indigo-200 bg-white text-indigo-600 hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-zinc-900 dark:text-indigo-300 dark:hover:bg-indigo-500/10"
-          }`}
-        >
-          + 신규 추가
-        </button>
       </div>
-    </div>
+      )}
+    </section>
   );
 }
 
@@ -1308,7 +1218,7 @@ function HiddenHoldingManager({
 
   async function deleteHolding() {
     if (!onDeleteHolding || holding.shares > 0) return;
-    if (!confirm(`"${holding.name}"을(를) DB에서 삭제할까요?`)) return;
+    if (!confirm(`"${holding.name}"을(를) 종목 목록에서 삭제할까요?`)) return;
     setIsDeleting(true);
     setStatus("");
     try {
@@ -1342,7 +1252,7 @@ function HiddenHoldingManager({
             disabled={!onDeleteHolding || holding.shares > 0 || isDeleting}
             className="border border-danger-line bg-danger-soft px-2.5 py-1.5 font-black text-danger transition-colors hover:bg-danger-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
           >
-            {isDeleting ? "삭제 중" : holding.shares > 0 ? "보유중 삭제불가" : "DB 삭제"}
+            {isDeleting ? "삭제 중" : holding.shares > 0 ? "보유중 삭제불가" : "목록에서 삭제"}
           </button>
         </div>
       </div>

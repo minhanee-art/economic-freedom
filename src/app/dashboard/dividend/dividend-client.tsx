@@ -111,6 +111,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
 
   return (
     <div className="space-y-5">
+      <h1 className="text-xl font-bold tracking-tight text-ink">배당 기록</h1>
       {/* 요약 카드 */}
       <div
         className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800"
@@ -133,7 +134,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
 
       {/* 입력 폼 */}
       <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
-        <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">배당금 추가</h3>
+        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">배당금 추가</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -210,16 +211,16 @@ export function DividendClient({ holdings, initialDividends }: Props) {
       {/* 월별 차트 */}
       {monthlyData.length > 0 && (
         <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
-          <h3 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">월별 배당금</h3>
+          <h2 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">월별 배당금</h2>
           <DividendBarChart data={monthlyData} />
         </div>
       )}
 
       {/* 배당 내역 리스트 */}
       <div>
-        <h3 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">
+        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">
           배당 내역 ({dividends.length})
-        </h3>
+        </h2>
         {dividends.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">
             아직 배당 기록이 없습니다.
@@ -338,7 +339,7 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">📥 분배금 자동조회</h3>
+        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">분배금 자동조회</h2>
         <span className="text-xs text-ink-mute">보유 종목 × 주당분배금</span>
       </div>
 

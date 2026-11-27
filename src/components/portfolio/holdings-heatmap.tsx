@@ -46,7 +46,7 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
       className="border border-hairline bg-white p-5 shadow-card dark:border-zinc-800 dark:bg-zinc-900"
     >
       <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-        <h3 className="text-sm font-semibold text-ink">종목 히트맵</h3>
+        <h2 className="text-sm font-semibold text-ink">종목 히트맵</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">면적 = 평가금액 비중 · 색 = 수익률(빨강 상승, 파랑 하락)</p>
       </div>
 

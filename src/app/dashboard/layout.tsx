@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent, type FocusEvent } from "react";
 import { cn } from "@/lib/utils";
 import {
   bottomNavItems,
   dashboardNavGroups,
   dashboardNavItems,
-  type DashboardNavItem,
+  isNavItemActive,
+  type DashboardNavGroup,
 } from "@/lib/dashboard-navigation";
 
 type PortfolioAccount = {
@@ -16,6 +17,16 @@ type PortfolioAccount = {
   name: string;
   owner_type: "self" | "spouse" | "child" | "other";
 };
+
+const OWNER_OPTIONS: { value: PortfolioAccount["owner_type"]; label: string }[] = [
+  { value: "self", label: "본인" },
+  { value: "spouse", label: "배우자" },
+  { value: "child", label: "자녀" },
+  { value: "other", label: "기타" },
+];
+
+const focusRing =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-dark-header";
 
 export default function DashboardLayout({
   children,
@@ -26,13 +37,24 @@ export default function DashboardLayout({
   const router = useRouter();
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [menuQuery, setMenuQuery] = useState("");
-  const [activeNavGroup, setActiveNavGroup] = useState<string | null>(null);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
-  const [accounts, setAccounts] = useState<PortfolioAccount[]>([]);
+  // null = 아직 불러오는 중(자리만 잡아 두어 헤더가 밀리지 않게 한다)
+  const [accounts, setAccounts] = useState<PortfolioAccount[] | null>(null);
   const [activeAccountId, setActiveAccountId] = useState("");
   const [isAccountSaving, setIsAccountSaving] = useState(false);
+  const [isAddingAccount, setIsAddingAccount] = useState(false);
+  const [newAccountName, setNewAccountName] = useState("");
+  const [newAccountOwner, setNewAccountOwner] = useState<PortfolioAccount["owner_type"]>("other");
+  const [accountError, setAccountError] = useState("");
+
+  const navRef = useRef<HTMLElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
+  const addAccountRef = useRef<HTMLDivElement>(null);
+  const addAccountButtonRef = useRef<HTMLButtonElement>(null);
+  const formId = useId();
 
   useEffect(() => {
     fetch("/api/me")
@@ -49,11 +71,10 @@ export default function DashboardLayout({
     fetch("/api/accounts")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (!data) return;
-        setAccounts(data.accounts ?? []);
-        setActiveAccountId(data.activeAccountId ?? data.accounts?.[0]?.id ?? "");
+        setAccounts(data?.accounts ?? []);
+        setActiveAccountId(data?.activeAccountId ?? data?.accounts?.[0]?.id ?? "");
       })
-      .catch(() => {});
+      .catch(() => setAccounts([]));
   }, [isAuthenticated]);
 
   useEffect(() => {
@@ -69,11 +90,36 @@ export default function DashboardLayout({
   useEffect(() => {
     const timeoutId = globalThis.setTimeout(() => {
       setIsNavigating(false);
-      setActiveNavGroup(null);
-      setIsSearchOpen(false);
+      setOpenGroup(null);
+      setIsMobileMenuOpen(false);
     }, 0);
     return () => globalThis.clearTimeout(timeoutId);
   }, [pathname]);
+
+  // 바깥을 누르면 열린 드롭다운·메뉴·계좌 추가 폼을 닫는다
+  useEffect(() => {
+    if (!openGroup && !isMobileMenuOpen && !isAddingAccount) return;
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (openGroup && navRef.current && !navRef.current.contains(target)) setOpenGroup(null);
+      if (
+        isMobileMenuOpen &&
+        !mobileMenuRef.current?.contains(target) &&
+        !mobileMenuButtonRef.current?.contains(target)
+      ) {
+        setIsMobileMenuOpen(false);
+      }
+      if (
+        isAddingAccount &&
+        !addAccountRef.current?.contains(target) &&
+        !addAccountButtonRef.current?.contains(target)
+      ) {
+        setIsAddingAccount(false);
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [openGroup, isMobileMenuOpen, isAddingAccount]);
 
   const prefetchRoute = (href: string) => {
     router.prefetch(href);
@@ -81,8 +127,8 @@ export default function DashboardLayout({
 
   const handleRouteIntent = (href: string) => {
     prefetchRoute(href);
-    setIsSearchOpen(false);
-    setActiveNavGroup(null);
+    setOpenGroup(null);
+    setIsMobileMenuOpen(false);
     if (href !== pathname) setIsNavigating(true);
   };
 
@@ -99,282 +145,433 @@ export default function DashboardLayout({
   const switchAccount = async (accountId: string) => {
     if (!accountId || accountId === activeAccountId) return;
     setIsAccountSaving(true);
-    const res = await fetch("/api/accounts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ accountId }),
-    });
-    if (res.ok) {
+    setAccountError("");
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accountId }),
+      });
+      if (!res.ok) throw new Error();
       setActiveAccountId(accountId);
       router.refresh();
+    } catch {
+      setAccountError("계좌를 바꾸지 못했습니다. 잠시 뒤 다시 선택해 주세요.");
+    } finally {
+      setIsAccountSaving(false);
     }
-    setIsAccountSaving(false);
   };
 
-  const addAccount = async () => {
-    const name = window.prompt("추가할 계좌 이름을 입력하세요. 예: 아빠, 아내, 첫째");
-    if (!name?.trim()) return;
+  const closeAddAccount = () => {
+    setIsAddingAccount(false);
+    setNewAccountName("");
+    setNewAccountOwner("other");
+    setAccountError("");
+    addAccountButtonRef.current?.focus();
+  };
+
+  const addAccount = async (event: FormEvent) => {
+    event.preventDefault();
+    const name = newAccountName.trim();
+    if (!name) {
+      setAccountError("계좌 이름을 입력해 주세요. 예: 아빠, 아내 IRP, 첫째");
+      return;
+    }
     setIsAccountSaving(true);
-    const res = await fetch("/api/accounts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim(), ownerType: "other" }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setAccounts((current) => [...current, data.account]);
+    setAccountError("");
+    try {
+      const res = await fetch("/api/accounts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, ownerType: newAccountOwner }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.account) throw new Error(data?.error ?? "");
+      setAccounts((current) => [...(current ?? []), data.account]);
       setActiveAccountId(data.account.id);
+      setIsAddingAccount(false);
+      setNewAccountName("");
+      setNewAccountOwner("other");
       router.refresh();
+    } catch (err) {
+      const reason = (err as Error).message;
+      setAccountError(`계좌를 추가하지 못했습니다${reason ? `: ${reason}` : ""}. 이름을 확인하고 다시 저장해 주세요.`);
+    } finally {
+      setIsAccountSaving(false);
     }
-    setIsAccountSaving(false);
   };
 
-  const isItemActive = (item: DashboardNavItem) =>
-    item.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(item.href);
+  const closeGroupOnBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpenGroup(null);
+  };
 
-  const normalizedQuery = menuQuery.trim().toLowerCase();
-  const filteredMenuItems = useMemo(() => {
-    if (!normalizedQuery) return dashboardNavItems;
-    return dashboardNavItems.filter((item) =>
-      [item.label, item.shortLabel, item.description, item.href]
-        .join(" ")
-        .toLowerCase()
-        .includes(normalizedQuery)
+  const closeOnEscape = (event: KeyboardEvent, close: () => void, focusTarget?: HTMLElement | null) => {
+    if (event.key !== "Escape") return;
+    event.stopPropagation();
+    close();
+    focusTarget?.focus();
+  };
+
+  const renderGroup = (group: DashboardNavGroup) => {
+    const isGroupActive = group.items.some((item) => isNavItemActive(item, pathname));
+
+    if (group.items.length === 1) {
+      const item = group.items[0];
+      const active = isNavItemActive(item, pathname);
+      return (
+        <Link
+          key={group.label}
+          href={item.href}
+          prefetch
+          aria-current={active ? "page" : undefined}
+          onClick={() => handleRouteIntent(item.href)}
+          onMouseEnter={() => prefetchRoute(item.href)}
+          className={cn(
+            "inline-flex h-10 items-center whitespace-nowrap border border-transparent px-3 text-sm font-semibold transition-colors",
+            focusRing,
+            active ? "border-white/15 bg-white/10 text-white" : "text-zinc-200 hover:bg-white/10 hover:text-white"
+          )}
+        >
+          {group.label}
+        </Link>
+      );
+    }
+
+    const isOpen = openGroup === group.label;
+    const panelId = `nav-panel-${group.items[0].href.replace(/\W+/g, "-")}`;
+    return (
+      <div
+        key={group.label}
+        className="relative"
+        onBlur={closeGroupOnBlur}
+        onKeyDown={(event) =>
+          closeOnEscape(event, () => setOpenGroup(null), event.currentTarget.querySelector("button"))
+        }
+      >
+        <button
+          type="button"
+          aria-expanded={isOpen}
+          aria-controls={panelId}
+          onClick={() => setOpenGroup(isOpen ? null : group.label)}
+          className={cn(
+            "inline-flex h-10 items-center gap-1 whitespace-nowrap border border-transparent px-3 text-sm font-semibold transition-colors",
+            focusRing,
+            isGroupActive || isOpen
+              ? "border-white/15 bg-white/10 text-white"
+              : "text-zinc-200 hover:bg-white/10 hover:text-white"
+          )}
+        >
+          {group.label}
+          <svg aria-hidden="true" className={cn("h-3.5 w-3.5 opacity-70 transition-transform", isOpen && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+
+        <div
+          id={panelId}
+          hidden={!isOpen}
+          className="absolute left-0 top-full z-50 mt-1 w-64 border border-hairline bg-surface p-1.5 text-ink shadow-float dark:border-zinc-800"
+        >
+          <ul>
+            {group.items.map((item) => {
+              const active = isNavItemActive(item, pathname);
+              return (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    prefetch
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => handleRouteIntent(item.href)}
+                    onMouseEnter={() => prefetchRoute(item.href)}
+                    onFocus={() => prefetchRoute(item.href)}
+                    className={cn(
+                      "flex min-h-11 items-center gap-3 px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                      active
+                        ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200"
+                        : "hover:bg-canvas-soft"
+                    )}
+                  >
+                    <span className="shrink-0 text-brand dark:text-indigo-300">{item.icon}</span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold">{item.label}</span>
+                      <span className="block text-xs leading-snug text-zinc-500 dark:text-zinc-400">{item.description}</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </div>
     );
-  }, [normalizedQuery]);
+  };
 
   return (
-    <div className="flex min-h-full flex-col pb-24 md:pb-0">
+    <div className="flex min-h-full flex-col pb-bottom-nav lg:pb-0">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-70 focus:bg-surface focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-float focus:outline-none focus:ring-2 focus:ring-brand"
+      >
+        본문 바로가기
+      </a>
       {isNavigating && (
-        <div className="fixed inset-x-0 top-0 z-[60] h-1 bg-indigo-500" />
+        <div aria-hidden="true" className="fixed inset-x-0 top-0 z-60 h-1 bg-indigo-500" />
       )}
-      <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm shadow-indigo-950/20">
-        <div className="relative mx-auto flex min-h-16 max-w-280 items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6">
-          <Link href="/dashboard" prefetch onClick={() => handleRouteIntent("/dashboard")} onMouseEnter={() => prefetchRoute("/dashboard")} className="shrink-0 text-lg font-bold tracking-tight">
+      <header className="sticky top-0 z-40 bg-dark-header text-white shadow-sm">
+        <div className="relative mx-auto flex h-16 max-w-280 items-center gap-2 px-3 sm:gap-3 sm:px-6">
+          <Link
+            href="/dashboard"
+            prefetch
+            onClick={() => handleRouteIntent("/dashboard")}
+            onMouseEnter={() => prefetchRoute("/dashboard")}
+            className={cn("shrink-0 whitespace-nowrap text-base font-bold tracking-tight sm:text-lg", focusRing)}
+          >
             가족연금계획
           </Link>
 
-          <nav
-            className="ml-2 hidden flex-1 items-center gap-1 lg:flex"
-            aria-label="대메뉴"
-            onMouseLeave={() => setActiveNavGroup(null)}
-          >
-            {dashboardNavGroups.map((group) => {
-              const isGroupActive = group.items.some(isItemActive);
-              const isDropdownOpen = activeNavGroup === group.label;
-
-              return (
-                <div
-                  key={group.label}
-                  className="relative"
-                  onMouseEnter={() => setActiveNavGroup(group.label)}
-                >
-                  <button
-                    type="button"
-                    onFocus={() => setActiveNavGroup(group.label)}
-                    className={cn(
-                      "inline-flex h-10 items-center gap-1 border border-transparent px-3 text-sm font-semibold transition-colors",
-                      isGroupActive
-                        ? "border-white/15 bg-white/10 text-white"
-                        : "text-zinc-200 hover:border-white/10 hover:bg-white/10 hover:text-white"
-                    )}
-                  >
-                    {group.label}
-                    <svg className="h-3.5 w-3.5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-                    </svg>
-                  </button>
-
-                  <div
-                    className={cn(
-                      "absolute left-0 top-full z-50 w-72 border border-zinc-200 bg-white p-2 text-ink shadow-float transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100",
-                      isDropdownOpen
-                        ? "visible translate-y-1 opacity-100"
-                        : "invisible translate-y-2 opacity-0"
-                    )}
-                  >
-                    <div className="px-3 py-2">
-                      <p className="text-sm font-bold">{group.label}</p>
-                      <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{group.description}</p>
-                    </div>
-                    <div className="space-y-1">
-                      {group.items.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          prefetch
-                          onClick={() => handleRouteIntent(item.href)}
-                          onMouseEnter={() => prefetchRoute(item.href)}
-                          onFocus={() => prefetchRoute(item.href)}
-                          className={cn(
-                            "flex items-center gap-3 border border-transparent px-3 py-2.5 transition-colors",
-                            isItemActive(item)
-                              ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
-                              : "hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
-                          )}
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-200 bg-zinc-100 text-indigo-500 dark:border-zinc-700 dark:bg-zinc-800">
-                            {item.icon}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold">{item.label}</span>
-                            <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{item.description}</span>
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+          <nav ref={navRef} className="ml-2 hidden flex-1 items-center gap-0.5 lg:flex" aria-label="대메뉴">
+            {dashboardNavGroups.map(renderGroup)}
           </nav>
 
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
-            {accounts.length > 0 && (
-              <div className="flex items-center gap-1 border border-white/10 bg-white/10 p-1">
-                <select
-                  value={activeAccountId}
-                  onChange={(event) => switchAccount(event.target.value)}
-                  disabled={isAccountSaving}
-                  className="h-9 max-w-24 bg-transparent px-1 text-xs font-bold text-white outline-none disabled:opacity-60 sm:max-w-36 sm:px-2 [&_option]:bg-zinc-900"
-                  aria-label="관리 계좌 선택"
-                >
-                  {accounts.map((account) => (
-                    <option key={account.id} value={account.id}>{account.name}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={addAccount}
-                  disabled={isAccountSaving}
-                  className="flex h-9 w-9 items-center justify-center border border-white/10 text-sm font-black text-white transition-colors hover:bg-white/10 disabled:opacity-60"
-                  aria-label="계좌 추가"
-                >
-                  +
-                </button>
-              </div>
-            )}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setIsSearchOpen((open) => !open)}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 border border-white/10 px-3 text-sm font-semibold transition-colors",
-                  isSearchOpen
-                    ? "bg-white text-dark-header"
-                    : "bg-white/10 text-white hover:bg-white/15"
-                )}
-                aria-expanded={isSearchOpen}
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
-                </svg>
-                <span className="hidden sm:inline">메뉴 검색</span>
-              </button>
-
-              {isSearchOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] border border-zinc-200 bg-white p-3 text-ink shadow-float dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
-                  <label className="sr-only" htmlFor="dashboard-menu-search">메뉴 검색</label>
-                  <div className="flex items-center gap-2 border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-                    <svg className="h-4 w-4 text-zinc-500 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
-                    </svg>
-                    <input
-                      id="dashboard-menu-search"
-                      value={menuQuery}
-                      onChange={(event) => setMenuQuery(event.target.value)}
-                      placeholder="예: 배당, 기록, ETF"
-                      className="min-w-0 flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-zinc-500"
-                    />
-                  </div>
-                  <div className="mt-3 max-h-[55dvh] space-y-1 overflow-y-auto">
-                    {filteredMenuItems.length === 0 ? (
-                      <p className="px-3 py-6 text-center text-sm text-zinc-500 dark:text-zinc-400">검색 결과가 없습니다.</p>
-                    ) : (
-                      filteredMenuItems.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          prefetch
-                          onMouseEnter={() => prefetchRoute(item.href)}
-                          onFocus={() => prefetchRoute(item.href)}
-                          onClick={() => handleRouteIntent(item.href)}
-                          className={cn(
-                            "flex items-center gap-3 border border-transparent px-3 py-2.5 transition-colors active:scale-[0.99]",
-                            isItemActive(item)
-                              ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
-                              : "hover:border-zinc-200 hover:bg-zinc-50 dark:hover:border-zinc-700 dark:hover:bg-zinc-800"
-                          )}
-                        >
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center border border-zinc-200 bg-zinc-100 text-indigo-500 dark:border-zinc-700 dark:bg-zinc-800">
-                            {item.icon}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-bold">{item.label}</span>
-                            <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400">{item.description}</span>
-                          </span>
-                        </Link>
-                      ))
+            {/* 계좌 선택: 불러오는 동안에도 같은 크기의 자리를 잡아 헤더가 밀리지 않게 한다 */}
+            <div className="relative flex h-11 w-30 shrink-0 items-center gap-1 border border-white/10 bg-white/10 p-1 sm:w-44">
+              {accounts === null ? (
+                <span aria-hidden="true" className="h-8 flex-1 animate-pulse bg-white/10" />
+              ) : accounts.length > 0 ? (
+                <>
+                  <select
+                    value={activeAccountId}
+                    onChange={(event) => switchAccount(event.target.value)}
+                    disabled={isAccountSaving}
+                    className={cn(
+                      "h-9 min-w-0 flex-1 truncate bg-transparent px-1 text-xs font-bold text-white disabled:opacity-60 sm:px-2 [&_option]:bg-zinc-900",
+                      focusRing
                     )}
-                  </div>
+                    aria-label="관리 계좌 선택"
+                  >
+                    {accounts.map((account) => (
+                      <option key={account.id} value={account.id}>{account.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    ref={addAccountButtonRef}
+                    type="button"
+                    onClick={() => (isAddingAccount ? closeAddAccount() : setIsAddingAccount(true))}
+                    disabled={isAccountSaving}
+                    aria-expanded={isAddingAccount}
+                    aria-controls={`${formId}-add-account`}
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center border border-white/10 text-white transition-colors hover:bg-white/10 disabled:opacity-60",
+                      focusRing
+                    )}
+                    aria-label="계좌 추가"
+                  >
+                    <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" d="M12 5v14M5 12h14" />
+                    </svg>
+                  </button>
+                </>
+              ) : null}
+
+              {isAddingAccount && (
+                <div
+                  ref={addAccountRef}
+                  id={`${formId}-add-account`}
+                  onKeyDown={(event) => closeOnEscape(event, closeAddAccount)}
+                  className="absolute right-0 top-full z-50 mt-2 w-popover border border-hairline bg-surface p-4 text-ink shadow-float dark:border-zinc-800"
+                >
+                  <form onSubmit={addAccount} className="space-y-3" aria-label="계좌 추가">
+                    <div>
+                      <label htmlFor={`${formId}-name`} className="mb-1 block text-xs font-medium text-ink-mute">
+                        계좌 이름
+                      </label>
+                      <input
+                        id={`${formId}-name`}
+                        autoFocus
+                        value={newAccountName}
+                        onChange={(event) => setNewAccountName(event.target.value)}
+                        placeholder="예: 아빠, 아내 IRP, 첫째"
+                        maxLength={40}
+                        className="h-11 w-full border border-hairline bg-surface px-3 text-base text-ink placeholder:text-zinc-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700 sm:text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor={`${formId}-owner`} className="mb-1 block text-xs font-medium text-ink-mute">
+                        명의
+                      </label>
+                      <select
+                        id={`${formId}-owner`}
+                        value={newAccountOwner}
+                        onChange={(event) => setNewAccountOwner(event.target.value as PortfolioAccount["owner_type"])}
+                        className="h-11 w-full border border-hairline bg-surface px-2 text-sm text-ink focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand dark:border-zinc-700"
+                      >
+                        {OWNER_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    {accountError && (
+                      <p role="alert" className="border border-danger-line bg-danger-soft px-3 py-2 text-xs leading-relaxed text-danger">
+                        {accountError}
+                      </p>
+                    )}
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={closeAddAccount}
+                        className="h-11 flex-1 border border-hairline bg-surface text-sm font-semibold text-ink hover:bg-canvas-soft dark:border-zinc-700"
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isAccountSaving}
+                        className="h-11 flex-1 bg-brand text-sm font-semibold text-white hover:bg-brand-deep disabled:opacity-60"
+                      >
+                        {isAccountSaving ? "저장 중" : "계좌 추가"}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               )}
             </div>
 
             {isAuthenticated && displayName && (
-              <span className="hidden text-sm text-zinc-200 sm:block">{displayName}</span>
+              <span className="hidden max-w-48 truncate text-sm text-zinc-200 xl:block" title={displayName}>
+                {displayName}
+              </span>
             )}
             <button
+              type="button"
               onClick={handleAuthButton}
-              className="shrink-0 whitespace-nowrap border border-white/10 px-2.5 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:bg-white/10 hover:text-white sm:px-3"
+              className={cn(
+                "hidden h-11 shrink-0 whitespace-nowrap border border-white/10 px-3 text-sm font-semibold text-zinc-200 transition-colors hover:bg-white/10 hover:text-white sm:inline-flex sm:items-center",
+                focusRing
+              )}
             >
               {isAuthenticated ? "로그아웃" : "로그인"}
             </button>
+            <button
+              ref={mobileMenuButtonRef}
+              type="button"
+              onClick={() => setIsMobileMenuOpen((open) => !open)}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="dashboard-mobile-menu"
+              className={cn(
+                "inline-flex h-11 shrink-0 items-center gap-1.5 border border-white/10 px-3 text-sm font-semibold text-white transition-colors hover:bg-white/10 lg:hidden",
+                focusRing
+              )}
+            >
+              <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+              메뉴
+            </button>
           </div>
+        </div>
+
+        {accountError && !isAddingAccount && (
+          <p role="alert" className="border-t border-white/10 bg-danger-fill px-4 py-2 text-center text-xs font-semibold text-white">
+            {accountError}
+          </p>
+        )}
+
+        <div
+          ref={mobileMenuRef}
+          id="dashboard-mobile-menu"
+          hidden={!isMobileMenuOpen}
+          onKeyDown={(event) => closeOnEscape(event, () => setIsMobileMenuOpen(false), mobileMenuButtonRef.current)}
+          className="max-h-below-header overflow-y-auto border-t border-white/10 bg-surface text-ink shadow-float lg:hidden"
+        >
+          <nav aria-label="전체 메뉴" className="mx-auto max-w-280 px-3 py-3 sm:px-6">
+            <ul className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
+              {dashboardNavGroups.map((group) => (
+                <li key={group.label} className="border-b border-hairline py-2 last:border-b-0 dark:border-zinc-800 sm:[&:nth-last-child(2)]:border-b-0">
+                  {group.items.length > 1 && (
+                    <p className="px-2 pb-1 text-xs font-medium text-zinc-500 dark:text-zinc-400">{group.label}</p>
+                  )}
+                  <ul>
+                    {group.items.map((item) => {
+                      const active = isNavItemActive(item, pathname);
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            prefetch
+                            aria-current={active ? "page" : undefined}
+                            onClick={() => handleRouteIntent(item.href)}
+                            className={cn(
+                              "flex min-h-11 items-center gap-3 px-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                              active ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-200" : "hover:bg-canvas-soft"
+                            )}
+                          >
+                            <span className="shrink-0 text-brand dark:text-indigo-300">{item.icon}</span>
+                            {item.label}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-2 flex items-center justify-between gap-3 border-t border-hairline pt-3 dark:border-zinc-800 sm:hidden">
+              <span className="min-w-0 truncate text-xs text-zinc-500 dark:text-zinc-400">{displayName}</span>
+              <button
+                type="button"
+                onClick={handleAuthButton}
+                className="h-11 shrink-0 border border-hairline px-4 text-sm font-semibold text-ink hover:bg-canvas-soft dark:border-zinc-700"
+              >
+                {isAuthenticated ? "로그아웃" : "로그인"}
+              </button>
+            </div>
+          </nav>
         </div>
       </header>
 
-      <main className="flex-1 bg-canvas-soft dark:bg-zinc-950">
+      <main id="main-content" tabIndex={-1} className="flex-1 bg-canvas-soft focus:outline-none dark:bg-zinc-950">
         <div className="mx-auto max-w-280 px-4 py-5 sm:px-6 md:py-7">
           {children}
         </div>
       </main>
 
-      <footer className="border-t border-hairline bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-900 sm:px-6">
-        <p className="mx-auto max-w-280 text-xs text-ink-mute dark:text-zinc-400">
+      <footer className="border-t border-hairline bg-surface px-4 py-4 dark:border-zinc-800 sm:px-6">
+        <p className="mx-auto max-w-280 text-xs leading-relaxed text-ink-mute">
           가족연금계획은 사용자가 입력한 기록을 계산해 보여주는 도구이며 투자 자문이나 매매 권유를 하지 않습니다. 세금·수익 계산은 참고용입니다.
         </p>
       </footer>
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-zinc-200/80 bg-white/95 shadow-[0_-10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/95 md:hidden">
-        <div className="mx-auto grid h-20 max-w-140 grid-cols-5 items-center px-2 pb-[env(safe-area-inset-bottom)]">
+      <nav
+        aria-label="주요 메뉴"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-hairline bg-surface pb-safe shadow-bar dark:border-zinc-800 lg:hidden"
+      >
+        <ul className="mx-auto grid h-20 max-w-140 grid-cols-5 items-center px-2">
           {bottomNavItems.map((item) => {
-            const isActive =
-              item.href === "/dashboard"
-                ? pathname === "/dashboard"
-                : pathname.startsWith(item.href);
-
+            const isActive = isNavItemActive(item, pathname);
             return (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch
-                onClick={() => handleRouteIntent(item.href)}
-                onTouchStart={() => prefetchRoute(item.href)}
-                onMouseEnter={() => prefetchRoute(item.href)}
-                className={cn(
-                  "flex min-w-0 flex-col items-center gap-1 border border-transparent px-1.5 py-2 text-xs font-semibold transition-all active:scale-95",
-                  isActive
-                    ? "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
-                    : "text-zinc-500 dark:text-zinc-400 hover:border-zinc-200 hover:bg-zinc-50 hover:text-zinc-700 dark:hover:border-zinc-800 dark:hover:bg-zinc-900 dark:hover:text-zinc-200"
-                )}
-              >
-                <span className={cn("border border-transparent p-1", isActive && "border-zinc-200 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900")}>{item.icon}</span>
-                <span className="truncate">{item.shortLabel}</span>
-              </Link>
+              <li key={item.href} className="min-w-0">
+                <Link
+                  href={item.href}
+                  prefetch
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => handleRouteIntent(item.href)}
+                  onTouchStart={() => prefetchRoute(item.href)}
+                  onMouseEnter={() => prefetchRoute(item.href)}
+                  className={cn(
+                    "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 px-1.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
+                    isActive
+                      ? "text-brand dark:text-indigo-300"
+                      : "text-zinc-500 hover:text-ink dark:text-zinc-400"
+                  )}
+                >
+                  {item.icon}
+                  <span className="truncate">{item.shortLabel}</span>
+                </Link>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </nav>
     </div>
   );

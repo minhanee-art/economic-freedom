@@ -307,6 +307,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
   return (
     <div className="space-y-6">
+      <h1 className="text-xl font-bold tracking-tight text-ink">설정</h1>
       {/* 저장 상태 토스트 */}
       {saveStatus && (
         <div className="fixed top-4 right-4 z-50 bg-brand text-white px-4 py-2 text-sm font-medium shadow-float animate-fade-in">
@@ -316,7 +317,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
       {/* 프로필 */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-4">
-        <h3 className="text-sm font-semibold">프로필</h3>
+        <h2 className="text-sm font-semibold">프로필</h2>
 
         <div>
           <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500">(Google 계정, 변경 불가)</span></label>
@@ -383,9 +384,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 종목 관리 */}
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h3 className="text-sm font-semibold">
+          <h2 className="text-sm font-semibold">
             종목 관리 ({holdings.length})
-          </h3>
+          </h2>
           <div className="flex items-center gap-2">
             <div className="flex items-center border border-hairline dark:border-zinc-700 overflow-hidden text-xs bg-white dark:bg-zinc-900 shadow-card">
               {(
@@ -538,37 +539,37 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 감정분석 종목 watchlist */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">📡 감정분석 종목 ({watchlist.length})</h3>
+          <h2 className="text-sm font-semibold">감정분석 종목 ({watchlist.length})</h2>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
         </div>
 
         {/* 추가 폼 */}
         <div className="space-y-2">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="text"
               value={wlName}
               onChange={(e) => setWlName(e.target.value)}
               placeholder="종목명 (예: 삼성전자, SCHD ETF)"
-              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <select
               value={wlMarket}
               onChange={(e) => setWlMarket(e.target.value as "KR" | "US")}
-              className="h-9 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-11 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
-              <option value="KR">🇰🇷 KR</option>
-              <option value="US">🇺🇸 US</option>
+              <option value="KR">한국(KR)</option>
+              <option value="US">미국(US)</option>
             </select>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="text"
               value={wlCode}
               onChange={(e) => setWlCode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddWatchlist()}
               placeholder={wlMarket === "KR" ? "종목코드 (예: 069500)" : "심볼 (예: SCHD)"}
-              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <button
               onClick={handleAddWatchlist}
@@ -588,7 +589,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             {watchlist.map((w) => (
               <li key={w.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
                 <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 w-7 shrink-0">
-                  {w.market === "US" ? "🇺🇸" : "🇰🇷"}
+                  {w.market === "US" ? "US" : "KR"}
                 </span>
                 <span className="flex-1 text-sm">{w.name}</span>
                 {w.code && (
@@ -609,37 +610,37 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 배당 캘린더 */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">📅 배당 캘린더 ({calendar.length})</h3>
+          <h2 className="text-sm font-semibold">배당 일정 ({calendar.length})</h2>
           <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
         </div>
 
         {/* 추가 폼 */}
         <div className="space-y-2">
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="date"
               value={calDate}
               onChange={(e) => setCalDate(e.target.value)}
-              className="h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="min-w-0 flex-1 basis-36 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <select
               value={calType}
               onChange={(e) => setCalType(e.target.value)}
-              className="h-9 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="h-11 border border-hairline bg-white transition px-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             >
-              <option value="ex-date">⚠️ 배당락일</option>
-              <option value="pay-date">💰 배당지급일</option>
-              <option value="meeting">🏛️ 주주총회</option>
-              <option value="other">📋 기타</option>
+              <option value="ex-date">배당락일</option>
+              <option value="pay-date">배당지급일</option>
+              <option value="meeting">주주총회</option>
+              <option value="other">기타</option>
             </select>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <input
               type="text"
               value={calStock}
               onChange={(e) => setCalStock(e.target.value)}
               placeholder="종목명 (예: 삼성전자)"
-              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
             <input
               type="text"
@@ -647,7 +648,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               onChange={(e) => setCalNote(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddCalendar()}
               placeholder="메모 (예: 2024년 결산배당)"
-              className="flex-1 h-9 border border-hairline bg-white transition px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
+              className="min-w-0 flex-1 basis-40 h-11 border border-hairline bg-white transition px-3 text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
             />
           </div>
           <button
@@ -666,10 +667,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           <ul className="space-y-1.5">
             {calendar.map((c) => {
               const typeLabel: Record<string, string> = {
-                "ex-date": "⚠️ 배당락",
-                "pay-date": "💰 지급일",
-                "meeting": "🏛️ 주총",
-                "other": "📋 기타",
+                "ex-date": "배당락",
+                "pay-date": "지급일",
+                "meeting": "주총",
+                "other": "기타",
               };
               return (
                 <li key={c.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
@@ -692,36 +693,61 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
       {/* 테마 설정 */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-        <h3 className="text-sm font-semibold">테마</h3>
-        <div className="flex gap-2">
+        <h2 className="text-sm font-semibold">테마</h2>
+        <div className="flex flex-wrap gap-2">
           {(
             [
-              { value: "light", label: "라이트", icon: "☀️" },
-              { value: "dark", label: "다크", icon: "🌙" },
-              { value: "system", label: "시스템", icon: "💻" },
-            ] as { value: Theme; label: string; icon: string }[]
+              { value: "light", label: "라이트" },
+              { value: "dark", label: "다크" },
+              { value: "system", label: "시스템" },
+            ] as { value: Theme; label: string }[]
           ).map((opt) => (
             <button
               key={opt.value}
+              type="button"
               onClick={() => setTheme(opt.value)}
+              aria-pressed={theme === opt.value}
               className={cn(
-                "flex-1 h-10 border text-sm font-medium transition-colors",
+                "flex-1 h-11 border text-sm font-medium transition-colors",
                 theme === opt.value
-                  ? "bg-indigo-500 text-white border-indigo-500 shadow-card"
+                  ? "bg-brand text-white border-brand"
                   : "border-hairline dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800"
               )}
             >
-              {opt.icon} {opt.label}
+              {opt.label}
             </button>
           ))}
         </div>
       </section>
 
-      {/* 위험 구역 */}
-      <section className="border border-danger-line bg-danger-soft p-5 space-y-3 shadow-card">
-        <h3 className="text-sm font-semibold text-danger">
-          위험 구역
-        </h3>
+      {/* 로그인 세션 — 데이터 삭제와 분리 */}
+      <section aria-labelledby="settings-session" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 id="settings-session" className="text-sm font-semibold text-ink">로그인</h2>
+            <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">이 기기에서 로그아웃합니다. 기록은 그대로 남습니다.</p>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="h-11 border border-hairline px-4 text-sm font-semibold text-ink transition-colors hover:bg-canvas-soft dark:border-zinc-700"
+          >
+            로그아웃
+          </button>
+        </div>
+      </section>
+
+      {/* 데이터 삭제 — 되돌릴 수 없는 작업만 모은다 */}
+      <section aria-labelledby="settings-data-delete" className="border border-danger-line bg-surface p-5 space-y-3 shadow-card">
+        <div>
+          <h2 id="settings-data-delete" className="flex items-center gap-2 text-sm font-semibold text-danger">
+            <svg aria-hidden="true" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+            </svg>
+            데이터 삭제
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">아래 작업은 되돌릴 수 없습니다. 누르면 무엇이 지워지는지 한 번 더 확인합니다.</p>
+        </div>
         <div className="space-y-2">
           <DangerButton
             label="종목 초기화 (기본 15종목)"
@@ -738,11 +764,6 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             desc="모든 배당금 기록이 삭제됩니다"
             onClick={() => setDangerModal("dividends")}
           />
-          <DangerButton
-            label="로그아웃"
-            desc="현재 세션에서 로그아웃합니다"
-            onClick={handleLogout}
-          />
         </div>
       </section>
 
@@ -750,7 +771,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {dangerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-sm border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
-            <h3 className="text-lg font-bold text-danger">정말 삭제하시겠습니까?</h3>
+            <h2 className="text-lg font-bold text-danger">정말 삭제하시겠습니까?</h2>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {dangerModal === "reset" &&
                 "현재 종목을 모두 삭제하고 기본 15개 종목으로 복원합니다. 매수 기록과 원가 데이터도 초기화됩니다."}
@@ -759,7 +780,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
               {dangerModal === "dividends" &&
                 "모든 배당금 수령 기록이 삭제됩니다. 이 작업은 되돌릴 수 없습니다."}
             </p>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => setDangerModal(null)}
                 disabled={isDeleting}
@@ -876,7 +897,8 @@ function DangerButton({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center justify-between border border-danger-line bg-white dark:bg-zinc-900 px-4 py-3 text-left shadow-card hover:bg-danger-soft hover:shadow-float transition-all"
+      type="button"
+      className="w-full min-h-14 flex items-center justify-between border border-danger-line bg-surface px-4 py-3 text-left transition-colors hover:bg-danger-soft"
     >
       <div>
         <p className="text-sm font-medium text-danger">
@@ -885,6 +907,7 @@ function DangerButton({
         <p className="text-xs text-zinc-500 dark:text-zinc-400">{desc}</p>
       </div>
       <svg
+        aria-hidden="true"
         className="w-4 h-4 text-danger shrink-0"
         fill="none"
         viewBox="0 0 24 24"

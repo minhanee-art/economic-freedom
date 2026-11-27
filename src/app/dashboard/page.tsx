@@ -1,8 +1,11 @@
 // 대시보드 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getHoldings, getCostBases, getProfile, getDividends, getDividendCalendar } from "@/lib/queries";
 import { DashboardClient } from "./dashboard-client";
+
+export const metadata: Metadata = { title: "홈 · 가족연금계획" };
 
 export default async function DashboardPage() {
   const session = await getSession();

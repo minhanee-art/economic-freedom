@@ -1,8 +1,11 @@
 // 자녀 계좌 관리 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getChildren, getChildGifts } from "@/lib/queries";
 import { ChildrenClient } from "./children-client";
+
+export const metadata: Metadata = { title: "자녀 계좌 · 가족연금계획" };
 
 export default async function ChildrenPage() {
   const session = await getSession();

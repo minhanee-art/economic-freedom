@@ -1,8 +1,11 @@
 // 설정 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getProfile, getHoldings, getWatchlist, getDividendCalendar } from "@/lib/queries";
 import { SettingsClient } from "./settings-client";
+
+export const metadata: Metadata = { title: "설정 · 가족연금계획" };
 
 export default async function SettingsPage() {
   const session = await getSession();

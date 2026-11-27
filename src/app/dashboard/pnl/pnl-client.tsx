@@ -96,6 +96,7 @@ export function PnLClient({
 
   return (
     <div className="space-y-5">
+      <h1 className="text-xl font-bold tracking-tight text-ink">자산·손익</h1>
       {/* 총 수익 현황 */}
       <div className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800">
         <div className="grid grid-cols-2 gap-5">
@@ -144,16 +145,16 @@ export function PnLClient({
           {/* 추이 차트 */}
           {chartData.length >= 2 && (
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
-              <h3 className="text-sm font-semibold text-ink mb-3">
+              <h2 className="text-sm font-semibold text-ink mb-3">
                 투입 vs 평가 추이
-              </h3>
+              </h2>
               <PnLAreaChart data={chartData} />
             </div>
           )}
 
           {/* 자산군별 손익 요약 */}
           <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
-            <h3 className="text-sm font-semibold text-ink mb-3">자산군별 손익</h3>
+            <h2 className="text-sm font-semibold text-ink mb-3">자산군별 손익</h2>
             <div className="grid grid-cols-2 gap-3">
               {Array.from(categoryMap.entries()).map(([cat, data]) => {
                 const pct =
@@ -192,9 +193,9 @@ export function PnLClient({
 
           {/* 종목별 손익 리스트 */}
           <div>
-            <h3 className="text-sm font-semibold text-ink mb-3">
+            <h2 className="text-sm font-semibold text-ink mb-3">
               종목별 손익 ({pnlList.length})
-            </h3>
+            </h2>
             <div className="space-y-2">
               {pnlList.map((h) => (
                 <div

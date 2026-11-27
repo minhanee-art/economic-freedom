@@ -431,7 +431,7 @@ export function HoldingCard({
               onClick={() => setTradeAction(tradeAction === "buy" ? null : "buy")}
               className="h-9 border border-indigo-200 bg-indigo-50 px-3 text-xs font-bold text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-500/30 dark:bg-indigo-500/15 dark:text-indigo-200"
             >
-              바로 매수
+              매수 기록
             </button>
             <button
               type="button"
@@ -439,7 +439,7 @@ export function HoldingCard({
               disabled={h.shares <= 0}
               className="h-9 border border-hairline bg-surface px-3 text-xs font-bold text-ink transition-colors hover:bg-canvas-soft disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
             >
-              바로 매도
+              매도 기록
             </button>
             {onHoldingDetailsChange && (
               <button
@@ -572,7 +572,7 @@ export function HoldingCard({
                   disabled={isTrading}
                   className={`col-span-2 h-9 border px-3 text-xs font-bold text-white transition-colors disabled:opacity-60 sm:col-span-1 border-brand bg-brand hover:bg-brand-deep`}
                 >
-                  {isTrading ? "처리중" : `${tradeAction === "buy" ? "매수" : "매도"} 확정`}
+                  {isTrading ? "저장 중" : `${tradeAction === "buy" ? "매수" : "매도"} 기록 저장`}
                 </button>
               </div>
               <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">

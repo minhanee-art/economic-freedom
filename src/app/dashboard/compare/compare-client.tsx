@@ -349,7 +349,7 @@ export function CompareClient({ holdings }: Props) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-ink tracking-tight">ETF 종목 비교</h2>
+        <h1 className="text-xl font-bold tracking-tight text-ink">ETF 종목 비교</h1>
         <div className="flex items-center gap-2">
           {selected.length > 0 && (
             <button
@@ -606,7 +606,7 @@ export function CompareClient({ holdings }: Props) {
           <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-sm font-semibold text-ink">ETF 구성 종목·편입비율 비교</h3>
+                <h2 className="text-sm font-semibold text-ink">ETF 구성 종목·편입비율 비교</h2>
                 <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                   각 ETF의 상위 편입 종목과 비중입니다. 종목코드는 굵게 표시했습니다.
                 </p>
@@ -663,7 +663,7 @@ export function CompareClient({ holdings }: Props) {
           {/* 유사 ETF */}
           {selected.some((s) => s.detail?.similarETFs?.length) && (
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h3 className="text-sm font-semibold text-ink mb-3">유사 ETF</h3>
+              <h2 className="text-sm font-semibold text-ink mb-3">유사 ETF</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {selected.map((s, i) => (
                   s.detail?.similarETFs?.length ? (
@@ -688,7 +688,7 @@ export function CompareClient({ holdings }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 레이더 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h3 className="text-sm font-semibold text-ink mb-3">종합 비교</h3>
+              <h2 className="text-sm font-semibold text-ink mb-3">종합 비교</h2>
               <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData}>
@@ -714,9 +714,9 @@ export function CompareClient({ holdings }: Props) {
 
             {/* 수익률 바 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h3 className="text-sm font-semibold text-ink mb-3">
+              <h2 className="text-sm font-semibold text-ink mb-3">
                 수익률 비교 ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
-              </h3>
+              </h2>
               <div className="h-75">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={returnBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
@@ -735,7 +735,7 @@ export function CompareClient({ holdings }: Props) {
 
             {/* 현재가 바 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h3 className="text-sm font-semibold text-ink mb-3">현재가 비교</h3>
+              <h2 className="text-sm font-semibold text-ink mb-3">현재가 비교</h2>
               <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
@@ -752,7 +752,7 @@ export function CompareClient({ holdings }: Props) {
 
             {/* 거래량 바 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h3 className="text-sm font-semibold text-ink mb-3">거래량 비교</h3>
+              <h2 className="text-sm font-semibold text-ink mb-3">거래량 비교</h2>
               <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>

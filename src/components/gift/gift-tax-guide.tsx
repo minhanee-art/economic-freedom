@@ -70,13 +70,18 @@ function Steps({ items }: { items: string[] }) {
 export function GiftTaxGuide() {
   return (
     <div className="space-y-3">
-      <div className="bg-caution-soft border border-caution/30 px-4 py-3 text-xs text-caution">
-        ⚠️ 아래 내용은 일반적인 안내이며 개별 상황(증여자·수증자 관계, 기존 증여 이력 등)에 따라 결과가 달라질 수 있습니다.
+      <div role="note" className="flex gap-2 bg-caution-soft border border-caution/30 px-4 py-3 text-xs leading-relaxed text-caution">
+        <svg aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+        </svg>
+        <p>
+        아래 내용은 일반적인 안내이며 개별 상황(증여자·수증자 관계, 기존 증여 이력 등)에 따라 결과가 달라질 수 있습니다.
         실제 신고 전 반드시 <b>국세청 홈택스(hometax.go.kr)</b> 자동계산 또는 <b>세무사 상담</b>으로 확인하세요.
         세법 개정으로 공제한도·세율·이자율이 바뀔 수 있습니다.
+        </p>
       </div>
 
-      <Section title="📋 기본 정보 — 공제한도 · 신고기한 · 세율">
+      <Section title="기본 정보 — 공제한도 · 신고기한 · 세율">
         <div>
           <p className="font-medium text-zinc-800 dark:text-zinc-100 mb-1">증여재산공제 (직계존속 → 직계비속, 10년간 합산)</p>
           <ul className="list-disc list-inside space-y-0.5">
@@ -240,7 +245,7 @@ export function GiftTaxGuide() {
         </div>
       </Section>
 
-      <Section title="⚠️ 공통 주의사항">
+      <Section title="공통 주의사항">
         <ul className="list-disc list-inside space-y-1">
           <li>반드시 자녀 <b>본인 명의</b> 계좌로 이체해야 증여로 인정됩니다. 부모가 자녀 이름으로 개설했지만 실질적으로 지배·관리하는 이른바 &quot;차명계좌&quot;는 증여로 인정되지 않으며, 오히려 나중에 실제 인출 시점에 증여로 재해석되어 과세될 수 있습니다.</li>
           <li>통장 이체 내역·증여계약서 등 증빙은 최소 10년 이상 보관하는 것을 권장합니다(추후 자금출처 소명 대비).</li>

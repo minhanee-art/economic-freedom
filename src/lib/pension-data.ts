@@ -226,7 +226,10 @@ export async function getRetirementGoal(userId: string): Promise<RetirementGoalR
            expected_return_pct::float AS expected_return_pct, salary_bracket
     FROM profiles WHERE id = ${userId}
   `;
-  if (!row) return null;
+  return row ? toRetirementGoal(row) : null;
+}
+
+function toRetirementGoal(row: Record<string, unknown>): RetirementGoalRow {
   return {
     targetMonthly: nullableNumber(row.retirement_target_monthly),
     retirementAge: nullableNumber(row.retirement_age),
@@ -237,21 +240,36 @@ export async function getRetirementGoal(userId: string): Promise<RetirementGoalR
   };
 }
 
+/**
+ * 요청에 들어 있는 항목만 바꾼다 — 키가 없으면 그대로 두고, 값이 null이면 지운다.
+ * 읽고 병합해 전체를 다시 쓰면 두 기기가 서로 다른 항목을 동시에 고칠 때 나중 요청이 앞 요청을 옛 값으로 되돌리므로,
+ * 항목마다 "바꿀지" 플래그를 넘겨 한 UPDATE 안에서 CASE로 고른다. 저장 후 전체 목표를 돌려주고, 프로필이 없으면 null.
+ */
+export async function patchRetirementGoal(
+  userId: string,
+  patch: Partial<RetirementGoalRow>
+): Promise<RetirementGoalRow | null> {
+  await ensurePensionSchema();
+  const has = (key: keyof RetirementGoalRow) => Object.prototype.hasOwnProperty.call(patch, key);
+  const value = <K extends keyof RetirementGoalRow>(key: K) => (has(key) ? (patch[key] ?? null) : null);
+  const [row] = await sql`
+    UPDATE profiles
+    SET retirement_target_monthly = CASE WHEN ${has("targetMonthly")}::boolean THEN ${value("targetMonthly")}::bigint ELSE retirement_target_monthly END,
+        retirement_age = CASE WHEN ${has("retirementAge")}::boolean THEN ${value("retirementAge")}::integer ELSE retirement_age END,
+        birth_year = CASE WHEN ${has("birthYear")}::boolean THEN ${value("birthYear")}::integer ELSE birth_year END,
+        spouse_birth_year = CASE WHEN ${has("spouseBirthYear")}::boolean THEN ${value("spouseBirthYear")}::integer ELSE spouse_birth_year END,
+        expected_return_pct = CASE WHEN ${has("expectedReturnPct")}::boolean THEN ${value("expectedReturnPct")}::numeric ELSE expected_return_pct END,
+        salary_bracket = CASE WHEN ${has("salaryBracket")}::boolean THEN ${value("salaryBracket")}::text ELSE salary_bracket END
+    WHERE id = ${userId}
+    RETURNING retirement_target_monthly, retirement_age, birth_year, spouse_birth_year,
+              expected_return_pct::float AS expected_return_pct, salary_bracket
+  `;
+  return row ? toRetirementGoal(row) : null;
+}
+
 /** 전달된 값 전체를 그대로 저장한다 (null은 지움). 프로필이 없으면 false. */
 export async function saveRetirementGoal(userId: string, goal: RetirementGoalRow): Promise<boolean> {
-  await ensurePensionSchema();
-  const rows = await sql`
-    UPDATE profiles
-    SET retirement_target_monthly = ${goal.targetMonthly},
-        retirement_age = ${goal.retirementAge},
-        birth_year = ${goal.birthYear},
-        spouse_birth_year = ${goal.spouseBirthYear},
-        expected_return_pct = ${goal.expectedReturnPct},
-        salary_bracket = ${goal.salaryBracket}
-    WHERE id = ${userId}
-    RETURNING id
-  `;
-  return rows.length > 0;
+  return (await patchRetirementGoal(userId, goal)) !== null;
 }
 
 // ── 계좌별 평가액·배당 (현금흐름 계산 입력) ──────────────────────

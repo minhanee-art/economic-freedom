@@ -27,6 +27,11 @@ before(async () => {
 
 beforeEach(() => {
   db.reset();
+  // 가짜 sql 은 호출 즉시 handler 를 돌리므로, 트랜잭션 결과는 각 문장의 handler 결과다.
+  db.sql.transaction = async (queries: unknown[]) => {
+    db.calls.push({ query: "<transaction>", values: queries });
+    return Promise.all(queries as Promise<unknown>[]);
+  };
   session.state.userId = "user-1";
 });
 
@@ -167,7 +172,7 @@ test("PATCH: 종목코드 형식이 틀리면 400", async () => {
 
 test("PATCH: 수량을 0으로 바꾸면 원가를 지운다", async () => {
   db.setHandler((query) => {
-    if (query.includes("SELECT shares")) return [{ shares: 5 }];
+    if (query.includes("RETURNING id")) return [{ id: "h1" }];
     if (query.includes("FROM holdings")) return [{ id: "h1", shares: 0 }];
     return [];
   });
@@ -179,11 +184,10 @@ test("PATCH: 수량을 0으로 바꾸면 원가를 지운다", async () => {
 });
 
 test("PATCH: 수량이 있는데 평단가가 0이면 400", async () => {
-  db.setHandler((query) => (query.includes("SELECT shares") ? [{ shares: 5 }] : []));
-
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", shares: 3, avg_price: 0 }));
   assert.equal(response.status, 400);
   assert.match((await readJson<{ error: string }>(response)).error, /평단가/);
+  assert.equal(db.find("<transaction>").length, 0);
 });
 
 test("PATCH: 계좌에 없는 종목이면 404", async () => {
@@ -191,6 +195,48 @@ test("PATCH: 계좌에 없는 종목이면 404", async () => {
 
   const response = await route.PATCH(jsonRequest("PATCH", { id: "h-other", shares: 3, avg_price: 100 }));
   assert.equal(response.status, 404);
+});
+
+test("PATCH: 평단가만 보내면 수량을 읽어 되쓰지 않고 한 문장으로 원가만 다시 계산한다", async () => {
+  db.setHandler((query) => (query.includes("WITH h AS") ? [{ found: 1, shares: 7 }] : query.includes("FROM holdings") ? [{ id: "h1", shares: 7 }] : []));
+
+  const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", avg_price: 1200 }));
+  assert.equal(response.status, 200);
+
+  assert.equal(db.find("UPDATE holdings SET shares").length, 0, "shares 를 다시 쓰지 않는다");
+  const [stmt] = db.find("WITH h AS");
+  assert.match(stmt.query, /FOR UPDATE/);
+  assert.match(stmt.query, /h\.shares::bigint \* \?::int/);
+  assert.equal(db.find("SELECT shares FROM holdings").length, 0, "트랜잭션 밖 사전 조회 없음");
+});
+
+test("PATCH: 평단가만 보냈는데 종목이 없으면 404", async () => {
+  db.setHandler((query) => (query.includes("WITH h AS") ? [{ found: 0, shares: 0 }] : []));
+
+  const response = await route.PATCH(jsonRequest("PATCH", { id: "h-other", avg_price: 1200 }));
+  assert.equal(response.status, 404);
+});
+
+test("PATCH: 평단가만 0으로 보내면 수량이 있을 때 400, 아무 것도 쓰지 않는다", async () => {
+  db.setHandler((query) => (query.includes("SELECT shares FROM holdings") ? [{ shares: 5 }] : []));
+
+  const response = await route.PATCH(jsonRequest("PATCH", { id: "h1", name: "새 이름", avg_price: 0 }));
+  assert.equal(response.status, 400);
+  assert.equal(db.find("<transaction>").length, 0);
+});
+
+test("PATCH: 여러 필드를 보내면 한 트랜잭션으로 묶고, 검증 실패 시 하나도 쓰지 않는다", async () => {
+  db.setHandler((query) => (query.includes("FROM holdings") ? [{ id: "h1" }] : []));
+
+  const ok = await route.PATCH(jsonRequest("PATCH", { id: "h1", current_price: 1000, target_pct: 10, name: "새 이름" }));
+  assert.equal(ok.status, 200);
+  const [tx] = db.find("<transaction>");
+  assert.equal((tx.values as unknown[]).length, 3);
+
+  db.reset();
+  const bad = await route.PATCH(jsonRequest("PATCH", { id: "h1", current_price: 1000, name: "  " }));
+  assert.equal(bad.status, 400);
+  assert.equal(db.find("<transaction>").length, 0, "트랜잭션을 시작하지 않으므로 앞 필드도 반영되지 않는다");
 });
 
 test("DELETE: 계좌·사용자 범위로만 지운다", async () => {

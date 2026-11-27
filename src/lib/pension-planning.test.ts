@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import {
+  computeFamilyTaxCredit,
   computeRetirementCashflow,
   computeTaxCreditProgress,
   futureValue,
@@ -156,4 +157,137 @@ test("현금흐름: 이미 은퇴 나이를 지났으면 남은 기간 0", () =>
   assert.equal(result.projectedBalances.private, 1_000_000);
   assert.equal(result.rows[0].age, 50, "지난 나이는 건너뛴다");
   assert.equal(result.rows.length, 1);
+});
+
+// ── 명의자별 계산 (가족 계좌를 한 사람처럼 합치지 않는다) ──
+
+test("세액공제: 부부가 연금저축에 각 600만원 → 명의자별 한도로 1,200만원 모두 공제 대상", () => {
+  const family = computeFamilyTaxCredit(
+    [
+      { ownerType: "self", accountType: "pension_savings", amount: 6_000_000, accountId: "a" },
+      { ownerType: "spouse", accountType: "pension_savings", amount: 6_000_000, accountId: "b" },
+      { ownerType: "child", accountType: "pension_savings", amount: 1_000_000, accountId: "c" },
+    ],
+    { self: "low", spouse: null },
+    rules
+  );
+  assert.equal(family.byOwner.length, 2);
+  const [self, spouse] = family.byOwner;
+  assert.equal(self.ownerType, "self");
+  assert.equal(self.progress.creditableTotal, 6_000_000);
+  assert.equal(self.progress.estimatedCredit, 990_000, "600만원 × 16.5%");
+  assert.equal(self.salaryBracketAssumed, false);
+  assert.equal(spouse.ownerType, "spouse");
+  assert.equal(spouse.progress.creditableTotal, 6_000_000);
+  assert.equal(spouse.salaryBracketAssumed, true, "배우자 소득 구간은 입력이 없어 가정");
+  assert.equal(spouse.progress.estimatedCredit, 792_000, "600만원 × 13.2%(가정)");
+
+  assert.equal(family.total.creditableTotal, 12_000_000, "한 사람 한도(600만원)로 자르지 않는다");
+  assert.equal(family.total.nonCreditablePaid, 0);
+  assert.equal(family.total.estimatedCredit, 1_782_000);
+  assert.equal(family.total.maxCredit, 1_485_000 + 1_188_000);
+  assert.equal(family.total.remainingCreditRoom, 6_000_000, "각자 IRP로 300만원씩 더 공제 가능");
+  assert.equal(family.total.remainingPensionSavingsRoom, 0);
+  assert.equal(Math.round(family.total.progressPct), 67);
+
+  assert.deepEqual(family.excluded, [
+    { accountId: "c", ownerType: "child", accountType: "pension_savings", amount: 1_000_000, reason: "child_or_other_owner" },
+  ]);
+});
+
+test("세액공제: 한 명의자 안에서는 기존처럼 600만원 한도로 자른다", () => {
+  const family = computeFamilyTaxCredit(
+    [
+      { ownerType: "self", accountType: "pension_savings", amount: 6_000_000 },
+      { ownerType: "self", accountType: "pension_savings", amount: 6_000_000 },
+    ],
+    { self: "low", spouse: null },
+    rules
+  );
+  assert.equal(family.byOwner.length, 1);
+  assert.equal(family.total.creditableTotal, 6_000_000);
+  assert.equal(family.total.estimatedCredit, 990_000);
+  assert.deepEqual(family.total, family.byOwner[0].progress);
+});
+
+test("현금흐름: 배우자(45세) 명의 연금 잔액은 본인 60세가 아니라 배우자 55세부터 받는다", () => {
+  const coupleGoal: RetirementGoal = {
+    targetMonthly: 3_000_000,
+    retirementAge: 60,
+    birthYear: 1966, // 2026년 60세
+    spouseBirthYear: 1981, // 2026년 45세
+    expectedReturnPct: 0,
+  };
+  const result = computeRetirementCashflow(
+    coupleGoal,
+    [],
+    [{ id: "sp", ownerType: "spouse", accountType: "pension_savings", value: 24_000_000, annualDividend: 0 }],
+    { currentYear: 2026, payoutYears: 20, horizonAge: 95 }
+  );
+  const spouse = result.annuities.find((a) => a.ownerType === "spouse")!;
+  assert.equal(spouse.ownerStartAge, 55);
+  assert.equal(spouse.startAge, 70, "본인 나이 기준 70세(배우자 55세)");
+  assert.equal(spouse.monthlyPrivate, 100_000);
+  assert.equal(result.annuity.monthlyPrivate, 0, "본인 명의 계좌는 없음");
+
+  const at = (age: number) => result.rows.find((row) => row.age === age)!;
+  assert.equal(at(60).layers.private, 0, "배우자 55세 전에는 연금수령 불가");
+  assert.equal(at(69).layers.private, 0);
+  assert.equal(at(70).layers.private, 100_000);
+  assert.equal(at(89).layers.private, 100_000);
+  assert.equal(at(90).layers.private, 0);
+  assert.deepEqual(result.excludedAccounts, []);
+
+  // 배우자 출생연도가 없으면 수령 시점을 지어내지 않고 제외한다
+  const unknown = computeRetirementCashflow(
+    { ...coupleGoal, spouseBirthYear: null },
+    [],
+    [{ id: "sp", ownerType: "spouse", accountType: "pension_savings", value: 24_000_000, annualDividend: 0 }],
+    { currentYear: 2026 }
+  );
+  assert.equal(unknown.rows.every((row) => row.layers.private === 0), true);
+  assert.deepEqual(unknown.excludedAccounts, [
+    { id: "sp", ownerType: "spouse", accountType: "pension_savings", value: 24_000_000, reason: "spouse_birth_year_missing" },
+  ]);
+});
+
+test("현금흐름: 80세 사용자(은퇴 나이 60)는 현재 잔액을 올해부터 나눠 받는다", () => {
+  const result = computeRetirementCashflow(
+    { targetMonthly: 1_000_000, retirementAge: 60, birthYear: 1946, spouseBirthYear: null, expectedReturnPct: 0 },
+    [],
+    [
+      { accountType: "pension_savings", value: 24_000_000, annualDividend: 0 },
+      { accountType: "dc", value: 12_000_000, annualDividend: 0 },
+    ],
+    { currentYear: 2026, payoutYears: 20, horizonAge: 90 }
+  );
+  assert.equal(result.currentAge, 80);
+  assert.equal(result.annuity.startAge, 80, "과거(60~79세)에 배치하지 않는다");
+  assert.equal(result.rows[0].age, 80);
+  assert.equal(result.atRetirement.layers.private, 100_000);
+  assert.equal(result.atRetirement.layers.retirement, 50_000);
+  assert.equal(result.rows.find((r) => r.age === 90)!.layers.private, 100_000);
+  assert.equal(result.coveragePctAtRetirement, 15);
+});
+
+test("현금흐름: 자녀·기타 명의 계좌는 연금화·배당 모두 제외", () => {
+  const result = computeRetirementCashflow(
+    goal,
+    [],
+    [
+      { id: "k", ownerType: "child", accountType: "general", value: 10_000_000, annualDividend: 1_200_000 },
+      { id: "o", ownerType: "other", accountType: "irp", value: 24_000_000, annualDividend: 0 },
+      { id: "s", ownerType: "spouse", accountType: "general", value: 1, annualDividend: 120_000 },
+    ],
+    { currentYear: 2026 }
+  );
+  assert.equal(result.atRetirement.layers.dividend, 10_000, "배우자 배당만 포함");
+  assert.equal(result.atRetirement.layers.private, 0);
+  assert.deepEqual(
+    result.excludedAccounts.map((e) => [e.id, e.reason]),
+    [
+      ["k", "child_or_other_owner"],
+      ["o", "child_or_other_owner"],
+    ]
+  );
 });

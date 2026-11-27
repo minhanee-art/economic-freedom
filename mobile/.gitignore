@@ -43,3 +43,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# e2e 스모크 테스트 산출물(스크린샷·결과 JSON·서버 로그)
+e2e/artifacts/

@@ -5,14 +5,15 @@
 ## 주요 기능
 
 - 포트폴리오 대시보드: 자산배분, 목표 비중 대비 현재 비중, 종목 히트맵
-- 매수 계획과 매수 기록, 평균단가·손익 추적
+- 적립 배분 계산(매수 계획 화면)과 매수 기록(개별 삭제 가능), 평균단가·손익 추적
+- 연금 설계: 연금계좌 납입, 연금 소득원, 은퇴 목표, 세액공제 진행률, 은퇴 시점 예상 현금흐름
 - 배당 기록과 배당 캘린더
 - 여러 포트폴리오 계좌(가족/명의별) 관리
 - 자녀 증여 관리
 - ETF 비교, 시장 정보(지수·거래대금·캔들·구성종목 등)
 - 엑셀 가져오기
 - 계정 삭제(설정 화면), 개인정보처리방침(`/privacy`)·계정 삭제 안내(`/account-deletion`) 페이지
-- 텔레그램 리포트·알림 (Vercel Cron)
+- 텔레그램 리포트·알림 (Vercel Cron), 허용된 채팅 전용 봇(웹훅 시크릿·허용 chat_id가 없으면 거부). AI 요약에는 고지 문구가 붙음
 
 ## 기술 스택
 
@@ -49,7 +50,8 @@ npm run dev                  # http://localhost:3000
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google 로그인 | 선택 |
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | 인증 레이트리밋 분산 저장소 | 선택 |
 | `CRON_SECRET` | Cron 호출 인증 (미설정 시 cron이 401로 차단) | Cron 사용 시 |
-| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` | 텔레그램 리포트·봇 | 선택 |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_WEBHOOK_SECRET` | 텔레그램 리포트·봇. 봇은 `TELEGRAM_WEBHOOK_SECRET`과 허용 chat_id가 없으면 모든 요청을 거부 | 선택 |
+| `TELEGRAM_ALLOWED_CHAT_IDS` | 봇과 대화할 수 있는 chat_id(쉼표 구분). `TELEGRAM_CHAT_ID`와 합쳐 허용 목록이 됨 | 봇 사용 시 |
 | `TELEGRAM_BOT_USERNAME` | 봇 사용자명(@ 제외). 설정 > 텔레그램 연결에서 `t.me` 딥링크를 만든다. 없으면 코드만 보여 준다 | 선택 |
 | `REPORT_USER_EMAIL` 또는 `REPORT_USER_ID` | 리포트 대상 사용자 | 리포트 사용 시 |
 | `KIS_APP_KEY`, `KIS_APP_SECRET` | 한국투자증권 시세 | 선택 |
@@ -81,11 +83,11 @@ CI(`.github/workflows/ci.yml`)는 PR과 `main` push에서 타입 검사 → lint
 
 ## 모바일 앱 (`mobile/`)
 
-Expo SDK 57 / expo-router 기반 앱입니다. 홈·자산·배당·설정 탭이 있고, 로그인 토큰은 SecureStore에 저장합니다. 서버 주소는 `EXPO_PUBLIC_API_BASE_URL`로 지정하며, `mobile/eas.json`의 `preview`·`production` 프로필에 운영 주소가 들어 있습니다.
+Expo SDK 57 / expo-router 기반 앱입니다. 홈·자산·배당·연금·설정 탭이 있고, 계좌 전환, 연금 설계 요약(읽기 전용), 매수·배당 수령 기록 입력, 비밀번호 변경, 계정 삭제를 지원합니다. 로그인 토큰은 SecureStore에 저장합니다. 서버 주소는 `EXPO_PUBLIC_API_BASE_URL`로 지정하며, `mobile/eas.json`의 `preview`·`production` 프로필에 운영 주소가 들어 있습니다.
 
 ```bash
 cd mobile
-npm ci --legacy-peer-deps   # npm 10에서 peer 의존성 충돌(react-native-reanimated)이 나면 필요
+npm ci                      # mobile/.npmrc의 legacy-peer-deps=true를 자동으로 읽음(EAS 빌드도 동일)
 npm run typecheck
 npm run lint
 npx expo-doctor
@@ -98,9 +100,9 @@ EXPO_PUBLIC_API_BASE_URL=http://<개발 서버 주소> npm start
 src/
 ├── app/
 │   ├── api/                 # accounts, auth, children, cron, danger, dividend-calendar,
-│   │                        # dividends, holdings, import, market, me, mobile, portfolio-returns,
+│   │                        # dividends, holdings, import, market, me, mobile, pension, portfolio-returns,
 │   │                        # prices, purchases, settings, telegram-bot, trades, watchlist
-│   ├── dashboard/           # 메인, buy, pnl, dividend, history, market, compare, children, settings
+│   ├── dashboard/           # 메인, buy, pnl, dividend, history, market, compare, children, retirement, settings
 │   ├── login/  signup/      # 인증 화면
 │   ├── privacy/             # 개인정보처리방침
 │   └── account-deletion/    # 계정 삭제 안내

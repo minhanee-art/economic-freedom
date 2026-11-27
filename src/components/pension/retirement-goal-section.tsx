@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { IncomeSourceRow, RetirementGoalRow } from "@/lib/pension-data";
-import { computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
+import { ACCOUNT_OWNER_LABELS, computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
 import { pensionIncomeTaxRate, type PensionRuleSet } from "@/lib/pension-rules";
 import { formatFullKRW, formatKRW } from "@/lib/utils";
 import type { PlanningAccount } from "./account-type-section";
@@ -95,7 +95,13 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
         startAge: s.start_age,
         endAge: s.end_age,
       })),
-      accounts.map((a) => ({ accountType: a.account_type, value: a.value, annualDividend: a.annual_dividend })),
+      accounts.map((a) => ({
+        id: a.id,
+        ownerType: a.owner_type,
+        accountType: a.account_type,
+        value: a.value,
+        annualDividend: a.annual_dividend,
+      })),
       { currentYear: year }
     );
   }, [ready, goal, sources, accounts, year]);
@@ -159,9 +165,32 @@ export function RetirementGoalSection({ year, rules, goal, onGoalChange, sources
           </div>
           <p className="text-xs text-zinc-500">
             올해 {cashflow.currentAge}세 · 은퇴까지 {cashflow.yearsToRetirement}년 · 연금계좌 평가액은 연 {goal.expectedReturnPct ?? 0}%로
-            굴려 {cashflow.annuity.startAge}세부터 {cashflow.annuity.years}년간 나눠 받는다고 가정 (은퇴 시점 추정 DC{" "}
+            굴려 명의자별로{" "}
+            {(cashflow.annuities.some((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
+              ? cashflow.annuities.filter((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
+              : cashflow.annuities
+            )
+              .map((a) =>
+                a.ownerType === "self"
+                  ? `본인 ${a.startAge}세부터`
+                  : `배우자 몫은 배우자 ${a.ownerStartAge}세(본인 ${a.startAge}세)부터`
+              )
+              .join(", ")}{" "}
+            {cashflow.annuity.years}년간 나눠 받는다고 가정 (은퇴 시점 추정 DC{" "}
             {formatKRW(cashflow.projectedBalances.retirement)}, 연금저축·IRP {formatKRW(cashflow.projectedBalances.private)})
           </p>
+          {cashflow.excludedAccounts.length > 0 && (
+            <p className="text-xs text-zinc-500">
+              현금흐름에서 뺀 계좌:{" "}
+              {cashflow.excludedAccounts
+                .map((e) => {
+                  const name = accounts.find((a) => a.id === e.id)?.name ?? "";
+                  const why = e.reason === "spouse_birth_year_missing" ? "배우자 출생연도 미입력" : `${ACCOUNT_OWNER_LABELS[e.ownerType]} 명의`;
+                  return `${name} (${why})`;
+                })
+                .join(", ")}
+            </p>
+          )}
 
           <div className="overflow-x-auto">
             <table className="w-full text-xs tabular-nums">

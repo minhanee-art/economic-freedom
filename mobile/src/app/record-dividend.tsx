@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { ApiError } from "@/api/client";
 import { createDividend, deleteDividend, listDividends } from "@/api/records";
 import { AppShell } from "@/components/AppShell";
@@ -8,10 +8,11 @@ import { Card } from "@/components/Card";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { clearSelectedAccountId, notifyPortfolioChanged } from "@/storage/account";
-import { clearSession } from "@/storage/session";
+import { handleUnauthorized } from "@/storage/session";
 import { formStyles as styles } from "@/styles/forms";
 import { colors } from "@/styles/theme";
 import type { DividendRecord } from "@/types";
+import { confirmDestructive } from "@/utils/confirm";
 import { formatKRW } from "@/utils/format";
 import { parsePositiveInt, todayString, validateDate } from "@/utils/records";
 
@@ -34,10 +35,10 @@ export default function RecordDividendScreen() {
   const records = loaded && loaded.accountId === selectedAccountId ? loaded.list : [];
   const account = accounts.find((item) => item.id === selectedAccountId);
 
-  const handleAuthErrors = useCallback(async (err: unknown): Promise<boolean> => {
+  const handleAuthErrors = useCallback(async (err: unknown, sentToken: string): Promise<boolean> => {
     if (err instanceof ApiError && err.status === 401) {
-      await clearSession();
-      router.replace("/login");
+      // 토큰이 바뀐 뒤 늦게 온 이전 토큰의 401이면 세션을 유지하고 오류만 조용히 넘긴다.
+      if (await handleUnauthorized(sentToken)) router.replace("/login");
       return true;
     }
     if (err instanceof ApiError && err.status === 404) {
@@ -55,7 +56,7 @@ export default function RecordDividendScreen() {
       setLoaded({ accountId: selectedAccountId, list: (await listDividends(session.token, selectedAccountId)).slice(0, 10) });
       setRecordsError("");
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setRecordsError(err instanceof Error ? err.message : "배당 수령 기록을 불러오지 못했습니다.");
     }
   }, [session, selectedAccountId, handleAuthErrors]);
@@ -82,7 +83,7 @@ export default function RecordDividendScreen() {
       notifyPortfolioChanged();
       await loadRecords();
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setError(err instanceof Error ? err.message : "배당 수령 기록을 저장하지 못했습니다.");
     } finally {
       submitLock.current = false;
@@ -101,7 +102,7 @@ export default function RecordDividendScreen() {
       notifyPortfolioChanged();
       await loadRecords();
     } catch (err) {
-      if (await handleAuthErrors(err)) return;
+      if (await handleAuthErrors(err, session.token)) return;
       setError(err instanceof Error ? err.message : "배당 수령 기록을 삭제하지 못했습니다.");
     } finally {
       submitLock.current = false;
@@ -110,10 +111,12 @@ export default function RecordDividendScreen() {
   };
 
   const confirmDelete = (record: DividendRecord) => {
-    Alert.alert("기록 삭제", `${record.date} ${record.holdingName ?? ""} ${formatKRW(record.amount)} 기록을 삭제할까요?`, [
-      { text: "취소", style: "cancel" },
-      { text: "삭제", style: "destructive", onPress: () => void performDelete(record) },
-    ]);
+    confirmDestructive({
+      title: "기록 삭제",
+      message: `${record.date} ${record.holdingName ?? ""} ${formatKRW(record.amount)} 기록을 삭제할까요?`,
+      confirmText: "삭제",
+      onConfirm: () => void performDelete(record),
+    });
   };
 
   const disabled = isSubmitting || !holding || !amount || !date;

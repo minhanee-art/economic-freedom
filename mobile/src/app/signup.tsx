@@ -80,7 +80,7 @@ export default function SignupScreen() {
         </View>
         {mismatch ? <Text style={styles.error}>비밀번호가 서로 다릅니다.</Text> : null}
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Pressable disabled={disabled} onPress={handleSignup} style={[styles.button, disabled && styles.buttonDisabled]}>
+        <Pressable accessibilityRole="button" disabled={disabled} onPress={handleSignup} style={[styles.button, disabled && styles.buttonDisabled]}>
           <Text style={styles.buttonText}>{isSubmitting ? "가입 중" : "회원가입"}</Text>
         </Pressable>
       </Card>

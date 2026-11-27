@@ -31,7 +31,7 @@
 | ☐ | 번들 ID·앱 이름 | 번들 ID `kr.kimvibe.economicfreedom`(첫 빌드 업로드 후 변경 불가). 앱 이름 2~30자, 부제 30자 이내 | `mobile/app.json`, https://developer.apple.com/help/app-store-connect/reference/app-information (앞부분 원문). 키워드 100바이트 한도는 **미확인(기억 기준)** |
 | ☐ | TestFlight | 내부 테스터 최대 100명(App Store Connect 사용자), 외부 최대 10,000명. 외부 테스터 첫 빌드는 베타 앱 심사 필요, 빌드는 최대 90일 테스트 가능. **iOS 빌드는 `eas.json`에 submit.ios 설정이 없고 iOS 빌드를 만든 적이 있는지 확인 필요** | https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview (앞부분 원문, 한도 수치는 요약 기준) |
 | ☐ | 심사 가이드라인 2.1 | 로그인이 있으면 데모 계정(백엔드 켜 둔 상태)이나 데모 모드를 제공. 충돌·미완성 빌드 거절 | https://developer.apple.com/app-store/review/guidelines/ (원문 확인) |
-| ☐ | 가이드라인 4.2 최소 기능 | "useful, unique, 'app-like'"이어야 함. **위험**: 현재 앱은 조회 전용이며 입력 기능이 웹에만 있음. 거절 시 대응 계획(예: 모바일 입력 기능 추가)을 미리 정할 것 | 위 가이드라인 페이지(원문 확인) |
+| ☐ | 가이드라인 4.2 최소 기능 | "useful, unique, 'app-like'"이어야 함. 현재 앱은 조회 전용이 아니라 계좌 전환, 연금 설계 요약(읽기 전용), 매수·배당 기록 입력, 비밀번호 변경을 지원함(2026-11-27 코드 확인). 다만 은퇴 목표·연금 소득원 입력은 웹에만 있음. 거절 시 대응 계획을 미리 정할 것 | 위 가이드라인 페이지(원문 확인) |
 | ☐ | 가이드라인 4.8 로그인 서비스 | 제3자·소셜 로그인을 주 계정으로 쓰면 동등한 대체 로그인 제공. 모바일 앱은 이메일 로그인만 있어 해당 가능성 낮음. 예외 목록 원문은 요약 기준이라 재확인 | 위 가이드라인 페이지(첫 문장 원문, 예외는 **요약 기준**) |
 | ☐ | 가이드라인 5.1.1 | (i) 개인정보처리방침을 메타데이터와 앱 안에 링크 — 앱은 설정 탭·가입 화면에서 링크함. (v) 계정 생성을 지원하면 **앱 내 계정 삭제** 필수 — 설정 탭에 있음 | 5.1.1 본문은 요약 기준 → **재확인 필요**. 삭제 요건은 원문 확인: https://developer.apple.com/support/offering-account-deletion-in-your-app/ |
 | ☐ | 가이드라인 3.2.1(viii) | "금융 거래·투자·자금 관리 앱은 해당 서비스를 수행하는 금융기관이 제출해야 하고 면허 필요". 이 앱 해당 여부 → `review-notes.md` 3-3 | 원문 확인 |
@@ -44,7 +44,8 @@
 
 1. `NEXT_PUBLIC_SUPPORT_EMAIL`을 Vercel 환경변수에 설정 — 안 하면 방침·삭제 안내 페이지에 이메일이 표시되지 않고 "스토어 등록정보의 개발자 연락처" 문구로 대체됨(`src/app/privacy/page.tsx`).
 2. 방침과 코드 불일치 정리(`data-safety.md` 7절).
-3. 웹의 텔레그램 봇 `TELEGRAM_CHAT_ID` 설정 여부 확인(미설정이면 누구나 봇 사용 가능, OpenAI 비용·데이터 전송 문제).
-4. 모바일 최소 기능(4.2) 보강 여부 결정.
+3. 텔레그램 봇은 코드상 `TELEGRAM_WEBHOOK_SECRET`·허용 chat_id(`TELEGRAM_ALLOWED_CHAT_IDS` 또는 `TELEGRAM_CHAT_ID`)가 없으면 거부(fail closed)로 바뀜. 운영 환경에 실제로 설정돼 있는지는 **미확인**(봇을 쓸 계획일 때만 필요).
+4. 모바일 최소 기능(4.2): 입력 기능이 늘었으므로 남은 위험(은퇴 목표 입력이 웹에만 있음)을 판단.
 5. EAS iOS 제출 설정, 최종 웹 도메인.
-6. 실제 기기에서 가입 → 데이터 조회 → 계정 삭제 흐름 시연 확인(아직 하지 않음).
+6. 실제 기기에서 가입 → 기록 입력·조회 → 비밀번호 변경 → 계정 삭제 흐름 시연 확인(아직 하지 않음).
+7. 이 PR에서 `mobile/npm ci` 실패(react-native-reanimated peer 충돌)를 `mobile/.npmrc`로 해결함. EAS 빌드 자체는 실행하지 않음 → **미확인**.

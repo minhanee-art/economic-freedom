@@ -52,7 +52,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-lg font-bold">자녀 계좌 관리</h2>
+        <h1 className="text-xl font-bold tracking-tight text-ink">자녀 계좌 관리</h1>
         <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
           자녀별 증여·정부지원금 입금·보유 종목을 관리하고 증여세 공제한도를 추적하세요.
         </p>
@@ -60,7 +60,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
       {/* 자녀 추가 */}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold">자녀 추가</h3>
+        <h2 className="text-sm font-semibold">자녀 추가</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이름</label>

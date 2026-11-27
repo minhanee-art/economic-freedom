@@ -128,7 +128,7 @@ export function ImportClient({ holdings, onClose }: Props) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/40 backdrop-blur-sm px-4">
       <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-ink dark:text-zinc-100">거래내역 가져오기</h3>
+          <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">거래내역 가져오기</h2>
           <button
             onClick={onClose}
             className="flex items-center justify-center w-8 h-8 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"

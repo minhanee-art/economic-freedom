@@ -94,6 +94,7 @@ export function MarketClient() {
 
   return (
     <div className="space-y-5">
+      <h1 className="text-xl font-bold tracking-tight text-ink">시장 현황</h1>
       {/* 주요 지수 */}
       <section>
         <div className="flex items-center justify-between mb-3">

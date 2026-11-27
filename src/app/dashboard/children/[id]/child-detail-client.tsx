@@ -78,7 +78,7 @@ export function ChildDetailClient({ child, initialGifts, initialHoldings }: Prop
         <Link href="/dashboard/children" className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-indigo-500">
           ← 자녀 목록
         </Link>
-        <h2 className="text-lg font-bold mt-1">{child.name}</h2>
+        <h1 className="text-xl font-bold tracking-tight text-ink">{child.name}</h1>
       </div>
 
       <GiftProgressCard birthDate={child.birth_date} gifts={gifts} />
@@ -193,7 +193,7 @@ function GiftsTab({
   return (
     <div className="space-y-4">
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold">입금/증여 기록 추가</h3>
+        <h2 className="text-sm font-semibold">입금/증여 기록 추가</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           정부·지자체에서 자녀 계좌로 직접 지급되는 돈은 “정부지원금”으로 기록하면 증여 한도 계산과 신고 관리에서 제외됩니다.
         </p>
@@ -515,7 +515,7 @@ function HoldingsTab({
   return (
     <div className="space-y-4">
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h3 className="text-sm font-semibold">보유 종목 추가</h3>
+        <h2 className="text-sm font-semibold">보유 종목 추가</h2>
         <div className="grid grid-cols-2 gap-3">
           <input
             type="text"

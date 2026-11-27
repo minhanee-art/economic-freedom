@@ -183,29 +183,47 @@ test("RebalanceAlert: 테마 설정 비중을 저장하고 0~100으로 자른다
   assert.deepEqual(calls[1], ["주식", 100]);
 });
 
-test("RebalanceAlert: 테마 토글로 비중 목록을 접고 펼친다", async () => {
+test("RebalanceAlert: 정렬·보기는 버튼 묶음 대신 라벨 있는 선택 상자 4개로 고른다", () => {
   render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} />);
 
-  const toggle = screen.getByRole("button", { name: /테마$/ });
-  assert.equal(toggle.getAttribute("aria-pressed"), "true");
-
-  fireEvent.click(toggle);
-  assert.equal(screen.getByRole("button", { name: /테마$/ }).getAttribute("aria-pressed"), "false");
-  assert.ok(await screen.findByText("테마 비중 숨김 · 클릭해서 다시 보기 (2개)"));
-
-  fireEvent.click(screen.getByText("테마 비중 숨김 · 클릭해서 다시 보기 (2개)"));
-  assert.ok(screen.getByText("테마별 비중 현황"));
+  for (const label of ["묶음", "카드 보기", "종목 정렬", "테마 정렬"]) {
+    assert.equal(screen.getByLabelText(label).tagName, "SELECT", label);
+  }
+  // 예전의 정렬 버튼(차이 큰순, 설정↓ …)은 없다
+  assert.equal(screen.queryByRole("button", { name: "차이 큰순" }), null);
+  assert.equal(screen.queryByRole("button", { name: "수익률순" }), null);
 });
 
-test("RebalanceAlert: 종목 토글은 테마 묶음 없이 전체 종목을 보여준다", async () => {
+test("RebalanceAlert: 묶음을 '전체 종목'으로 바꾸면 테마 묶음 없이 전체 종목을 보여준다", async () => {
   render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} />);
 
-  fireEvent.click(screen.getByRole("button", { name: /종목$/ }));
+  fireEvent.change(screen.getByLabelText("묶음"), { target: { value: "all" } });
 
-  assert.ok(await screen.findByText("전체 종목"));
-  assert.ok(screen.getByText(/전체 보유종목 2개/));
+  assert.ok(await screen.findByText(/전체 보유종목 2개/));
   assert.ok(screen.getAllByText("KODEX 200").length >= 1);
   assert.ok(screen.getAllByText("TIGER 미국배당").length >= 1);
+  // 테마 정렬은 테마별 묶음에서만 보인다
+  assert.equal(screen.queryByLabelText("테마 정렬"), null);
+});
+
+test("RebalanceAlert: 숨긴 종목·신규 추가는 화면에 떠 있지 않고 섹션 머리의 일반 버튼이다", () => {
+  render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} onAddHolding={async () => {}} />);
+  const add = screen.getByRole("button", { name: "+ 신규 추가" });
+  assert.equal(add.closest(".fixed"), null);
+  assert.equal(screen.getByRole("button", { name: "숨긴 종목 0" }).closest(".fixed"), null);
+});
+
+test("RebalanceAlert: collapsible 이면 접힌 채로 요약만 보이고 펼치기로 연다", () => {
+  render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} collapsible defaultCollapsed title="보유 종목과 목표 비중" />);
+
+  assert.ok(screen.getByRole("heading", { name: "보유 종목과 목표 비중" }));
+  const toggle = screen.getByRole("button", { name: "펼치기" });
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(screen.queryByLabelText("묶음"), null);
+
+  fireEvent.click(toggle);
+  assert.equal(screen.getByRole("button", { name: "접기" }).getAttribute("aria-expanded"), "true");
+  assert.ok(screen.getByLabelText("묶음"));
 });
 
 test("RebalanceAlert: 검색어로 종목을 걸러낸다", async () => {
@@ -214,11 +232,11 @@ test("RebalanceAlert: 검색어로 종목을 걸러낸다", async () => {
   const search = screen.getByPlaceholderText("예: 나스닥, TIGER, 360750, 배당");
   fireEvent.change(search, { target: { value: "TIGER" } });
 
-  assert.ok(await screen.findByText("검색 결과 1개"));
+  assert.ok(await screen.findByText(/검색 결과 1개/));
   assert.ok(screen.getByText("검색 초기화"));
 
   fireEvent.click(screen.getByText("검색 초기화"));
-  assert.equal(screen.queryByText("검색 결과 1개"), null);
+  assert.equal(screen.queryByText(/검색 결과 1개/), null);
 });
 
 test("RebalanceAlert: 종목을 숨기면 목록에서 빠지고 개수가 표시된다", async () => {
@@ -241,7 +259,7 @@ test("RebalanceAlert: 종목을 숨기면 목록에서 빠지고 개수가 표�
   assert.ok(await screen.findByRole("button", { name: "숨긴 종목 0" }));
 });
 
-test("RebalanceAlert: 보유 0주 종목은 DB 삭제가 가능하다", async () => {
+test("RebalanceAlert: 보유 0주 종목은 목록에서 삭제할 수 있다", async () => {
   render(
     <RebalanceAlert
       holdings={[
@@ -270,7 +288,7 @@ test("RebalanceAlert: 보유 0주 종목은 DB 삭제가 가능하다", async ()
   fireEvent.click(screen.getByRole("button", { name: /1개 표시 · 숨김 1개/ }));
   fireEvent.click(await screen.findByRole("button", { name: /숨김 종목 1개 관리/ }));
 
-  const removeButtons = await screen.findAllByRole("button", { name: "DB 삭제" });
+  const removeButtons = await screen.findAllByRole("button", { name: "목록에서 삭제" });
   fireEvent.click(removeButtons[0]);
 
   await new Promise((resolve) => setTimeout(resolve, 20));
@@ -337,4 +355,12 @@ test("RebalanceAlert: 검색으로 종목을 찾아 추가한다", async () => {
     avg_price: 19_000,
   });
   assert.ok(fetchUrls.some((url) => url.includes("/api/market/search")));
+});
+
+test("RebalanceAlert: 다른 화면의 '종목 추가'(#holdings)로 들어오면 접힌 섹션을 펼친다", async () => {
+  window.location.hash = "#holdings";
+  render(<RebalanceAlert holdings={twoHoldings} categoryData={categoryData} collapsible defaultCollapsed title="보유 종목과 목표 비중" />);
+  assert.ok(await screen.findByRole("button", { name: "접기" }));
+  assert.ok(document.getElementById("holdings"));
+  window.location.hash = "";
 });

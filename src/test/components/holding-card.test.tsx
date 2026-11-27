@@ -109,9 +109,9 @@ test("HoldingCard: 원가가 없으면 수익률·손익을 -로 둔다", async 
 test("HoldingCard: 보유 수량이 0이면 매도 버튼이 비활성", async () => {
   render(<HoldingCard holding={makeHolding({ shares: 0, current_value: 0, actual_pct: 0 })} />);
 
-  const sell = screen.getByRole("button", { name: "바로 매도" }) as HTMLButtonElement;
+  const sell = screen.getByRole("button", { name: "매도 기록" }) as HTMLButtonElement;
   assert.equal(sell.disabled, true);
-  assert.equal((screen.getByRole("button", { name: "바로 매수" }) as HTMLButtonElement).disabled, false);
+  assert.equal((screen.getByRole("button", { name: "매수 기록" }) as HTMLButtonElement).disabled, false);
 });
 
 test("HoldingCard: 설정 비중을 바꾸면 저장 콜백을 부른다", async () => {
@@ -216,14 +216,14 @@ test("HoldingCard: 종목 정보를 정정하면 콜백에 값이 전달된다",
   assert.equal(screen.queryByText("품번 / 상품명 / 수량 / 평단가 정정"), null);
 });
 
-test("HoldingCard: 매수 확정 시 수량·단가·날짜를 담아 API를 부른다", async () => {
+test("HoldingCard: 매수 기록 저장 시 수량·단가·날짜를 담아 API를 부른다", async () => {
   const completed: unknown[] = [];
   render(<HoldingCard holding={makeHolding()} onTradeComplete={(result) => completed.push(result)} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "바로 매수" }));
+  fireEvent.click(screen.getByRole("button", { name: "매수 기록" }));
   fireEvent.change(screen.getByLabelText("KODEX 200 거래 수량"), { target: { value: "3" } });
   fireEvent.change(screen.getByLabelText("KODEX 200 거래 단가"), { target: { value: "10500" } });
-  fireEvent.click(screen.getByRole("button", { name: "매수 확정" }));
+  fireEvent.click(screen.getByRole("button", { name: "매수 기록 저장" }));
 
   assert.ok(await screen.findByText("매수 반영 완료"));
   assert.equal(fetchCalls.length, 1);
@@ -241,9 +241,9 @@ test("HoldingCard: 매수 확정 시 수량·단가·날짜를 담아 API를 부
 test("HoldingCard: 보유 수량보다 많이 매도하면 요청을 보내지 않는다", async () => {
   render(<HoldingCard holding={makeHolding({ shares: 2 })} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "바로 매도" }));
+  fireEvent.click(screen.getByRole("button", { name: "매도 기록" }));
   fireEvent.change(screen.getByLabelText("KODEX 200 거래 수량"), { target: { value: "5" } });
-  fireEvent.click(screen.getByRole("button", { name: "매도 확정" }));
+  fireEvent.click(screen.getByRole("button", { name: "매도 기록 저장" }));
 
   assert.ok(await screen.findByText("보유 수량보다 많이 매도할 수 없습니다."));
   assert.equal(fetchCalls.length, 0);
@@ -258,8 +258,8 @@ test("HoldingCard: API가 실패하면 서버 메시지를 보여준다", async 
 
   render(<HoldingCard holding={makeHolding()} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "바로 매수" }));
-  fireEvent.click(screen.getByRole("button", { name: "매수 확정" }));
+  fireEvent.click(screen.getByRole("button", { name: "매수 기록" }));
+  fireEvent.click(screen.getByRole("button", { name: "매수 기록 저장" }));
 
   assert.ok(await screen.findByText("보유 수량이 부족합니다."));
 });
@@ -267,7 +267,7 @@ test("HoldingCard: API가 실패하면 서버 메시지를 보여준다", async 
 test("HoldingCard: 리밸런싱 계산 수량을 계산해 보여준다", async () => {
   render(<HoldingCard holding={makeHolding({ target_pct: 60, actual_pct: 40 })} portfolioTotalValue={250_000} />);
 
-  fireEvent.click(screen.getByRole("button", { name: "바로 매수" }));
+  fireEvent.click(screen.getByRole("button", { name: "매수 기록" }));
 
   // (0.6 × 250,000 - 100,000) / (10,000 × 0.4) = 12.5 → 13주
   const advice = await screen.findByText(/가 필요합니다\(계산값\)/);

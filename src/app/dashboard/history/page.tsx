@@ -1,9 +1,12 @@
 // 매수 이력 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getPurchaseRecords, getPurchaseRecordsCount, getHoldings, type PurchaseRecordRow } from "@/lib/queries";
 import { HistoryClient } from "./history-client";
 import type { Holding } from "@/types";
+
+export const metadata: Metadata = { title: "매수 기록 · 가족연금계획" };
 
 export default async function HistoryPage() {
   const session = await getSession();

@@ -60,7 +60,7 @@ export function PasswordSection() {
 
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-      <h3 className="text-sm font-semibold">{hasPassword ? "비밀번호 변경" : "비밀번호 설정"}</h3>
+      <h2 className="text-sm font-semibold">{hasPassword ? "비밀번호 변경" : "비밀번호 설정"}</h2>
       {!hasPassword && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           Google로 가입한 계정입니다. 비밀번호를 설정하면 모바일 앱에서 이메일과 비밀번호로 로그인할 수 있습니다.

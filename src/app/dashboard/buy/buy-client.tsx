@@ -43,7 +43,7 @@ function cycleStatusLabel(item: BuyPlanItem): string {
 
 // 연간 계획의 주문 주기 문구
 function annualCadenceLabel(item: AnnualPlanItem): string {
-  if (item.quantity <= 0) return "주문 불가";
+  if (item.quantity <= 0) return "배분 없음";
   if (item.quantity >= 12) {
     const perMonth = item.quantity / 12;
     return `매달 ${Number.isInteger(perMonth) ? perMonth : perMonth.toFixed(1)}주`;
@@ -430,7 +430,7 @@ export function BuyClient({
   return (
     <div className="space-y-5">
       <div className="border border-hairline bg-canvas-soft px-4 py-3 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="text-base font-bold text-ink dark:text-zinc-100">적립 배분 계산</h1>
+        <h1 className="text-xl font-bold tracking-tight text-ink">적립 배분 계산</h1>
         <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
           사용자가 설정한 목표 비중에 따른 계산 결과이며 투자 권유가 아닙니다.
         </p>
@@ -583,9 +583,9 @@ export function BuyClient({
             <div className="mb-4 border border-hairline bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-ink dark:text-zinc-100">연간 주문 계획</p>
+                  <p className="text-sm font-semibold text-ink dark:text-zinc-100">연간 배분 계획</p>
                   <p className="mt-0.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-                    월 {formatKRWFull(budget)} × 12개월 = {formatKRWFull(annualPlan.annualBudget)} 기준 · 소수점 주문이 안 되므로 종목별 연간 수량을 정수로 확정
+                    월 {formatKRWFull(budget)} × 12개월 = {formatKRWFull(annualPlan.annualBudget)} 기준 · 1주 단위로 계산해 종목별 연간 수량을 정수로 맞춤
                   </p>
                 </div>
                 <button
@@ -606,8 +606,8 @@ export function BuyClient({
                           <th className="pb-2 text-left font-medium">종목</th>
                           <th className="pb-2 text-right font-medium">목표 비중</th>
                           <th className="pb-2 text-right font-medium">1주 가격</th>
-                          <th className="pb-2 text-right font-medium">연 주문</th>
-                          <th className="pb-2 text-right font-medium">주문 주기</th>
+                          <th className="pb-2 text-right font-medium">연 수량</th>
+                          <th className="pb-2 text-right font-medium">배분 주기</th>
                           <th className="pb-2 text-right font-medium">연 금액</th>
                         </tr>
                       </thead>
@@ -777,7 +777,7 @@ export function BuyClient({
             </div>
           )}
           <div className="flex justify-between text-sm border-t border-hairline pt-3">
-            <span className="text-ink font-medium">총 주문금액 (수수료 포함)</span>
+            <span className="text-ink font-medium">기록 금액 (수수료 포함)</span>
             <span className="font-bold text-lg tabular-nums text-ink">{formatKRWFull(actualTotalSpent)}</span>
           </div>
           <div className="flex justify-between text-sm">
@@ -790,7 +790,7 @@ export function BuyClient({
             onClick={() => setShowConfirm(true)}
             className="w-full h-12 font-semibold text-white bg-brand hover:bg-brand-deep transition-colors mt-3"
           >
-            매수 확정 &amp; 기록 저장
+            기록 저장
           </button>
         </div>
       )}
@@ -799,9 +799,9 @@ export function BuyClient({
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/50 backdrop-blur-sm px-4">
           <div className="w-full max-w-lg border border-hairline bg-white dark:bg-zinc-900 dark:border-zinc-800 p-6 space-y-4 shadow-float">
-            <h3 className="text-lg font-bold text-ink dark:text-zinc-100">매수를 확정하시겠습니까?</h3>
+            <h3 className="text-lg font-bold text-ink dark:text-zinc-100">이 매수 기록을 저장할까요?</h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              종목 카드에서 입력한 주문 단가로 매수 기록과 평균단가를 저장합니다. 특정 종목만 먼저 체결됐다면 목록을 닫고 해당 카드의 &apos;이 종목만 기록 저장&apos;을 사용하세요.
+              종목 카드에서 입력한 기록 단가로 매수 기록과 평균단가를 저장합니다. 주문은 실행되지 않습니다. 일부 종목만 먼저 샀다면 목록을 닫고 해당 카드의 &apos;이 종목만 기록 저장&apos;을 사용하세요.
             </p>
             <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1 text-sm">
               {actualBuyItems.map(({ item, executionPrice, actualCost }) => (
@@ -945,7 +945,7 @@ function BuyPlanCard({
         {item.quantity > 0 && (
           <div className="mt-3 border border-hairline bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-800/60">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">주문 단가</span>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">기록 단가</span>
               {isExecutionPriceOverridden && (
                 <button
                   type="button"
@@ -968,7 +968,7 @@ function BuyPlanCard({
                 <span aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 dark:text-zinc-400">원</span>
               </div>
               <div className="text-right">
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">주문금액</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">기록 금액</p>
                 <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{formatKRWFull(orderCost)}</p>
               </div>
             </div>

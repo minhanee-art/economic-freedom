@@ -89,6 +89,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
 
   return (
     <div className="space-y-5">
+      <h1 className="text-xl font-bold tracking-tight text-ink">매수 기록</h1>
       {/* 누적 통계 */}
       <div
         className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800"

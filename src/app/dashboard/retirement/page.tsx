@@ -1,4 +1,5 @@
 // 연금 설계 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import {
@@ -9,6 +10,8 @@ import {
 } from "@/lib/pension-data";
 import { ScrollToHash } from "@/components/ui/scroll-to-hash";
 import { RetirementClient } from "./retirement-client";
+
+export const metadata: Metadata = { title: "연금 설계 · 가족연금계획" };
 
 export default async function RetirementPage() {
   const session = await getSession();

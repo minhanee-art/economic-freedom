@@ -25,7 +25,7 @@ export function SectionCard({
   return (
     <section id={id} className="scroll-mt-24 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
       <div>
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <h2 className="text-sm font-semibold">{title}</h2>
         {description && <div className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">{description}</div>}
       </div>
       {children}

@@ -19,7 +19,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
   const total = data.reduce((s, d) => s + d.value, 0);
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
       <div className="w-40 h-40 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>

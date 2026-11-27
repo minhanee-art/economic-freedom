@@ -1,8 +1,11 @@
 // 자녀 상세 서버 컴포넌트 — 증여 기록 + 보유 종목 + 신고 가이드
+import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { getChild, getChildGifts, getChildHoldings } from "@/lib/queries";
 import { ChildDetailClient } from "./child-detail-client";
+
+export const metadata: Metadata = { title: "자녀 상세 · 가족연금계획" };
 
 export default async function ChildDetailPage({
   params,

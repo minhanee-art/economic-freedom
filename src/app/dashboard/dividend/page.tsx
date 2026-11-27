@@ -1,10 +1,13 @@
 // 배당 관리 서버 컴포넌트
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { sql } from "@/lib/db";
 import { NoHoldingsState } from "@/components/portfolio/no-holdings-state";
 import { DividendClient } from "./dividend-client";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
+
+export const metadata: Metadata = { title: "배당 기록 · 가족연금계획" };
 
 export default async function DividendPage() {
   const session = await getSession();

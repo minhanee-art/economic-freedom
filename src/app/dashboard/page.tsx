@@ -1,4 +1,5 @@
 // 대시보드 서버 컴포넌트
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
@@ -7,6 +8,8 @@ import { getOnboardingFacts } from "@/lib/onboarding";
 import { buildOnboardingSteps, isOnboardingComplete, ONBOARDING_HIDDEN_COOKIE } from "@/lib/onboarding-steps";
 import { FirstRunGuide } from "@/components/onboarding/first-run-guide";
 import { DashboardClient } from "./dashboard-client";
+
+export const metadata: Metadata = { title: "홈 · 가족연금계획" };
 
 export default async function DashboardPage() {
   const session = await getSession();

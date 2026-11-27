@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis } from "@/types";
 import { computeHoldingsWithPnL } from "@/lib/portfolio";
@@ -12,8 +12,9 @@ import { computeDailyChange, computeDividendYields, type DividendRecordLite } fr
 import { RebalanceAlert } from "@/components/portfolio/rebalance-alert";
 import { CategoryPieChart } from "@/components/charts/category-pie-chart";
 import { AllocationBarChart } from "@/components/charts/allocation-bar-chart";
-import { cn, formatKRW, formatSignedKRW } from "@/lib/utils";
-import { extraNavItems } from "@/lib/dashboard-navigation";
+import { cn, formatSignedKRW } from "@/lib/utils";
+import { toLocalDateKey, upcomingDividendSchedule } from "@/lib/dashboard-home";
+import { HomeStatus } from "@/components/portfolio/home-status";
 import type { DividendCalendarRow } from "@/lib/queries";
 import { CATEGORIES } from "@/lib/constants";
 
@@ -26,24 +27,6 @@ interface Props {
   lastPriceUpdate: string | null;
   dividendCalendar: DividendCalendarRow[];
 }
-
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-
-type TodayInfo = {
-  date: Date;
-  dateKey: string;
-  fullDate: string;
-  weekOfYear: number;
-};
-
-type EconomicEvent = {
-  id: string;
-  date: string;
-  title: string;
-  type: string;
-  note: string;
-  source: string;
-};
 
 type NewHoldingPayload = {
   code: string;
@@ -102,14 +85,16 @@ export function DashboardClient({
   const [refreshResult, setRefreshResult] = useState("");
   const [savingTargetPctId, setSavingTargetPctId] = useState<string | null>(null);
   const [savingCategoryTarget, setSavingCategoryTarget] = useState<string | null>(null);
-  const [todayInfo, setTodayInfo] = useState<TodayInfo | null>(null);
+  // 서버·클라이언트 날짜가 다를 수 있어 마운트 뒤에 정한다
+  const [todayKey, setTodayKey] = useState<string | null>(null);
   const [returnSummary, setReturnSummary] = useState<PortfolioReturnSummary | null>(null);
   const [returnStatus, setReturnStatus] = useState("");
   const [isSendingReturnReport, setIsSendingReturnReport] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    setTodayInfo(getTodayInfo(new Date()));
+    const id = globalThis.setTimeout(() => setTodayKey(toLocalDateKey(new Date())), 0);
+    return () => globalThis.clearTimeout(id);
   }, []);
 
   useEffect(() => {
@@ -338,7 +323,7 @@ export function DashboardClient({
         }
         return [...current, result.costBasis];
       });
-      setRefreshResult("거래가 DB에 반영되었습니다.");
+      setRefreshResult("매수·매도 기록을 저장했습니다.");
       router.refresh();
       setTimeout(() => setRefreshResult(""), 3000);
     },
@@ -463,8 +448,6 @@ export function DashboardClient({
 
   const totalValue = holdingsWithPnL.reduce((s, h) => s + h.current_value, 0);
   const totalCost = holdingsWithPnL.reduce((s, h) => s + h.total_cost, 0);
-  const totalPnL = totalValue - totalCost;
-  const totalPnLPct = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 
   const dividendYields = computeDividendYields(dividendRecords, totalCost, totalValue);
   // undefined = 스냅샷 응답을 아직 못 받음(표시 안 함), null = 전일 기준 없음
@@ -472,9 +455,6 @@ export function DashboardClient({
     ? computeDailyChange(returnSummary.periods.day, returnSummary.totalValue)
     : undefined;
 
-  const activeHoldings = holdingsWithPnL.filter(
-    (h) => h.shares > 0 || h.target_pct > 0
-  );
 
   // 파이차트 데이터
   const categoryMap = new Map<string, number>();
@@ -504,17 +484,13 @@ export function DashboardClient({
     current: Number((categoryCurrentMap.get(name) ?? 0).toFixed(1)),
   }));
 
-  const economicEvents = useMemo(() => {
-    const baseDate = todayInfo?.date ?? new Date();
-    return buildEconomicEvents(dividendCalendar, baseDate);
-  }, [dividendCalendar, todayInfo]);
-
-  const homeExtraNavItems = extraNavItems.filter((item) => item.href !== "/dashboard/history");
+  const upcomingDividends = upcomingDividendSchedule(dividendCalendar, todayKey ?? "9999-12-31");
 
   return (
     <div className="space-y-5 md:space-y-6">
       {refreshResult && (
         <div
+          role={refreshResult.includes("실패") ? "alert" : "status"}
           className={`border px-4 py-2.5 text-sm font-medium ${
             refreshResult.includes("실패")
               ? "bg-danger-soft text-danger border-danger-line"
@@ -525,108 +501,7 @@ export function DashboardClient({
         </div>
       )}
 
-      <section className="overflow-hidden border border-indigo-100/80 bg-white shadow-float dark:border-indigo-500/15 dark:bg-zinc-900">
-        <div className="relative px-5 py-6 sm:px-7 sm:py-7">
-          <div className="relative space-y-5">
-            <div className="border-b border-zinc-200 pb-5 dark:border-zinc-800">
-              <div className="max-w-3xl">
-                <div className="mb-4 inline-flex items-center gap-2 border border-dark-header bg-dark-header px-3 py-2 text-xs font-bold text-white dark:border-indigo-500/40 dark:bg-indigo-500/20 dark:text-indigo-200">
-                  <span className="flex h-6 w-6 items-center justify-center border border-white/20 bg-white/10">
-                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 10.8 11.2 3a1.15 1.15 0 0 1 1.6 0L21 10.8M5.2 9.5v9.1c0 .77.63 1.4 1.4 1.4h3.15v-4.25c0-.69.56-1.25 1.25-1.25h2c.69 0 1.25.56 1.25 1.25V20h3.15c.77 0 1.4-.63 1.4-1.4V9.5" />
-                    </svg>
-                  </span>
-                  연금 홈
-                </div>
-                <h1 className="text-[1.7rem] font-black leading-tight tracking-[-0.04em] text-ink dark:text-white sm:text-4xl lg:text-[2.45rem]">
-                  든든한 노후를 위한 {todayInfo?.weekOfYear ?? 33}주차 여정입니다.
-                </h1>
-                <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-ink-mute dark:text-zinc-400">
-                  한 번의 수익률보다 오래 지속되는 습관이 안정적인 현금흐름을 만듭니다.
-                </p>
-                <p className="mt-5 border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold text-ink shadow-card dark:border-zinc-800 dark:bg-zinc-950/70 dark:text-zinc-100 sm:text-sm">
-                  {todayInfo?.fullDate ?? "2026년 8월 12일 수요일"} | {todayInfo ? `${todayInfo.weekOfYear}주차` : "33주차"} | 장기 연금 관리는 날짜를 기록하는 것부터 시작합니다.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <HomeStat label="평가금액" value={formatKRW(totalValue)} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-              <HomeStat
-                label="총 손익"
-                value={formatSignedKRW(totalPnL)}
-                tone={totalPnL > 0 ? "up" : totalPnL < 0 ? "down" : "neutral"}
-                sub={`${totalPnLPct >= 0 ? "+" : ""}${totalPnLPct.toFixed(2)}%`}
-                onRefresh={handleRefresh}
-                isRefreshing={isRefreshing}
-              />
-              <HomeStat label="보유 종목" value={`${activeHoldings.length}개`} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-              <HomeStat label="월 적립금" value={formatKRW(monthlyBudget)} onRefresh={handleRefresh} isRefreshing={isRefreshing} />
-            </div>
-
-            <ReturnSummaryCard
-              summary={returnSummary}
-              onSend={handleSendReturnReport}
-              isSending={isSendingReturnReport}
-              status={returnStatus}
-            />
-
-            <div className="border border-zinc-200 bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-base font-bold tracking-tight text-ink dark:text-white">경제 캘린더</h2>
-                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                    등록된 배당락일과 월간 경제 체크 이벤트를 함께 봅니다.
-                  </p>
-                </div>
-                <Link
-                  href="/dashboard/dividend"
-                  className="shrink-0 border border-hairline bg-canvas-soft px-3 py-1.5 text-xs font-bold text-success transition-colors hover:bg-canvas-soft"
-                >
-                  배당 관리
-                </Link>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-                {economicEvents.map((event) => (
-                  <EconomicEventCard key={event.id} event={event} />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="border border-hairline bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900 sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold tracking-tight">추가 메뉴</h2>
-            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-              하단 메뉴에서 뺀 기능은 홈에서 버튼으로 실행합니다.
-            </p>
-          </div>
-          <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-semibold text-zinc-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-            {homeExtraNavItems.length}개
-          </span>
-        </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {homeExtraNavItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="group flex min-h-20 items-center gap-3 border border-zinc-200 bg-zinc-50/70 p-4 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:bg-indigo-50/60 active:translate-y-0 dark:border-zinc-800 dark:bg-zinc-950/60 dark:hover:border-indigo-500/30 dark:hover:bg-indigo-500/10"
-            >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center border border-zinc-200 bg-white text-indigo-500 shadow-card transition-colors group-hover:border-indigo-500 group-hover:bg-indigo-500 group-hover:text-white dark:border-zinc-800 dark:bg-zinc-900">
-                {item.icon}
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-bold text-zinc-900 dark:text-zinc-100">{item.label}</span>
-                <span className="mt-0.5 block text-xs leading-5 text-zinc-500 dark:text-zinc-400">{item.description}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
+      <HomeStatus />
 
       <SummaryHeader
         totalValue={totalValue}
@@ -639,22 +514,34 @@ export function DashboardClient({
         dailyChange={dailyChange}
       />
 
+      <ReturnSummaryCard
+        summary={returnSummary}
+        onSend={handleSendReturnReport}
+        isSending={isSendingReturnReport}
+        status={returnStatus}
+      />
+
+      <UpcomingDividends items={upcomingDividends} />
+
       <HoldingsHeatmap holdings={holdingsWithPnL} />
 
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
-            <h3 className="text-sm font-semibold mb-3">자산군별 비중</h3>
+          <section aria-labelledby="home-pie-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
+            <h2 id="home-pie-title" className="text-sm font-semibold text-ink mb-3">자산군별 비중</h2>
             <CategoryPieChart data={pieData} />
-          </div>
-          <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card">
-            <h3 className="text-sm font-semibold mb-3">현재 vs 목표 비중</h3>
+          </section>
+          <section aria-labelledby="home-bar-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
+            <h2 id="home-bar-title" className="text-sm font-semibold text-ink mb-3">현재 vs 목표 비중</h2>
             <AllocationBarChart data={barData} />
-          </div>
+          </section>
         </div>
       )}
 
       <RebalanceAlert
+        title="보유 종목과 목표 비중"
+        collapsible
+        defaultCollapsed
         holdings={holdingsWithPnL}
         categoryData={barData}
         onTargetPctChange={handleTargetPctChange}
@@ -666,54 +553,6 @@ export function DashboardClient({
         savingTargetPctId={savingTargetPctId}
         savingCategoryTarget={savingCategoryTarget}
       />
-    </div>
-  );
-}
-
-function HomeStat({
-  label,
-  value,
-  sub,
-  tone = "neutral",
-  onRefresh,
-  isRefreshing = false,
-}: {
-  label: string;
-  value: string;
-  sub?: string;
-  tone?: "neutral" | "up" | "down";
-  onRefresh?: () => void;
-  isRefreshing?: boolean;
-}) {
-  return (
-    <div className="border border-zinc-200 bg-white p-3 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
-        {onRefresh && (
-          <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isRefreshing}
-            className="flex h-7 w-7 shrink-0 items-center justify-center border border-zinc-200 bg-zinc-50 text-zinc-500 transition-colors hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:border-indigo-500/40 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
-          >
-            <span className="sr-only">업데이트</span>
-            <svg className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 11a8.1 8.1 0 0 0-15.5-2M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2M20 19v-4h-4" />
-            </svg>
-          </button>
-        )}
-      </div>
-      <p
-        className={cn(
-          "mt-1 text-lg font-bold tabular-nums tracking-tight",
-          tone === "up" && "text-gain",
-          tone === "down" && "text-loss",
-          tone === "neutral" && "text-zinc-950 dark:text-white"
-        )}
-      >
-        {value}
-      </p>
-      {sub && <p className="mt-0.5 text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">{sub}</p>}
     </div>
   );
 }
@@ -731,11 +570,11 @@ function ReturnSummaryCard({
 }) {
   const periods: ReturnPeriodKey[] = ["day", "week", "month"];
   return (
-    <div className="border border-zinc-200 bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-950/60">
+    <section aria-labelledby="home-returns-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
       <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-base font-bold tracking-tight text-ink dark:text-white">기간별 수익률</h2>
-          <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
+          <h2 id="home-returns-title" className="text-base font-bold tracking-tight text-ink">기간별 수익률</h2>
+          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
             일별·주간·월간 수익률을 계좌별 스냅샷 기준으로 계산합니다. 추가 매수/매도 원가 변동은 보정합니다.
           </p>
         </div>
@@ -747,7 +586,7 @@ function ReturnSummaryCard({
           ) : (
             <Link
               href="/dashboard/settings"
-              className="text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300"
+              className="inline-flex min-h-10 items-center text-xs font-semibold text-brand hover:underline dark:text-indigo-300"
             >
               {summary?.telegramNeedsRelink ? "텔레그램 다시 연결 필요 · 설정" : "텔레그램 연결 · 설정"}
             </Link>
@@ -756,14 +595,14 @@ function ReturnSummaryCard({
             type="button"
             onClick={onSend}
             disabled={isSending || !summary?.telegramChatIdMasked}
-            className="h-10 border border-indigo-600 bg-indigo-600 px-3 text-xs font-black text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+            className="h-10 border border-hairline bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:bg-canvas-soft dark:border-zinc-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
           >
             {isSending ? "전송 중" : "텔레그램 전송"}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="grid grid-cols-1 divide-y divide-hairline border-y border-hairline dark:divide-zinc-800 dark:border-zinc-800 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
         {periods.map((key) => (
           <ReturnPeriodBox key={key} period={summary?.periods[key] ?? null} />
         ))}
@@ -781,7 +620,7 @@ function ReturnSummaryCard({
           </span>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -790,11 +629,11 @@ function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
   const amount = period?.returnAmount;
   const tone = pct === null || pct === undefined || pct === 0 ? "neutral" : pct > 0 ? "up" : "down";
   return (
-    <div className="border border-zinc-100 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/70">
+    <div className="py-3 sm:px-4 sm:first:pl-0">
       <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400">{period?.label ??"수익률"}</p>
       <p
         className={cn(
-          "mt-1 text-xl font-black tabular-nums tracking-tight",
+          "mt-1 text-xl font-semibold tabular-nums tracking-tight",
           tone === "up" && "text-gain",
           tone === "down" && "text-loss",
           tone === "neutral" && "text-zinc-500 dark:text-zinc-400"
@@ -816,126 +655,40 @@ function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
   );
 }
 
-function EconomicEventCard({ event }: { event: EconomicEvent }) {
+function UpcomingDividends({ items }: { items: DividendCalendarRow[] }) {
   return (
-    <div className="border border-zinc-200 bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-card dark:border-zinc-800 dark:bg-zinc-900/80 dark:hover:border-indigo-500/30">
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <span className="border border-zinc-200 bg-zinc-100 px-2.5 py-1 text-xs font-bold text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-          {formatEventDate(event.date)}
-        </span>
-        <span
-          className={cn(
-            "border px-2.5 py-1 text-xs font-bold",
-            (event.type.includes("배당") || event.type.includes("실적")) &&
-              "border-hairline bg-canvas-soft text-success",
-            !event.type.includes("배당") && !event.type.includes("실적") &&
-              "border-indigo-100 bg-indigo-50 text-indigo-600 dark:border-indigo-500/20 dark:bg-indigo-500/15 dark:text-indigo-300"
-          )}
-        >
-          {event.type}
-        </span>
+    <section aria-labelledby="home-dividend-schedule" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 id="home-dividend-schedule" className="text-base font-bold text-ink">다가오는 배당 일정</h2>
+        <Link href="/dashboard/dividend" className="inline-flex min-h-10 items-center text-sm font-semibold text-brand hover:underline dark:text-indigo-300">
+          배당 기록
+        </Link>
       </div>
-      <p className="text-sm font-bold text-zinc-950 dark:text-white">{event.title}</p>
-      <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">{event.note}</p>
-      <p className="mt-2 text-xs font-semibold text-zinc-500 dark:text-zinc-400">{event.source}</p>
-    </div>
+      {items.length === 0 ? (
+        <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+          등록한 배당 일정이 없습니다. 설정의 배당 일정에서 지급 예정일을 등록하면 여기에 가까운 순으로 보입니다.
+        </p>
+      ) : (
+        <ul className="divide-y divide-hairline dark:divide-zinc-800">
+          {items.map((item) => (
+            <li key={item.id} className="flex items-baseline justify-between gap-3 py-2 text-sm">
+              <span className="min-w-0">
+                <span className="font-semibold text-ink">{item.stock}</span>
+                <span className="text-zinc-500 dark:text-zinc-400"> · {item.type}{item.note ? ` · ${item.note}` : ""}</span>
+              </span>
+              <time dateTime={item.date} className="shrink-0 tabular-nums text-ink">{formatScheduleDate(item.date)}</time>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 
-function getTodayInfo(date: Date): TodayInfo {
-  return {
-    date,
-    dateKey: toDateKey(date),
-    fullDate: `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 ${WEEKDAYS[date.getDay()]}요일`,
-    weekOfYear: getISOWeek(date),
-  };
-}
+const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
-function buildEconomicEvents(
-  dividendCalendar: DividendCalendarRow[],
-  baseDate: Date
-): EconomicEvent[] {
-  const todayKey = toDateKey(baseDate);
-  const dividendEvents = dividendCalendar
-    .filter((item) => item.date >= todayKey)
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 1)
-    .map((item) => ({
-      id: item.id,
-      date: item.date,
-      title: "배당 기록",
-      type: "배당 기록",
-      note: item.note || "배당 캘린더에 등록된 일정입니다.",
-      source: "등록된 배당 캘린더",
-    }));
-
-  const nextMonday = addDays(baseDate, ((8 - baseDate.getDay()) % 7) || 7);
-  const nextMonthStart = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
-  const earningsSeasonMonths = [0, 3, 6, 9];
-  const isEarningsSeason = earningsSeasonMonths.includes(baseDate.getMonth());
-
-  const checklistEvents: EconomicEvent[] = [
-    {
-      id: "earnings-check",
-      date: toDateKey(nextMonday),
-      title: isEarningsSeason ? "미국 기업 실적 발표 시즌 점검" : "관심 기업 실적 발표 일정 확인",
-      type: "실적 체크",
-      note: "ETF 편입 비중이 큰 기업의 실적 발표가 지수 변동성을 키울 수 있습니다.",
-      source: "월간 경제 체크",
-    },
-    {
-      id: "macro-check",
-      date: toDateKey(addDays(baseDate, 5)),
-      title: "물가-금리 일정 확인",
-      type: "경제 일정",
-      note: "금리와 물가 지표는 채권/배당 ETF의 가격 흐름을 흔들 수 있습니다.",
-      source: "월간 경제 체크",
-    },
-    {
-      id: "monthly-pension-check",
-      date: toDateKey(nextMonthStart),
-      title: "월 적립-리밸런싱 점검",
-      type: "연금 관리",
-      note: "정해진 예산과 목표 비중을 다시 확인하고 다음 적립 배분 계산에 반영합니다.",
-      source: "개인 연금 루틴",
-    },
-  ];
-
-  const dividendRecord = dividendEvents[0] ?? {
-    id: "dividend-record",
-    date: todayKey,
-    title: "배당 기록",
-    type: "배당 기록",
-    note: "분배금 입금 내역과 배당락일을 한 번에 점검합니다.",
-    source: "배당 관리",
-  };
-
-  return [...checklistEvents, dividendRecord].slice(0, 4);
-}
-
-function toDateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
-}
-
-function getISOWeek(date: Date): number {
-  const target = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNumber = target.getUTCDay() || 7;
-  target.setUTCDate(target.getUTCDate() + 4 - dayNumber);
-  const yearStart = new Date(Date.UTC(target.getUTCFullYear(), 0, 1));
-  return Math.ceil(((target.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-}
-
-function formatEventDate(date: string): string {
+function formatScheduleDate(date: string): string {
   const parsed = new Date(`${date}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return date;
-  return `${parsed.getMonth() + 1}/${parsed.getDate()}(${WEEKDAYS[parsed.getDay()]})`;
+  return `${parsed.getMonth() + 1}월 ${parsed.getDate()}일(${WEEKDAYS[parsed.getDay()]})`;
 }

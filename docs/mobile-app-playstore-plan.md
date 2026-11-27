@@ -170,7 +170,7 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 완료 기준:
 
 - 이 문서 승인
-- 앱 패키지명 결정: `kr.kimvibe.economicfreedom` (확정, 변경 불가)
+- 앱 패키지명 결정: `family.pension.plan` (2026-11-27 변경 확정. 이전 값 `kr.kimvibe.economicfreedom`)
 
 ### Phase 1. 모바일 앱 골격
 
@@ -287,7 +287,7 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 ## 11. 우선 결정할 것
 
 1. ~~앱 이름~~ — 가족연금계획으로 확정
-2. ~~Android package name~~ — `kr.kimvibe.economicfreedom`으로 확정
+2. ~~Android package name~~ — `family.pension.plan`으로 확정(2026-11-27, 이전 `kr.kimvibe.economicfreedom`)
 3. 1차 버전 로그인 필수 여부
 4. 데이터 저장 방식: 서버 동기화 우선 vs 로컬 우선
 5. Play Store 개발자 계정 준비 상태
@@ -297,7 +297,7 @@ Play Store 심사를 위해 초기에 명확히 정리한다.
 현재 상황에서는 아래로 진행하는 것이 가장 안전하다.
 
 - 앱 이름: `가족연금계획`
-- package name: `kr.kimvibe.economicfreedom`
+- package name: `family.pension.plan`
 - 기술: Expo React Native + EAS Build
 - 데이터: 기존 서버 DB/API 연동
 - 인증: 모바일용 이메일/비밀번호 토큰 로그인 추가

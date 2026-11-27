@@ -33,7 +33,7 @@
 - 모바일 전용 API: `/api/mobile/auth/{login,signup}`, `/api/mobile/portfolio-summary`. 그 외 `/api/accounts`, `/api/pension/*`, `/api/purchases`, `/api/dividends`, `/api/auth/password`, `DELETE /api/me`를 공용으로 호출
 - 토큰은 expo-secure-store에 저장, 서버 주소는 `EXPO_PUBLIC_API_BASE_URL`
 - `mobile/eas.json`의 preview·production 프로필에 운영 API 주소 설정됨
-- Android 패키지 `kr.kimvibe.economicfreedom`, versionCode 4 (`mobile/app.json`)
+- Android 패키지 `family.pension.plan`, versionCode 4 (`mobile/app.json`)
 
 ### 테스트
 - `npm test`: `src/**/*.test.ts(x)`를 node:test로 실행 (API, 컴포넌트, 계산 로직)
@@ -42,6 +42,6 @@
 ## 남은 일 / 확인이 필요한 것
 - Play Console 내부 테스트 업로드와 스토어 등록 (코드에서는 진행 여부를 확인할 수 없음)
 - EAS production 빌드는 이 문서 작성 시점에 실행·검증하지 않았음
-- `supabase/migrations/`는 예전 기록으로 남아 있고 현재 런타임은 Supabase를 쓰지 않음(코드·스크립트 참조 없음, 주석·문서에서만 언급). 삭제 여부는 별도 결정 필요
+- `supabase/migrations/`(예전 Supabase 시절 기록)는 삭제함. 계좌(account_id) 스키마는 `neon-schema.sql`에 반영됨
 - `mobile/npm ci`의 reanimated peer 충돌은 `mobile/.npmrc`(`legacy-peer-deps=true`)와 lockfile 정리로 해결. EAS 빌드 자체는 실행해 확인하지 않음
 - `mobile/src/hooks/usePortfolioSummary.ts`에 lint 경고 1건(`react-hooks/set-state-in-effect`)

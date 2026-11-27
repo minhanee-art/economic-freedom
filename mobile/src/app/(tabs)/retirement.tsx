@@ -225,14 +225,22 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
               />
               <Metric label="예상 공제액" value={formatKRW(owner.progress.estimatedCredit)} />
               <Metric label="공제율" value={`${(owner.progress.rate * 100).toFixed(1)}%`} />
-              {owner.salaryBracketAssumed ? <Notice>소득 구간 미입력 — 낮은 공제율로 가정</Notice> : null}
+              {owner.salaryBracketAssumed ? (
+                <Notice>
+                  {`${OWNER_LABELS[owner.ownerType]} 소득 구간 미입력 — 낮은 공제율로 가정. 웹의 연금 설계 화면에서 입력할 수 있습니다.`}
+                </Notice>
+              ) : null}
             </View>
           ))}
         </View>
       ) : null}
 
       {onlySpouse ? (
-        <Notice>배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 배우자 소득 구간은 낮은 공제율로 가정했습니다.</Notice>
+        <Notice>
+          {byOwner[0].salaryBracketAssumed
+            ? "배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 배우자 소득 구간이 입력되지 않아 낮은 공제율로 가정했습니다."
+            : "배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 웹에 저장된 배우자 소득 구간의 공제율을 썼습니다."}
+        </Notice>
       ) : null}
       {excludedAccounts.length > 0 ? (
         <>
@@ -253,7 +261,7 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
       {taxCredit.salaryBracketAssumed ? (
         <Notice>
           {byOwner.length > 0
-            ? "소득 구간이 없는 명의자는 서버가 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. 본인 소득 구간은 웹에서 저장할 수 있고, 배우자 소득 구간은 아직 입력할 수 없습니다."
+            ? "소득 구간이 없는 명의자는 서버가 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. 본인·배우자 소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다."
             : "소득 구간이 저장되어 있지 않아 서버가 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다."}
         </Notice>
       ) : null}

@@ -86,6 +86,8 @@ export type RetirementGoal = {
   spouseBirthYear: number | null;
   expectedReturnPct: number | null;
   salaryBracket: "low" | "high" | null;
+  /** 배우자 총급여 구간(웹 연금 설계 화면에서 입력). 이 필드가 없는 이전 서버 응답이면 null 로 채운다(api/pension.ts) */
+  spouseSalaryBracket: "low" | "high" | null;
 };
 
 export type IncomeSource = {
@@ -134,7 +136,7 @@ export type TaxCreditProgress = {
 export type OwnerTaxCredit = {
   ownerType: "self" | "spouse";
   salaryBracket: "low" | "high";
-  /** true면 소득 구간 입력이 없어 낮은 공제율로 가정한 것(배우자는 입력란이 없어 항상 가정) */
+  /** true면 이 명의자의 소득 구간 입력이 없어 낮은 공제율로 가정한 것. 본인·배우자 모두 웹 연금 설계 화면에서 입력한다 */
   salaryBracketAssumed: boolean;
   progress: TaxCreditProgress;
 };

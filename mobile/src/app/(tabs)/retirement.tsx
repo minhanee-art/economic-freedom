@@ -204,6 +204,8 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
   const { progress, byOwner, excludedAccounts } = taxCredit;
   const family = byOwner.length > 1;
   const onlySpouse = byOwner.length === 1 && byOwner[0].ownerType === "spouse";
+  // 배우자 명의 공제 대상 계좌가 없으면 배우자를 언급하지 않는다
+  const hasSpouseOwner = byOwner.some((owner) => owner.ownerType === "spouse");
   return (
     <>
       <Text style={styles.label}>{family ? "가족 합계 " : ""}공제 한도 대비 납입 진행률</Text>
@@ -261,7 +263,7 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
       {taxCredit.salaryBracketAssumed ? (
         <Notice>
           {byOwner.length > 0
-            ? "소득 구간이 없는 명의자는 서버가 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. 본인·배우자 소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다."
+            ? `소득 구간이 없는 명의자는 서버가 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. ${hasSpouseOwner ? "본인·배우자 " : ""}소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다.`
             : "소득 구간이 저장되어 있지 않아 서버가 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다."}
         </Notice>
       ) : null}

@@ -32,9 +32,11 @@ const EMPTY_FORM: FormState = {
 interface Props {
   sources: IncomeSourceRow[];
   onChange: (sources: IncomeSourceRow[]) => void;
+  /** false면 배우자 목록 블록을 그리지 않는다(배우자 데이터가 없고 배우자 정보를 추가하지 않은 경우). 구성원 선택지는 그대로 둔다 */
+  showSpouse: boolean;
 }
 
-export function IncomeSourcesSection({ sources, onChange }: Props) {
+export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -118,7 +120,7 @@ export function IncomeSourcesSection({ sources, onChange }: Props) {
         </>
       }
     >
-      {(["self", "spouse"] as FamilyMember[]).map((member) => {
+      {((showSpouse ? ["self", "spouse"] : ["self"]) as FamilyMember[]).map((member) => {
         const items = sources.filter((s) => s.member === member);
         return (
           <div key={member} className="space-y-1">

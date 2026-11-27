@@ -8,6 +8,7 @@ import { ContributionSection, type ContributionMap } from "@/components/pension/
 import { IncomeSourcesSection } from "@/components/pension/income-sources-section";
 import { RetirementGoalSection } from "@/components/pension/retirement-goal-section";
 import { sendJson } from "@/components/pension/ui";
+import { getSpousePresence } from "@/lib/spouse-presence";
 
 interface Props {
   year: number;
@@ -24,6 +25,10 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
   const [sources, setSources] = useState(initialSources);
   const [goal, setGoal] = useState(initialGoal);
   const [bracketError, setBracketError] = useState("");
+  // 배우자 항목은 기본으로 숨긴다. 배우자 데이터가 하나라도 있거나 '배우자 정보 추가'를 누르면 보인다.
+  const [spouseAdded, setSpouseAdded] = useState(false);
+  const spousePresence = getSpousePresence({ goal, accounts, sources });
+  const spouseOpen = spousePresence.any || spouseAdded;
 
   const changeSalaryBracket = async (salaryBracket: SalaryBracket) => {
     const previous = goal;
@@ -53,6 +58,9 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
         onGoalChange={setGoal}
         sources={sources}
         accounts={accounts}
+        spousePresence={spousePresence}
+        spouseOpen={spouseOpen}
+        onSpouseOpenChange={setSpouseAdded}
       />
 
       <ContributionSection
@@ -67,7 +75,7 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
       />
       {bracketError && <p className="text-xs text-red-500">{bracketError}</p>}
 
-      <IncomeSourcesSection sources={sources} onChange={setSources} />
+      <IncomeSourcesSection sources={sources} onChange={setSources} showSpouse={spouseOpen} />
 
       <AccountTypeSection accounts={accounts} onChange={setAccounts} />
     </div>

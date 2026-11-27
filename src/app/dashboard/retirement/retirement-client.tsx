@@ -62,6 +62,7 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
         contributions={contributions}
         onContributionsChange={setContributions}
         salaryBracket={goal.salaryBracket}
+        spouseSalaryBracket={goal.spouseSalaryBracket}
         onSalaryBracketChange={changeSalaryBracket}
       />
       {bracketError && <p className="text-xs text-red-500">{bracketError}</p>}

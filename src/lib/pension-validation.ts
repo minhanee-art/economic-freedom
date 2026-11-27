@@ -122,6 +122,12 @@ export function parseRetirementGoalBody(body: unknown, now = new Date()): Parsed
     else if (v === "low" || v === "high") out.salaryBracket = v;
     else return { ok: false, error: "총급여 구간이 올바르지 않습니다." };
   }
+  if (has("spouseSalaryBracket")) {
+    const v = b.spouseSalaryBracket;
+    if (v === null || v === "") out.spouseSalaryBracket = null;
+    else if (v === "low" || v === "high") out.spouseSalaryBracket = v;
+    else return { ok: false, error: "배우자 총급여 구간이 올바르지 않습니다." };
+  }
   if (Object.keys(out).length === 0) return { ok: false, error: "저장할 항목이 없습니다." };
   return { ok: true, value: out };
 }

@@ -21,6 +21,7 @@ const EMPTY_GOAL: RetirementGoal = {
   spouseBirthYear: null,
   expectedReturnPct: null,
   salaryBracket: null,
+  spouseSalaryBracket: null,
 };
 
 /**

@@ -36,6 +36,7 @@ export default async function RetirementPage() {
           spouseBirthYear: null,
           expectedReturnPct: null,
           salaryBracket: null,
+          spouseSalaryBracket: null,
         }
       }
     />

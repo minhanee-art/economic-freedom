@@ -51,6 +51,7 @@ export async function ensurePensionSchema(): Promise<void> {
     await sql`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_birth_year INTEGER`;
     await sql`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS expected_return_pct NUMERIC(5,2)`;
     await sql`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS salary_bracket TEXT`;
+    await sql`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_salary_bracket TEXT`;
   })().catch((error) => {
     // 실패하면 다음 요청에서 다시 시도
     schemaReady = null;
@@ -215,6 +216,8 @@ export type RetirementGoalRow = {
   spouseBirthYear: number | null;
   expectedReturnPct: number | null;
   salaryBracket: SalaryBracket | null;
+  /** 배우자 총급여 구간. null이면 미입력 — 배우자 명의 계좌는 낮은 공제율로 가정한다 */
+  spouseSalaryBracket: SalaryBracket | null;
 };
 
 const nullableNumber = (value: unknown) => (value === null || value === undefined ? null : Number(value));
@@ -223,11 +226,13 @@ export async function getRetirementGoal(userId: string): Promise<RetirementGoalR
   await ensurePensionSchema();
   const [row] = await sql`
     SELECT retirement_target_monthly, retirement_age, birth_year, spouse_birth_year,
-           expected_return_pct::float AS expected_return_pct, salary_bracket
+           expected_return_pct::float AS expected_return_pct, salary_bracket, spouse_salary_bracket
     FROM profiles WHERE id = ${userId}
   `;
   return row ? toRetirementGoal(row) : null;
 }
+
+const toSalaryBracket = (value: unknown): SalaryBracket | null => (value === "low" || value === "high" ? value : null);
 
 function toRetirementGoal(row: Record<string, unknown>): RetirementGoalRow {
   return {
@@ -236,7 +241,8 @@ function toRetirementGoal(row: Record<string, unknown>): RetirementGoalRow {
     birthYear: nullableNumber(row.birth_year),
     spouseBirthYear: nullableNumber(row.spouse_birth_year),
     expectedReturnPct: nullableNumber(row.expected_return_pct),
-    salaryBracket: row.salary_bracket === "low" || row.salary_bracket === "high" ? row.salary_bracket : null,
+    salaryBracket: toSalaryBracket(row.salary_bracket),
+    spouseSalaryBracket: toSalaryBracket(row.spouse_salary_bracket),
   };
 }
 
@@ -259,10 +265,11 @@ export async function patchRetirementGoal(
         birth_year = CASE WHEN ${has("birthYear")}::boolean THEN ${value("birthYear")}::integer ELSE birth_year END,
         spouse_birth_year = CASE WHEN ${has("spouseBirthYear")}::boolean THEN ${value("spouseBirthYear")}::integer ELSE spouse_birth_year END,
         expected_return_pct = CASE WHEN ${has("expectedReturnPct")}::boolean THEN ${value("expectedReturnPct")}::numeric ELSE expected_return_pct END,
-        salary_bracket = CASE WHEN ${has("salaryBracket")}::boolean THEN ${value("salaryBracket")}::text ELSE salary_bracket END
+        salary_bracket = CASE WHEN ${has("salaryBracket")}::boolean THEN ${value("salaryBracket")}::text ELSE salary_bracket END,
+        spouse_salary_bracket = CASE WHEN ${has("spouseSalaryBracket")}::boolean THEN ${value("spouseSalaryBracket")}::text ELSE spouse_salary_bracket END
     WHERE id = ${userId}
     RETURNING retirement_target_monthly, retirement_age, birth_year, spouse_birth_year,
-              expected_return_pct::float AS expected_return_pct, salary_bracket
+              expected_return_pct::float AS expected_return_pct, salary_bracket, spouse_salary_bracket
   `;
   return row ? toRetirementGoal(row) : null;
 }

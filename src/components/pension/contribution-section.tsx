@@ -26,6 +26,8 @@ interface Props {
   contributions: ContributionMap;
   onContributionsChange: (next: ContributionMap) => void;
   salaryBracket: SalaryBracket | null;
+  /** 배우자 총급여 구간 — 은퇴 목표 폼에서 입력한다. null이면 낮은 공제율로 가정 */
+  spouseSalaryBracket: SalaryBracket | null;
   onSalaryBracketChange: (next: SalaryBracket) => void;
 }
 
@@ -36,6 +38,7 @@ export function ContributionSection({
   contributions,
   onContributionsChange,
   salaryBracket,
+  spouseSalaryBracket,
   onSalaryBracketChange,
 }: Props) {
   const targetAccounts = accounts.filter((a) => isPensionAccountType(a.account_type) || a.account_type === "isa");
@@ -45,7 +48,7 @@ export function ContributionSection({
 
   const bracket: SalaryBracket = salaryBracket ?? "high";
   // 한도·공제율은 명의자 개인 기준 — 본인·배우자를 따로 계산해 더하고, 자녀·기타 명의는 뺀다.
-  // 배우자 소득 구간은 입력란이 없어 낮은 공제율로 가정한다.
+  // 소득 구간이 미입력인 명의자는 낮은 공제율로 가정한다.
   const family = useMemo(
     () =>
       computeFamilyTaxCredit(
@@ -55,10 +58,10 @@ export function ContributionSection({
           accountType: a.account_type,
           amount: contributions[a.id] ?? 0,
         })),
-        { self: salaryBracket, spouse: null },
+        { self: salaryBracket, spouse: spouseSalaryBracket },
         rules
       ),
-    [targetAccounts, contributions, salaryBracket, rules]
+    [targetAccounts, contributions, salaryBracket, spouseSalaryBracket, rules]
   );
   const progress = family.total;
   const totalLimit = rules.taxCredit.combinedLimit * family.byOwner.length;
@@ -170,13 +173,19 @@ export function ContributionSection({
             <li key={o.ownerType}>
               {ACCOUNT_OWNER_LABELS[o.ownerType]}: 공제 대상 {formatKRW(o.progress.creditableTotal)} /{" "}
               {formatKRW(rules.taxCredit.combinedLimit)} · 예상 공제액 {formatFullKRW(o.progress.estimatedCredit)} · 공제율{" "}
-              {(o.progress.rate * 100).toFixed(1)}%{o.salaryBracketAssumed && " (소득 구간 미입력 — 낮은 공제율로 가정)"}
+              {(o.progress.rate * 100).toFixed(1)}%{o.salaryBracketAssumed &&
+                (o.ownerType === "spouse"
+                  ? " (배우자 소득 구간 미입력 — 낮은 공제율로 가정, 위 은퇴 목표에서 입력)"
+                  : " (소득 구간 미입력 — 낮은 공제율로 가정)")}
             </li>
           ))}
         </ul>
       )}
       {family.byOwner.length === 1 && family.byOwner[0].ownerType === "spouse" && (
-        <p className="text-xs text-zinc-500">배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 배우자 소득 구간은 낮은 공제율로 가정했습니다.</p>
+        <p className="text-xs text-zinc-500">
+          배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다 (공제율 {(family.byOwner[0].progress.rate * 100).toFixed(1)}%).
+          {family.byOwner[0].salaryBracketAssumed && " 배우자 소득 구간이 미입력이라 낮은 공제율로 가정했습니다. 위 은퇴 목표에서 입력할 수 있습니다."}
+        </p>
       )}
       {family.excluded.length > 0 && (
         <p className="text-xs text-zinc-500">

@@ -80,3 +80,19 @@ test("parseRetirementGoalBody: 범위 밖·빈 본문은 거부", () => {
   assert.equal(parseRetirementGoalBody({ salaryBracket: "mid" }, now).ok, false);
   assert.equal(parseRetirementGoalBody({ birthYear: 2030 }, now).ok, false);
 });
+
+test("parseRetirementGoalBody: 배우자 총급여 구간은 low·high·null(빈 문자열 포함)만 받는다", () => {
+  assert.deepEqual(parseRetirementGoalBody({ spouseSalaryBracket: "low" }, now), { ok: true, value: { spouseSalaryBracket: "low" } });
+  assert.deepEqual(parseRetirementGoalBody({ spouseSalaryBracket: "high" }, now), { ok: true, value: { spouseSalaryBracket: "high" } });
+  assert.deepEqual(parseRetirementGoalBody({ spouseSalaryBracket: null }, now), { ok: true, value: { spouseSalaryBracket: null } });
+  assert.deepEqual(parseRetirementGoalBody({ spouseSalaryBracket: "" }, now), { ok: true, value: { spouseSalaryBracket: null } });
+  assert.deepEqual(parseRetirementGoalBody({ salaryBracket: "low", spouseSalaryBracket: "high" }, now), {
+    ok: true,
+    value: { salaryBracket: "low", spouseSalaryBracket: "high" },
+  });
+  for (const bad of ["mid", "LOW", 0, true, ["low"]]) {
+    const r = parseRetirementGoalBody({ spouseSalaryBracket: bad }, now);
+    assert.equal(r.ok, false, `값 ${JSON.stringify(bad)}`);
+    if (!r.ok) assert.equal(r.error, "배우자 총급여 구간이 올바르지 않습니다.");
+  }
+});

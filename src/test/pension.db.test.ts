@@ -29,6 +29,8 @@ before(async () => {
   await db.pool.query(readFileSync("neon-schema.sql", "utf8"));
   // 운영 DB처럼 account_type 컬럼이 없던 시절의 계좌를 만든 뒤 코드의 ALTER로 컬럼을 붙인다
   await db.sql`ALTER TABLE portfolio_accounts DROP COLUMN account_type`;
+  // 운영 DB처럼 배우자 총급여 구간 컬럼이 없던 프로필에 코드의 ALTER로 컬럼을 붙인다
+  await db.sql`ALTER TABLE profiles DROP COLUMN spouse_salary_bracket`;
   await db.sql`INSERT INTO users (id, email) VALUES (${USER}, ${"pension-user@pension.local"}), (${OTHER}, ${"pension-other@pension.local"})`;
   await db.sql`INSERT INTO profiles (id, email) VALUES (${USER}, ${"pension-user@pension.local"}), (${OTHER}, ${"pension-other@pension.local"})`;
   await db.sql`INSERT INTO portfolio_accounts (id, user_id, name, display_order) VALUES (${LEGACY_ACCOUNT}, ${USER}, ${"내 계좌"}, ${0})`;
@@ -128,6 +130,7 @@ test("은퇴 목표: profiles에 저장·조회, 프로필 없는 사용자는 f
     spouseBirthYear: null,
     expectedReturnPct: null,
     salaryBracket: null,
+    spouseSalaryBracket: null,
   });
   const goal = {
     targetMonthly: 3_500_000,
@@ -136,6 +139,7 @@ test("은퇴 목표: profiles에 저장·조회, 프로필 없는 사용자는 f
     spouseBirthYear: 1982,
     expectedReturnPct: 4.5,
     salaryBracket: "low" as const,
+    spouseSalaryBracket: "high" as const,
   };
   assert.equal(await data.saveRetirementGoal(USER, goal), true);
   assert.deepEqual(await data.getRetirementGoal(USER), goal);
@@ -144,6 +148,30 @@ test("은퇴 목표: profiles에 저장·조회, 프로필 없는 사용자는 f
   const ghost = "bbbbbbbb-0000-4000-8000-00000000ffff";
   assert.equal(await data.saveRetirementGoal(ghost, goal), false);
   assert.equal(await data.getRetirementGoal(ghost), null);
+});
+
+test("배우자 총급여 구간: 코드의 ALTER로 컬럼이 생기고, 보낸 항목만 바꾸며 다른 사용자와 섞이지 않는다", { skip }, async () => {
+  const [column] = await db.sql`
+    SELECT data_type FROM information_schema.columns
+    WHERE table_name = 'profiles' AND column_name = 'spouse_salary_bracket'
+  `;
+  assert.equal(column?.data_type, "text", "ensurePensionSchema가 없던 컬럼을 붙인다");
+
+  await data.patchRetirementGoal(USER, { salaryBracket: "high", spouseSalaryBracket: null });
+  const saved = await data.patchRetirementGoal(USER, { spouseSalaryBracket: "low" });
+  assert.equal(saved?.spouseSalaryBracket, "low");
+  assert.equal(saved?.salaryBracket, "high", "본인 구간은 그대로");
+  assert.equal((await data.getRetirementGoal(USER))?.spouseSalaryBracket, "low");
+  assert.equal((await data.getRetirementGoal(OTHER))?.spouseSalaryBracket, null, "다른 사용자 프로필은 그대로");
+
+  // 다른 항목만 바꾸면 배우자 구간은 유지, null을 보내면 지운다
+  assert.equal((await data.patchRetirementGoal(USER, { retirementAge: 62 }))?.spouseSalaryBracket, "low");
+  assert.equal((await data.patchRetirementGoal(USER, { spouseSalaryBracket: null }))?.spouseSalaryBracket, null);
+
+  // 알 수 없는 값이 DB에 들어 있어도(직접 수정 등) 응답은 null(미입력)로 읽는다
+  await db.sql`UPDATE profiles SET spouse_salary_bracket = 'mid' WHERE id = ${USER}`;
+  assert.equal((await data.getRetirementGoal(USER))?.spouseSalaryBracket, null);
+  await db.sql`UPDATE profiles SET spouse_salary_bracket = NULL WHERE id = ${USER}`;
 });
 
 test("계좌 스냅샷: 평가액과 최근 1년 배당만 합산한다", { skip }, async () => {

@@ -14,6 +14,7 @@ type Goal = {
   spouseBirthYear: number | null;
   expectedReturnPct: number | null;
   salaryBracket: "low" | "high" | null;
+  spouseSalaryBracket: "low" | "high" | null;
 };
 const emptyGoal: Goal = {
   targetMonthly: null,
@@ -22,6 +23,7 @@ const emptyGoal: Goal = {
   spouseBirthYear: null,
   expectedReturnPct: null,
   salaryBracket: null,
+  spouseSalaryBracket: null,
 };
 
 // 사용자별 데이터 — 요청한 userId의 것만 돌려주는 스텁
@@ -80,6 +82,7 @@ type Summary = {
     contributionsRecorded: boolean;
     progress: { creditableTotal: number; progressPct: number; estimatedCredit: number; remainingCreditRoom: number };
     accounts: { id: string; paid: number }[];
+    byOwner: { ownerType: string; salaryBracket: string; salaryBracketAssumed: boolean; progress: { estimatedCredit: number; rate: number } }[];
   };
   taxCreditUnavailableReason: string | null;
   retirement: {
@@ -172,6 +175,7 @@ test("정상 계산: 은퇴 시점 월 현금흐름과 목표 충족률", async 
     spouseBirthYear: null,
     expectedReturnPct: null,
     salaryBracket: null,
+    spouseSalaryBracket: null,
   };
 
   const body = await readJson<Summary>(await route.GET(jsonRequest("GET")));
@@ -206,4 +210,39 @@ test("다른 사용자의 데이터는 내려가지 않는다", async () => {
   const own = await readJson<Summary>(await route.GET(jsonRequest("GET")));
   assert.equal(own.goal.targetMonthly, 7_777_777);
   assert.equal(own.taxCredit?.progress.creditableTotal, 6_000_000);
+});
+
+test("배우자 총급여 구간: 저장된 사용자 자신의 값으로 배우자 공제율을 계산한다", async () => {
+  const spouseAccount = { ...account("s1", "배우자 연금저축", "pension_savings"), owner_type: "spouse" };
+  data.accounts["user-1"] = [spouseAccount];
+  data.contributions["user-1"] = [{ id: "c1", account_id: "s1", year: YEAR, amount: 6_000_000, memo: null, updated_at: "" }];
+  data.goals["user-1"] = { ...emptyGoal, salaryBracket: "high", spouseSalaryBracket: null };
+  // 다른 사용자는 배우자 구간을 'low'로 저장해 두었다 — user-1 계산에 섞이면 안 된다
+  data.accounts["user-2"] = [{ ...spouseAccount, id: "s2" }];
+  data.contributions["user-2"] = [{ id: "c2", account_id: "s2", year: YEAR, amount: 6_000_000, memo: null, updated_at: "" }];
+  data.goals["user-2"] = { ...emptyGoal, spouseSalaryBracket: "low" };
+
+  const missing = await readJson<Summary>(await route.GET(jsonRequest("GET")));
+  assert.equal(missing.goal.spouseSalaryBracket, null);
+  assert.ok(missing.taxCredit);
+  assert.deepEqual(
+    missing.taxCredit.byOwner.map((o) => [o.ownerType, o.salaryBracket, o.salaryBracketAssumed]),
+    [["spouse", "high", true]]
+  );
+  assert.equal(missing.taxCredit.salaryBracketAssumed, true);
+
+  data.goals["user-1"] = { ...emptyGoal, salaryBracket: "high", spouseSalaryBracket: "low" };
+  const entered = await readJson<Summary>(await route.GET(jsonRequest("GET")));
+  assert.ok(entered.taxCredit);
+  const [spouse] = entered.taxCredit.byOwner;
+  assert.equal(spouse.salaryBracket, "low");
+  assert.equal(spouse.salaryBracketAssumed, false);
+  assert.ok(spouse.progress.estimatedCredit > missing.taxCredit.byOwner[0].progress.estimatedCredit);
+  assert.equal(entered.taxCredit.salaryBracketAssumed, false);
+
+  session.state.userId = "user-2";
+  const other = await readJson<Summary>(await route.GET(jsonRequest("GET")));
+  assert.equal(other.goal.spouseSalaryBracket, "low");
+  assert.equal(other.taxCredit?.byOwner[0].salaryBracket, "low", "user-2 는 자기 배우자 구간으로 계산");
+  assert.equal(other.taxCredit?.salaryBracketAssumed, false, "배우자 명의 계좌만 있고 배우자 구간이 입력됨");
 });

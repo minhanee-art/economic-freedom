@@ -266,6 +266,7 @@ ALTER TABLE profiles ADD COLUMN IF NOT EXISTS birth_year INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_birth_year INTEGER;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS expected_return_pct NUMERIC(5,2);
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS salary_bracket TEXT; -- 'low'(총급여 5,500만원 이하) | 'high'
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS spouse_salary_bracket TEXT; -- 배우자 총급여 구간, 값은 salary_bracket 과 같음. NULL = 미입력
 
 -- 15. 텔레그램 채팅 소유 확인(연결 코드) — 코드(src/lib/telegram-link.ts ensureTelegramLinkSchema)에서도
 --     같은 정의를 IF NOT EXISTS로 보장한다.

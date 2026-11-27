@@ -1,6 +1,9 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { colors } from "@/styles/theme";
+import { setupWebDocument } from "@/styles/web-document";
+
+setupWebDocument();
 
 export default function RootLayout() {
   return (

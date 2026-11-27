@@ -326,7 +326,7 @@ await expectText("총 평가금액", 60000);
 // 1 홈
 await openTab("홈");
 await expectText("총 평가금액");
-await visible(page.locator("div")).filter({ hasText: /보유 종목\s*5개/ }).last().waitFor({ state: "visible", timeout: 30000 });
+await expectText("남은 공제 한도");
 await expectText("내 연금저축"); // 계좌 칩
 await scrollTop();
 await shot(1);
@@ -334,14 +334,14 @@ await shot(1);
 // 2 자산
 await openTab("자산");
 await expectText("TIGER 미국배당다우존스");
-await expectText("평가금액, 손익, 비중");
+await expectText(/^종목 \d+개$/);
 await scrollTop();
 await shot(2);
 
 // 3 배당
 await openTab("배당");
 await expectText("예상 연 배당");
-await expectText("예정 캘린더");
+await expectText("예정 일정");
 await expectText(kstDate(9));
 await scrollTop();
 await scrollToText("예상 연 배당", 28);
@@ -358,11 +358,11 @@ await shot(4);
 
 /** 계좌 칩을 눌러 계좌를 바꾼다(선택 상태가 반영될 때까지 조건 대기). */
 async function selectAccountChip(name) {
-  const chip = button(new RegExp(name), false);
+  const chip = visible(page.getByRole("radio", { name: new RegExp(name) })).first();
   await chip.waitFor({ state: "visible", timeout: 30000 });
   await chip.click();
   await page.waitForFunction(
-    (label) => [...document.querySelectorAll('[role="button"]')].some((el) => el.offsetParent !== null && el.textContent.includes(label) && el.getAttribute("aria-selected") === "true"),
+    (label) => [...document.querySelectorAll('[role="radio"]')].some((el) => el.offsetParent !== null && el.textContent.includes(label) && el.getAttribute("aria-selected") === "true"),
     name,
     { timeout: 30000 }
   );
@@ -370,16 +370,16 @@ async function selectAccountChip(name) {
 
 // 5 매수 기록 추가 (입력 후 기록 금액이 보이는 상태) — 종목이 적은 배우자 계좌로 찍어 안내문·입력·기록 금액이 한 화면에 들어오게 한다
 await openTab("자산");
-await expectText("평가금액, 손익, 비중");
+await expectText(/^종목 \d+개$/);
 await selectAccountChip("배우자 계좌");
 await expectText("TIGER 미국S&P500");
 await button("매수 기록 추가").click();
 await expectText("이미 한 거래를 기록합니다");
 await expectText("기록할 계좌");
 await expectText("배우자 계좌 · 배우자");
-await button(/TIGER 미국S&P500/, false).click();
+await visible(page.getByRole("radio", { name: /TIGER 미국S&P500/ })).first().click();
 await fillInputs(["100", "21500", today]);
-await expectText("기록 금액 ₩2,150,000");
+await expectText("기록 금액 2,150,000원");
 await blur();
 await scrollTop();
 await shot(5);
@@ -405,10 +405,10 @@ await selectAccountChip("배우자 계좌");
 await button("배당 수령 기록 추가").click();
 await expectText("이미 받은 배당을 기록합니다");
 await expectText("배우자 계좌 · 배우자");
-await button(/TIGER 미국S&P500/, false).click();
+await visible(page.getByRole("radio", { name: /TIGER 미국S&P500/ })).first().click();
 await fillInputs(["48000", today]);
 await expectText("최근 배당 수령 기록");
-await expectText("₩");
+await expectText(/\d원$/);
 await blur();
 await scrollTop();
 await shot(7);
@@ -417,7 +417,6 @@ await selectAccountChip("내 계좌");
 
 // 8 설정
 await openTab("설정");
-await expectText("연결됨");
 await expectText(EMAIL);
 await expectText("계정 삭제 안내");
 await scrollTop();
@@ -433,7 +432,7 @@ const color = (name) => {
 };
 const BG = color("brandDark");
 const BAND_TEXT = color("surface");
-const FRAME = color("brandDeep");
+const FRAME = color("ink");
 
 const compose = await browser.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1, locale: "ko-KR" });
 const composePage = await compose.newPage();

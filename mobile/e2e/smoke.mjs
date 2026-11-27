@@ -83,6 +83,8 @@ function assert(condition, message) {
 const visible = (locator) => locator.filter({ visible: true });
 const text = (value, exact = false) => visible(page.getByText(value, { exact })).first();
 const button = (name, exact = true) => visible(page.getByRole("button", { name, exact })).first();
+// 계좌 칩·기록 화면의 종목 선택은 라디오 묶음(accessibilityRole="radio")이다.
+const radio = (name, exact = false) => visible(page.getByRole("radio", { name, exact })).first();
 
 async function expectText(value, timeout = 30000, exact = false) {
   await text(value, exact).waitFor({ state: "visible", timeout });
@@ -259,7 +261,7 @@ async function pickerState() {
   await expectText("이전 화면에서 계좌를 선택하세요");
   return page.evaluate(() => {
     const shown = (el) => el.offsetParent !== null;
-    const buttons = [...document.querySelectorAll('[role="button"]')].filter(shown);
+    const buttons = [...document.querySelectorAll('[role="button"], [role="radio"]')].filter(shown);
     const notHeld = buttons.filter((b) => b.textContent.includes("보유 0주"));
     const toggle = buttons.find((b) => /보유하지 않은 종목 \d+개 (보기|접기)/.test(b.textContent));
     return { notHeld: notHeld.map((b) => b.textContent), toggle: toggle ? toggle.textContent : null };
@@ -372,7 +374,7 @@ await step("신규 계정: 자산 탭 빈 상태 → 종목 추가 화면에서 
 
   const accounts = await apiDirect("/api/accounts", { token });
   const mainId = accounts.data.accounts[0].id;
-  for (const h of FRESH_HOLDINGS) {
+  for (const [index, h] of FRESH_HOLDINGS.entries()) {
     await fillInputs([h.name, h.code]);
     const post = quiet(page.waitForRequest((req) => req.url().includes("/api/holdings") && req.method() === "POST", { timeout: 15000 }));
     const done = waitApi("/api/holdings", "POST");
@@ -383,12 +385,20 @@ await step("신규 계정: 자산 탭 빈 상태 → 종목 추가 화면에서 
     const res = await done;
     assert(res.status() === 201, `종목 추가 응답 ${res.status()}`);
     await expectText(`${h.name}(${h.code})을(를) 0주로 추가했습니다.`);
+    if (index === 0) {
+      // 같은 계좌에 같은 종목코드는 다시 넣지 않는다(앱 사전 확인 또는 서버 409 — 문구는 같다).
+      // 새 입력을 시작하면 직전 성공 문구와 '이 종목의 매수 기록 추가' 버튼은 사라져 새 오류와 섞이지 않는다.
+      await fillInputs(["중복", h.code]);
+      await visible(page.getByRole("button", { name: "종목 추가", exact: true })).last().click();
+      await expectText("이 계좌에 이미 있는 종목코드입니다.");
+      assert((await visible(page.getByText("0주로 추가했습니다")).count()) === 0, "중복 오류와 직전 성공 문구가 함께 보임");
+      assert(
+        (await visible(page.getByRole("button", { name: "이 종목의 매수 기록 추가", exact: true })).count()) === 0,
+        "중복 오류와 직전 '이 종목의 매수 기록 추가' 버튼이 함께 보임"
+      );
+      await shot("add-holding-duplicate");
+    }
   }
-
-  // 같은 계좌에 같은 종목코드는 다시 넣지 않는다(앱 사전 확인 또는 서버 409 — 문구는 같다)
-  await fillInputs(["중복", FRESH_HOLDINGS[0].code]);
-  await visible(page.getByRole("button", { name: "종목 추가", exact: true })).last().click();
-  await expectText("이 계좌에 이미 있는 종목코드입니다.");
 
   const list = await apiDirect("/api/holdings", { token, accountId: mainId });
   const codes = list.data.map((h) => h.code).sort();
@@ -404,14 +414,14 @@ await step("신규 계정: '이 종목의 매수 기록 추가' → 방금 추�
   await visible(page.getByRole("button", { name: "이 종목의 매수 기록 추가", exact: true })).first().click();
   await expectText("이미 한 거래를 기록합니다");
   await pickerState();
-  const picked = visible(page.getByRole("button", { name: new RegExp(last.name) })).first();
+  const picked = visible(page.getByRole("radio", { name: new RegExp(last.name) })).first();
   await waitAttr(picked, "aria-selected", "true");
   freshPickedName = last.name;
   s.notes.push(`미리 골라진 종목: ${freshPickedName}`);
   await shot("fresh-purchase-preselected");
   await fillInputs(["2", "5000", today]);
   const post = waitApi("/api/purchases", "POST");
-  await visible(page.getByRole("button", { name: "매수 기록 추가", exact: true })).last().click();
+  await button("기록 저장").click();
   const res = await post;
   assert(res.ok(), `매수 기록 저장 실패: HTTP ${res.status()}`);
   await expectText("2주 매수 기록을 추가했습니다");
@@ -426,7 +436,7 @@ await step("신규 계정: 다시 열면 그 종목만 보이고 '보유하지 �
   const rest = freshHoldingCount - 1;
   await leaveRecordScreen();
   await openTab("홈");
-  await visible(page.locator("div")).filter({ hasText: /보유 종목\s*1개/ }).last().waitFor({ state: "visible", timeout: 30000 });
+  await expectText("총 평가금액"); // 매수 기록 뒤 홈이 빈 상태에서 계좌 요약으로 바뀜
   for (const [tabLabel, openLabel, marker] of [
     ["자산", "매수 기록 추가", "이미 한 거래를 기록합니다"],
     ["배당", "배당 수령 기록 추가", "이미 받은 배당을 기록합니다"],
@@ -439,7 +449,7 @@ await step("신규 계정: 다시 열면 그 종목만 보이고 '보유하지 �
     s.notes.push(`${tabLabel}: 접힌 상태 0주 ${collapsed.notHeld.length}개, 토글=${collapsed.toggle}`);
     assert(collapsed.notHeld.length === 0, `${tabLabel}: 접힌 상태인데 0주 종목 ${collapsed.notHeld.length}개가 보임`);
     assert(collapsed.toggle === `보유하지 않은 종목 ${rest}개 보기`, `${tabLabel}: 토글 문구 '${collapsed.toggle}'`);
-    assert((await visible(page.getByRole("button", { name: new RegExp(freshPickedName) })).count()) >= 1, `${tabLabel}: 매수한 종목이 목록에 없음`);
+    assert((await visible(page.getByRole("radio", { name: new RegExp(freshPickedName) })).count()) >= 1, `${tabLabel}: 매수한 종목이 목록에 없음`);
     await button(`보유하지 않은 종목 ${rest}개 보기`).click();
     await button(`보유하지 않은 종목 ${rest}개 접기`).waitFor({ state: "visible", timeout: 15000 });
     const expanded = await pickerState();
@@ -488,10 +498,10 @@ await step("로그인(새로 띄운 화면에서 이메일·비밀번호)", asyn
 
 for (const [label, marker] of [
   ["홈", "총 평가금액"],
-  ["자산", "평가금액, 손익, 비중"],
+  ["자산", "보유자산"],
   ["배당", "예상 연 배당"],
   ["연금", "연금 설계"],
-  ["설정", "계정과 앱 정보를 관리합니다"],
+  ["설정", "약관 및 안내"],
 ]) {
   await step(`탭 렌더링: ${label}`, async () => {
     await openTab(label);
@@ -506,7 +516,7 @@ for (const [label, marker] of [
 await step("계좌 전환: 배우자 계좌 선택 → 요청 헤더 반영, 다른 탭·새로고침 후에도 유지", async (s) => {
   await openTab("홈");
   await expectText("총 평가금액");
-  const chip = button(/배우자 계좌/, false);
+  const chip = radio(/배우자 계좌/);
   await chip.waitFor({ state: "visible", timeout: 10000 });
   const summaryReq = quiet(page.waitForRequest(
     (req) => req.url().includes("/api/mobile/portfolio-summary") && req.headers()["x-portfolio-account-id"] === spouseAccountId,
@@ -530,43 +540,43 @@ await step("계좌 전환: 배우자 계좌 선택 → 요청 헤더 반영, 다
   await shot("account-switched-holdings");
   // 이후 기록 단계는 첫 계좌에서 진행한다.
   await openTab("홈");
-  await button(/내 계좌/, false).click();
+  await radio(/내 계좌/).click();
   await expectText("테스트배당ETF").catch(() => {});
 });
 
 await step("매수 기록 추가 → 목록 표시(내 계좌)", async (s) => {
   await openTab("자산");
   // 앞 단계가 중간에 실패해도 이 단계는 내 계좌에서 시작한다.
-  const mine = button(/내 계좌/, false);
+  const mine = radio(/내 계좌/);
   if ((await mine.getAttribute("aria-selected")) !== "true") await mine.click();
   await expectText("테스트배당ETF");
   await button("매수 기록 추가").click();
   await expectText("이미 한 거래를 기록합니다");
   await expectText("기록할 계좌");
   await expectText("내 계좌 · 본인");
-  await button(/테스트배당ETF/, false).click();
+  await radio(/테스트배당ETF/).click();
   await fillInputs(["3", "11000", today]); // 수량, 단가, 거래일
   const post = quiet(page.waitForRequest((req) => req.url().includes("/api/purchases") && req.method() === "POST", { timeout: 15000 }));
-  await visible(page.getByRole("button", { name: "매수 기록 추가", exact: true })).last().click();
+  await button("기록 저장").click();
   const req = await post;
   s.notes.push(`POST 헤더 계좌=${req.headers()["x-portfolio-account-id"]}`);
   assert(req.headers()["x-portfolio-account-id"] === firstAccountId, "매수 기록 요청이 선택한 계좌 헤더를 쓰지 않음");
   await expectText("3주 매수 기록을 추가했습니다");
-  await expectText("테스트배당ETF 3주 × ₩11,000");
+  await expectText("테스트배당ETF 3주 × 11,000원");
   // 입력한 거래일이 그대로 돌아오는지(시간대 때문에 하루 밀리지 않는지) 함께 본다.
-  await expectText(`${today} · ₩33,000`);
+  await expectText(`${today} · 33,000원`);
   await shot("purchase-added");
 });
 
 await step("매수 기록 삭제", async () => {
   const del = waitApi("/api/purchases/", "DELETE");
-  await rowButton(`${today} · ₩33,000`, "삭제").click();
+  await rowButton(`${today} · 33,000원`, "삭제").click();
   const res = await del;
   assert(res.status() === 200, `삭제 응답 ${res.status()}`);
   await expectText("매수 기록을 삭제했습니다");
   // 보유 종목 등록 때 생긴 초기 매수 기록은 남고, 방금 추가한 기록만 사라져야 한다.
-  await text(`${today} · ₩33,000`).waitFor({ state: "detached", timeout: 10000 });
-  await expectText("테스트배당ETF 10주 × ₩10,000");
+  await text(`${today} · 33,000원`).waitFor({ state: "detached", timeout: 10000 });
+  await expectText("테스트배당ETF 10주 × 10,000원");
   await shot("purchase-deleted");
   await page.goBack();
 });
@@ -576,13 +586,13 @@ await step("배당 기록 추가 → 목록 표시 → 삭제", async () => {
   await expectText("예상 연 배당");
   await button("배당 수령 기록 추가").click();
   await expectText("이미 받은 배당을 기록합니다");
-  await button(/테스트배당ETF/, false).click();
+  await radio(/테스트배당ETF/).click();
   await fillInputs(["4321", today]);
   const post = waitApi("/api/dividends", "POST");
-  await visible(page.getByRole("button", { name: "배당 수령 기록 추가", exact: true })).last().click();
+  await button("기록 저장").click();
   assert((await post).ok(), "배당 기록 저장 실패");
   await expectText("배당 수령");
-  await expectText(`${today} · ₩4,321`);
+  await expectText(`${today} · 4,321원`);
   await shot("dividend-added");
   const del = waitApi("/api/dividends", "DELETE");
   await button("삭제").click();
@@ -594,7 +604,7 @@ await step("배당 기록 추가 → 목록 표시 → 삭제", async () => {
 
 await step("연금 탭: 요약 표시와 입력 없음 안내", async () => {
   await openTab("연금");
-  await expectText("가족 전체 계좌를 합산한 값입니다");
+  await expectText(/명의 계좌 \d+개를 합산한 값입니다/);
   await expectText("세액공제 납입");
   await expectText("연금저축·IRP·DC·ISA 계좌가 없어 계산하지 않았습니다");
   await expectText("은퇴 목표가 모두 입력되지 않아 계산하지 않았습니다");
@@ -629,11 +639,12 @@ await step("연금 탭: 명의자별 세액공제 블록과 '제외된 계좌' �
   assert(owners.includes("self") && owners.includes("spouse"), `서버 요약의 명의자: ${owners.join(",")}`);
   assert(credit.excludedAccounts.some((e) => e.id === childId), "서버 요약에 자녀 계좌가 제외 목록에 없음");
 
-  const krw = (n) => new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(n);
+  // 앱 목록 표기(DESIGN.md Money: 전체 표기 "162,890,500원")
+  const krw = (n) => `${Math.round(n).toLocaleString("ko-KR")}원`;
   const limit = summary.rules.taxCredit.combinedLimit;
   await page.reload({ waitUntil: "domcontentloaded" });
   await openTab("연금");
-  await expectText("가족 전체 계좌를 합산한 값입니다");
+  await expectText(/명의 계좌 \d+개를 합산한 값입니다/);
   await expectText("연금계좌 납입액");
   const ownerLabel = { self: "본인", spouse: "배우자" };
   for (const owner of credit.byOwner) {
@@ -659,7 +670,7 @@ await step("연금 탭: 명의자별 세액공제 블록과 '제외된 계좌' �
 
 await step("비밀번호 변경 후에도 로그인 상태 유지", async (s) => {
   await openTab("설정");
-  await expectText("연결됨");
+  await button("로그아웃", false).waitFor({ state: "visible", timeout: 30000 });
   await button("비밀번호 변경").click();
   await waitInputsReady(3); // 폼이 열리고 입력란이 활성화될 때까지 조건 대기
   await fillInputs([PASSWORD, NEW_PASSWORD, NEW_PASSWORD]);
@@ -676,7 +687,7 @@ await step("비밀번호 변경 후에도 로그인 상태 유지", async (s) =>
   await openTab("홈");
   await expectText("총 평가금액");
   await openTab("설정");
-  await expectText("연결됨");
+  await button("로그아웃", false).waitFor({ state: "visible", timeout: 30000 });
   token = after;
   await shot("password-changed");
 });

@@ -50,7 +50,7 @@ export default function SignupScreen() {
 
   return (
     <AppShell>
-      <Text style={type.label}>웹에서 만든 계정과 같은 계정입니다. 웹과 앱 어디서든 같은 이메일로 로그인합니다.</Text>
+      <Text style={type.label}>이메일과 비밀번호로 계정을 만듭니다. 웹에서 만든 계정과 같은 계정이라 웹과 앱에서 같은 이메일로 로그인합니다.</Text>
 
       <Card>
         <TextField

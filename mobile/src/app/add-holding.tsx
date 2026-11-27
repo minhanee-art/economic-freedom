@@ -81,6 +81,11 @@ export default function AddHoldingScreen() {
         setError("선택한 계좌를 찾을 수 없어 계좌 선택을 초기화했습니다. 계좌를 확인한 뒤 다시 시도해주세요.");
         return;
       }
+      if (err instanceof ApiError && err.status === 409) {
+        // 서버가 같은 종목코드를 거절했다(요약을 다시 받기 전이라 앱 사전 확인을 지나친 경우) — 종목코드 칸 아래에 보인다.
+        setErrors({ code: err.message });
+        return;
+      }
       setError(err instanceof Error ? err.message : "종목을 추가하지 못했습니다.");
     } finally {
       submitLock.current = false;

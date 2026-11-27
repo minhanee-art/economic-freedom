@@ -71,8 +71,8 @@ function PlanContent({
       {!summary ? (
         <Notice>
           {summaryFailed
-            ? "서버 계산값을 불러오지 못해 납입액과 목록만 표시합니다. 당겨서 새로고침하면 다시 시도합니다."
-            : "서버가 아직 연금 요약 계산값을 제공하지 않아 납입액과 목록만 표시합니다."}
+            ? "세액공제·현금흐름 계산값을 불러오지 못해 납입액과 목록만 표시합니다. 당겨서 새로고침하면 다시 시도합니다."
+            : "세액공제·현금흐름 계산값을 아직 받을 수 없어 납입액과 목록만 표시합니다."}
         </Notice>
       ) : null}
 
@@ -134,7 +134,7 @@ const LAYER_LABELS: [keyof PensionLayers, string][] = [
 function SummaryCards({ summary }: { summary: PensionSummary }) {
   const { taxCredit, retirement } = summary;
   const cashflow = retirement.cashflow;
-  const unverified = summary.rules.unverifiedTopics;
+  const ruleNotes = ruleNoteTexts(summary.rules.unverifiedTopics);
   return (
     <>
       <Card title={`${summary.year}년 세액공제 납입`}>
@@ -202,19 +202,30 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
       <Card title="계산 가정과 확인 상태">
         <Notice>{summary.disclaimer}</Notice>
         {!summary.rules.exact ? (
-          <Notice tone="caution">{`${summary.year}년 기준 규칙이 서버에 등록되어 있지 않아 가까운 연도(${summary.rules.year}년)의 값으로 계산했습니다.`}</Notice>
+          <Notice tone="caution">{`${summary.year}년 세법 기준이 아직 반영되지 않아 가까운 연도(${summary.rules.year}년) 기준으로 계산했습니다.`}</Notice>
         ) : null}
-        {unverified.length > 0 ? (
-          <View style={styles.list}>
-            <Notice>서버가 공식 출처로 확인하지 못했다고 표시한 항목(미확인):</Notice>
-            {unverified.map((topic) => (
-              <Notice key={topic}>{`· ${topic}`}</Notice>
-            ))}
-          </View>
-        ) : null}
+        {ruleNotes.map((note) => (
+          <Notice key={note}>{note}</Notice>
+        ))}
       </Card>
     </>
   );
+}
+
+/**
+ * 계산 규칙 중 공식 출처와 아직 대조하지 못한 항목(서버 응답의 unverifiedTopics)을 사용자에게 하는 말로 바꾼다.
+ * 응답 원문은 개발용 메모(법령 조항·"국세×1.1로 계산" 등)라 그대로 보이지 않고, 앱이 정한 문장만 보인다.
+ */
+function ruleNoteTexts(topics: string[]): string[] {
+  if (topics.length === 0) return [];
+  const notes: string[] = [];
+  if (topics.some((topic) => topic.includes("지방소득세"))) {
+    notes.push("공제율과 연금소득세율은 지방소득세(소득세의 10%)를 포함해 계산했습니다.");
+  }
+  if (topics.some((topic) => !topic.includes("지방소득세"))) {
+    notes.push("일부 세율·한도는 법령 원문과 다시 대조하는 중이라 실제 값과 다를 수 있습니다.");
+  }
+  return notes;
 }
 
 function taxCreditUnavailableText(reason: string | null): string {
@@ -306,8 +317,8 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
       {taxCredit.salaryBracketAssumed ? (
         <Notice>
           {byOwner.length > 0
-            ? `소득 구간이 없는 명의자는 서버가 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. ${hasSpouseOwner ? "본인·배우자 " : ""}소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다.`
-            : "소득 구간이 저장되어 있지 않아 서버가 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다."}
+            ? `소득 구간이 없는 명의자는 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. ${hasSpouseOwner ? "본인·배우자 " : ""}소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다.`
+            : "소득 구간이 저장되어 있지 않아 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다."}
         </Notice>
       ) : null}
       {needsWebInput ? <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 소득 구간 입력" /> : null}

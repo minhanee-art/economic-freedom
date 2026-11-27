@@ -66,6 +66,9 @@ export default function LoginScreen() {
         <Pressable disabled={disabled} onPress={handleLogin} style={[styles.button, disabled && styles.buttonDisabled]}>
           <Text style={styles.buttonText}>{isSubmitting ? "로그인 중" : "로그인"}</Text>
         </Pressable>
+        <Text style={styles.subtitle}>
+          Google로 가입했다면 웹에서 Google로 로그인한 뒤 설정에서 비밀번호를 만들면 앱에서 로그인할 수 있습니다.
+        </Text>
       </Card>
 
       <Link href="/signup" asChild>

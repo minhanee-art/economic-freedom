@@ -2,7 +2,7 @@ import { router } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/api/client";
 import { getPensionSummary, getRetirementPlan } from "@/api/pension";
-import { clearSession, loadSession } from "@/storage/session";
+import { handleUnauthorized, loadSession } from "@/storage/session";
 import type { PensionSummary, RetirementPlan } from "@/types";
 
 export function useRetirementPlan() {
@@ -16,8 +16,10 @@ export function useRetirementPlan() {
   const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
+    let sentToken: string | null = null;
     try {
       const session = await loadSession();
+      sentToken = session?.token ?? null;
       if (!session) {
         setPlan(null);
         setSummary(null);
@@ -39,7 +41,8 @@ export function useRetirementPlan() {
       setSummaryFailed(nextSummary.failed);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        await clearSession();
+        // 이전 토큰의 지연된 401이면(토큰이 이미 교체됨) 새 세션을 유지하고 무시한다.
+        if (!sentToken || !(await handleUnauthorized(sentToken))) return;
         setPlan(null);
         setSummary(null);
         router.replace("/login");

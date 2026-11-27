@@ -25,11 +25,14 @@ export async function signupWithEmail(email: string, password: string): Promise<
   return toSession(body);
 }
 
-export async function deleteAccount(token: string, password: string): Promise<void> {
+/** 계정 삭제 확인값: 비밀번호 계정은 { password }, Google 전용(비밀번호 없음) 계정은 { confirmEmail }. */
+export type DeleteConfirmation = { password: string } | { confirmEmail: string };
+
+export async function deleteAccount(token: string, confirmation: DeleteConfirmation): Promise<void> {
   await apiRequest<unknown>("/api/me", {
     method: "DELETE",
     token,
-    body: { password },
+    body: confirmation,
     fallbackError: "계정을 삭제하지 못했습니다.",
   });
 }

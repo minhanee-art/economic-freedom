@@ -145,7 +145,7 @@ export function TelegramLinkSection() {
         </p>
       )}
 
-      <Link href="/guide/telegram" className="inline-block text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
+      <Link href="/guide/telegram" className="inline-flex min-h-11 items-center text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-300">
         연결 방법 안내
       </Link>
 

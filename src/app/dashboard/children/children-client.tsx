@@ -117,7 +117,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
           {children.map((c) => (
             <div key={c.id} className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3">
-                <Link href={`/dashboard/children/${c.id}`} className="flex-1">
+                <Link href={`/dashboard/children/${c.id}`} className="flex min-h-11 flex-1 flex-col justify-center">
                   <p className="text-sm font-semibold">{c.name}</p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">만 {getAge(c.birth_date)}세 · {c.birth_date}</p>
                 </Link>
@@ -137,7 +137,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
               </div>
               <Link
                 href={`/dashboard/children/${c.id}`}
-                className="block px-4 py-2.5 text-center text-xs font-medium text-indigo-500 border-t border-zinc-100 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors dark:text-indigo-300"
+                className="flex min-h-11 items-center justify-center px-4 text-center text-xs font-medium text-indigo-500 border-t border-zinc-100 dark:border-zinc-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors dark:text-indigo-300"
               >
                 입금/증여 기록 · 보유 종목 · 신고 가이드 보기 →
               </Link>

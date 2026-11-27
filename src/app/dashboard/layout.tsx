@@ -538,7 +538,7 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      <main id="main-content" tabIndex={-1} className="flex-1 bg-canvas-soft focus:outline-none dark:bg-zinc-950">
+      <main id="main-content" tabIndex={-1} className="min-h-dvh flex-1 bg-canvas-soft focus:outline-none dark:bg-zinc-950">
         <div className="mx-auto max-w-280 px-4 py-5 sm:px-6 md:py-7">
           {children}
         </div>

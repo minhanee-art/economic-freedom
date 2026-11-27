@@ -252,11 +252,11 @@ export default function Home() {
               <p className={lead}>
                 계좌번호나 계좌 비밀번호는 받지 않습니다. 계정을 삭제하면 입력한 기록이 함께 지워집니다.
               </p>
-              <p className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-base">
-                <Link href="/privacy" className="font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
+              <p className="mt-4 flex flex-wrap gap-x-5 text-base">
+                <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
                   개인정보처리방침
                 </Link>
-                <Link href="/account-deletion" className="font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
+                <Link href="/account-deletion" className="inline-flex min-h-11 items-center font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
                   계정 및 데이터 삭제 안내
                 </Link>
               </p>

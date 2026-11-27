@@ -24,7 +24,7 @@ export default async function BuyPlanPage() {
 
   if (holdings.length === 0) {
     return (
-      <NoHoldingsState description="적립 배분 계산은 내가 추가한 종목과 직접 정한 목표 비중으로 월 적립금을 나눠 보는 계산기입니다. 종목을 먼저 추가하면 이 화면에서 계산할 수 있습니다." />
+      <NoHoldingsState pageTitle="적립 배분 계산" description="적립 배분 계산은 내가 추가한 종목과 직접 정한 목표 비중으로 월 적립금을 나눠 보는 계산기입니다. 종목을 먼저 추가하면 이 화면에서 계산할 수 있습니다." />
     );
   }
 

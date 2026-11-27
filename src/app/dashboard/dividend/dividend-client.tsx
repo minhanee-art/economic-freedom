@@ -385,7 +385,7 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
                 <button
                   onClick={() => handleFetch(h)}
                   disabled={status === "loading"}
-                  className="shrink-0 h-7 px-3.5 bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  className="shrink-0 min-h-11 px-3.5 text-xs font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
                 >
                   {status === "loading" ? "조회 중..." : "가져오기"}
                 </button>

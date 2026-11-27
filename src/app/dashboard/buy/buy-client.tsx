@@ -989,7 +989,7 @@ function BuyPlanCard({
               type="button"
               onClick={onSaveRecord}
               disabled={isSaveDisabled}
-              className="mt-3 w-full h-9 bg-indigo-600 text-white text-xs font-semibold transition-colors hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
+              className="mt-3 w-full h-11 text-xs font-semibold disabled:cursor-not-allowed border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
             >
               {isSavingRecord ? "저장 중..." : "이 종목만 기록 저장"}
             </button>

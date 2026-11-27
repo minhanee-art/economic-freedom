@@ -378,7 +378,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         <button
           onClick={saveProfile}
-          className="w-full h-10 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors"
+          className="w-full h-11 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 shadow-card transition-colors"
         >
           프로필 저장
         </button>
@@ -503,7 +503,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             <button
               onClick={handleAddHolding}
               disabled={isAdding}
-              className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+              className="w-full h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
             >
               {isAdding ? "추가 중..." : "종목 추가"}
             </button>
@@ -585,7 +585,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             <button
               onClick={handleAddWatchlist}
               disabled={isAddingWl}
-              className="h-9 px-4 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+              className="h-11 px-4 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
             >
               {isAddingWl ? "..." : "+ 추가"}
             </button>
@@ -671,7 +671,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           <button
             onClick={handleAddCalendar}
             disabled={isAddingCal}
-            className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
+            className="w-full h-11 text-sm font-semibold border border-hairline bg-surface text-ink hover:bg-canvas-soft disabled:opacity-50 transition-colors dark:border-zinc-700"
           >
             {isAddingCal ? "..." : "+ 추가"}
           </button>

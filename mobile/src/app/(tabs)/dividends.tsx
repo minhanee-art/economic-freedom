@@ -36,7 +36,7 @@ function DividendContent({ summary }: { summary: PortfolioSummary }) {
     <>
       <Card title="예상 연 배당">
         <Text style={type.numberLg}>{formatKRW(summary.expectedAnnualDividend)}</Text>
-        <Text style={[type.label, styles.tabular]}>월 평균 {formatKRW(monthlyAverage)}</Text>
+        <Text style={[type.label, styles.tabular]}>12개월로 나누면 월 {formatKRW(monthlyAverage)}</Text>
       </Card>
 
       <Card title="월별 흐름">
@@ -84,7 +84,7 @@ function MonthlyBars({ months }: { months: DividendMonth[] }) {
         <Text style={[type.label, styles.tabular]} accessibilityLiveRegion="polite">
           {picked ? `${picked.month} ${formatKRWFull(picked.amount)}` : `최고 ${peak?.month ?? ""} ${formatKRWFull(max)}`}
         </Text>
-        <Text style={[type.caption, styles.tabular]}>점선은 12개월 평균 {formatKRWFull(average)}</Text>
+        <Text style={[type.caption, styles.tabular]}>점선은 아래 막대 12개의 평균 {formatKRWFull(average)}</Text>
       </View>
       <View style={styles.chart}>
         <View style={[styles.avgLine, { bottom: (average / max) * CHART_HEIGHT }]} pointerEvents="none" />

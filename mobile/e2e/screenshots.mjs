@@ -107,7 +107,7 @@ async function fillInputs(values) {
 /** 로딩 표시(스피너)가 없고 오류 카드가 없으며 글꼴이 준비될 때까지 기다린다(고정 sleep 없음). */
 async function settle() {
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForFunction(() => document.querySelectorAll('[role="progressbar"]').length === 0, null, { timeout: 30000 });
+  await page.waitForFunction(() => document.querySelectorAll('[role="progressbar"]:not([aria-valuenow])').length === 0, null, { timeout: 30000 });
   await visible(page.getByText("데이터를 불러오지 못했습니다")).first().waitFor({ state: "detached", timeout: 1000 }).catch(() => {
     throw new Error("오류 카드가 표시됨");
   });

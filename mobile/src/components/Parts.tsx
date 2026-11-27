@@ -46,6 +46,10 @@ export function ProgressBar({ pct, label }: { pct: number; label: string }) {
       accessibilityRole="progressbar"
       accessibilityLabel={label}
       accessibilityValue={{ min: 0, max: 100, now }}
+      // react-native-web 는 accessibilityValue 를 DOM 에 옮기지 않아 aria-* 로도 준다
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={now}
     >
       <View style={[styles.fill, { width: `${now}%` }]} />
     </View>

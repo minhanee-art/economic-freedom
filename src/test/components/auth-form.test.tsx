@@ -119,6 +119,7 @@ test("AuthForm 회원가입: 성공하면 가입 완료 화면을 보여준다",
   render(<AuthForm mode="signup" />);
   fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "new@b.com" } });
   fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "secret123" } });
+  fireEvent.change(screen.getByLabelText("비밀번호 확인"), { target: { value: "secret123" } });
   fireEvent.submit(screen.getByRole("button", { name: "회원가입" }).closest("form") as HTMLFormElement);
 
   assert.ok(await screen.findByText("가입 완료"));
@@ -129,4 +130,77 @@ test("AuthForm 회원가입: 성공하면 가입 완료 화면을 보여준다",
 test("AuthForm 로그인: initialError가 있으면 처음부터 안내 문구를 보여준다", () => {
   render(<AuthForm mode="login" initialError="이 이메일은 이미 다른 Google 계정에 연결되어 있습니다." />);
   assert.ok(screen.getByText("이 이메일은 이미 다른 Google 계정에 연결되어 있습니다."));
+});
+
+test("AuthForm 회원가입: 비밀번호 확인이 다르면 요청하지 않고 오류로 초점을 옮긴다", async () => {
+  render(<AuthForm mode="signup" />);
+  fireEvent.change(screen.getByLabelText("이메일"), { target: { value: "new@b.com" } });
+  fireEvent.change(screen.getByLabelText("비밀번호"), { target: { value: "secret123" } });
+  fireEvent.change(screen.getByLabelText("비밀번호 확인"), { target: { value: "secret124" } });
+  assert.ok(screen.getByText("비밀번호가 서로 다릅니다."), "입력 중에도 불일치를 알려준다");
+  fireEvent.submit(screen.getByRole("button", { name: "회원가입" }).closest("form") as HTMLFormElement);
+
+  const alert = await screen.findByRole("alert");
+  assert.match(alert.textContent ?? "", /비밀번호가 서로 다릅니다/);
+  assert.equal(fetchCalls.length, 0);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(document.activeElement, alert);
+});
+
+test("AuthForm 회원가입: 개인정보처리방침 동의 안내와 링크가 있다", () => {
+  render(<AuthForm mode="signup" />);
+  const link = screen.getByRole("link", { name: "개인정보처리방침" });
+  assert.equal(link.getAttribute("href"), "/privacy");
+  assert.match(link.parentElement?.textContent ?? "", /가입하면 개인정보처리방침에 동의한 것으로 봅니다/);
+});
+
+test("AuthForm: 네트워크 오류면 '로그인 중'에 멈추지 않고 alert로 알린다", async () => {
+  globalThis.fetch = (async () => {
+    throw new TypeError("Failed to fetch");
+  }) as typeof fetch;
+  render(<AuthForm mode="login" />);
+  fillAndSubmit();
+
+  const alert = await screen.findByRole("alert");
+  assert.match(alert.textContent ?? "", /서버에 연결하지 못했습니다/);
+  const button = screen.getByRole("button", { name: "로그인" }) as HTMLButtonElement;
+  assert.equal(button.disabled, false);
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  assert.equal(document.activeElement, alert);
+});
+
+test("AuthForm: 서버 오류 문구는 role=alert로 보인다", async () => {
+  fetchResponse = { status: 401, body: { error: "이메일 또는 비밀번호가 올바르지 않습니다." } };
+  render(<AuthForm mode="login" />);
+  fillAndSubmit();
+  const alert = await screen.findByRole("alert");
+  assert.equal(alert.textContent, "이메일 또는 비밀번호가 올바르지 않습니다.");
+});
+
+test("AuthForm: 자동완성 속성이 모드에 맞다", () => {
+  render(<AuthForm mode="login" />);
+  assert.equal(screen.getByLabelText("이메일").getAttribute("autocomplete"), "email");
+  assert.equal(screen.getByLabelText("비밀번호").getAttribute("autocomplete"), "current-password");
+  cleanup();
+  render(<AuthForm mode="signup" />);
+  assert.equal(screen.getByLabelText("비밀번호").getAttribute("autocomplete"), "new-password");
+  assert.equal(screen.getByLabelText("비밀번호 확인").getAttribute("autocomplete"), "new-password");
+});
+
+test("AuthForm: 비밀번호 표시 버튼으로 입력값을 보였다 숨긴다", () => {
+  render(<AuthForm mode="login" />);
+  const input = screen.getByLabelText("비밀번호") as HTMLInputElement;
+  assert.equal(input.type, "password");
+  fireEvent.click(screen.getByRole("button", { name: "비밀번호 표시" }));
+  assert.equal(input.type, "text");
+  fireEvent.click(screen.getByRole("button", { name: "비밀번호 숨기기" }));
+  assert.equal(input.type, "password");
+});
+
+test("AuthForm: 제목은 한 번만, 그라디언트 버튼 없이", () => {
+  const { container } = render(<AuthForm mode="login" />);
+  assert.equal(container.querySelectorAll("h1").length, 1);
+  assert.equal(screen.getByRole("heading", { level: 1 }).textContent, "로그인");
+  assert.equal(screen.queryByText("계정에 로그인하세요"), null);
+  assert.equal(container.innerHTML.includes("bg-gradient"), false);
 });

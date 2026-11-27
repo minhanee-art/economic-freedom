@@ -128,7 +128,7 @@ export default function DeleteAccountScreen() {
               setFieldError("");
             }}
             placeholder="현재 비밀번호"
-            secureTextEntry
+            revealable
             value={password}
             error={fieldError}
             returnKeyType="done"

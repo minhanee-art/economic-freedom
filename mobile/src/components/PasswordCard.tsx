@@ -140,7 +140,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
               label="현재 비밀번호"
               autoComplete="current-password"
               onChangeText={setCurrent}
-              secureTextEntry
+              revealable
               value={current}
               error={errors.current}
               returnKeyType="next"
@@ -153,7 +153,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
             label="새 비밀번호"
             autoComplete="new-password"
             onChangeText={setNext}
-            secureTextEntry
+            revealable
             value={next}
             error={errors.next}
             returnKeyType="next"
@@ -165,7 +165,7 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
             label="새 비밀번호 확인"
             autoComplete="new-password"
             onChangeText={setConfirm}
-            secureTextEntry
+            revealable
             value={confirm}
             error={errors.confirm}
             returnKeyType="done"

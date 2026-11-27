@@ -1,7 +1,8 @@
-import { StyleSheet, TextInput, View, type TextInputProps } from "react-native";
+import { useState } from "react";
+import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from "react-native";
 import { Text } from "@/components/AppText";
 import { Button } from "@/components/Button";
-import { colors, radius, spacing, type } from "@/styles/theme";
+import { colors, radius, spacing, touchTarget, type } from "@/styles/theme";
 import { formatDateInput, quickDates } from "@/utils/records";
 
 type TextFieldProps = Omit<TextInputProps, "style"> & {
@@ -10,22 +11,46 @@ type TextFieldProps = Omit<TextInputProps, "style"> & {
   error?: string | null;
   helper?: string;
   ref?: React.Ref<TextInput>;
+  /** 비밀번호 칸: 칸 오른쪽에 '표시/숨기기' 전환 버튼을 둔다(웹 auth-form 의 PasswordInput 과 같은 이름·상태). */
+  revealable?: boolean;
 };
 
 /** 라벨 + 입력칸 + (도움말 또는 오류). 입력칸의 접근성 이름은 라벨과 같다. */
-export function TextField({ label, error, helper, ref, ...input }: TextFieldProps) {
+export function TextField({ label, error, helper, ref, revealable, ...input }: TextFieldProps) {
+  const [revealed, setRevealed] = useState(false);
+  const field = (
+    <TextInput
+      ref={ref}
+      accessibilityLabel={label}
+      accessibilityHint={error ?? helper}
+      aria-invalid={error ? true : undefined}
+      placeholderTextColor={colors.placeholder}
+      {...input}
+      secureTextEntry={revealable ? !revealed : input.secureTextEntry}
+      style={[styles.input, error ? styles.inputError : null, revealable ? styles.inputWithToggle : null]}
+    />
+  );
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <TextInput
-        ref={ref}
-        accessibilityLabel={label}
-        accessibilityHint={error ?? helper}
-        aria-invalid={error ? true : undefined}
-        placeholderTextColor={colors.placeholder}
-        {...input}
-        style={[styles.input, error ? styles.inputError : null]}
-      />
+      {revealable ? (
+        <View style={styles.inputRow}>
+          {field}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${label} ${revealed ? "숨기기" : "표시"}`}
+            accessibilityState={{ selected: revealed }}
+            aria-pressed={revealed}
+            onPress={() => setRevealed((v) => !v)}
+            android_ripple={{ color: colors.ripple, borderless: false }}
+            style={({ pressed }) => [styles.toggle, pressed ? styles.togglePressed : null]}
+          >
+            <Text style={styles.toggleText}>{revealed ? "숨기기" : "표시"}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        field
+      )}
       {error ? <FieldError message={error} /> : helper ? <Text style={type.caption}>{helper}</Text> : null}
     </View>
   );
@@ -109,6 +134,22 @@ const styles = StyleSheet.create({
   label: { ...type.label, color: colors.ink },
   input: fieldStyles.input,
   inputError: { borderColor: colors.danger, borderWidth: 2 },
+  inputRow: { position: "relative", justifyContent: "center" },
+  inputWithToggle: { paddingRight: 72 },
+  toggle: {
+    position: "absolute",
+    right: 2,
+    top: 2,
+    bottom: 2,
+    minWidth: 64,
+    minHeight: touchTarget,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.sm,
+  },
+  togglePressed: { backgroundColor: colors.surfaceMuted },
+  toggleText: { ...type.label, color: colors.ink, fontWeight: "600" },
   error: { ...type.label, color: colors.danger },
   chips: { flexDirection: "row", gap: spacing.sm },
   chipActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft },

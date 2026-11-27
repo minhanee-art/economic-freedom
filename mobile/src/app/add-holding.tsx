@@ -147,7 +147,9 @@ export default function AddHoldingScreen() {
               : `${added.name}(${added.code})을(를) 0주로 추가했습니다.`}
           </StatusMessage>
           {added.price === null ? (
-            <Text style={type.caption}>현재가를 불러오지 못해 첫 매수 기록의 단가로 평가합니다. 자산 탭의 '시세 새로고침'으로 다시 불러올 수 있습니다.</Text>
+            <Text style={type.caption}>
+              {"현재가를 불러오지 못해 첫 매수 기록의 단가로 평가합니다. 자산 탭의 '시세 새로고침'으로 다시 불러올 수 있습니다."}
+            </Text>
           ) : null}
           <Button
             label="이 종목의 매수 기록 추가"

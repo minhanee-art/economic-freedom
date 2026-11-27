@@ -6,6 +6,8 @@ import { formatKRWFull, formatKRW } from "@/lib/utils";
 import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
 import { NoHoldingsState, noHoldingsSecondaryClass } from "@/components/portfolio/no-holdings-state";
 import { ImportClient } from "./import-client";
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
 
 interface RecordWithItems extends PurchaseRecord {
   purchase_items: PurchaseItem[] | null;
@@ -25,6 +27,8 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; retry?: () => void } | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
   const router = useRouter();
   const hasMore = records.length < totalCount;
 
@@ -40,6 +44,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
 
   const loadMore = async () => {
     setIsLoadingMore(true);
+    setError(null);
     try {
       const offset = records.length;
       const res = await fetch(`/api/purchases?offset=${offset}&limit=${PAGE_SIZE}`);
@@ -47,7 +52,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       const { records: more } = await res.json();
       if (Array.isArray(more) && more.length) setRecords([...records, ...more]);
     } catch {
-      alert("기록을 더 불러오지 못했습니다. 다시 시도해주세요.");
+      setError({ message: failureMessage("기록을 더 불러오지", new Error("")), retry: loadMore });
     } finally {
       setIsLoadingMore(false);
     }
@@ -56,8 +61,14 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   // 매수 기록 한 건 삭제 — 서버가 보유 수량·원가를 함께 되돌린다
   const deleteRecord = async (record: RecordWithItems) => {
     const summary = (record.purchase_items ?? []).map((item) => `${item.name} ${item.quantity}주`).join(", ");
-    if (!confirm(`${record.date} 매수 기록을 삭제할까요?\n${summary}\n\n보유 수량과 원가에서도 이 매수분이 빠집니다.`)) return;
+    const ok = await confirm({
+      title: `${record.date} 매수 기록을 삭제할까요?`,
+      body: `${summary}\n\n보유 수량과 원가에서도 이 매수분이 빠집니다.`,
+      confirmLabel: "기록 삭제",
+    });
+    if (!ok) return;
     setDeletingId(record.id);
+    setError(null);
     try {
       const res = await fetch(`/api/purchases/${record.id}`, { method: "DELETE" });
       if (!res.ok) {
@@ -67,7 +78,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       setRecords((prev) => prev.filter((r) => r.id !== record.id));
       router.refresh();
     } catch (err) {
-      alert(`삭제하지 못했습니다.\n${(err as Error).message}`);
+      setError({ message: failureMessage(`${record.date} 매수 기록을 삭제`, err), retry: () => deleteRecord(record) });
     } finally {
       setDeletingId(null);
     }
@@ -90,6 +101,8 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-bold tracking-tight text-ink">매수 기록</h1>
+      {dialog}
+      {error && <InlineError message={error.message} onRetry={error.retry} onDismiss={() => setError(null)} />}
       {/* 누적 통계 */}
       <div
         className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800"
@@ -197,7 +210,7 @@ function RecordCard({
             onClick={onDelete}
             disabled={isDeleting}
             aria-label={`${record.date} 매수 기록 삭제`}
-            className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors disabled:opacity-50"
+            className="-my-2 -mr-2 inline-flex min-h-11 min-w-11 items-center justify-center px-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 hover:text-danger transition-colors disabled:opacity-50"
           >
             {isDeleting ? "삭제 중" : "삭제"}
           </button>
@@ -209,7 +222,7 @@ function RecordCard({
         {items.map((item) => (
           <div key={item.id} className="flex items-center px-4 py-3">
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-ink dark:text-zinc-100">{item.name}</p>
+              <p className="text-sm font-medium truncate text-ink dark:text-zinc-100" title={item.name}>{item.name}</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{item.code}</p>
             </div>
             <div className="text-right shrink-0 ml-3">

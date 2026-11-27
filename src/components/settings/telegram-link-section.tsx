@@ -2,6 +2,7 @@
 
 // 설정 > 텔레그램 연결 — 현재 계좌에 텔레그램 채팅을 연결 코드로 연결·해제한다.
 // chat_id를 직접 입력하지 않는다: 봇에게 코드를 보낸 채팅만 연결되므로, 본인이 쓰는 채팅임이 확인된다.
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -32,6 +33,7 @@ function formatDateTime(iso: string): string {
 
 export function TelegramLinkSection() {
   const [status, setStatus] = useState<LinkStatus | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
   const [issued, setIssued] = useState<IssuedCode | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "error" | "info"; text: string } | null>(null);
@@ -90,7 +92,12 @@ export function TelegramLinkSection() {
   };
 
   const unlink = async () => {
-    if (!confirm("이 계좌의 텔레그램 연결을 해제할까요? 해제하면 수익률 리포트를 보낼 수 없습니다.")) return;
+    const ok = await confirm({
+      title: "이 계좌의 텔레그램 연결을 해제할까요?",
+      body: "해제하면 수익률 리포트를 보낼 수 없습니다.",
+      confirmLabel: "연결 해제",
+    });
+    if (!ok) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -192,6 +199,7 @@ export function TelegramLinkSection() {
           </button>
         )}
       </div>
+      {dialog}
     </section>
   );
 }

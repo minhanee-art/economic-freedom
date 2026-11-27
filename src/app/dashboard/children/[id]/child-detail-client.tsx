@@ -6,6 +6,8 @@ import type { ChildRow, ChildGiftRow, ChildHoldingRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
 import { GiftTaxGuide } from "@/components/gift/gift-tax-guide";
 import { presentValueOfInstallments } from "@/lib/gift-tax";
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { failureMessage } from "@/components/dashboard/inline-error";
 import { formatKRW, formatKRWFull, formatSignedKRW, pnlTextClass, cn } from "@/lib/utils";
 
 interface Props {
@@ -129,6 +131,7 @@ function GiftsTab({
   const [memo, setMemo] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
+  const { confirm, dialog } = useConfirmDialog();
 
   // 분할(정기금) 계산 보조 — 월 납입액 × 개월수를 3% 할인율로 현재가치 환산 (참고용)
   const [installMonthly, setInstallMonthly] = useState("");
@@ -178,20 +181,33 @@ function GiftsTab({
         reportDate: !g.reported ? new Date().toISOString().split("T")[0] : null,
       }),
     });
-    if (!res.ok) return alert("변경 실패");
+    if (!res.ok) {
+      setError(failureMessage("신고 여부를 변경", new Error(`서버 응답 ${res.status}`)));
+      return;
+    }
+    setError("");
     const data = await res.json();
     setGifts(gifts.map((x) => (x.id === g.id ? data : x)));
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("이 증여 기록을 삭제하시겠습니까?")) return;
+    const target = gifts.find((g) => g.id === id);
+    const ok = await confirm({
+      title: "이 증여 기록을 삭제하시겠습니까?",
+      body: target ? `${target.date} · ${formatKRWFull(Number(target.amount))}` : undefined,
+      confirmLabel: "기록 삭제",
+    });
+    if (!ok) return;
     const res = await fetch(`/api/children/${childId}/gifts/${id}`, { method: "DELETE" });
-    if (res.ok) setGifts(gifts.filter((g) => g.id !== id));
-    else alert("삭제 실패");
+    if (res.ok) {
+      setError("");
+      setGifts(gifts.filter((g) => g.id !== id));
+    } else setError(failureMessage("증여 기록을 삭제", new Error(`서버 응답 ${res.status}`)));
   };
 
   return (
     <div className="space-y-4">
+      {dialog}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold">입금/증여 기록 추가</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -235,8 +251,8 @@ function GiftsTab({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">날짜</label>
-            <input
+            <label htmlFor="child-detail-1" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">날짜</label>
+            <input id="child-detail-1"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -244,8 +260,8 @@ function GiftsTab({
             />
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">금액 (원)</label>
-            <input
+            <label htmlFor="child-detail-2" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">금액 (원)</label>
+            <input id="child-detail-2"
               type="text"
               inputMode="numeric"
               value={amount}
@@ -259,8 +275,8 @@ function GiftsTab({
           </div>
         </div>
         <div>
-          <label className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">메모 (선택)</label>
-          <input
+          <label htmlFor="child-detail-3" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">메모 (선택)</label>
+          <input id="child-detail-3"
             type="text"
             value={memo}
             onChange={(e) => setMemo(e.target.value)}
@@ -289,7 +305,7 @@ function GiftsTab({
               유기정기금 계약서·평가명세서 미리보기 (참고용 — 실제 신고는 홈택스 자동계산으로 확인)
             </p>
             <div className="grid grid-cols-2 gap-2">
-              <input
+              <input aria-label="월 납입액(원)"
                 type="text"
                 inputMode="numeric"
                 value={installMonthly}
@@ -300,7 +316,7 @@ function GiftsTab({
                 placeholder="월 납입액(원)"
                 className="h-9 border border-zinc-200 bg-white px-2 text-xs dark:border-zinc-700 dark:bg-zinc-900"
               />
-              <input
+              <input aria-label="개월 수"
                 type="text"
                 inputMode="numeric"
                 value={installMonths}
@@ -369,7 +385,7 @@ function GiftsTab({
           </div>
         )}
 
-        {error && <p className="text-xs text-danger">{error}</p>}
+        {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
           disabled={!date || !amount || isAdding}
@@ -473,6 +489,7 @@ function HoldingsTab({
   const [currentPrice, setCurrentPrice] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [error, setError] = useState("");
+  const { confirm, dialog } = useConfirmDialog();
 
   const handleAdd = async () => {
     if (!code.trim() || !name.trim()) return;
@@ -506,32 +523,41 @@ function HoldingsTab({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("이 종목을 삭제하시겠습니까?")) return;
+    const target = holdings.find((h) => h.id === id);
+    const ok = await confirm({
+      title: `${target?.name ?? "이 종목"}을(를) 삭제하시겠습니까?`,
+      body: "이 자녀 계좌의 보유 종목에서 빠집니다.",
+      confirmLabel: "종목 삭제",
+    });
+    if (!ok) return;
     const res = await fetch(`/api/children/${childId}/holdings/${id}`, { method: "DELETE" });
-    if (res.ok) setHoldings(holdings.filter((h) => h.id !== id));
-    else alert("삭제 실패");
+    if (res.ok) {
+      setError("");
+      setHoldings(holdings.filter((h) => h.id !== id));
+    } else setError(failureMessage(`${target?.name ?? "종목"}을(를) 삭제`, new Error(`서버 응답 ${res.status}`)));
   };
 
   return (
     <div className="space-y-4">
+      {dialog}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
         <h2 className="text-sm font-semibold">보유 종목 추가</h2>
         <div className="grid grid-cols-2 gap-3">
-          <input
+          <input aria-label="종목코드"
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value)}
             placeholder="종목코드"
             className="h-10 border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           />
-          <input
+          <input aria-label="종목명"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="종목명"
             className="h-10 border border-zinc-200 bg-white px-3 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           />
-          <input
+          <input aria-label="보유 수량"
             type="text"
             inputMode="numeric"
             value={shares}
@@ -539,7 +565,7 @@ function HoldingsTab({
             placeholder="보유 수량"
             className="h-10 border border-zinc-200 bg-white px-3 text-sm text-right dark:border-zinc-700 dark:bg-zinc-800"
           />
-          <input
+          <input aria-label="평균 매수가"
             type="text"
             inputMode="numeric"
             value={avgPrice}
@@ -547,7 +573,7 @@ function HoldingsTab({
             placeholder="평균 매수가"
             className="h-10 border border-zinc-200 bg-white px-3 text-sm text-right dark:border-zinc-700 dark:bg-zinc-800"
           />
-          <input
+          <input aria-label="현재가"
             type="text"
             inputMode="numeric"
             value={currentPrice}
@@ -556,7 +582,7 @@ function HoldingsTab({
             className="h-10 border border-zinc-200 bg-white px-3 text-sm text-right col-span-2 dark:border-zinc-700 dark:bg-zinc-800"
           />
         </div>
-        {error && <p className="text-xs text-danger">{error}</p>}
+        {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
           disabled={!code.trim() || !name.trim() || isAdding}

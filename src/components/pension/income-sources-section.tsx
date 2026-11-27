@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { useState } from "react";
 import type { IncomeSourceRow } from "@/lib/pension-data";
 import {
@@ -38,6 +39,7 @@ interface Props {
 
 export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
+  const { confirm, dialog } = useConfirmDialog();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -88,7 +90,8 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
   };
 
   const remove = async (id: string) => {
-    if (!confirm("이 항목을 삭제할까요?")) return;
+    const ok = await confirm({ title: "이 항목을 삭제할까요?", body: "연금 소득원 목록과 은퇴 현금흐름 계산에서 빠집니다.", confirmLabel: "항목 삭제" });
+    if (!ok) return;
     try {
       await sendJson(`/api/pension/income-sources/${id}`, "DELETE");
       onChange(sources.filter((s) => s.id !== id));
@@ -186,7 +189,7 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
           <input inputMode="numeric" value={form.endAge} onChange={(e) => set("endAge", e.target.value)} className={inputClass} />
         </Field>
       </div>
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
       <div className="flex gap-2">
         <button onClick={submit} disabled={isSaving || !form.monthlyAmount} className={primaryButtonClass}>
           {isSaving ? "저장 중..." : editingId ? "수정 저장" : "항목 추가"}
@@ -203,6 +206,7 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
           </button>
         )}
       </div>
+      {dialog}
     </SectionCard>
   );
 }

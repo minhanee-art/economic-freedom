@@ -1,6 +1,8 @@
 // 적립 배분 계산 클라이언트 (매수 계획 화면) — 알고리즘 자동 계산 + 종목별 수량 수동 조절 + 수수료 포함 계산
 "use client";
 
+import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
+import { DialogFrame } from "@/components/dashboard/confirm-dialog";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
@@ -65,6 +67,7 @@ export function BuyClient({
   const [isExecuting, setIsExecuting] = useState(false);
   const [executingHoldingId, setExecutingHoldingId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState("");
+  const [saveError, setSaveError] = useState<{ message: string; retry?: () => void } | null>(null);
   const [priceStatus, setPriceStatus] = useState("");
   const [quantityOverrides, setQuantityOverrides] = useState<Record<string, number>>({});
   const [executionPriceOverrides, setExecutionPriceOverrides] = useState<Record<string, number>>({});
@@ -312,8 +315,9 @@ export function BuyClient({
 
   async function savePurchaseRows(rows: typeof actualBuyItems) {
     if (rows.length === 0) return false;
+    setSaveError(null);
     if (rows.some(({ item, executionPrice }) => item.quantity <= 0 || executionPrice <= 0)) {
-      alert("매수 수량과 단가는 0보다 커야 합니다.");
+      setSaveError({ message: "기록할 수량과 단가는 0보다 커야 합니다. 종목 카드의 수량·기록 단가를 확인해 주세요." });
       return false;
     }
 
@@ -386,7 +390,7 @@ export function BuyClient({
       if (!saved) return;
 
       setSuccessMessage(
-        `${sortedBuyItems.length}개 종목, 총 ${formatKRWFull(actualTotalSpent)} 매수 완료! (수수료 ${formatKRWFull(actualFeeAmount)} 포함)`
+        `${sortedBuyItems.length}개 종목, 총 ${formatKRWFull(actualTotalSpent)} 매수 기록 저장 완료 (수수료 ${formatKRWFull(actualFeeAmount)} 포함)`
       );
       setShowConfirm(false);
 
@@ -398,7 +402,8 @@ export function BuyClient({
         setExecutionPriceOverrides({});
       }, 2000);
     } catch (err) {
-      alert(`매수 실행 중 오류가 발생했습니다:\n${(err as Error).message}`);
+      setShowConfirm(false);
+      setSaveError({ message: failureMessage("매수 기록을 저장", err), retry: handleExecute });
     } finally {
       setIsExecuting(false);
     }
@@ -421,7 +426,7 @@ export function BuyClient({
       router.refresh();
       setTimeout(() => setSuccessMessage(""), 2000);
     } catch (err) {
-      alert(`매수 기록 저장 중 오류가 발생했습니다:\n${(err as Error).message}`);
+      setSaveError({ message: failureMessage("매수 기록을 저장", err), retry: () => handleSingleExecute(holdingId) });
     } finally {
       setExecutingHoldingId(null);
     }
@@ -436,8 +441,9 @@ export function BuyClient({
         </p>
       </div>
 
+      {saveError && <InlineError message={saveError.message} onRetry={saveError.retry} onDismiss={() => setSaveError(null)} />}
       {successMessage && (
-        <div className="bg-canvas-soft border border-hairline px-4 py-3 text-sm text-success font-medium shadow-card">
+        <div role="status" className="bg-surface border border-hairline px-4 py-3 text-sm text-success font-medium shadow-card dark:border-zinc-800">
           {successMessage}
         </div>
       )}
@@ -490,6 +496,7 @@ export function BuyClient({
           <span className="text-xs text-zinc-500 dark:text-zinc-400 shrink-0">증권사 수수료</span>
           <input
             type="number"
+            aria-label="증권사 수수료(%)"
             value={feeRatePct}
             onChange={(e) => handleFeeRateChange(e.target.value)}
             step="0.001"
@@ -797,10 +804,9 @@ export function BuyClient({
 
       {/* 확인 모달 */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/50 backdrop-blur-sm px-4">
-          <div className="w-full max-w-lg border border-hairline bg-white dark:bg-zinc-900 dark:border-zinc-800 p-6 space-y-4 shadow-float">
-            <h3 className="text-lg font-bold text-ink dark:text-zinc-100">이 매수 기록을 저장할까요?</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        <DialogFrame labelledBy="buy-confirm-title" describedBy="buy-confirm-desc" onDismiss={() => !isExecuting && setShowConfirm(false)} className="max-w-lg space-y-4 border-hairline dark:border-zinc-800">
+            <h2 id="buy-confirm-title" className="text-lg font-bold text-ink">이 매수 기록을 저장할까요?</h2>
+            <p id="buy-confirm-desc" className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
               종목 카드에서 입력한 기록 단가로 매수 기록과 평균단가를 저장합니다. 주문은 실행되지 않습니다. 일부 종목만 먼저 샀다면 목록을 닫고 해당 카드의 &apos;이 종목만 기록 저장&apos;을 사용하세요.
             </p>
             <div className="max-h-[60vh] space-y-2 overflow-y-auto pr-1 text-sm">
@@ -843,6 +849,7 @@ export function BuyClient({
             </div>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setShowConfirm(false)}
                 disabled={isExecuting}
                 className="flex-1 h-11 border border-hairline dark:border-zinc-700 text-sm font-medium transition-colors hover:bg-canvas-soft dark:hover:bg-zinc-800"
@@ -852,13 +859,12 @@ export function BuyClient({
               <button
                 onClick={handleExecute}
                 disabled={isExecuting || actualTotalSpent <= 0}
-                className="flex-1 h-11 bg-indigo-600 text-white text-sm font-medium transition-colors hover:bg-indigo-700 disabled:opacity-50 shadow-card"
+                className="flex-1 h-11 bg-brand text-white text-sm font-semibold transition-colors hover:bg-brand-deep disabled:opacity-50"
               >
-                {isExecuting ? "처리 중..." : "확정"}
+                {isExecuting ? "저장 중..." : "기록 저장"}
               </button>
             </div>
-          </div>
-        </div>
+        </DialogFrame>
       )}
     </div>
   );
@@ -961,6 +967,7 @@ function BuyPlanCard({
                 <input
                   type="text"
                   inputMode="numeric"
+                  aria-label={`${h.name} 기록 단가(원)`}
                   value={executionPrice > 0 ? executionPrice.toLocaleString("ko-KR") : ""}
                   onChange={(e) => onExecutionPriceChange(e.target.value)}
                   className="h-10 w-full border border-hairline bg-white pl-3 pr-9 text-right font-semibold tabular-nums text-ink focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"

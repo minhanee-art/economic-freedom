@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { formatKRWFull, formatKRW } from "@/lib/utils";
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
 import { DividendBarChart } from "@/components/charts/dividend-bar-chart";
 
 interface HoldingOption {
@@ -36,6 +38,8 @@ export function DividendClient({ holdings, initialDividends }: Props) {
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [memo, setMemo] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [error, setError] = useState<{ message: string; retry?: () => void } | null>(null);
+  const { confirm, dialog } = useConfirmDialog();
 
   useEffect(() => {
     setDividends(initialDividends);
@@ -67,6 +71,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
   const handleAdd = async () => {
     if (!holdingId || !amount) return;
     setIsAdding(true);
+    setError(null);
 
     try {
       const res = await fetch("/api/dividends", {
@@ -79,7 +84,10 @@ export function DividendClient({ holdings, initialDividends }: Props) {
           memo: memo || null,
         }),
       });
-      if (!res.ok) throw new Error("추가 실패");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? `서버 응답 ${res.status}`);
+      }
       const data = await res.json();
 
       setDividends([data, ...dividends]);
@@ -87,14 +95,21 @@ export function DividendClient({ holdings, initialDividends }: Props) {
       setAmount("");
       setMemo("");
     } catch (err) {
-      alert(`추가 실패: ${(err as Error).message}`);
+      setError({ message: failureMessage("배당 기록을 추가", err), retry: handleAdd });
     } finally {
       setIsAdding(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("이 배당 기록을 삭제하시겠습니까?")) return;
+    const target = dividends.find((d) => d.id === id);
+    const ok = await confirm({
+      title: "이 배당 기록을 삭제하시겠습니까?",
+      body: target ? `${target.date} · ${target.holding_name ?? "알 수 없음"} · ${formatKRWFull(target.amount)}` : undefined,
+      confirmLabel: "기록 삭제",
+    });
+    if (!ok) return;
+    setError(null);
 
     try {
       const res = await fetch("/api/dividends", {
@@ -102,16 +117,21 @@ export function DividendClient({ holdings, initialDividends }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-      if (!res.ok) throw new Error("삭제 실패");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? `서버 응답 ${res.status}`);
+      }
       setDividends(dividends.filter((d) => d.id !== id));
     } catch (err) {
-      alert(`삭제 실패: ${(err as Error).message}`);
+      setError({ message: failureMessage("배당 기록을 삭제", err), retry: () => handleDelete(id) });
     }
   };
 
   return (
     <div className="space-y-5">
       <h1 className="text-xl font-bold tracking-tight text-ink">배당 기록</h1>
+      {dialog}
+      {error && <InlineError message={error.message} onRetry={error.retry} onDismiss={() => setError(null)} />}
       {/* 요약 카드 */}
       <div
         className="border border-hairline bg-surface px-6 py-6 shadow-card dark:border-zinc-800"
@@ -138,8 +158,8 @@ export function DividendClient({ holdings, initialDividends }: Props) {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-ink-mute mb-1">종목</label>
-            <select
+            <label htmlFor="dividend-form-1" className="block text-xs text-ink-mute mb-1">종목</label>
+            <select id="dividend-form-1"
               value={holdingId}
               onChange={(e) => setHoldingId(e.target.value)}
               className="w-full h-10 border border-hairline bg-white px-3 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:border-zinc-700 dark:bg-zinc-800"
@@ -154,10 +174,8 @@ export function DividendClient({ holdings, initialDividends }: Props) {
           </div>
 
           <div>
-            <label className="block text-xs text-ink-mute mb-1">
-              배당금액 (원)
-            </label>
-            <input
+            <label htmlFor="dividend-form-2" className="block text-xs text-ink-mute mb-1">배당금액 (원)</label>
+            <input id="dividend-form-2"
               type="text"
               inputMode="numeric"
               value={amount}
@@ -171,8 +189,8 @@ export function DividendClient({ holdings, initialDividends }: Props) {
           </div>
 
           <div>
-            <label className="block text-xs text-ink-mute mb-1">날짜</label>
-            <input
+            <label htmlFor="dividend-form-3" className="block text-xs text-ink-mute mb-1">날짜</label>
+            <input id="dividend-form-3"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -181,10 +199,8 @@ export function DividendClient({ holdings, initialDividends }: Props) {
           </div>
 
           <div>
-            <label className="block text-xs text-ink-mute mb-1">
-              메모 (선택)
-            </label>
-            <input
+            <label htmlFor="dividend-form-4" className="block text-xs text-ink-mute mb-1">메모 (선택)</label>
+            <input id="dividend-form-4"
               type="text"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
@@ -233,7 +249,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
                 className="flex items-center border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3 shadow-card transition-shadow hover:shadow-float"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold truncate">
+                  <p className="text-sm font-semibold truncate" title={d.holding_name ?? undefined}>
                     {d.holding_name ?? "알 수 없음"}
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
@@ -245,10 +261,13 @@ export function DividendClient({ holdings, initialDividends }: Props) {
                   {formatKRWFull(d.amount)}
                 </p>
                 <button
+                  type="button"
                   onClick={() => handleDelete(d.id)}
-                  className="text-zinc-500 dark:text-zinc-400 hover:text-danger transition-colors shrink-0"
+                  aria-label={`${d.date} ${d.holding_name ?? ""} 배당 기록 삭제`}
+                  className="-my-2 -mr-2 inline-flex h-11 w-11 shrink-0 items-center justify-center text-zinc-600 transition-colors hover:text-danger dark:text-zinc-400"
                 >
                   <svg
+                    aria-hidden="true"
                     className="w-4 h-4"
                     fill="none"
                     viewBox="0 0 24 24"

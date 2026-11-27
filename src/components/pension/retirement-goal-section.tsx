@@ -1,5 +1,6 @@
 "use client";
 
+import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { useMemo, useState } from "react";
 import type { IncomeSourceRow, RetirementGoalRow } from "@/lib/pension-data";
 import { ACCOUNT_OWNER_LABELS, computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
@@ -55,6 +56,7 @@ export function RetirementGoalSection({
   spouseOpen,
   onSpouseOpenChange,
 }: Props) {
+  const { confirm, dialog } = useConfirmDialog();
   const [form, setForm] = useState({
     targetMonthly: toText(goal.targetMonthly),
     retirementAge: toText(goal.retirementAge),
@@ -117,11 +119,14 @@ export function RetirementGoalSection({
       spousePresence.spouseAccountCount > 0 ? `배우자 명의 계좌 ${spousePresence.spouseAccountCount}개` : "",
       spousePresence.spouseSourceCount > 0 ? `배우자 연금 소득원 ${spousePresence.spouseSourceCount}개` : "",
     ].filter(Boolean);
-    const ok = confirm(
-      "저장된 배우자 출생연도와 배우자 총급여 구간을 지웁니다." +
+    const ok = await confirm({
+      title: "배우자 정보를 지울까요?",
+      body:
+        "저장된 배우자 출생연도와 배우자 총급여 구간을 지웁니다." +
         (remaining.length > 0 ? ` ${remaining.join("와 ")}는 지우지 않고 그대로 남습니다.` : "") +
-        " 계속할까요?"
-    );
+        " 계속할까요?",
+      confirmLabel: "배우자 정보 지우기",
+    });
     if (!ok) return;
     setIsRemovingSpouse(true);
     try {
@@ -246,7 +251,7 @@ export function RetirementGoalSection({
           {isSaving ? "저장 중..." : "목표 저장"}
         </button>
         {message && <span className="text-xs text-zinc-500 dark:text-zinc-400">{message}</span>}
-        {error && <span className="text-xs text-danger">{error}</span>}
+        {error && <span role="alert" className="text-xs leading-relaxed text-danger">{error}</span>}
       </div>
 
       {!cashflow || !at ? (
@@ -344,6 +349,7 @@ export function RetirementGoalSection({
           />
         </div>
       )}
+      {dialog}
     </SectionCard>
   );
 }

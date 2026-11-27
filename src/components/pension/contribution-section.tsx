@@ -148,7 +148,7 @@ export function ContributionSection({
           })}
         </ul>
       )}
-      {error && <p className="text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
 
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-zinc-500 dark:text-zinc-400">

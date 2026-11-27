@@ -67,7 +67,8 @@
 - 아래는 **선택 사항(사용자 판단)** 입니다. 필수가 아니라 정확성 보강입니다.
   1. 1항 텔레그램 줄의 "연결 코드는 해시로만 잠시 보관하며 10분 뒤 만료" — 코드는 10분 뒤 **무효**가 되지만 행은 같은 사용자의 다음 발급·연결 해제·계정 삭제 때 지워집니다(`issueTelegramLinkCode`, `unlinkTelegram`). "보관 후 삭제"까지 정확히 쓰려면 "만료 후 다음 발급·해제·계정 삭제 시 삭제"로 고치는 것을 검토.
   2. 예전에 직접 입력해 확인되지 않은 chat_id가 DB에 남을 수 있음(`needsRelink`, 리포트는 안 나감). 방침 1항은 "연결 확인한 chat_id"만 적고 있음 → "이전에 직접 입력해 아직 확인되지 않은 chat_id가 남아 있을 수 있으며 다시 연결하거나 해제·계정 삭제하면 삭제됩니다" 취지의 문장 추가 여부 검토. 운영 DB에 실제로 남은 값이 있는지는 **미확인**.
-  3. 8항 문의 이메일은 `NEXT_PUBLIC_SUPPORT_EMAIL` 설정 여부에 따라 달라집니다. 공개 문의 이메일이 아직 정해지지 않았으므로 방침의 문의 문장·등록정보 연락처 칸은 **결정 대기**.
+  3. **(제안, 5항 문구 보강)** 1항 텔레그램 줄의 "연결 코드는 해시로만 잠시 보관하며 10분 뒤 만료"는 실제 보존보다 짧게 읽힙니다. 코드는 10분 뒤 **무효**가 되지만 행은 만료 후에도 남습니다: 같은 사용자가 새 코드를 발급할 때 그 사용자의 만료 행이 지워지고(`issueTelegramLinkCode`), 연결 해제 시 그 계좌의 코드 행이 전부 지워지며(`unlinkTelegram`, `src/lib/telegram-link.ts:218`), 계정 삭제 시 `ON DELETE CASCADE` 로 지워집니다. 제안 문장: "연결 코드는 해시로만 보관하며 발급 10분 뒤 사용할 수 없게 되고, 이후 새 코드 발급·연결 해제·계정 삭제 때 삭제됩니다." (방침 `src/app/privacy/page.tsx:24` — 수정은 사용자 결정, 이 PR 에서는 수정하지 않음)
+  4. 8항 문의 이메일은 `NEXT_PUBLIC_SUPPORT_EMAIL` 설정 여부에 따라 달라집니다. 공개 문의 이메일이 아직 정해지지 않았으므로 방침의 문의 문장·등록정보 연락처 칸은 **결정 대기**.
 - 이 판단은 코드 확인만으로 한 것이며 법적 검토가 아닙니다.
 
 ## E. 결정 대기 (문장 의존 목록)
@@ -77,3 +78,43 @@
 | 모바일 Google 로그인 지원 여부 | `data-safety.md` 1절 Google 식별자 행의 "모바일 앱에는 Google 로그인 없음", 4절 삭제 주의, `review-notes.md` 4절 마지막 줄, 이 문서 B절 4.8 항목. 현재 코드(`mobile/src/app/login.tsx`)는 이메일만 | **결정 대기** — 현재 문장은 코드 사실 그대로 두고 지어내지 않음 |
 | 공개 문의 이메일 | 이 문서 C절 1번, 방침 8항, Play·App Store 연락처 칸, 계정 삭제 안내 | **결정 대기** |
 | 패키지 ID(`kr.kimvibe.economicfreedom`) 변경 여부 | 이 문서 A절 '패키지 이름 등록'·B절 '번들 ID' 행(첫 업로드 뒤 변경 불가) | **결정 대기** — 현재 `mobile/app.json` 값을 그대로 적음 |
+
+## F. 사용자가 직접 할 일 (순서대로)
+
+각 항목 끝의 `→`는 참고할 문서 위치입니다. 이 목록은 문서 기준이며 어느 것도 에이전트가 실행·확인하지 않았습니다(운영 환경·Play Console·EAS 상태는 모두 **미확인**).
+
+**1. 결정**
+- [ ] 모바일 Google 로그인 지원 여부, 공개 문의 이메일, 패키지 ID 변경 여부, 최종 웹 도메인 정하기 → E절, `eas-readiness.md` 1절
+- [ ] 방침 시행일을 새 날짜로 바꿀지 결정하고 `src/app/privacy/page.tsx` 수정(선택 보강 3건 포함 여부 판단) → D절
+
+**2. 운영 환경변수·웹훅 (운영자 작업)**
+- [ ] Vercel 에 `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_BOT_TOKEN`, `CRON_SECRET` 설정, 필요하면 `TELEGRAM_BOT_USERNAME`·`TELEGRAM_ALLOWED_CHAT_IDS` → C절 3번, `.env.example`
+- [ ] 시크릿 설정 뒤 웹훅 재등록(`GET /api/telegram-bot?setup=1`, Bearer `CRON_SECRET`) → C절 3번
+- [ ] 크론 호출이 헤더 방식인지 확인(쿼리 `?secret=` 는 거부됨) → C절 3번
+- [ ] 운영 DB 에 `telegram_chat_verified_at`·`telegram_link_codes` 반영 확인(`neon-schema.sql` 15번 또는 코드의 자동 생성) → C절 3번
+- [ ] 기존 텔레그램 사용자에게 설정 > 텔레그램 연결에서 **다시 연결**하라고 안내 → C절 3번
+- [ ] `NEXT_PUBLIC_SUPPORT_EMAIL` 설정(공개 문의 이메일 결정 후) → C절 1번
+
+**3. Play Console**
+- [ ] 개발자 계정 유형 확인(금융 서비스에 해당하는지 포함), 조직이면 D-U-N-S → A절 첫 행, `review-notes.md` 3-3
+- [ ] 비공개 테스트 요건 확인(개인 계정이면 12명·14일) → A절 두 번째 행
+- [ ] 앱 만들기, 패키지 이름 확정(올리면 변경 불가) → E절, `eas-readiness.md`
+- [ ] 스토어 등록정보: 이름·짧은 설명·자세한 설명·연락처 이메일 → `listing-ko.md`
+- [ ] 스크린샷 8장·피처 그래픽·아이콘 준비(탭바 PR 머지 뒤 촬영) → `screenshots.md`
+- [ ] **서비스 제공자 전제 확인**: Vercel·Neon·Upstash 약관·DPA 가 "개발자를 대신해 처리"에 해당하는지, Play 안내 원문의 '공유' 예외 문구 확인(해당하지 않으면 '공유' 답 변경) → `data-safety.md` 5-4
+- [ ] 데이터 보안 양식 작성 → `data-safety.md` 5절
+- [ ] 금융 기능 선언 → `review-notes.md` 3-3 2번(Google 안내 13849271)
+- [ ] 콘텐츠 등급 설문, 타깃 연령(18세 이상), 광고 없음 선언 → A절
+- [ ] 계정 삭제 URL(`{웹 주소}/account-deletion`) 입력, 개인정보처리방침 URL(`/privacy`) 입력 → A절, `data-safety.md` 4절
+- [ ] 심사용 앱 액세스: 데모 계정 만들고(가상 보유·매수·배당 기록 입력) 로그인 정보 입력, 삭제 시연용 계정은 따로 → `review-notes.md` 1~3절, 4절
+- [ ] 타깃 API 레벨 확인(업로드 경고 또는 빌드 산출물 검사) → A절, `eas-readiness.md`
+
+**4. EAS 빌드·제출**
+- [ ] Play 에 올라간 versionCode 최댓값 확인 → `eas-readiness.md` 1·3절
+- [ ] 위 문서 2절의 명령 순서대로: 의존성 → 압축본(.npmrc) 점검 → production 빌드 → `app.json` 변경 확인·커밋 → 업로드 → `eas-readiness.md` 2절
+- [ ] iOS 를 낼 경우 `buildNumber`·`submit.ios`·iPad 스크린샷 → `eas-readiness.md` 1절, B절
+
+**5. 실기기 확인**
+- [ ] 가입 → 매수·배당 기록 입력 → 매수 기록 삭제 → 연금 탭 조회 → 비밀번호 변경 → 로그아웃 → 계정 삭제 흐름 → C절 6번, `review-notes.md`
+- [ ] 화면에 '경제적 자유' 이름이 남아 있지 않은지(앱 이름·설정 화면·스토어 이미지)
+- [ ] 방침·삭제 안내 링크가 앱에서 열리는지(설정 탭) → `review-notes.md` 4절

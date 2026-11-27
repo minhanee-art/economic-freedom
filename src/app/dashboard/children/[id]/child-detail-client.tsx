@@ -8,7 +8,7 @@ import { GiftTaxGuide } from "@/components/gift/gift-tax-guide";
 import { presentValueOfInstallments } from "@/lib/gift-tax";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { failureMessage } from "@/components/dashboard/inline-error";
-import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, cn } from "@/lib/utils";
+import { formatKRW, formatKRWFull, formatPnlKRW, pnlTextClass, cn, missingFields } from "@/lib/utils";
 
 interface Props {
   child: ChildRow;
@@ -151,7 +151,8 @@ function GiftsTab({
 
   const handleAdd = async () => {
     const amt = parseInt(amount.replace(/[^0-9]/g, ""), 10);
-    if (!date || !amt) return;
+    const lack = missingFields([[Boolean(date), "날짜"], [Boolean(amt), "금액"]]);
+    if (lack.length) { setError(`${lack.join("·")}을(를) 입력해 주세요.`); return; }
     setIsAdding(true);
     setError("");
     try {
@@ -392,7 +393,7 @@ function GiftsTab({
         {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
-          disabled={!date || !amount || isAdding}
+          disabled={isAdding}
           className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "입금 기록 추가"}
@@ -497,7 +498,8 @@ function HoldingsTab({
   const { confirm, dialog } = useConfirmDialog();
 
   const handleAdd = async () => {
-    if (!code.trim() || !name.trim()) return;
+    const lack = missingFields([[Boolean(code.trim()), "종목코드"], [Boolean(name.trim()), "종목명"]]);
+    if (lack.length) { setError(`${lack.join("·")}을(를) 입력해 주세요.`); return; }
     setIsAdding(true);
     setError("");
     try {
@@ -590,7 +592,7 @@ function HoldingsTab({
         {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
-          disabled={!code.trim() || !name.trim() || isAdding}
+          disabled={isAdding}
           className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "종목 추가"}

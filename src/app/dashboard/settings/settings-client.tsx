@@ -5,7 +5,7 @@ import { InlineError, failureMessage } from "@/components/dashboard/inline-error
 import { useEffect, useState, useRef, useCallback } from "react";
 import type { CSSProperties } from "react";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, missingFields } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import type { Profile, Holding } from "@/types";
@@ -153,7 +153,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
   // 종목 추가
   const handleAddHolding = async () => {
-    if (!newCode || !newName || !newSubCategory) return;
+    const lack = missingFields([[Boolean(newCode), "종목코드"], [Boolean(newName), "종목명"], [Boolean(newSubCategory), "세부 분류"]]);
+    if (lack.length) { setError({ message: `${lack.join("·")}을(를) 입력해 주세요.` }); return; }
+    setError(null);
     setIsAdding(true);
 
     try {
@@ -248,7 +250,9 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const [isAddingCal, setIsAddingCal] = useState(false);
 
   const handleAddCalendar = async () => {
-    if (!calDate || !calStock) return;
+    const lack = missingFields([[Boolean(calDate), "날짜"], [Boolean(calStock), "종목"]]);
+    if (lack.length) { setError({ message: `배당 일정의 ${lack.join("·")}을(를) 입력해 주세요.` }); return; }
+    setError(null);
     setIsAddingCal(true);
     try {
       const res = await fetch("/api/dividend-calendar", {
@@ -285,7 +289,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   const [isAddingWl, setIsAddingWl] = useState(false);
 
   const handleAddWatchlist = async () => {
-    if (!wlName.trim()) return;
+    if (!wlName.trim()) { setError({ message: "뉴스 요약을 받을 종목명을 입력해 주세요." }); return; }
+    setError(null);
     setIsAddingWl(true);
     try {
       const res = await fetch("/api/watchlist", {
@@ -497,7 +502,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             </div>
             <button
               onClick={handleAddHolding}
-              disabled={!newCode || !newName || !newSubCategory || isAdding}
+              disabled={isAdding}
               className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
             >
               {isAdding ? "추가 중..." : "종목 추가"}
@@ -579,7 +584,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             />
             <button
               onClick={handleAddWatchlist}
-              disabled={!wlName.trim() || isAddingWl}
+              disabled={isAddingWl}
               className="h-9 px-4 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
             >
               {isAddingWl ? "..." : "+ 추가"}
@@ -665,7 +670,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
           </div>
           <button
             onClick={handleAddCalendar}
-            disabled={!calDate || !calStock || isAddingCal}
+            disabled={isAddingCal}
             className="w-full h-9 bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 shadow-card transition-colors"
           >
             {isAddingCal ? "..." : "+ 추가"}

@@ -367,9 +367,9 @@ export function DashboardClient({
       if (data?.costBasis) {
         setCostBases((current) => [...current, data.costBasis as CostBasis]);
       }
-      setRefreshResult("종목 추가 완료");
+      setRefreshResult(`${body.name} 종목을 추가했습니다.`);
       router.refresh();
-      setTimeout(() => setRefreshResult(""), 3000);
+      setTimeout(() => setRefreshResult(""), 6000);
     },
     [router]
   );

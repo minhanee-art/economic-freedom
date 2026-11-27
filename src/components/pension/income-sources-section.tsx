@@ -58,6 +58,10 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
       startAge,
       endAge,
     };
+    if (!monthlyAmount) {
+      setError("월 수령액을 입력해 주세요.");
+      return;
+    }
     setIsSaving(true);
     setError("");
     try {
@@ -191,7 +195,7 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
       </div>
       {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
       <div className="flex gap-2">
-        <button onClick={submit} disabled={isSaving || !form.monthlyAmount} className={primaryButtonClass}>
+        <button onClick={submit} disabled={isSaving} className={primaryButtonClass}>
           {isSaving ? "저장 중..." : editingId ? "수정 저장" : "항목 추가"}
         </button>
         {editingId && (

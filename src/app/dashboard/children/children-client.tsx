@@ -7,6 +7,7 @@ import { failureMessage } from "@/components/dashboard/inline-error";
 import type { ChildRow, ChildGiftRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
 import { getAge } from "@/lib/gift-tax";
+import { missingFields } from "@/lib/utils";
 
 interface Props {
   initialChildren: ChildRow[];
@@ -24,7 +25,8 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
   const giftsByChild = (childId: string) => gifts.filter((g) => g.child_id === childId);
 
   const handleAdd = async () => {
-    if (!name.trim() || !birthDate) return;
+    const lack = missingFields([[Boolean(name.trim()), "이름"], [Boolean(birthDate), "생년월일"]]);
+    if (lack.length) { setError(`${lack.join("·")}을(를) 입력해 주세요.`); return; }
     setIsAdding(true);
     setError("");
     try {
@@ -100,7 +102,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
         {error && <p role="alert" className="text-xs leading-relaxed text-danger">{error}</p>}
         <button
           onClick={handleAdd}
-          disabled={!name.trim() || !birthDate || isAdding}
+          disabled={isAdding}
           className="w-full h-10 bg-indigo-500 text-white text-sm font-medium transition-colors hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isAdding ? "추가 중..." : "자녀 추가"}

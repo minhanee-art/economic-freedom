@@ -1347,7 +1347,17 @@ function AddHoldingForm({
   }, [searchQuery]);
 
   async function submit() {
-    if (!canSubmit || !selectedEtf) return;
+    if (isAdding) return;
+    // 버튼을 미리 막지 않고, 누르면 무엇이 빠졌는지 알려 준다
+    if (!selectedEtf) { setStatus("먼저 종목을 검색해 목록에서 고르세요."); return; }
+    if (!canSubmit) {
+      setStatus(
+        !Number.isFinite(parsedTargetPct) || parsedTargetPct < 0 || parsedTargetPct > 100
+          ? "목표 비중은 0~100 사이로 입력해 주세요."
+          : "보유수량이 있으면 평균단가를 입력해 주세요."
+      );
+      return;
+    }
     setIsAdding(true);
     setStatus("");
     try {
@@ -1512,13 +1522,13 @@ function AddHoldingForm({
       <button
         type="button"
         onClick={submit}
-        disabled={!canSubmit}
-        className="mt-3 h-10 w-full border border-indigo-600 bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+        disabled={isAdding}
+        className="mt-3 h-11 w-full border border-indigo-600 bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
       >
         {isAdding ? "추가 중" : "종목 추가"}
       </button>
       {status && (
-        <p className={`mt-2 text-xs font-semibold ${status.includes("추가했습니다") ? "text-success" : "text-danger"}`}>
+        <p role={status.includes("추가했습니다") ? "status" : "alert"} className={`mt-2 text-xs font-semibold ${status.includes("추가했습니다") ? "text-success" : "text-danger"}`}>
           {status}
         </p>
       )}

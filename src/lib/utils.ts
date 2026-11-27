@@ -130,3 +130,8 @@ export function formatTargetGap(diff: number, digits = 1): string {
 export function cn(...classes: (string | undefined | false)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+/** 비어 있는 필수 칸의 이름만 돌려준다: missingFields([[Boolean(date), "날짜"], [Boolean(amount), "금액"]]) → ["금액"] */
+export function missingFields(fields: [boolean, string][]): string[] {
+  return fields.filter(([filled]) => !filled).map(([, label]) => label);
+}

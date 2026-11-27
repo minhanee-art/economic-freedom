@@ -173,7 +173,6 @@ page.on("dialog", async (dialog) => {
 });
 
 let token = null;
-let userId = null;
 let firstAccountId = null;
 let spouseAccountId = null;
 
@@ -211,7 +210,6 @@ await step("회원가입", async () => {
   const session = await storedSession();
   assert(session?.token, "세션이 저장되지 않았습니다");
   token = session.token;
-  userId = session.user.id;
   await shot("home-after-signup");
 });
 

@@ -373,8 +373,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         className={cn(
           "px-4 py-3 text-sm font-medium tabular-nums shadow-card",
           isTarget100
-            ? "bg-canvas-soft text-success border border-hairline"
-            : "bg-danger-soft text-danger border border-danger-line"
+            ? "bg-surface text-success border border-hairline dark:border-zinc-800"
+            : "bg-caution-soft text-caution border border-caution/30"
         )}
       >
         목표 비중 합계: {totalTargetPct.toFixed(1)}%

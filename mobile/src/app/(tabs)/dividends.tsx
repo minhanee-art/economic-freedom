@@ -11,7 +11,7 @@ import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
 import { colors, radius, spacing, type } from "@/styles/theme";
 import type { DividendMonth, PortfolioSummary } from "@/types";
-import { formatKRW, formatKRWFull } from "@/utils/format";
+import { formatKRW, formatKRWAxis, formatKRWFull, niceAxisStep } from "@/utils/format";
 
 export default function DividendsScreen() {
   const { summary, accounts, selectedAccountId, selectAccount, isLoading, error, refresh } = usePortfolioSummary();
@@ -63,10 +63,12 @@ function DividendContent({ summary }: { summary: PortfolioSummary }) {
 }
 
 const CHART_HEIGHT = 140;
+const AXIS_WIDTH = 40;
 
 /**
- * 월별 배당 막대. 최고 달과 월 평균을 숫자로 바로 적고, 막대를 누르면 그 달 금액을 보인다.
- * 0원인 달은 막대를 그리지 않고 바닥선만 둔다. 평균은 점선으로 표시한다.
+ * 월별 배당 막대. 왼쪽에 금액 눈금(0·중간·위, "50만" 식 짧은 표기)과 가로 보조선을 두어 막대 높이를 읽을 수 있게 하고,
+ * 최고 달과 월 평균은 위에 숫자로 적는다. 막대(달 한 칸 전체가 누르는 영역)를 누르면 그 달 금액이 위 문구에 나온다.
+ * 막대마다 금액을 쓰면 12칸에서 겹치므로 쓰지 않는다. 0원인 달은 막대 없이 바닥선만. 평균은 점선.
  */
 function MonthlyBars({ months }: { months: DividendMonth[] }) {
   const max = Math.max(0, ...months.map((m) => m.amount));
@@ -79,41 +81,65 @@ function MonthlyBars({ months }: { months: DividendMonth[] }) {
     return <Text style={[type.body, styles.muted]}>월별 배당 기록이나 예정 금액이 아직 없습니다.</Text>;
   }
 
+  const step = niceAxisStep(max, 3);
+  const top = step * Math.ceil(max / step);
+  const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, i) => i * step);
+  const y = (value: number) => (value / top) * CHART_HEIGHT;
+
   return (
     <View style={styles.chartBlock}>
       <View style={styles.legend}>
-        <Text style={[type.label, styles.tabular]} accessibilityLiveRegion="polite">
+        <Text style={[type.label, styles.readout]} accessibilityLiveRegion="polite" aria-live="polite">
           {picked ? `${picked.month} ${formatKRWFull(picked.amount)}` : `최고 ${peak?.month ?? ""} ${formatKRWFull(max)}`}
         </Text>
-        <Text style={[type.caption, styles.tabular]}>점선은 아래 막대 12개의 평균 {formatKRWFull(average)}</Text>
+        <Text style={[type.caption, styles.tabular]}>점선은 12개월 평균 {formatKRWFull(average)}</Text>
       </View>
-      <View style={styles.chart}>
-        <View style={[styles.avgLine, { bottom: (average / max) * CHART_HEIGHT }]} pointerEvents="none" />
-        {months.map((item) => {
-          const active = item.month === selected;
-          const height = item.amount > 0 ? Math.max((item.amount / max) * CHART_HEIGHT, 2) : 0;
-          return (
-            <Pressable
-              key={item.month}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.month} ${formatKRWFull(item.amount)}`}
-              accessibilityState={{ selected: active }}
-              onPress={() => setSelected(active ? null : item.month)}
-              style={styles.barHit}
-            >
-              {height > 0 ? <View style={[styles.bar, { height }, active ? styles.barActive : null]} /> : null}
-            </Pressable>
-          );
-        })}
+      <View style={styles.plot}>
+        <View style={styles.yAxis} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+          {ticks.map((tick) => (
+            <Text key={tick} style={[type.caption, styles.tick, { bottom: y(tick) - 9 }]}>
+              {tick === 0 ? "0" : formatKRWAxis(tick)}
+            </Text>
+          ))}
+        </View>
+        <View style={styles.chart}>
+          {ticks.slice(1).map((tick) => (
+            <View key={tick} style={[styles.grid, { bottom: y(tick) }]} pointerEvents="none" />
+          ))}
+          <View style={[styles.avgLine, { bottom: y(average) }]} pointerEvents="none" />
+          {months.map((item) => {
+            const active = item.month === selected;
+            const height = item.amount > 0 ? Math.max(y(item.amount), 2) : 0;
+            return (
+              <Pressable
+                key={item.month}
+                accessibilityRole="button"
+                accessibilityLabel={`${item.month} ${formatKRWFull(item.amount)}`}
+                accessibilityState={{ selected: active }}
+                aria-pressed={active}
+                onPress={() => setSelected(active ? null : item.month)}
+                android_ripple={{ color: colors.ripple }}
+                style={({ pressed }) => [styles.barHit, active ? styles.barHitActive : pressed ? styles.barHitPressed : null]}
+              >
+                {height > 0 ? <View style={[styles.bar, { height }, active ? styles.barActive : null]} /> : null}
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
-      <View style={styles.axis}>
+      <View style={[styles.axis, { marginLeft: AXIS_WIDTH }]}>
         {months.map((item) => (
-          <Text key={item.month} style={[type.caption, styles.axisLabel]} importantForAccessibility="no" accessibilityElementsHidden>
+          <Text
+            key={item.month}
+            style={[type.caption, styles.axisLabel, item.month === selected ? styles.axisLabelActive : null]}
+            importantForAccessibility="no"
+            accessibilityElementsHidden
+          >
             {item.month.replace("월", "")}
           </Text>
         ))}
       </View>
-      <Text style={type.caption}>단위: 월. 막대를 누르면 그 달 금액을 봅니다.</Text>
+      <Text style={type.caption}>가로축은 월, 세로축은 금액(원)입니다. 막대를 누르면 그 달 금액을 봅니다.</Text>
     </View>
   );
 }
@@ -123,14 +149,19 @@ const styles = StyleSheet.create({
   tabular: { fontVariant: ["tabular-nums"] },
   chartBlock: { gap: spacing.sm },
   legend: { gap: 2 },
+  readout: { color: colors.ink, fontVariant: ["tabular-nums"] },
+  plot: { flexDirection: "row" },
+  yAxis: { width: AXIS_WIDTH, height: CHART_HEIGHT },
+  tick: { position: "absolute", right: spacing.xs, lineHeight: 18, fontVariant: ["tabular-nums"] },
   chart: {
+    flex: 1,
     height: CHART_HEIGHT,
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: colors.lineStrong,
   },
+  grid: { position: "absolute", left: 0, right: 0, height: StyleSheet.hairlineWidth, backgroundColor: colors.line },
   avgLine: {
     position: "absolute",
     left: 0,
@@ -141,11 +172,15 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: colors.lineStrong,
   },
-  barHit: { flex: 1, height: "100%", justifyContent: "flex-end" },
+  // 달 한 칸 전체가 누르는 영역(칸 사이 빈틈 없음). 막대는 칸 안에서 좌우 2px 안쪽에 그린다.
+  barHit: { flex: 1, height: "100%", justifyContent: "flex-end", paddingHorizontal: 2 },
+  barHitPressed: { backgroundColor: colors.surfaceMuted },
+  barHitActive: { backgroundColor: colors.primarySoft },
   bar: { width: "100%", borderTopLeftRadius: radius.sm / 4, borderTopRightRadius: radius.sm / 4, backgroundColor: colors.primary, opacity: 0.85 },
   barActive: { opacity: 1, backgroundColor: colors.primaryPressed },
-  axis: { flexDirection: "row", gap: spacing.xs },
+  axis: { flexDirection: "row" },
   axisLabel: { flex: 1, textAlign: "center", fontVariant: ["tabular-nums"] },
+  axisLabelActive: { color: colors.ink, fontWeight: "600" },
   calendarRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md, paddingVertical: spacing.md },
   calendarMain: { flex: 1, gap: 2 },
 });

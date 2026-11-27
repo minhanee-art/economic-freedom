@@ -19,6 +19,7 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
+  const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
@@ -26,7 +27,11 @@ export default function LoginScreen() {
     if (!email.trim()) found.email = "이메일을 입력해주세요.";
     if (!password) found.password = "비밀번호를 입력해주세요.";
     setErrors(found);
-    if (Object.keys(found).length > 0) return;
+    if (Object.keys(found).length > 0) {
+      // 빈 제출 뒤에는 첫 오류 칸으로 초점을 옮긴다(스크린리더가 그 칸의 이름과 오류를 읽는다).
+      (found.email ? emailRef : passwordRef).current?.focus();
+      return;
+    }
     setIsSubmitting(true);
     setError("");
     try {
@@ -47,12 +52,16 @@ export default function LoginScreen() {
 
       <Card>
         <TextField
+          ref={emailRef}
           label="이메일"
           autoCapitalize="none"
           autoComplete="email"
           autoCorrect={false}
           keyboardType="email-address"
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="name@example.com"
           value={email}
           error={errors.email}
@@ -64,8 +73,11 @@ export default function LoginScreen() {
           ref={passwordRef}
           label="비밀번호"
           autoComplete="current-password"
-          onChangeText={setPassword}
-          secureTextEntry
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          revealable
           value={password}
           error={errors.password}
           returnKeyType="go"

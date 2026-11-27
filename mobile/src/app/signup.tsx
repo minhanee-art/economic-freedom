@@ -1,6 +1,6 @@
 import { Link, router } from "expo-router";
 import { useRef, useState } from "react";
-import { Linking, type TextInput } from "react-native";
+import { Linking, Pressable, StyleSheet, type TextInput } from "react-native";
 import { Text } from "@/components/AppText";
 import { signupWithEmail } from "@/api/auth";
 import { webUrl } from "@/api/client";
@@ -10,7 +10,7 @@ import { Card } from "@/components/Card";
 import { TextField } from "@/components/Field";
 import { FormError } from "@/components/Parts";
 import { saveSession } from "@/storage/session";
-import { colors, type } from "@/styles/theme";
+import { colors, radius, touchTarget, type } from "@/styles/theme";
 
 type Errors = { email?: string; password?: string; passwordConfirm?: string };
 
@@ -21,6 +21,7 @@ export default function SignupScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
+  const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
   const privacyUrl = webUrl("/privacy");
@@ -35,7 +36,11 @@ export default function SignupScreen() {
     if (!passwordConfirm) found.passwordConfirm = "비밀번호를 한 번 더 입력해주세요.";
     else if (mismatch) found.passwordConfirm = mismatch;
     setErrors(found);
-    if (Object.keys(found).length > 0) return;
+    if (Object.keys(found).length > 0) {
+      // 빈 제출 뒤에는 첫 오류 칸으로 초점을 옮긴다.
+      (found.email ? emailRef : found.password ? passwordRef : confirmRef).current?.focus();
+      return;
+    }
     setIsSubmitting(true);
     setError("");
     try {
@@ -55,12 +60,16 @@ export default function SignupScreen() {
 
       <Card>
         <TextField
+          ref={emailRef}
           label="이메일"
           autoCapitalize="none"
           autoComplete="email"
           autoCorrect={false}
           keyboardType="email-address"
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
+          }}
           placeholder="name@example.com"
           value={email}
           error={errors.email}
@@ -72,8 +81,11 @@ export default function SignupScreen() {
           ref={passwordRef}
           label="비밀번호"
           autoComplete="new-password"
-          onChangeText={setPassword}
-          secureTextEntry
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
+          }}
+          revealable
           value={password}
           error={errors.password}
           returnKeyType="next"
@@ -84,8 +96,11 @@ export default function SignupScreen() {
           ref={confirmRef}
           label="비밀번호 확인"
           autoComplete="new-password"
-          onChangeText={setPasswordConfirm}
-          secureTextEntry
+          onChangeText={(text) => {
+            setPasswordConfirm(text);
+            if (errors.passwordConfirm) setErrors((prev) => ({ ...prev, passwordConfirm: undefined }));
+          }}
+          revealable
           value={passwordConfirm}
           error={errors.passwordConfirm ?? mismatch}
           returnKeyType="go"
@@ -94,13 +109,18 @@ export default function SignupScreen() {
         {error ? <FormError>{error}</FormError> : null}
         <Button label="회원가입" busy={isSubmitting} busyLabel="가입 중" onPress={handleSignup} />
         {privacyUrl ? (
-          <Text style={type.caption}>
-            가입하면{" "}
-            <Text accessibilityRole="link" onPress={() => Linking.openURL(privacyUrl)} style={{ color: colors.primary, textDecorationLine: "underline" }}>
-              개인정보처리방침
+          // 링크를 문장 속 글자 대신 한 줄 전체(높이 44 이상)로 눌리게 한다.
+          <Pressable
+            accessibilityRole="link"
+            accessibilityHint="브라우저에서 개인정보처리방침을 엽니다"
+            onPress={() => Linking.openURL(privacyUrl)}
+            android_ripple={{ color: colors.ripple }}
+            style={({ pressed }) => [styles.privacy, pressed ? styles.privacyPressed : null]}
+          >
+            <Text style={type.caption}>
+              가입하면 <Text style={styles.privacyLink}>개인정보처리방침</Text>에 동의한 것으로 봅니다.
             </Text>
-            에 동의한 것으로 봅니다.
-          </Text>
+          </Pressable>
         ) : null}
       </Card>
 
@@ -110,3 +130,9 @@ export default function SignupScreen() {
     </AppShell>
   );
 }
+
+const styles = StyleSheet.create({
+  privacy: { minHeight: touchTarget, justifyContent: "center", borderRadius: radius.sm },
+  privacyPressed: { backgroundColor: colors.surfaceMuted },
+  privacyLink: { color: colors.primary, textDecorationLine: "underline" },
+});

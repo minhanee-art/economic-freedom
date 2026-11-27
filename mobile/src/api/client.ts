@@ -18,7 +18,7 @@ export function webUrl(path: string): string | null {
 }
 
 type RequestOptions = {
-  method?: "GET" | "POST" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   token?: string;
   /** 계좌 범위 API에서 사용할 계좌 id — X-Portfolio-Account-Id 헤더로 보낸다. */
   accountId?: string;

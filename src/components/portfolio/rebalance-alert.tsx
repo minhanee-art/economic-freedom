@@ -1523,7 +1523,7 @@ function AddHoldingForm({
         type="button"
         onClick={submit}
         disabled={isAdding}
-        className="mt-3 h-11 w-full border border-indigo-600 bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:border-zinc-200 disabled:bg-zinc-100 disabled:text-zinc-500 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-400"
+        className="mt-3 h-11 w-full border border-indigo-600 bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-wait disabled:opacity-70"
       >
         {isAdding ? "추가 중" : "종목 추가"}
       </button>

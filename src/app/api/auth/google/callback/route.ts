@@ -9,7 +9,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { signToken, setSessionCookie } from "@/lib/session";
-import { DEFAULT_HOLDINGS } from "@/lib/constants";
 import { ensurePortfolioAccountSchema, getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 import { normalizeEmail } from "@/lib/auth-account";
 import { ensureSessionVersionSchema, toSessionVersion } from "@/lib/session-version";
@@ -66,14 +65,8 @@ async function createGoogleUser(email: string, googleId: string, name: string): 
   const [row] = inserted;
   const userId = String(row.id);
 
-  const accountId = await getActivePortfolioAccountId(userId);
-  for (const h of DEFAULT_HOLDINGS) {
-    await sql`
-      INSERT INTO holdings (user_id, account_id, code, name, category, sub_category, current_price, target_pct)
-      VALUES (${userId}, ${accountId}, ${h.code}, ${h.name}, ${h.category}, ${h.sub_category}, ${h.current_price ?? 0}, ${h.target_pct})
-      ON CONFLICT DO NOTHING
-    `;
-  }
+  // 기본 계좌("내 계좌")만 만든다. 종목은 넣지 않는다(빈 계정으로 시작).
+  await getActivePortfolioAccountId(userId);
   await sql`
     INSERT INTO profiles (id, email, display_name, monthly_budget)
     VALUES (${userId}, ${email}, ${name}, 300000)

@@ -133,7 +133,7 @@ export default function RecordDividendScreen() {
       <View style={{ gap: 16 }}>
         <View style={styles.field}>
           <Text style={styles.label}>종목</Text>
-          <HoldingPicker holdings={holdings} selectedId={holdingId} onSelect={setHoldingId} />
+          <HoldingPicker holdings={holdings} loaded={summary != null} selectedId={holdingId} onSelect={setHoldingId} />
         </View>
         <View style={styles.field}>
           <Text style={styles.label}>수령 금액(원)</Text>

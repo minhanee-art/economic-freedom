@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatKRWFull, formatKRW } from "@/lib/utils";
 import type { PurchaseRecord, PurchaseItem, Holding } from "@/types";
+import { NoHoldingsState, noHoldingsSecondaryClass } from "@/components/portfolio/no-holdings-state";
 import { ImportClient } from "./import-client";
 
 interface RecordWithItems extends PurchaseRecord {
@@ -71,6 +72,20 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
       setDeletingId(null);
     }
   };
+
+  // 종목도 기록도 없는 계좌 — 0원 통계 대신 빈 상태. CSV 가져오기는 종목을 함께 만들 수 있어 그대로 둔다
+  if (holdings.length === 0 && records.length === 0) {
+    return (
+      <div className="space-y-5">
+        <NoHoldingsState description="매수 기록은 추가한 종목에 남깁니다. 종목을 추가하면서 이미 산 수량과 단가를 넣거나, 증권사 거래내역 CSV를 가져오면 기록이 여기에 쌓입니다.">
+          <button type="button" onClick={() => setShowImport(true)} className={noHoldingsSecondaryClass}>
+            증권사 거래내역 가져오기 (CSV)
+          </button>
+        </NoHoldingsState>
+        {showImport && <ImportClient holdings={holdings} userId={userId} onClose={() => setShowImport(false)} />}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">

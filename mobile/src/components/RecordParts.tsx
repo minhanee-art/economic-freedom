@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Card } from "@/components/Card";
+import { EmptyHoldings } from "@/components/EmptyHoldings";
 import { colors, radius, spacing } from "@/styles/theme";
 import type { AccountSummary, Holding } from "@/types";
 import { splitHoldingsForPicker, visibleNotHeld } from "@/utils/holdings";
@@ -8,12 +8,12 @@ import { splitHoldingsForPicker, visibleNotHeld } from "@/utils/holdings";
 const OWNER_LABELS: Record<string, string> = { self: "본인", spouse: "배우자", child: "자녀" };
 
 /** 기록이 저장될 계좌를 화면 맨 위에 분명히 보여준다. */
-export function RecordAccountBanner({ account }: { account: AccountSummary | undefined }) {
+export function RecordAccountBanner({ account, label = "기록할 계좌" }: { account: AccountSummary | undefined; label?: string }) {
   if (!account) return null;
   const owner = OWNER_LABELS[account.ownerType];
   return (
     <View style={styles.banner} accessibilityRole="summary">
-      <Text style={styles.bannerLabel}>기록할 계좌</Text>
+      <Text style={styles.bannerLabel}>{label}</Text>
       <Text style={styles.bannerName}>
         {account.name}
         {owner ? ` · ${owner}` : ""}
@@ -25,17 +25,20 @@ export function RecordAccountBanner({ account }: { account: AccountSummary | und
 
 /**
  * 현재 계좌의 종목 중 하나를 고른다. 보유 중(수량 > 0)인 종목을 먼저 보이고,
- * 0주 종목(가입 시 기본 종목·전량 매도한 종목)은 펼침 버튼을 눌렀을 때만 보인다.
+ * 0주 종목(추가만 하고 아직 기록이 없는 종목·전량 매도한 종목)은 펼침 버튼을 눌렀을 때만 보인다.
  * 보유 중 종목이 없으면 처음부터 펼치고, 이미 고른 0주 종목은 접어도 목록에 남긴다.
  */
 export function HoldingPicker({
   holdings,
   selectedId,
   onSelect,
+  loaded = true,
 }: {
   holdings: Holding[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** 종목 목록(요약 응답)을 받았는지. 받기 전에는 빈 상태를 그리지 않는다(종목이 있는 계좌에서 잠깐 '종목 없음'이 보이지 않게). */
+  loaded?: boolean;
 }) {
   const { held, notHeld, startExpanded } = splitHoldingsForPicker(holdings);
   // 사용자가 직접 펼치거나 접기 전에는 목록 상태(보유 중 종목 유무)를 따른다.
@@ -43,10 +46,9 @@ export function HoldingPicker({
   const expanded = userExpanded ?? startExpanded;
 
   if (holdings.length === 0) {
+    if (!loaded) return null;
     return (
-      <Card>
-        <Text style={styles.empty}>이 계좌에 보유 종목이 없습니다. 웹에서 종목을 먼저 등록해주세요.</Text>
-      </Card>
+      <EmptyHoldings description="이 계좌에 종목을 먼저 추가하면 여기서 골라 기록할 수 있습니다." />
     );
   }
   const shownNotHeld = visibleNotHeld(notHeld, expanded, selectedId);
@@ -112,7 +114,6 @@ const styles = StyleSheet.create({
   bannerLabel: { color: colors.primary, fontSize: 12, fontWeight: "800" },
   bannerName: { color: colors.ink, fontSize: 18, fontWeight: "900" },
   bannerHint: { color: colors.inkMuted, fontSize: 12, lineHeight: 18 },
-  empty: { color: colors.inkMuted, fontSize: 14, lineHeight: 20 },
   list: { gap: spacing.sm },
   hint: { color: colors.inkMuted, fontSize: 12, lineHeight: 18 },
   toggle: {

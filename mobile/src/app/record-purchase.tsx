@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { ApiError } from "@/api/client";
@@ -18,7 +18,9 @@ import { INT_MAX, parsePositiveInt, todayString, validateDate } from "@/utils/re
 
 export default function RecordPurchaseScreen() {
   const { summary, session, accounts, selectedAccountId, isLoading, error: loadError, refresh } = usePortfolioSummary();
-  const [holdingId, setHoldingId] = useState<string | null>(null);
+  // 종목 추가 화면에서 넘어오면 방금 추가한 종목을 미리 고른다
+  const params = useLocalSearchParams<{ holdingId?: string }>();
+  const [holdingId, setHoldingId] = useState<string | null>(typeof params.holdingId === "string" ? params.holdingId : null);
   const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [date, setDate] = useState(todayString());
@@ -156,7 +158,7 @@ export default function RecordPurchaseScreen() {
       <View style={{ gap: 16 }}>
         <View style={styles.field}>
           <Text style={styles.label}>종목</Text>
-          <HoldingPicker holdings={holdings} selectedId={holdingId} onSelect={setHoldingId} />
+          <HoldingPicker holdings={holdings} loaded={summary != null} selectedId={holdingId} onSelect={setHoldingId} />
         </View>
         <View style={styles.field}>
           <Text style={styles.label}>수량(주)</Text>

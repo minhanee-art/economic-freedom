@@ -213,8 +213,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         flash("배당 기록 전체 삭제됨");
       } else if (dangerModal === "reset") {
         const res = await fetch("/api/settings", { method: "DELETE" });
-        if (!res.ok) throw new Error("초기화 실패");
-        flash("종목 초기화 완료");
+        if (!res.ok) throw new Error("보유 종목 삭제 실패");
+        flash("보유 종목 전체 삭제됨");
         router.refresh();
       }
     } catch (err) {
@@ -724,8 +724,8 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         </h3>
         <div className="space-y-2">
           <DangerButton
-            label="종목 초기화 (기본 15종목)"
-            desc="모든 종목을 삭제하고 기본 15개 종목으로 복원합니다"
+            label="보유 종목 전체 삭제"
+            desc="현재 계좌의 종목을 모두 지워 빈 상태로 만듭니다"
             onClick={() => setDangerModal("reset")}
           />
           <DangerButton
@@ -753,7 +753,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
             <h3 className="text-lg font-bold text-danger">정말 삭제하시겠습니까?</h3>
             <p className="text-sm text-zinc-500 dark:text-zinc-400">
               {dangerModal === "reset" &&
-                "현재 종목을 모두 삭제하고 기본 15개 종목으로 복원합니다. 매수 기록과 원가 데이터도 초기화됩니다."}
+                "현재 계좌의 보유 종목을 모두 삭제합니다. 이 종목들의 매수·매도·배당 기록과 원가 데이터도 함께 지워집니다. 이 작업은 되돌릴 수 없습니다."}
               {dangerModal === "purchases" &&
                 "모든 매수 기록, 보유수량, 원가 데이터가 초기화됩니다. 이 작업은 되돌릴 수 없습니다."}
               {dangerModal === "dividends" &&

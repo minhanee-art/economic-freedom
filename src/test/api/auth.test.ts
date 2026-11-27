@@ -161,8 +161,7 @@ test("회원가입: 동시 가입으로 UNIQUE 위반이 나면 409", async () =
   assert.equal(response.status, 409);
 });
 
-test("회원가입: 성공하면 기본 종목·프로필을 만들고 쿠키를 준다", async () => {
-  const { DEFAULT_HOLDINGS } = await import("@/lib/constants");
+test("회원가입: 성공하면 프로필을 만들고 쿠키를 준다 — 종목은 만들지 않는다(빈 계정)", async () => {
   db.setHandler((query) => {
     if (query.includes("SELECT id FROM users")) return [];
     if (query.includes("INSERT INTO users")) return [{ id: "user-new", session_version: 0 }];
@@ -173,7 +172,7 @@ test("회원가입: 성공하면 기본 종목·프로필을 만들고 쿠키를
   assert.equal(response.status, 201);
   assert.deepEqual(await readJson(response), { ok: true });
 
-  assert.equal(db.find("INSERT INTO holdings").length, DEFAULT_HOLDINGS.length);
+  assert.equal(db.find("INSERT INTO holdings").length, 0, "가입 시 예시 종목을 넣지 않는다");
   const profileInserts = db.find("INSERT INTO profiles");
   assert.equal(profileInserts.length, 1);
   // 기본 월 예산은 SQL 리터럴로 들어간다

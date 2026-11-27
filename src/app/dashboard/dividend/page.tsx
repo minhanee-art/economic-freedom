@@ -2,6 +2,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { sql } from "@/lib/db";
+import { NoHoldingsState } from "@/components/portfolio/no-holdings-state";
 import { DividendClient } from "./dividend-client";
 import { getActivePortfolioAccountId } from "@/lib/portfolio-accounts";
 
@@ -26,6 +27,16 @@ export default async function DividendPage() {
     dividends = d as unknown as typeof dividends;
   } catch (err) {
     console.error("[dividend/page] DB error:", err);
+  }
+
+  // 배당은 수량이 있는 종목에만 기록한다. 기록도 종목도 없으면 0원 요약 대신 빈 상태를 보인다
+  if (holdingsWithShares.length === 0 && dividends.length === 0) {
+    return (
+      <NoHoldingsState
+        title="배당을 기록할 종목이 없습니다"
+        description="배당은 수량이 있는 종목에 기록합니다. 종목을 추가하고 이미 산 수량을 기록하면 이 화면에서 받은 배당을 입력할 수 있습니다."
+      />
+    );
   }
 
   return (

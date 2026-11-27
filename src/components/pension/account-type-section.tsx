@@ -62,6 +62,7 @@ export function AccountTypeSection({ accounts, onChange }: Props) {
 
   return (
     <SectionCard
+      id="account-types"
       title="계좌 세제 유형"
       description="계좌마다 연금저축·IRP·DC·ISA·일반·자녀 중 하나를 지정하세요. 유형을 정하지 않은 기존 계좌는 '일반'으로 계산합니다."
     >

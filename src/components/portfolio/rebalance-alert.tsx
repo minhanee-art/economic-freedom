@@ -364,7 +364,7 @@ export function RebalanceAlert({
 
   if (categoryRows.length === 0) {
     return (
-      <div className="border border-hairline bg-white px-5 py-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
+      <div id="holdings" className="scroll-mt-24 border border-hairline bg-white px-5 py-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
         <div className="mb-4 border-b border-zinc-100 pb-4 dark:border-zinc-800">
           <p className="text-sm font-black text-zinc-900 dark:text-zinc-100">새 계좌 시작하기</p>
           <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
@@ -383,7 +383,7 @@ export function RebalanceAlert({
   }
 
   return (
-    <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-5 py-4 space-y-4 shadow-card">
+    <div id="holdings" className="scroll-mt-24 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-5 py-4 space-y-4 shadow-card">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-semibold">테마별 비중 현황</p>

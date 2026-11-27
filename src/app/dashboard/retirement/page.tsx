@@ -7,6 +7,7 @@ import {
   getIncomeSources,
   getRetirementGoal,
 } from "@/lib/pension-data";
+import { ScrollToHash } from "@/components/ui/scroll-to-hash";
 import { RetirementClient } from "./retirement-client";
 
 export default async function RetirementPage() {
@@ -23,22 +24,25 @@ export default async function RetirementPage() {
   ]);
 
   return (
-    <RetirementClient
-      year={year}
-      initialAccounts={accounts}
-      initialContributions={Object.fromEntries(contributions.map((c) => [c.account_id, c.amount]))}
-      initialSources={sources}
-      initialGoal={
-        goal ?? {
-          targetMonthly: null,
-          retirementAge: null,
-          birthYear: null,
-          spouseBirthYear: null,
-          expectedReturnPct: null,
-          salaryBracket: null,
-          spouseSalaryBracket: null,
+    <>
+      <ScrollToHash />
+      <RetirementClient
+        year={year}
+        initialAccounts={accounts}
+        initialContributions={Object.fromEntries(contributions.map((c) => [c.account_id, c.amount]))}
+        initialSources={sources}
+        initialGoal={
+          goal ?? {
+            targetMonthly: null,
+            retirementAge: null,
+            birthYear: null,
+            spouseBirthYear: null,
+            expectedReturnPct: null,
+            salaryBracket: null,
+            spouseSalaryBracket: null,
+          }
         }
-      }
-    />
+      />
+    </>
   );
 }

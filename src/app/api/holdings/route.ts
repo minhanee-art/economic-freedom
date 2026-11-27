@@ -38,6 +38,8 @@ export async function POST(request: Request) {
   const avgPrice = Number(body.avg_price ?? 0);
 
   if (!code || !name || !category) return NextResponse.json({ error: "종목코드, 종목명, 대분류가 필요합니다." }, { status: 400 });
+  if (!/^[0-9A-Za-z]{1,12}$/.test(code)) return NextResponse.json({ error: "종목코드는 숫자/영문 12자 이하여야 합니다." }, { status: 400 });
+  if (name.length > 100) return NextResponse.json({ error: "종목명은 100자 이하로 입력해주세요." }, { status: 400 });
   if (!Number.isFinite(currentPrice) || currentPrice < 0 || currentPrice > INT_MAX) return NextResponse.json({ error: "현재가는 0 이상이어야 합니다." }, { status: 400 });
   if (!Number.isFinite(targetPct) || targetPct < 0 || targetPct > 100) return NextResponse.json({ error: "설정비중은 0~100이어야 합니다." }, { status: 400 });
   if (!Number.isInteger(shares) || shares < 0 || shares > INT_MAX) return NextResponse.json({ error: "보유수량은 0 이상 정수여야 합니다." }, { status: 400 });
@@ -86,7 +88,15 @@ export async function POST(request: Request) {
     `);
   }
 
-  await sql.transaction(queries);
+  // 같은 계좌에 같은 종목코드가 이미 있으면 UNIQUE(user_id, account_id, code) 위반 — 500 대신 409로 알린다
+  const inserted = await sql.transaction(queries).then(
+    () => true,
+    (err: { code?: string }) => {
+      if (err?.code === "23505") return false;
+      throw err;
+    }
+  );
+  if (!inserted) return NextResponse.json({ error: "이 계좌에 이미 있는 종목코드입니다." }, { status: 409 });
 
   const [row] = await sql`
     SELECT id, user_id, account_id, code, name, category, sub_category,

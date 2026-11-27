@@ -60,7 +60,6 @@ beforeEach(() => {
 });
 
 test("mobile 가입: 성공하면 로그인과 같은 형태로 토큰을 본문에 준다", async () => {
-  const { DEFAULT_HOLDINGS } = await import("@/lib/constants");
   const response = await mobileSignup.POST(jsonRequest("POST", { email: " New@B.com ", password: "secret123" }));
   assert.equal(response.status, 201);
 
@@ -70,8 +69,8 @@ test("mobile 가입: 성공하면 로그인과 같은 형태로 토큰을 본문
   assert.equal(await verifyToken(body.token), "user-new");
   assert.equal(response.headers.get("set-cookie"), null, "앱 가입은 쿠키를 쓰지 않는다");
 
-  // 웹 가입과 같은 기본 데이터 생성
-  assert.equal(db.find("INSERT INTO holdings").length, DEFAULT_HOLDINGS.length);
+  // 웹 가입과 같은 기본 데이터 생성 — 프로필만 만들고 종목은 넣지 않는다(빈 계정)
+  assert.equal(db.find("INSERT INTO holdings").length, 0);
   assert.equal(db.find("INSERT INTO profiles").length, 1);
   // 이메일은 정규화해서 저장
   assert.equal(db.find("INSERT INTO users")[0].values[0], "new@b.com");

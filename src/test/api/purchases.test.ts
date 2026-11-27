@@ -111,6 +111,16 @@ test("POST: 정상 입력은 201, 종목코드·이름은 서버 보유 종목 �
   assert.deepEqual(item.values.slice(1), [H1, "305050", "ACE 코스피", 3, 10_000, 30_015]);
 });
 
+test("POST: 현재가가 0원인 종목만 기록 단가로 현재가를 채운다(이미 있는 현재가는 유지)", async () => {
+  db.setHandler(ownedHoldings);
+  const response = await purchases.POST(jsonRequest("POST", { date: todayKstDateKey(), items: [validItem] }));
+  assert.equal(response.status, 201);
+  const [update] = db.find("UPDATE holdings");
+  assert.match(update.query, /current_price = CASE WHEN current_price > 0 THEN current_price ELSE \? END/);
+  // values: [quantity, price, holdingId, user, account]
+  assert.deepEqual(update.values, [3, 10_000, H1, "user-1", "acc-1"]);
+});
+
 test("POST: 현재 계좌에 없는 종목이 섞이면 400", async () => {
   db.setHandler((query) => (query.includes("FROM holdings") ? [{ id: H1, code: "305050", name: "ACE 코스피" }] : []));
   const response = await purchases.POST(

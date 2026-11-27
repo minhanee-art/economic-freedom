@@ -234,21 +234,27 @@ await step("회원가입", async () => {
   await button("회원가입").click();
   const res = await signup;
   assert(res.status() === 201, `가입 응답 ${res.status()}`);
-  await expectText("총 평가금액");
+  // 새 계정은 종목 없이 시작한다 — 홈은 0원 요약 대신 빈 상태
+  await expectText("아직 종목이 없습니다");
   const session = await storedSession();
   assert(session?.token, "세션이 저장되지 않았습니다");
   token = session.token;
   await shot("home-after-signup");
 });
 
-// ── 신규 계정(기본 종목이 전부 0주) ────────────────────────
-// 가입 직후 계정에는 수량 없는 기본 종목이 만들어진다. 이후 단계가 API 로 10주짜리 종목을 시드하므로, 그 전에 확인한다.
+// ── 신규 계정(종목 없이 시작) ────────────────────────────
+// 가입 직후 계정에는 종목이 없다. 앱에서 종목 2개를 추가하고 그중 하나를 매수 기록해, 0주 종목 접기까지 확인한다.
+// 이후 단계가 API 로 10주짜리 종목을 시드하므로, 그 전에 확인한다.
+const FRESH_HOLDINGS = [
+  { name: "신규테스트주식ETF", code: "E2E101" },
+  { name: "신규테스트채권ETF", code: "E2E102" },
+];
 let freshHoldingCount = 0;
 let freshPickedName = "";
 
 /** 기록 화면의 종목 선택 목록 상태: 0주 종목 버튼 수, 접기/보기 토글 문구, 보유 종목 버튼 이름. */
 async function pickerState() {
-  // 계좌 배너는 요약 응답이 도착한 뒤에 그려진다 — 종목 목록도 같은 응답이므로 이를 조건으로 기다린다(로딩 중에는 '보유 종목이 없습니다'가 잠깐 보인다).
+  // 계좌 배너는 요약 응답이 도착한 뒤에 그려진다 — 종목 목록도 같은 응답이므로 이를 조건으로 기다린다(요약을 받기 전에는 종목 목록을 그리지 않는다).
   await expectText("기록할 계좌");
   await expectText("이전 화면에서 계좌를 선택하세요");
   return page.evaluate(() => {
@@ -304,58 +310,115 @@ await step("레이아웃: 탭바 다섯 라벨이 뷰포트·탭바 안에 온�
   await shot("tabbar-layout");
 });
 
-await step("신규 계정: 홈 '보유 종목 0개', 기본 종목은 전부 0주", async (s) => {
+await step("신규 계정: 홈은 빈 상태(종목 0개, 가짜 손익·추세 표시 없음)", async (s) => {
   await openTab("홈");
-  await expectText("총 평가금액");
-  const metric = visible(page.locator("div")).filter({ hasText: /보유 종목\s*0개/ }).last();
-  await metric.waitFor({ state: "visible", timeout: 30000 });
+  await expectText("아직 종목이 없습니다");
   const res = await apiDirect("/api/holdings", { token });
   assert(res.status === 200 && Array.isArray(res.data), `종목 조회 ${res.status}`);
-  freshHoldingCount = res.data.length;
-  assert(freshHoldingCount >= 2, `기본 종목이 2개 미만(${freshHoldingCount}) — 접힘 확인을 할 수 없음`);
-  assert(res.data.every((h) => Number(h.shares) === 0), "신규 계정인데 0주가 아닌 기본 종목이 있음");
-  s.notes.push(`기본 종목 ${freshHoldingCount}개, 모두 0주`);
-  await shot("fresh-home");
+  assert(res.data.length === 0, `새 계정인데 종목이 ${res.data.length}개 있음(가입 시 예시 종목이 만들어짐)`);
+  for (const fake of ["+0.00%", "목표 대비 0%", "총 평가금액"]) {
+    assert((await visible(page.getByText(fake)).count()) === 0, `빈 계정 홈에 '${fake}'가 보임`);
+  }
+  s.notes.push("종목 0개, 홈에 '아직 종목이 없습니다'");
+  await shot("fresh-home-empty");
 });
 
-/** 기록 화면(스택)에서 이전 탭 화면으로 돌아온다. 단계가 중간에 실패해도 다음 단계가 탭바에서 시작하도록 실패 시에도 호출한다. */
+/** 기록·종목 추가 화면(스택)에서 이전 탭 화면으로 돌아온다. 단계가 중간에 실패해도 다음 단계가 탭바에서 시작하도록 실패 시에도 호출한다. */
 async function leaveRecordScreen() {
-  if (new URL(page.url()).pathname.includes("record-")) await page.goBack().catch(() => {});
+  const pathname = new URL(page.url()).pathname;
+  if (pathname.includes("record-") || pathname.includes("add-holding")) await page.goBack().catch(() => {});
   await visible(page.getByRole("tab")).first().waitFor({ state: "visible", timeout: 30000 });
 }
 
-await step("신규 계정: 배당 기록 화면은 0주 종목이 처음부터 펼쳐져 있음(접기 토글 없음)", async (s) => {
-  await openTab("배당");
-  await button("배당 수령 기록 추가").click();
-  await expectText("이미 받은 배당을 기록합니다");
-  const state = await pickerState();
-  s.notes.push(`0주 종목 ${state.notHeld.length}개 표시, 토글=${state.toggle}`);
-  assert(state.notHeld.length === freshHoldingCount, `0주 종목 ${state.notHeld.length}개만 보임(기대 ${freshHoldingCount})`);
-  assert(state.toggle === null, "보유 종목이 없는데 접기/보기 토글이 보임");
-  await expectText("보유 수량이 있는 종목이 없어 등록된 종목을 모두 표시합니다.");
-  await shot("fresh-dividend-picker");
+await step("신규 계정: 배당·매수 기록 화면의 종목 목록은 '종목 추가'로 가는 빈 상태", async (s) => {
+  for (const [tabLabel, openLabel, marker] of [
+    ["배당", "배당 수령 기록 추가", "이미 받은 배당을 기록합니다"],
+    ["자산", null, "이미 한 거래를 기록합니다"],
+  ]) {
+    await leaveRecordScreen();
+    await openTab(tabLabel);
+    if (openLabel) {
+      await button(openLabel).click();
+    } else {
+      // 종목이 없으면 자산 탭은 '매수 기록 추가' 대신 빈 상태의 '종목 추가'만 보인다 — 매수 기록 화면은 주소로 연다
+      await expectText("아직 종목이 없습니다");
+      assert((await visible(page.getByRole("button", { name: "매수 기록 추가", exact: true })).count()) === 0, "빈 계정 자산 탭에 '매수 기록 추가'가 보임");
+      await page.goto(`${APP_URL}/record-purchase`, { waitUntil: "domcontentloaded" });
+    }
+    await expectText(marker);
+    await expectText("기록할 계좌");
+    await expectText("종목을 먼저 추가하면 여기서 골라 기록할 수 있습니다");
+    assert((await visible(page.getByRole("button", { name: "종목 추가", exact: true })).count()) >= 1, `${tabLabel}: 빈 상태에 '종목 추가'가 없음`);
+    s.notes.push(`${tabLabel}: 종목 목록 빈 상태 확인`);
+    await shot(`fresh-${tabLabel === "자산" ? "purchase" : "dividend"}-picker-empty`);
+  }
+  await leaveRecordScreen();
 });
 
-await step("신규 계정: 매수 기록 — 0주 종목이 펼쳐져 보이고 하나를 골라 저장 성공", async (s) => {
-  await leaveRecordScreen();
+await step("신규 계정: 자산 탭 빈 상태 → 종목 추가 화면에서 검증 오류 후 종목 2개 추가(Bearer·계좌 헤더)", async (s) => {
   await openTab("자산");
-  await button("매수 기록 추가").click();
+  await expectText("아직 종목이 없습니다");
+  await shot("fresh-holdings-empty");
+  await button("종목 추가").click();
+  await expectText("추가할 계좌");
+  await expectText("가지고 있는 종목의 이름과 종목코드");
+  await shot("add-holding");
+
+  // 형식이 틀린 종목코드는 요청 전에 막는다
+  await fillInputs(["테스트", "30-50"]);
+  await visible(page.getByRole("button", { name: "종목 추가", exact: true })).last().click();
+  await expectText("종목코드는 숫자와 영문 12자 이하로 입력해주세요.");
+  await shot("add-holding-invalid");
+
+  const accounts = await apiDirect("/api/accounts", { token });
+  const mainId = accounts.data.accounts[0].id;
+  for (const h of FRESH_HOLDINGS) {
+    await fillInputs([h.name, h.code]);
+    const post = quiet(page.waitForRequest((req) => req.url().includes("/api/holdings") && req.method() === "POST", { timeout: 15000 }));
+    const done = waitApi("/api/holdings", "POST");
+    await visible(page.getByRole("button", { name: "종목 추가", exact: true })).last().click();
+    const req = await post;
+    assert(req.headers()["authorization"]?.startsWith("Bearer "), "종목 추가 요청에 Bearer 토큰이 없음");
+    assert(req.headers()["x-portfolio-account-id"] === mainId, `종목 추가 요청 계좌 헤더 ${req.headers()["x-portfolio-account-id"]} (기대 ${mainId})`);
+    const res = await done;
+    assert(res.status() === 201, `종목 추가 응답 ${res.status()}`);
+    await expectText(`${h.name}(${h.code})을(를) 0주로 추가했습니다.`);
+  }
+
+  // 같은 계좌에 같은 종목코드는 다시 넣지 않는다(앱 사전 확인 또는 서버 409 — 문구는 같다)
+  await fillInputs(["중복", FRESH_HOLDINGS[0].code]);
+  await visible(page.getByRole("button", { name: "종목 추가", exact: true })).last().click();
+  await expectText("이 계좌에 이미 있는 종목코드입니다.");
+
+  const list = await apiDirect("/api/holdings", { token, accountId: mainId });
+  const codes = list.data.map((h) => h.code).sort();
+  assert(JSON.stringify(codes) === JSON.stringify(FRESH_HOLDINGS.map((h) => h.code).sort()), `서버 종목 ${codes.join(",")}`);
+  assert(list.data.every((h) => Number(h.shares) === 0), "앱에서 추가한 종목이 0주가 아님");
+  freshHoldingCount = list.data.length;
+  s.notes.push(`앱에서 종목 ${freshHoldingCount}개 추가(${codes.join(", ")}), 중복 코드 거절`);
+  await shot("add-holding-done");
+});
+
+await step("신규 계정: '이 종목의 매수 기록 추가' → 방금 추가한 종목이 골라진 채 열리고 저장 성공", async (s) => {
+  const last = FRESH_HOLDINGS.at(-1);
+  await visible(page.getByRole("button", { name: "이 종목의 매수 기록 추가", exact: true })).first().click();
   await expectText("이미 한 거래를 기록합니다");
-  const state = await pickerState();
-  s.notes.push(`0주 종목 ${state.notHeld.length}개 표시, 토글=${state.toggle}`);
-  assert(state.notHeld.length === freshHoldingCount, `0주 종목 ${state.notHeld.length}개만 보임(기대 ${freshHoldingCount})`);
-  assert(state.toggle === null, "보유 종목이 없는데 접기/보기 토글이 보임");
-  await shot("fresh-purchase-picker");
-  const first = visible(page.getByRole("button", { name: /보유 0주/ })).first();
-  freshPickedName = (await first.innerText()).split("\n")[0].trim();
-  s.notes.push(`고른 종목: ${freshPickedName}`);
-  await first.click();
+  await pickerState();
+  const picked = visible(page.getByRole("button", { name: new RegExp(last.name) })).first();
+  await waitAttr(picked, "aria-selected", "true");
+  freshPickedName = last.name;
+  s.notes.push(`미리 골라진 종목: ${freshPickedName}`);
+  await shot("fresh-purchase-preselected");
   await fillInputs(["2", "5000", today]);
   const post = waitApi("/api/purchases", "POST");
   await visible(page.getByRole("button", { name: "매수 기록 추가", exact: true })).last().click();
   const res = await post;
-  assert(res.ok(), `0주 종목 매수 기록 저장 실패: HTTP ${res.status()}`);
+  assert(res.ok(), `매수 기록 저장 실패: HTTP ${res.status()}`);
   await expectText("2주 매수 기록을 추가했습니다");
+  // 현재가를 모르던 종목은 기록 단가로 현재가가 채워져 평가금액이 0원(-100%)으로 보이지 않는다
+  const list = await apiDirect("/api/holdings", { token });
+  const bought = list.data.find((h) => h.code === last.code);
+  assert(Number(bought?.shares) === 2 && Number(bought?.current_price) === 5000, `매수 후 종목 ${JSON.stringify(bought)}`);
   await shot("fresh-purchase-saved");
 });
 

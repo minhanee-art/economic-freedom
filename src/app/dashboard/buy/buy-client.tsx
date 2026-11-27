@@ -419,7 +419,7 @@ export function BuyClient({
       if (!saved) return;
 
       setSuccessMessage(
-        `${row.item.holding.name} ${row.item.quantity}주, ${formatKRWFull(row.actualCost)} 기록 저장 완료!`
+        `${row.item.holding.name} ${row.item.quantity.toLocaleString()}주, ${formatKRWFull(row.actualCost)} 기록 저장 완료!`
       );
       setQuantityOverrides((prev) => ({ ...prev, [holdingId]: 0 }));
       resetExecutionPrice(holdingId);
@@ -655,7 +655,7 @@ export function BuyClient({
                                   : "text-ink dark:text-zinc-100"
                               )}
                             >
-                              {item.quantity}주
+                              {item.quantity.toLocaleString()}주
                             </td>
                             <td className="py-1.5 text-right text-zinc-500 dark:text-zinc-400">
                               {annualCadenceLabel(item)}
@@ -820,7 +820,7 @@ export function BuyClient({
                   <div className="min-w-0">
                     <p className="truncate font-medium text-ink dark:text-zinc-100">{item.holding.name}</p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                      {item.quantity}주 × {formatKRWFull(executionPrice)}
+                      {item.quantity.toLocaleString()}주 × {formatKRWFull(executionPrice)}
                     </p>
                   </div>
                   <span className="shrink-0 font-semibold tabular-nums text-ink dark:text-zinc-100">{formatKRWFull(actualCost)}</span>
@@ -948,7 +948,7 @@ function BuyPlanCard({
                 onClick={() => onQuantityChange(algorithmQty)}
                 className="text-xs text-indigo-500 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors tabular-nums"
               >
-                계산 {algorithmQty}주로 복원
+                계산 {algorithmQty.toLocaleString()}주로 복원
               </button>
             )}
           </div>

@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { formatKRWFull } from "@/lib/utils";
 import type { Holding } from "@/types";
+import { DialogFrame } from "@/components/dashboard/confirm-dialog";
 
 export interface ParsedRow {
   date: string;         // YYYY-MM-DD
@@ -125,13 +126,14 @@ export function ImportClient({ holdings, onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-dark/40 backdrop-blur-sm px-4">
-      <div className="w-full max-w-lg max-h-[80vh] overflow-y-auto border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-float">
+    <DialogFrame labelledBy="import-dialog-title" onDismiss={onClose} className="max-w-lg max-h-[85vh] space-y-4 overflow-y-auto border-hairline dark:border-zinc-800">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-ink dark:text-zinc-100">거래내역 가져오기</h2>
+          <h2 id="import-dialog-title" className="text-lg font-semibold text-ink dark:text-zinc-100">거래내역 가져오기</h2>
           <button
+            type="button"
             onClick={onClose}
-            className="flex items-center justify-center w-8 h-8 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
+            aria-label="거래내역 가져오기 닫기"
+            className="-mr-2 flex items-center justify-center w-11 h-11 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
           >
             <svg aria-hidden="true" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -275,8 +277,7 @@ export function ImportClient({ holdings, onClose }: Props) {
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </DialogFrame>
   );
 }
 

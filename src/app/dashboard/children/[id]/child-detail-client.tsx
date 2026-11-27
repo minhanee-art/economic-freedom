@@ -612,7 +612,7 @@ function HoldingsTab({
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{h.name}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.code} · {h.shares}주</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{h.code} · {Number(h.shares).toLocaleString()}주</p>
                 </div>
                 <div className="text-right mx-3">
                   <p className="text-sm font-semibold">{formatKRW(currentValue)}</p>

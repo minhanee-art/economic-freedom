@@ -60,7 +60,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
 
   // 매수 기록 한 건 삭제 — 서버가 보유 수량·원가를 함께 되돌린다
   const deleteRecord = async (record: RecordWithItems) => {
-    const summary = (record.purchase_items ?? []).map((item) => `${item.name} ${item.quantity}주`).join(", ");
+    const summary = (record.purchase_items ?? []).map((item) => `${item.name} ${item.quantity.toLocaleString()}주`).join(", ");
     const ok = await confirm({
       title: `${record.date} 매수 기록을 삭제할까요?`,
       body: `${summary}\n\n보유 수량과 원가에서도 이 매수분이 빠집니다.`,
@@ -226,9 +226,9 @@ function RecordCard({
               <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">{item.code}</p>
             </div>
             <div className="text-right shrink-0 ml-3">
-              <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{item.quantity}주</p>
+              <p className="text-sm font-semibold tabular-nums text-ink dark:text-zinc-100">{item.quantity.toLocaleString()}주</p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                {formatKRWFull(item.price_at_purchase)} × {item.quantity} ={" "}
+                {formatKRWFull(item.price_at_purchase)} × {item.quantity.toLocaleString()}주 ={" "}
                 {formatKRWFull(item.cost)}
               </p>
             </div>

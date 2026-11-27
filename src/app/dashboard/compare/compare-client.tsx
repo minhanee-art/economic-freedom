@@ -566,7 +566,7 @@ export function CompareClient({ holdings }: Props) {
                   </th>
                   {selected.map((s, i) => (
                     <th scope="col" key={s.code} className="series-fg px-3 py-3 text-right min-w-35" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>
-                      <span className="block text-sm font-extrabold tabular-nums">{s.code}</span>
+                      <span className="block text-sm font-bold tabular-nums">{s.code}</span>
                       <span className="block text-xs font-semibold text-zinc-500 dark:text-zinc-400 whitespace-normal break-keep">
                         {s.name}
                       </span>
@@ -614,7 +614,7 @@ export function CompareClient({ holdings }: Props) {
                 />
                 <CRow
                   label={COMPARISON_LABELS.shares}
-                  vals={selected.map((s) => s.shares > 0 ? `${s.shares}주` : "-")}
+                  vals={selected.map((s) => s.shares > 0 ? `${s.shares.toLocaleString()}주` : "-")}
                 />
               </tbody>
             </table>
@@ -638,7 +638,7 @@ export function CompareClient({ holdings }: Props) {
                   <div key={s.code} className="border border-zinc-100 bg-canvas-soft p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
                     <div className="mb-2 flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="series-fg text-sm font-extrabold tabular-nums" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>{s.code}</p>
+                        <p className="series-fg text-sm font-bold tabular-nums" style={{"--series-fg": SERIES_COLORS[i] } as CSSProperties}>{s.code}</p>
                         <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-300 truncate">{s.name}</p>
                       </div>
                       <span className="shrink-0 bg-white px-2 py-1 text-xs font-bold text-zinc-600 shadow-sm dark:bg-zinc-900 dark:text-zinc-300">
@@ -651,7 +651,7 @@ export function CompareClient({ holdings }: Props) {
                           <div key={`${s.code}-${component.code || component.name}`} className="space-y-1">
                             <div className="flex items-center justify-between gap-2 text-xs">
                               <span className="min-w-0 truncate text-zinc-700 dark:text-zinc-300">
-                                <strong className="font-extrabold text-zinc-950 dark:text-white">{component.code || "코드없음"}</strong>
+                                <strong className="font-bold text-zinc-950 dark:text-white">{component.code || "코드없음"}</strong>
                                 <span className="ml-1">{component.name}</span>
                               </span>
                               <span className="shrink-0 font-bold tabular-nums text-zinc-900 dark:text-zinc-100">
@@ -859,7 +859,7 @@ function ChartLegend({ items }: { items: CompareItem[] }) {
       {items.map((item, i) => (
         <div key={item.code} className="flex min-w-0 items-center gap-1.5 text-xs text-zinc-600 dark:text-zinc-300">
           <span className="dot-bg h-2.5 w-2.5 shrink-0" style={{ "--dot-bg": SERIES_COLORS[i] } as CSSProperties} />
-          <strong className="shrink-0 font-extrabold tabular-nums text-zinc-950 dark:text-white">{item.code}</strong>
+          <strong className="shrink-0 font-bold tabular-nums text-zinc-950 dark:text-white">{item.code}</strong>
           <span className="max-w-60 whitespace-normal break-keep leading-snug">{item.name}</span>
         </div>
       ))}

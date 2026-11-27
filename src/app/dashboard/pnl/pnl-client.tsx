@@ -207,7 +207,7 @@ export function PnLClient({
                       <div>
                         <p className="text-sm font-semibold text-ink">{h.name}</p>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-                          {h.code} · {h.shares}주
+                          {h.code} · {Number(h.shares).toLocaleString()}주
                         </p>
                       </div>
                       <div className="text-right">

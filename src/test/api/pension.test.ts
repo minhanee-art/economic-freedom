@@ -11,7 +11,8 @@ const store = {
   ownedAccounts: new Set(["acc-1"]),
   contributions: [] as { account_id: string; year: number; amount: number; memo: string | null }[],
   sources: [] as { id: string; userId: string; [key: string]: unknown }[],
-  goal: null as Goal | null,
+  /** 사용자별 은퇴 목표(profiles 행). 값이 null이면 프로필 없음 */
+  goals: {} as Record<string, Goal | null>,
   saved: [] as Goal[],
 };
 
@@ -49,12 +50,13 @@ mock.module("@/lib/pension-data", {
       store.sources.splice(index, 1);
       return true;
     },
-    getRetirementGoal: async () => store.goal,
-    patchRetirementGoal: async (_u: string, patch: Goal) => {
-      if (!store.goal) return null;
-      store.goal = { ...store.goal, ...patch };
+    getRetirementGoal: async (userId: string) => store.goals[userId] ?? null,
+    patchRetirementGoal: async (userId: string, patch: Goal) => {
+      const current = store.goals[userId];
+      if (!current) return null;
+      store.goals[userId] = { ...current, ...patch };
       store.saved.push(patch);
-      return store.goal;
+      return store.goals[userId];
     },
   },
 });
@@ -78,14 +80,16 @@ beforeEach(() => {
   store.contributions = [];
   store.sources = [];
   store.saved = [];
-  store.goal = {
+  const baseGoal = {
     targetMonthly: 3_000_000,
     retirementAge: 60,
     birthYear: 1980,
     spouseBirthYear: null,
     expectedReturnPct: 4,
     salaryBracket: null,
+    spouseSalaryBracket: null,
   };
+  store.goals = { "user-1": { ...baseGoal }, "user-2": { ...baseGoal } };
 });
 
 const year = new Date().getFullYear();
@@ -183,9 +187,58 @@ test("은퇴 목표: 저장 함수에는 보낸 키만 넘긴다 — null은 지
 });
 
 test("은퇴 목표: 프로필이 없으면 GET은 빈 목표, PATCH는 404", async () => {
-  store.goal = null;
+  store.goals["user-1"] = null;
   const got = await readJson<{ goal: Goal }>(await goal.GET(jsonRequest("GET")));
   assert.equal(got.goal.targetMonthly, null);
   assert.equal((await goal.PATCH(jsonRequest("PATCH", { targetMonthly: 1 }))).status, 404);
   assert.equal((await goal.PATCH(jsonRequest("PATCH", { retirementAge: 5 }))).status, 400);
+});
+
+test("은퇴 목표: 배우자 총급여 구간을 저장·재조회하고 null로 지운다", async () => {
+  const saved = await goal.PATCH(jsonRequest("PATCH", { spouseSalaryBracket: "low" }));
+  assert.equal(saved.status, 200);
+  assert.deepEqual(store.saved, [{ spouseSalaryBracket: "low" }], "보낸 배우자 구간만 넘긴다");
+  const body = await readJson<{ goal: Goal }>(saved);
+  assert.equal(body.goal.spouseSalaryBracket, "low");
+  assert.equal(body.goal.salaryBracket, null, "본인 구간은 그대로");
+
+  const got = await readJson<{ goal: Goal }>(await goal.GET(jsonRequest("GET")));
+  assert.equal(got.goal.spouseSalaryBracket, "low");
+
+  const cleared = await readJson<{ goal: Goal }>(await goal.PATCH(jsonRequest("PATCH", { spouseSalaryBracket: null })));
+  assert.equal(cleared.goal.spouseSalaryBracket, null);
+  const emptied = await readJson<{ goal: Goal }>(await goal.PATCH(jsonRequest("PATCH", { spouseSalaryBracket: "" })));
+  assert.equal(emptied.goal.spouseSalaryBracket, null, "빈 문자열도 지우기");
+});
+
+test("은퇴 목표: 배우자 총급여 구간이 low·high·null이 아니면 400이고 저장하지 않는다", async () => {
+  for (const bad of ["mid", "LOW", 1, true, {}]) {
+    const response = await goal.PATCH(jsonRequest("PATCH", { spouseSalaryBracket: bad }));
+    assert.equal(response.status, 400, `값 ${JSON.stringify(bad)}`);
+    const body = await readJson<{ error: string }>(response);
+    assert.match(body.error, /배우자 총급여 구간/);
+  }
+  // 다른 항목과 함께 보내도 하나라도 틀리면 전체를 저장하지 않는다
+  assert.equal((await goal.PATCH(jsonRequest("PATCH", { salaryBracket: "low", spouseSalaryBracket: "x" }))).status, 400);
+  assert.deepEqual(store.saved, []);
+  assert.equal(store.goals["user-1"]?.salaryBracket, null);
+});
+
+test("은퇴 목표: 배우자 총급여 구간은 로그인한 사용자 자신의 프로필에만 저장된다", async () => {
+  assert.equal((await goal.PATCH(jsonRequest("PATCH", { spouseSalaryBracket: "high" }))).status, 200);
+  assert.equal(store.goals["user-1"]?.spouseSalaryBracket, "high");
+  assert.equal(store.goals["user-2"]?.spouseSalaryBracket, null, "다른 사용자 프로필은 그대로");
+
+  session.state.userId = "user-2";
+  const other = await readJson<{ goal: Goal }>(await goal.GET(jsonRequest("GET")));
+  assert.equal(other.goal.spouseSalaryBracket, null, "다른 사용자에게 보이지 않는다");
+  assert.equal((await goal.PATCH(jsonRequest("PATCH", { spouseSalaryBracket: "low" }))).status, 200);
+  assert.equal(store.goals["user-1"]?.spouseSalaryBracket, "high", "user-2 저장이 user-1을 덮지 않는다");
+});
+
+test("은퇴 목표: 프로필이 없으면 GET 빈 목표에도 spouseSalaryBracket 키가 null로 있다", async () => {
+  store.goals["user-1"] = null;
+  const got = await readJson<{ goal: Goal }>(await goal.GET(jsonRequest("GET")));
+  assert.ok(Object.prototype.hasOwnProperty.call(got.goal, "spouseSalaryBracket"));
+  assert.equal(got.goal.spouseSalaryBracket, null);
 });

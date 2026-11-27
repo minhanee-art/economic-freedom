@@ -227,6 +227,7 @@ test("은퇴 목표: 명시적 null은 지우고, 보내지 않은 항목은 유
     spouseBirthYear: null,
     expectedReturnPct: null,
     salaryBracket: "low",
+    spouseSalaryBracket: null,
   };
   assert.deepEqual((await response.json()).goal, expected);
   assert.deepEqual(await readGoal(), expected);

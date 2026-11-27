@@ -11,6 +11,7 @@ const EMPTY_GOAL: RetirementGoalRow = {
   spouseBirthYear: null,
   expectedReturnPct: null,
   salaryBracket: null,
+  spouseSalaryBracket: null,
 };
 
 export async function GET(request: Request) {

@@ -196,12 +196,13 @@ export function MarketClient({ holdings }: { holdings: MarketHolding[] }) {
 
       {/* ETF 뉴스 */}
       <section>
-        <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
-          ETF 관련 뉴스
-          <InfoTip label="ETF 관련 뉴스 설명" align="start">
-            검색어로 찾은 외부 언론 기사 링크입니다. 이 서비스의 의견이나 투자 권유가 아닙니다.
+        <h2 className="text-base font-bold tracking-tight text-ink">ETF 관련 뉴스</h2>
+        <p className="mb-3 mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          외부 언론 기사 링크이며 투자 권유가 아닙니다.
+          <InfoTip label="뉴스 출처 설명" align="start">
+            검색어로 찾은 외부 기사입니다. 이 서비스의 의견이 아닙니다.
           </InfoTip>
-        </h2>
+        </p>
 
         <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
           {["연금", "배당ETF", "코스피", "미국ETF", "금ETF", "채권"].map(

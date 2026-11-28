@@ -194,7 +194,7 @@ export default function Home() {
             <div className="mt-8 max-w-prose border border-zinc-300 bg-white px-4 py-3 text-sm leading-6 text-ink break-keep dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
               <p>
                 <strong className="font-bold text-dark-header dark:text-white">기록과 계산만 하는 도구입니다.</strong>{" "}
-                계좌 연결·주문 실행·투자 자문 없이, 세액과 수령액 계산은 참고용입니다.
+                주문을 실행하지 않습니다. 투자 자문이나 중개를 하지 않으며, 세액과 수령액 계산은 참고용입니다.
               </p>
             </div>
           </div>

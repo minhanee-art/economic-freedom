@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from "react-native";
 import { Text } from "@/components/AppText";
 import { Button } from "@/components/Button";
+import { InfoTip } from "@/components/InfoTip";
 import { colors, radius, spacing, touchTarget, type } from "@/styles/theme";
 import { formatDateInput, quickDates } from "@/utils/records";
 
@@ -10,19 +11,21 @@ type TextFieldProps = Omit<TextInputProps, "style"> & {
   /** 이 칸의 오류. 칸 바로 아래에 보이고 스크린리더가 읽는다. */
   error?: string | null;
   helper?: string;
+  /** 라벨 옆 ⓘ 말풍선에 둘 보충 설명(칸 아래 helper 대신). 낭독기 힌트로도 읽힌다. */
+  info?: string;
   ref?: React.Ref<TextInput>;
   /** 비밀번호 칸: 칸 오른쪽에 '표시/숨기기' 전환 버튼을 둔다(웹 auth-form 의 PasswordInput 과 같은 이름·상태). */
   revealable?: boolean;
 };
 
 /** 라벨 + 입력칸 + (도움말 또는 오류). 입력칸의 접근성 이름은 라벨과 같다. */
-export function TextField({ label, error, helper, ref, revealable, ...input }: TextFieldProps) {
+export function TextField({ label, error, helper, info, ref, revealable, ...input }: TextFieldProps) {
   const [revealed, setRevealed] = useState(false);
   const field = (
     <TextInput
       ref={ref}
       accessibilityLabel={label}
-      accessibilityHint={error ?? helper}
+      accessibilityHint={error ?? helper ?? info}
       aria-invalid={error ? true : undefined}
       placeholderTextColor={colors.placeholder}
       {...input}
@@ -32,7 +35,14 @@ export function TextField({ label, error, helper, ref, revealable, ...input }: T
   );
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      {info ? (
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>{label}</Text>
+          <InfoTip label={`${label} 설명`}>{info}</InfoTip>
+        </View>
+      ) : (
+        <Text style={styles.label}>{label}</Text>
+      )}
       {revealable ? (
         <View style={styles.inputRow}>
           {field}
@@ -132,6 +142,7 @@ export const fieldStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   field: { gap: spacing.sm },
   label: { ...type.label, color: colors.ink },
+  labelRow: { flexDirection: "row", alignItems: "center" },
   input: fieldStyles.input,
   inputError: { borderColor: colors.danger, borderWidth: 2 },
   inputRow: { position: "relative", justifyContent: "center" },

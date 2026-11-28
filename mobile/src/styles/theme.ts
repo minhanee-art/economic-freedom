@@ -42,6 +42,8 @@ const light = {
   /** 안드로이드 눌림 물결(ripple) */
   ripple: "#d9dee8",
   rippleOnPrimary: "#7a66fe",
+  /** 떠 있는 말풍선(InfoTip)의 그림자 — ink 16% */
+  shadow: "#0d253d29",
 };
 
 export type ThemeColors = typeof light;

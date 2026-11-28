@@ -2,6 +2,7 @@ import { Linking, StyleSheet, View } from "react-native";
 import { Text } from "@/components/AppText";
 import { webUrl } from "@/api/client";
 import { Button } from "@/components/Button";
+import { InfoTip } from "@/components/InfoTip";
 import { colors, radius, spacing, type } from "@/styles/theme";
 
 /** 화면 제목. 스택 화면은 헤더가 제목을 보이므로 탭 화면에서만 쓴다. */
@@ -13,9 +14,27 @@ export function ScreenTitle({ children }: { children: string }) {
   );
 }
 
-/** 계산 가정·안내 문구. 보조 잉크(흰 면 5.1:1). tone=caution 은 추정·한도 초과 같은 주의. */
-export function Notice({ children, tone = "plain" }: { children: string; tone?: "plain" | "caution" }) {
-  return <Text style={[type.caption, tone === "caution" ? styles.caution : null]}>{children}</Text>;
+/**
+ * 계산 가정·안내 문구. 보조 잉크(흰 면 5.1:1). tone=caution 은 추정·한도 초과 같은 주의.
+ * info 를 주면 문구 끝에 ⓘ 말풍선을 붙인다 — 핵심 한 문장만 보이고 이유·풀이는 말풍선으로(줄 높이 44 이상).
+ */
+export function Notice({
+  children,
+  tone = "plain",
+  info,
+}: {
+  children: string;
+  tone?: "plain" | "caution";
+  info?: { label: string; text: string };
+}) {
+  const text = <Text style={[type.caption, tone === "caution" ? styles.caution : null, info ? styles.noticeText : null]}>{children}</Text>;
+  if (!info) return text;
+  return (
+    <View style={styles.noticeRow}>
+      {text}
+      <InfoTip label={info.label}>{info.text}</InfoTip>
+    </View>
+  );
 }
 
 /** 저장 성공 같은 상태 문구. 스크린리더가 바뀐 내용을 읽는다. */
@@ -80,6 +99,8 @@ export const RETIREMENT_WEB_PATH = "/dashboard/retirement";
 
 const styles = StyleSheet.create({
   caution: { color: colors.caution },
+  noticeRow: { flexDirection: "row", alignItems: "center", minHeight: 44 },
+  noticeText: { flexShrink: 1 },
   success: { ...type.label, color: colors.success },
   errorBox: {
     borderRadius: radius.sm,

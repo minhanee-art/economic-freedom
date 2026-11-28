@@ -4,6 +4,7 @@
 //   <p>…문장 안에도 <InfoTip label="세액공제 한도 설명" align="end">연금저축 600만원, IRP 합산 900만원.</InfoTip> 넣을 수 있다.</p>
 //   <EmojiList><EmojiLine emoji="🧾">세액공제 한도 채우기</EmojiLine><EmojiLine emoji="💸">배당 기록하기</EmojiLine></EmojiList>
 //   <EmojiLine as="p" emoji="📅" size="sm" tone="mute">등록한 배당 일정이 없습니다.</EmojiLine>  (글자·색은 size/tone 으로, className 은 margin 만)
+//   가운데 정렬: <EmojiLine as="p" emoji="🌴" align="center">…</EmojiLine>  (className="justify-center" 대신 align="center")
 // InfoTip 의 children 은 span 안에 들어가므로 글·<strong>·<br /> 같은 인라인 요소만 쓴다(<p>·<ul> 금지). 1~3문장.
 // 동작: 누르면 열림/다시 누르면 닫힘(터치), 마우스 호버·키보드 포커스로도 열림, Esc·바깥 누르기로 닫힘.
 // 말풍선은 Popover API(top layer)로 띄워 부모의 overflow-hidden·sticky 헤더에 잘리지 않고, 열릴 때 화면 안으로 좌표를 맞춘다.
@@ -244,6 +245,7 @@ export function EmojiLine({
   as: Tag = "li",
   size = "inherit",
   tone = "inherit",
+  align = "start",
   className = "",
 }: {
   emoji: string;
@@ -251,14 +253,17 @@ export function EmojiLine({
   as?: "li" | "p" | "div" | "span";
   size?: keyof typeof EMOJI_LINE_SIZE;
   tone?: keyof typeof EMOJI_LINE_TONE;
+  /** start = 왼쪽 정렬(글자가 남은 폭을 채움), center = 이모지+글자 묶음을 가운데로 */
+  align?: "start" | "center";
   className?: string;
 }) {
+  const center = align === "center";
   return (
-    <Tag className={`flex min-w-0 items-baseline gap-2 ${EMOJI_LINE_SIZE[size]} ${EMOJI_LINE_TONE[tone]} ${className}`}>
+    <Tag className={`flex min-w-0 items-baseline gap-2 ${center ? "justify-center text-center" : ""} ${EMOJI_LINE_SIZE[size]} ${EMOJI_LINE_TONE[tone]} ${className}`}>
       <span aria-hidden="true" className="w-5 shrink-0 text-center">
         {emoji}
       </span>
-      <span className="min-w-0 flex-1">{children}</span>
+      <span className={center ? "min-w-0" : "min-w-0 flex-1"}>{children}</span>
     </Tag>
   );
 }

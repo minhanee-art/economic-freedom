@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { cn, formatKRWFull } from "@/lib/utils";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 import type { IndexData } from "@/app/api/market/indices/route";
 
 export interface MarketHolding {
@@ -91,8 +92,8 @@ export function MarketClient({ holdings }: { holdings: MarketHolding[] }) {
       <h1 className="text-xl font-bold tracking-tight text-ink">시장 현황</h1>
       {/* 주요 지수 */}
       <section>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-bold text-ink tracking-tight">주요 지수</h2>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h2 className="text-base font-bold tracking-tight text-ink">주요 지수</h2>
           <button
             type="button"
             onClick={fetchIndices}
@@ -141,7 +142,12 @@ export function MarketClient({ holdings }: { holdings: MarketHolding[] }) {
       {/* 내 보유 종목 시세 */}
       <section aria-labelledby="my-prices-title">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-          <h2 id="my-prices-title" className="text-lg font-bold text-ink tracking-tight">내 보유 종목 시세</h2>
+          <h2 id="my-prices-title" className="text-base font-bold tracking-tight text-ink">
+            내 보유 종목 시세
+            <InfoTip label="보유 종목 시세 설명" align="start">
+              &lsquo;지금 시세 조회&rsquo;로 가져온 값은 이 화면에만 보이고 저장하지 않습니다. 저장은 홈의 &lsquo;시세 새로고침&rsquo;에서 합니다.
+            </InfoTip>
+          </h2>
           {myHoldings.length > 0 && (
             <button
               type="button"
@@ -160,9 +166,10 @@ export function MarketClient({ holdings }: { holdings: MarketHolding[] }) {
           <p role="status" className="mb-2 text-xs text-zinc-500 dark:text-zinc-400">{priceStatus.text} 조회한 값은 이 화면에만 보이며 저장하지 않습니다.</p>
         )}
         {myHoldings.length === 0 ? (
-          <p className="border border-hairline bg-surface px-4 py-6 text-sm leading-relaxed text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            이 계좌에 종목코드가 있는 종목이 없습니다. 홈의 &lsquo;보유 종목과 목표 비중&rsquo;에서 종목을 추가하면 여기서 시세를 볼 수 있습니다.
-          </p>
+          <div className="space-y-2 border border-hairline bg-surface px-4 py-5 text-sm text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+            <EmojiLine as="p" emoji="🏦">이 계좌에 종목코드가 있는 종목이 없습니다.</EmojiLine>
+            <EmojiLine as="p" emoji="➕">홈의 &lsquo;보유 종목과 목표 비중&rsquo;에서 종목을 추가하면 시세를 볼 수 있습니다.</EmojiLine>
+          </div>
         ) : (
           <ul className="divide-y divide-hairline border border-hairline bg-surface dark:divide-zinc-800 dark:border-zinc-800">
             {myHoldings.map((h) => {
@@ -189,10 +196,12 @@ export function MarketClient({ holdings }: { holdings: MarketHolding[] }) {
 
       {/* ETF 뉴스 */}
       <section>
-        <h2 className="text-lg font-bold text-ink tracking-tight">ETF 관련 뉴스</h2>
-        <p className="mt-1 mb-3 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          검색어로 찾은 외부 언론 기사 링크입니다. 이 서비스의 의견이나 투자 권유가 아닙니다.
-        </p>
+        <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
+          ETF 관련 뉴스
+          <InfoTip label="ETF 관련 뉴스 설명" align="start">
+            검색어로 찾은 외부 언론 기사 링크입니다. 이 서비스의 의견이나 투자 권유가 아닙니다.
+          </InfoTip>
+        </h2>
 
         <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
           {["연금", "배당ETF", "코스피", "미국ETF", "금ETF", "채권"].map(

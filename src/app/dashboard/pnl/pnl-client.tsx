@@ -5,6 +5,7 @@ import type { Holding, CostBasis, PurchaseRecord } from "@/types";
 import type { CSSProperties } from "react";
 import { formatKRW, formatKRWFull, formatPercent, formatPnlKRW, pnlTextClass, cn } from "@/lib/utils";
 import { getCategoryColor } from "@/lib/colors";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 
 interface HoldingPnL {
   id: string;
@@ -109,7 +110,12 @@ export function PnLClient({
             <p className="text-lg font-semibold tabular-nums tracking-tight">{formatKRW(totalValue)}</p>
           </div>
           <div>
-            <p className="text-xs font-medium text-ink-mute mb-1">평가손익</p>
+            <p className="text-xs font-medium text-ink-mute mb-1">
+              평가손익
+              <InfoTip label="평가손익 설명" align="start">
+                매수 기록으로 계산한 원가와 저장된 현재가를 비교한 참고용 값입니다. 세금·수수료는 반영하지 않습니다.
+              </InfoTip>
+            </p>
             <p
               className={cn(
                 "text-lg font-semibold tabular-nums tracking-tight",
@@ -136,17 +142,21 @@ export function PnLClient({
 
       {isEmpty ? (
         <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-12 text-center shadow-card">
-          <p className="text-sm text-ink-mute dark:text-zinc-400">
-            보유 종목이 없습니다. 매수 후 손익이 표시됩니다.
-          </p>
+          <ul className="mx-auto inline-block space-y-2 text-left text-sm text-ink-mute dark:text-zinc-400">
+            <EmojiLine emoji="🏦">보유 종목이 없습니다</EmojiLine>
+            <EmojiLine emoji="💰">매수를 기록하면 손익이 표시됩니다</EmojiLine>
+          </ul>
         </div>
       ) : (
         <>
           {/* 추이 차트 */}
           {chartData.length >= 2 && (
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
-              <h2 className="text-sm font-semibold text-ink mb-3">
+              <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
                 투입 vs 평가 추이
+                <InfoTip label="추이 차트 설명" align="start">
+                  과거 구간은 당시 시세가 없어 투입원금 기준선으로 그리고, 평가금액은 현재 시점 한 점만 보여 줍니다.
+                </InfoTip>
               </h2>
               <LazyPnLAreaChart data={chartData} />
             </div>
@@ -154,7 +164,7 @@ export function PnLClient({
 
           {/* 자산군별 손익 요약 */}
           <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
-            <h2 className="text-sm font-semibold text-ink mb-3">자산군별 손익</h2>
+            <h2 className="mb-3 text-base font-bold tracking-tight text-ink">자산군별 손익</h2>
             <div className="grid grid-cols-2 gap-3">
               {Array.from(categoryMap.entries()).map(([cat, data]) => {
                 const pct =
@@ -193,7 +203,7 @@ export function PnLClient({
 
           {/* 종목별 손익 리스트 */}
           <div>
-            <h2 className="text-sm font-semibold text-ink mb-3">
+            <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
               종목별 손익 ({pnlList.length})
             </h2>
             <div className="space-y-2">

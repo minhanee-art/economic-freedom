@@ -142,26 +142,22 @@ const steps = [
   {
     emoji: "🏦",
     title: "계좌를 등록하고 유형을 정합니다",
-    body: "연금저축·IRP·DC·ISA·일반 계좌의 유형과 명의(본인·배우자)를 지정합니다.",
-    tip: "세액공제와 개인연금 계산이 이 정보로 나뉩니다.",
+    body: "연금저축·IRP·DC·ISA·일반 계좌의 유형과 명의를 정하면 세액공제·개인연금 계산이 나뉩니다.",
   },
   {
     emoji: "💸",
     title: "매수와 배당을 기록합니다",
-    body: "직접 입력하거나 증권사 엑셀·CSV 거래내역을 가져옵니다.",
-    tip: "보유 수량과 평균단가는 이 기록으로 계산합니다.",
+    body: "직접 입력하거나 증권사 엑셀·CSV 거래내역을 가져오면 보유 수량과 평균단가가 계산됩니다.",
   },
   {
-    emoji: "📅",
+    emoji: "📋",
     title: "국민연금·퇴직연금 예상액을 적습니다",
-    body: "예상 월 수령액과 수령 시작 나이를 본인·배우자별로 옮겨 적습니다.",
-    tip: "국민연금공단 '내 연금 알아보기'나 통합연금포털에서 조회할 수 있습니다.",
+    body: "국민연금공단·통합연금포털에서 조회한 예상 월 수령액과 시작 나이를 본인·배우자별로 옮겨 적습니다.",
   },
   {
     emoji: "🌴",
     title: "은퇴 나이와 목표 월 생활비를 정합니다",
-    body: "나이별 예상 월 현금흐름과 목표 대비 부족액이 표로 나옵니다.",
-    tip: "올해 납입액을 적으면 세액공제 진행률도 함께 갱신됩니다.",
+    body: "나이별 예상 월 현금흐름과 목표 대비 부족액이 표로 나오고, 세액공제 진행률도 함께 갱신됩니다.",
   },
 ];
 
@@ -176,13 +172,15 @@ export default function Home() {
             <h1 className="text-3xl font-bold leading-tight tracking-tight text-dark-header text-balance break-keep dark:text-white sm:text-4xl lg:text-5xl">
               은퇴하면 매달 얼마가 들어올지, 직접 남긴 기록으로 계산합니다
             </h1>
-            <EmojiList className="mt-5 max-w-prose text-base sm:text-lg">
-              <EmojiLine emoji="🌴">나이별 월 현금흐름을 본인·배우자 기준으로 계산</EmojiLine>
-              <EmojiLine emoji="🧾">올해 연금저축·IRP 세액공제 한도 채움 정도</EmojiLine>
-              <EmojiLine emoji="💸">
-                국민연금·퇴직연금 예상액, 계좌 평가액, 배당 기록을 합산
-              </EmojiLine>
-            </EmojiList>
+            <div className="mt-5 max-w-prose text-lg leading-8 text-ink break-keep dark:text-zinc-300">
+              <EmojiList size="inherit" tone="inherit">
+                <EmojiLine emoji="🌴">나이별 월 현금흐름을 본인·배우자 기준으로 계산</EmojiLine>
+                <EmojiLine emoji="🧾">올해 연금저축·IRP 세액공제 한도 채움 정도</EmojiLine>
+                <EmojiLine emoji="💸">
+                  국민연금·퇴직연금 예상액, 계좌 평가액, 배당 기록을 합산
+                </EmojiLine>
+              </EmojiList>
+            </div>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/signup" className={primaryButton}>
                 회원가입
@@ -194,7 +192,7 @@ export default function Home() {
             <div className="mt-8 max-w-prose border border-zinc-300 bg-white px-4 py-3 text-sm leading-6 text-ink break-keep dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
               <p>
                 <strong className="font-bold text-dark-header dark:text-white">기록과 계산만 하는 도구입니다.</strong>{" "}
-                주문을 실행하지 않습니다. 투자 자문이나 중개를 하지 않으며, 세액과 수령액 계산은 참고용입니다.
+                증권사 계좌와 연결하지 않고 주문을 실행하지 않습니다. 투자 자문이나 중개를 하지 않으며, 세액과 수령액 계산은 참고용입니다.
               </p>
             </div>
           </div>
@@ -207,17 +205,19 @@ export default function Home() {
               <h2 id="tax-credit" className={h2}>
                 올해 연금계좌 세액공제 한도를 얼마나 채웠는지 봅니다
               </h2>
-              <EmojiList className="mt-5 text-base">
-                <EmojiLine emoji="🧾">
-                  연금저축 600만원, IRP·DC 합산 900만원까지가 한 사람의 공제 대상
-                </EmojiLine>
-                <EmojiLine emoji="💰">
-                  계좌별 올해 납입액으로 공제 대상 금액·예상 세액공제액·남은 한도 계산
-                  <InfoTip label="공제율 설명" align="start">
-                    공제율은 명의자의 총급여 구간에 따라 16.5% 또는 13.2%(지방소득세 포함)로 계산합니다.
-                  </InfoTip>
-                </EmojiLine>
-              </EmojiList>
+              <div className={lead}>
+                <EmojiList size="inherit" tone="inherit">
+                  <EmojiLine emoji="🧾">
+                    연금저축 600만원, IRP·DC 합산 900만원까지가 한 사람의 공제 대상
+                  </EmojiLine>
+                  <EmojiLine emoji="💰">
+                    계좌별 올해 납입액으로 공제 대상 금액·예상 세액공제액·남은 한도 계산
+                    <InfoTip label="공제율 설명" align="start">
+                      공제율은 명의자의 총급여 구간에 따라 16.5% 또는 13.2%(지방소득세 포함)로 계산합니다.
+                    </InfoTip>
+                  </EmojiLine>
+                </EmojiList>
+              </div>
             </div>
             <ContributionExample />
           </div>
@@ -229,10 +229,7 @@ export default function Home() {
               기록을 채우는 순서
             </h2>
             <p className={`${lead} max-w-prose`}>
-              계좌를 연결하지 않으므로 거래·배당·연금 예상액은 직접 입력합니다.
-              <InfoTip label="평가금액 계산 설명" align="start">
-                평가금액은 기록한 보유 수량에 공개 시세를 곱해 계산합니다.
-              </InfoTip>
+              계좌를 연결하지 않으므로 거래·배당·연금 예상액은 직접 입력합니다. 평가금액은 기록한 보유 수량에 공개 시세를 곱해 계산합니다.
             </p>
             <ol className="mt-10 grid grid-cols-1 gap-x-12 gap-y-8 md:grid-cols-2">
               {steps.map((step, index) => (
@@ -241,15 +238,10 @@ export default function Home() {
                     {index + 1}.
                   </span>
                   <div className="min-w-0">
-                    <h3 className="text-base font-bold text-dark-header break-keep dark:text-white">
-                      {step.title}
-                      <InfoTip label={`${step.title} 설명`} align="start">
-                        {step.tip}
-                      </InfoTip>
-                    </h3>
-                    <EmojiList className="mt-2 text-base text-zinc-600 dark:text-zinc-400">
-                      <EmojiLine emoji={step.emoji}>{step.body}</EmojiLine>
-                    </EmojiList>
+                    <h3 className="text-base font-bold text-dark-header break-keep dark:text-white">{step.title}</h3>
+                    <div className="mt-2 text-base leading-7 text-zinc-600 break-keep dark:text-zinc-400">
+                      <EmojiLine as="p" emoji={step.emoji}>{step.body}</EmojiLine>
+                    </div>
                   </div>
                 </li>
               ))}
@@ -263,24 +255,28 @@ export default function Home() {
               <h2 id="more" className={h2}>
                 그 밖에 할 수 있는 일
               </h2>
-              <EmojiList className="mt-6 space-y-5 text-base break-keep dark:text-zinc-300">
-                <EmojiLine emoji="🎁">
-                  <strong className="font-bold text-dark-header dark:text-white">자녀 증여 기록.</strong> 증여·입금과 증여세 신고 여부를 자녀별로 적어 둡니다.
-                </EmojiLine>
-                <EmojiLine emoji="🔔">
-                  <strong className="font-bold text-dark-header dark:text-white">텔레그램 리포트.</strong> 평가금액·손익·기간별 수익률을 내 텔레그램 채팅으로 받습니다.{" "}
-                  <Link href="/guide/telegram" className="font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
-                    연결 방법
-                  </Link>
-                </EmojiLine>
-              </EmojiList>
+              <div className="mt-6 text-base leading-7 text-ink break-keep dark:text-zinc-300">
+                <EmojiList size="inherit" tone="inherit" className="space-y-5">
+                  <EmojiLine emoji="🎁">
+                    <strong className="font-bold text-dark-header dark:text-white">자녀 증여 기록.</strong> 증여·입금과 증여세 신고 여부를 자녀별로 적어 둡니다.
+                  </EmojiLine>
+                  <EmojiLine emoji="🔔">
+                    <strong className="font-bold text-dark-header dark:text-white">텔레그램 리포트.</strong> 평가금액·손익·기간별 수익률을 내 텔레그램 채팅으로 받습니다.{" "}
+                    <Link href="/guide/telegram" className="whitespace-nowrap font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
+                      연결 방법
+                    </Link>
+                  </EmojiLine>
+                </EmojiList>
+              </div>
             </div>
             <div>
               <h2 className={h2}>입력한 데이터</h2>
-              <EmojiList className="mt-4 text-base">
-                <EmojiLine emoji="🔒">계좌번호·계좌 비밀번호는 받지 않습니다</EmojiLine>
-                <EmojiLine emoji="🗑️">계정을 삭제하면 입력한 기록이 함께 지워집니다</EmojiLine>
-              </EmojiList>
+              <div className={lead}>
+                <EmojiList size="inherit" tone="inherit">
+                  <EmojiLine emoji="🔒">계좌번호·계좌 비밀번호는 받지 않습니다</EmojiLine>
+                  <EmojiLine emoji="🗑️">계정을 삭제하면 입력한 기록이 함께 지워집니다</EmojiLine>
+                </EmojiList>
+              </div>
               <p className="mt-4 flex flex-wrap gap-x-5 text-base">
                 <Link href="/privacy" className="inline-flex min-h-11 items-center font-semibold text-indigo-600 underline underline-offset-4 dark:text-indigo-300">
                   개인정보처리방침

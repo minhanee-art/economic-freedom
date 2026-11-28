@@ -1,6 +1,7 @@
 // InfoTip — 제목·라벨 옆 ⓘ 버튼 + 말풍선 안내. EmojiLine — 이모지 그림 + 글자 한 줄(목록용).
 // 사용 예:
 //   <h2 className="…">기간별 수익률 <InfoTip label="기간별 수익률 설명">매수 기록 기준 원가로 계산한 참고용 값입니다.</InfoTip></h2>
+//   숫자를 설명할 때는 위로: <InfoTip label="평가손익 설명" side="top">…</InfoTip> (위 공간이 모자라면 자동으로 아래)
 //   <p>…문장 안에도 <InfoTip label="세액공제 한도 설명" align="end">연금저축 600만원, IRP 합산 900만원.</InfoTip> 넣을 수 있다.</p>
 //   <EmojiList><EmojiLine emoji="🧾">세액공제 한도 채우기</EmojiLine><EmojiLine emoji="💸">배당 기록하기</EmojiLine></EmojiList>
 //   <EmojiLine as="p" emoji="📅" size="sm" tone="mute">등록한 배당 일정이 없습니다.</EmojiLine>  (글자·색은 size/tone 으로, className 은 margin 만)
@@ -26,6 +27,7 @@ export function InfoTip({
   label,
   children,
   align = "center",
+  side: preferredSide = "bottom",
   className = "",
 }: {
   /** 버튼의 aria-label. 무엇에 대한 설명인지(예: "기간별 수익률 설명"). */
@@ -34,6 +36,8 @@ export function InfoTip({
   children: ReactNode;
   /** 말풍선의 가로 기준. start = 아이콘 왼쪽에 맞춰 오른쪽으로, end = 아이콘 오른쪽에 맞춰 왼쪽으로. 어느 쪽이든 화면 밖으로 나가면 안으로 당긴다. */
   align?: "start" | "center" | "end";
+  /** 말풍선이 열리는 쪽. 설명 대상 숫자를 가리지 않게 top 을 고를 수 있다. 고른 쪽 공간이 모자라면 반대쪽으로 연다. */
+  side?: "top" | "bottom";
   className?: string;
 }) {
   const id = useId();
@@ -73,7 +77,10 @@ export function InfoTip({
     left = Math.max(VIEWPORT_GAP, Math.min(left, vw - VIEWPORT_GAP - w));
     const below = cy + iconHalf + OFFSET;
     const above = cy - iconHalf - OFFSET - h;
-    const side: "bottom" | "top" = below + h <= vh - VIEWPORT_GAP || above < VIEWPORT_GAP ? "bottom" : "top";
+    const fitsBelow = below + h <= vh - VIEWPORT_GAP;
+    const fitsAbove = above >= VIEWPORT_GAP;
+    const side: "bottom" | "top" =
+      preferredSide === "top" ? (fitsAbove || !fitsBelow ? "top" : "bottom") : fitsBelow || !fitsAbove ? "bottom" : "top";
     bubble.style.left = `${Math.round(left)}px`;
     bubble.style.top = `${Math.round(side === "bottom" ? below : above)}px`;
     const arrowX = `${Math.round(Math.max(10, Math.min(cx - left, w - 10)) - 5)}px`;
@@ -85,7 +92,7 @@ export function InfoTip({
       arrowBottomRef.current.hidden = side !== "top";
       arrowBottomRef.current.style.left = arrowX;
     }
-  }, [align]);
+  }, [align, preferredSide]);
 
   // 열릴 때: top layer 에 올리고(지원 브라우저) 화면 안으로 좌표를 맞춘다. 칠하기 전에 끝내 깜빡임이 없다.
   useLayoutEffect(() => {
@@ -170,7 +177,7 @@ export function InfoTip({
   return (
     <span
       ref={wrapRef}
-      className={`relative ml-1 inline-flex items-center align-middle ${className}`}
+      className={`relative ml-1.5 mr-1 inline-flex items-center align-middle ${className}`}
       onPointerEnter={onPointerEnter}
       onPointerLeave={onPointerLeave}
     >
@@ -193,7 +200,7 @@ export function InfoTip({
           if (e.currentTarget.matches(":focus-visible")) setMode((m) => m ?? "focus");
         }}
         onBlur={() => setMode((m) => (m === "focus" ? null : m))}
-        className="-m-3.5 inline-flex size-11 min-h-11 min-w-11 shrink-0 items-center justify-center text-ink-mute transition-colors hover:text-brand focus-visible:text-brand focus-visible:outline-2 focus-visible:-outline-offset-8 focus-visible:outline-brand aria-expanded:text-brand"
+        className="-m-3.5 inline-flex size-11 min-h-11 min-w-11 shrink-0 items-center justify-center text-ink-mute transition-colors hover:text-brand focus-visible:text-brand focus-visible:outline-2 focus-visible:-outline-offset-12 focus-visible:outline-brand aria-expanded:text-brand"
       >
         <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="8" cy="8" r="6.75" />
@@ -234,6 +241,16 @@ const EMOJI_LINE_TONE = {
   success: "font-semibold text-success",
 } as const;
 
+// 호출부 className 이 글자 크기·색을 직접 주면 그쪽이 이기게, 겹치는 기본 클래스를 뺀다(cn 은 단순 결합이라 순서로 이기지 못한다).
+// 접두사 없는 클래스만 본다 — sm:·dark: 같은 변형 클래스는 Tailwind 순서상 이미 기본 클래스를 이긴다.
+const SIZE_CLASS = /(^|\s)text-(xs|sm|base|lg|xl|[2-9]xl)(\/\S+)?(?=\s|$)/;
+const COLOR_CLASS = /(^|\s)text-(?!xs\b|sm\b|base\b|lg\b|xl\b|[2-9]xl\b|left\b|center\b|right\b|justify\b|start\b|end\b|wrap\b|nowrap\b|balance\b|pretty\b|ellipsis\b|clip\b)[a-z]/;
+function typeClasses(size: string, tone: string, className: string) {
+  // 크기를 호출부가 정해도 줄높이(1.6)는 유지한다
+  const sizePart = !size ? "" : !SIZE_CLASS.test(className) ? size : /(^|\s)leading-/.test(className) ? "" : "leading-relaxed";
+  return `${sizePart} ${COLOR_CLASS.test(className) ? "" : tone}`;
+}
+
 /**
  * 이모지 그림 + 글자 한 줄. 이모지는 aria-hidden, 뜻은 글자가 전한다. 기본은 `li`(EmojiList 안에서 쓴다).
  * 글자 크기·색은 size·tone 으로 고른다(className 에는 margin 같은 배치만 — design lint 의 no-restyle).
@@ -259,7 +276,7 @@ export function EmojiLine({
 }) {
   const center = align === "center";
   return (
-    <Tag className={`flex min-w-0 items-baseline gap-2 ${center ? "justify-center text-center" : ""} ${EMOJI_LINE_SIZE[size]} ${EMOJI_LINE_TONE[tone]} ${className}`}>
+    <Tag className={`flex min-w-0 items-baseline gap-2 ${center ? "justify-center text-center" : ""} ${typeClasses(EMOJI_LINE_SIZE[size], EMOJI_LINE_TONE[tone], className)} ${className}`}>
       <span aria-hidden="true" className="w-5 shrink-0 text-center">
         {emoji}
       </span>
@@ -268,7 +285,7 @@ export function EmojiLine({
   );
 }
 
-/** EmojiLine 묶음(ul). 줄 사이 8px, 기본 14px·ink. size="xs"·tone="mute" 로 작게·흐리게. */
+/** EmojiLine 묶음(ul). 줄 사이 8px, 기본 14px·ink. size="xs"·tone="mute" 로 작게·흐리게. className 에 글자 크기·색이 있으면 그것이 이긴다. */
 export function EmojiList({
   children,
   size = "sm",
@@ -276,9 +293,11 @@ export function EmojiList({
   className = "",
 }: {
   children: ReactNode;
-  size?: "sm" | "xs";
-  tone?: "ink" | "mute";
+  /** inherit = 감싼 요소의 글자 크기·색을 그대로 쓴다(랜딩처럼 본문 크기가 다른 곳) */
+  size?: "sm" | "xs" | "inherit";
+  tone?: "ink" | "mute" | "inherit";
   className?: string;
 }) {
-  return <ul className={`space-y-2 ${EMOJI_LINE_SIZE[size]} ${EMOJI_LINE_TONE[tone]} ${className}`}>{children}</ul>;
+  const gap = /(^|\s)space-y-/.test(className) ? "" : "space-y-2";
+  return <ul className={`${gap} ${typeClasses(EMOJI_LINE_SIZE[size], EMOJI_LINE_TONE[tone], className)} ${className}`}>{children}</ul>;
 }

@@ -112,7 +112,7 @@ export function PnLClient({
           <div>
             <p className="text-xs font-medium text-ink-mute mb-1">
               평가손익
-              <InfoTip label="평가손익 설명" align="start">
+              <InfoTip label="평가손익 설명" align="start" side="top">
                 매수 기록으로 계산한 원가와 저장된 현재가를 비교한 참고용 값입니다. 세금·수수료는 반영하지 않습니다.
               </InfoTip>
             </p>

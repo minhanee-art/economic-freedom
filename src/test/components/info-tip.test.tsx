@@ -73,3 +73,36 @@ test("EmojiLine: 이모지는 aria-hidden, 뜻은 글자가 전한다", () => {
   assert.equal(item.textContent, "🧾세액공제 한도 채우기");
   assert.equal(item.querySelector("[aria-hidden='true']")?.textContent, "🧾");
 });
+
+test("EmojiList·EmojiLine: 호출부 className 의 글자 크기·색·간격이 기본값을 이긴다", () => {
+  render(
+    <mod.EmojiList className="mt-5 text-base leading-7 text-zinc-600 space-y-5 dark:text-zinc-400">
+      <mod.EmojiLine emoji="🌴">은퇴</mod.EmojiLine>
+    </mod.EmojiList>
+  );
+  const list = screen.getByRole("list");
+  const cls = list.className.split(/\s+/);
+  for (const gone of ["text-sm", "text-ink", "leading-relaxed", "space-y-2"]) assert.ok(!cls.includes(gone), gone);
+  for (const kept of ["text-base", "leading-7", "text-zinc-600", "space-y-5"]) assert.ok(cls.includes(kept), kept);
+
+  cleanup();
+  // 변형 클래스(dark:)만 주면 라이트 기본 색은 남는다
+  render(<mod.EmojiList className="dark:text-zinc-300"><mod.EmojiLine emoji="🌴">은퇴</mod.EmojiLine></mod.EmojiList>);
+  assert.ok(screen.getByRole("list").className.split(/\s+/).includes("text-ink"));
+});
+
+test("EmojiLine: align=center 면 글자 span 이 남은 폭을 채우지 않고 묶음이 가운데로 온다", () => {
+  render(<mod.EmojiLine as="p" emoji="📅" align="center">일정이 없습니다</mod.EmojiLine>);
+  const p = screen.getByText("일정이 없습니다").parentElement as HTMLElement;
+  assert.match(p.className, /justify-center/);
+  assert.doesNotMatch(screen.getByText("일정이 없습니다").className, /flex-1/);
+});
+
+test("InfoTip: side=top 이어도 aria 와 열고 닫기는 같다", () => {
+  render(<mod.InfoTip label="평가손익 설명" side="top">참고용</mod.InfoTip>);
+  const btn = screen.getByRole("button", { name: "평가손익 설명" });
+  fireEvent.click(btn);
+  assert.equal(btn.getAttribute("aria-expanded"), "true");
+  fireEvent.click(btn);
+  assert.equal(btn.getAttribute("aria-expanded"), "false");
+});

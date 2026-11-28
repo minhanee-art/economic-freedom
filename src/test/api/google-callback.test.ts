@@ -160,7 +160,7 @@ test("선점된 비밀번호 계정에 처음 연결: 비밀번호 무효화·�
   // 새 토큰은 올라간 버전 — 공격자가 가진 버전 0 토큰은 무효
   assert.equal(await tokenVersion(response), 1);
   // 비밀번호 재설정을 할 수 있는 설정 화면으로 보낸다
-  assert.equal(location(response), "/dashboard/settings");
+  assert.equal(location(response), "/dashboard/settings?tab=account");
   // 이메일 조회는 소문자 기준 + 정확히 같은 행 우선
   const lookup = db.find("SELECT id, google_id FROM users")[0];
   assert.match(lookup.query, /lower\(email\) = \?/);

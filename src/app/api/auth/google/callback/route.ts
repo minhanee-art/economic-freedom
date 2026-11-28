@@ -142,8 +142,8 @@ export async function GET(request: NextRequest) {
   }
 
   const token = await signToken(user.id, user.sessionVersion);
-  // 처음 연결된 경우 비밀번호가 무효화되었으므로 비밀번호 설정이 있는 설정 화면으로 보낸다
-  const res = NextResponse.redirect(`${origin}${user.linked ? "/dashboard/settings" : "/dashboard"}`);
+  // 처음 연결된 경우 비밀번호가 무효화되었으므로 비밀번호 설정이 있는 설정 > 계정 탭으로 보낸다
+  const res = NextResponse.redirect(`${origin}${user.linked ? "/dashboard/settings?tab=account" : "/dashboard"}`);
   setSessionCookie(res, token);
   res.cookies.delete("g_oauth_state");
   return res;

@@ -3,6 +3,7 @@
 
 import { LazyCategoryPieChart, LazyAllocationBarChart } from "@/components/charts/lazy";
 import Link from "next/link";
+import { settingsTabHref } from "@/components/settings/settings-tabs";
 import { useEffect, useState, useCallback, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import type { Holding, CostBasis } from "@/types";
@@ -609,7 +610,7 @@ function ReturnSummaryCard({
             </span>
           ) : (
             <Link
-              href="/dashboard/settings"
+              href={settingsTabHref("alerts", "telegram")}
               className="inline-flex min-h-10 items-center text-xs font-semibold text-brand hover:underline dark:text-indigo-300"
             >
               {summary?.telegramNeedsRelink ? "텔레그램 다시 연결 필요 · 설정" : "텔레그램 연결 · 설정"}
@@ -695,7 +696,7 @@ function UpcomingDividends({ items }: { items: DividendCalendarRow[] }) {
         <EmojiLine as="p" emoji="💸" size="sm" tone="mute">
           <span>
             등록한 배당 일정이 없습니다.{" "}
-            <Link href="/dashboard/settings" className="font-semibold text-brand underline-offset-2 hover:underline dark:text-indigo-300">
+            <Link href={settingsTabHref("alerts", "dividend-calendar")} className="font-semibold text-brand underline-offset-2 hover:underline dark:text-indigo-300">
               설정에서 등록
             </Link>
           </span>

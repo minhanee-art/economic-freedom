@@ -602,7 +602,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 종목 리스트 */}
         {watchlist.length === 0 ? (
-          <EmojiLine emoji="🔔" as="p" size="xs" tone="mute" className="mx-auto w-fit py-2">뉴스 요약을 받을 종목을 추가해 주세요.</EmojiLine>
+          <EmojiLine emoji="🔔" as="p" size="xs" tone="mute" align="center" className="my-2">뉴스 요약을 받을 종목을 추가해 주세요.</EmojiLine>
         ) : (
           <ul className="space-y-1.5">
             {watchlist.map((w) => (
@@ -689,7 +689,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 일정 리스트 */}
         {calendar.length === 0 ? (
-          <EmojiLine emoji="📅" as="p" size="xs" tone="mute" className="mx-auto w-fit py-2">배당 일정을 추가해 주세요.</EmojiLine>
+          <EmojiLine emoji="📅" as="p" size="xs" tone="mute" align="center" className="my-2">배당 일정을 추가해 주세요.</EmojiLine>
         ) : (
           <ul className="space-y-1.5">
             {calendar.map((c) => {

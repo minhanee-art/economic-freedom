@@ -316,7 +316,7 @@ test("배우자 명의 계좌가 남아 있으면 확인창과 화면에 안내�
       initialGoal={saved}
     />
   );
-  assert.ok(screen.getByText(/배우자 명의 계좌 1개가 있어 배우자 정보를 표시합니다/));
+  assert.ok(screen.getByRole("button", { name: "배우자 정보 표시 이유" }));
   await clickRemoveSpouse();
   assert.match(confirmMessages[0], /배우자 명의 계좌 1개는 지우지 않고 그대로 남습니다/);
   await waitFor(() => assert.equal(requests.length, 1));
@@ -325,5 +325,5 @@ test("배우자 명의 계좌가 남아 있으면 확인창과 화면에 안내�
   // 계좌가 남아 있으므로 펼친 채로, 지울 값이 없으니 제거 버튼은 사라진다
   await waitFor(() => assert.equal(screen.queryByRole("button", { name: "배우자 정보 제거" }), null));
   assert.equal((screen.getByLabelText(/배우자 출생연도/) as HTMLInputElement).value, "");
-  assert.ok(screen.getByText(/배우자 명의 계좌 1개가 있어 배우자 정보를 표시합니다/));
+  assert.ok(screen.getByRole("button", { name: "배우자 정보 표시 이유" }));
 });

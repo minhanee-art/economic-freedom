@@ -111,7 +111,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
       {/* 자녀 목록 */}
       {children.length === 0 ? (
-        <EmojiLine emoji="👶" as="p" size="sm" tone="mute" className="mx-auto w-fit py-8">등록된 자녀가 없습니다.</EmojiLine>
+        <EmojiLine emoji="👶" as="p" size="sm" tone="mute" align="center" className="my-8">등록된 자녀가 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-3">
           {children.map((c) => (

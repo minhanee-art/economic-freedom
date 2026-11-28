@@ -403,7 +403,7 @@ function GiftsTab({
       </div>
 
       {gifts.length === 0 ? (
-        <EmojiLine emoji="🎁" as="p" size="sm" tone="mute" className="mx-auto w-fit py-8">아직 입금/증여 기록이 없습니다.</EmojiLine>
+        <EmojiLine emoji="🎁" as="p" size="sm" tone="mute" align="center" className="my-8">아직 입금/증여 기록이 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-2">
           {gifts.map((g) => (
@@ -602,7 +602,7 @@ function HoldingsTab({
       </div>
 
       {holdings.length === 0 ? (
-        <EmojiLine emoji="💰" as="p" size="sm" tone="mute" className="mx-auto w-fit py-8">등록된 보유 종목이 없습니다.</EmojiLine>
+        <EmojiLine emoji="💰" as="p" size="sm" tone="mute" align="center" className="my-8">등록된 보유 종목이 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-2">
           {holdings.map((h) => {

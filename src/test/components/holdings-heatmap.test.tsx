@@ -80,6 +80,20 @@ test("히트맵: 접근성 라벨에 비중과 수익률이 들어간다", () =>
   assert.match(tile.className, /bg-heat-gain-strong/);
   const loss = screen.getByLabelText("TIGER 미국 비중 38.0%, 수익률 -5.00%");
   assert.match(loss.className, /bg-heat-loss\b/);
+  // 칸 글자색도 테마 토큰을 따른다(다크의 밝은 강한 칸은 어두운 글자)
+  assert.match(tile.className, /text-heat-on-strong/);
+  assert.match(loss.className, /text-heat-on\b/);
+});
+
+test("히트맵: 칸 색은 :root(라이트)와 .dark(다크)에서 따로 정한다", async () => {
+  const { readFileSync } = await import("node:fs");
+  const css = readFileSync("src/app/globals.css", "utf8");
+  const block = (sel: string) => css.match(new RegExp(`^${sel} \\{([^}]*)\\}`, "m"))?.[1] ?? "";
+  for (const sel of [":root", "\\.dark"]) {
+    for (const t of ["gain-strong", "gain", "flat", "loss", "loss-strong", "on", "on-strong"]) {
+      assert.match(block(sel), new RegExp(`--heat-${t}:`), `${sel} --heat-${t}`);
+    }
+  }
 });
 
 test("히트맵: 종목별 비중·수익률은 아래 목록에 이름·비중·수익률을 표시한다", () => {

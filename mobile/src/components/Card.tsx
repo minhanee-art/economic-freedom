@@ -7,17 +7,22 @@ type CardProps = PropsWithChildren<{
   title?: string;
   /** 제목 오른쪽의 짧은 값(예: "65세"). 버튼이 아니다. */
   aside?: string;
+  /** 제목 바로 옆의 ⓘ 말풍선(InfoTip). 카드의 보충 설명은 항상 보이는 문단 대신 여기에 둔다. */
+  info?: ReactNode;
 }>;
 
 /** 한 겹짜리 묶음. 카드 안에 다시 테두리 상자를 넣지 않는다(행은 Rows 의 구분선으로 나눈다). */
-export function Card({ title, aside, children }: CardProps) {
+export function Card({ title, aside, info, children }: CardProps) {
   return (
     <View style={styles.card}>
       {title ? (
         <View style={styles.header}>
-          <Text style={styles.title} accessibilityRole="header">
-            {title}
-          </Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.title} accessibilityRole="header">
+              {title}
+            </Text>
+            {info}
+          </View>
           {aside ? <Text style={styles.aside}>{aside}</Text> : null}
         </View>
       ) : null}
@@ -65,10 +70,11 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "baseline",
+    alignItems: "center",
     justifyContent: "space-between",
     gap: spacing.md,
   },
+  titleRow: { flexDirection: "row", alignItems: "center", flexShrink: 1 },
   title: { ...type.heading, flexShrink: 1 },
   aside: { ...type.label, fontVariant: ["tabular-nums"] },
   divider: { height: StyleSheet.hairlineWidth, backgroundColor: colors.line },

@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { TextField } from "@/components/Field";
+import { EmojiLine, EmojiList } from "@/components/InfoTip";
 import { FormError } from "@/components/Parts";
 import { saveSession } from "@/storage/session";
 import { colors, radius, touchTarget, type } from "@/styles/theme";
@@ -56,7 +57,10 @@ export default function SignupScreen() {
 
   return (
     <AppShell>
-      <Text style={type.label}>이메일과 비밀번호로 계정을 만듭니다. 웹에서 만든 계정과 같은 계정이라 웹과 앱에서 같은 이메일로 로그인합니다.</Text>
+      <EmojiList>
+        <EmojiLine emoji="✉️" size="sm">이메일과 비밀번호로 계정을 만듭니다.</EmojiLine>
+        <EmojiLine emoji="🔗" size="sm">웹과 앱에서 같은 계정으로 로그인합니다.</EmojiLine>
+      </EmojiList>
 
       <Card>
         <TextField

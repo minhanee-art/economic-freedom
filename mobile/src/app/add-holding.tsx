@@ -8,6 +8,7 @@ import { fetchAndSavePrice } from "@/api/prices";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { TextField } from "@/components/Field";
+import { EmojiLine, EmojiList } from "@/components/InfoTip";
 import { FormError, StatusMessage } from "@/components/Parts";
 import { RecordAccountBanner } from "@/components/RecordParts";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
@@ -102,9 +103,10 @@ export default function AddHoldingScreen() {
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
-      <Text style={type.label}>
-        가지고 있는 종목의 이름과 종목코드를 입력해 이 계좌에 추가합니다. 수량과 단가는 추가한 뒤 매수 기록으로 남깁니다.
-      </Text>
+      <EmojiList>
+        <EmojiLine emoji="🗂️" size="sm">가지고 있는 종목의 이름과 종목코드 입력</EmojiLine>
+        <EmojiLine emoji="🛒" size="sm">수량·단가는 추가한 뒤 매수 기록으로</EmojiLine>
+      </EmojiList>
 
       <RecordAccountBanner account={account} label="추가할 계좌" />
       {loadError && !summary ? <FormError>{loadError}</FormError> : null}
@@ -131,7 +133,7 @@ export default function AddHoldingScreen() {
         placeholder="숫자·영문 12자 이하"
         value={code}
         error={errors.code}
-        helper="증권사 앱의 종목 상세나 거래내역에 나오는 코드입니다."
+        info="증권사 앱의 종목 상세나 거래내역에 나오는 코드입니다."
         returnKeyType="done"
         onSubmitEditing={handleSubmit}
       />

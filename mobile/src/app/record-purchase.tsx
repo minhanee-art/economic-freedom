@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card, Rows } from "@/components/Card";
 import { DateField, TextField } from "@/components/Field";
+import { EmojiLine } from "@/components/InfoTip";
 import { FormError, StatusMessage } from "@/components/Parts";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
@@ -170,7 +171,7 @@ export default function RecordPurchaseScreen() {
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
-      <Text style={type.label}>이미 한 거래를 기록합니다. 주문이 실행되지 않습니다.</Text>
+      <EmojiLine emoji="📝" size="sm">이미 한 거래를 기록합니다. 주문이 실행되지 않습니다.</EmojiLine>
 
       <RecordAccountBanner account={account} />
       {loadError && !summary ? <FormError>{loadError}</FormError> : null}
@@ -239,7 +240,7 @@ export default function RecordPurchaseScreen() {
 
           <Card title="최근 매수 기록">
             {recordsError ? <FormError>{recordsError}</FormError> : null}
-            {records.length === 0 && !recordsError ? <Text style={type.caption}>아직 기록이 없습니다.</Text> : null}
+            {records.length === 0 && !recordsError ? <EmojiLine emoji="🛒" size="sm">아직 기록이 없습니다.</EmojiLine> : null}
             <Rows>
               {records.map((record) => (
                 <View key={record.id} style={styles.recordRow}>

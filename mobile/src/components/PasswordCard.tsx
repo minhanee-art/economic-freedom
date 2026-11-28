@@ -7,6 +7,7 @@ import { ApiError } from "@/api/client";
 import { Button } from "@/components/Button";
 import { Card } from "@/components/Card";
 import { TextField } from "@/components/Field";
+import { InfoTip } from "@/components/InfoTip";
 import { FormError, StatusMessage } from "@/components/Parts";
 import { handleUnauthorized, saveSession } from "@/storage/session";
 import { colors, spacing, type } from "@/styles/theme";
@@ -102,7 +103,14 @@ export function PasswordCard({ session, onSessionChange }: { session: AuthSessio
   const title = hasPassword === false ? "비밀번호 설정" : "비밀번호 변경";
 
   return (
-    <Card title="비밀번호">
+    <Card
+      title="비밀번호"
+      info={
+        hasPassword === false ? (
+          <InfoTip label="비밀번호 설정 설명">Google로 가입한 계정입니다. 비밀번호를 만들면 앱에서도 이메일과 비밀번호로 로그인할 수 있습니다.</InfoTip>
+        ) : undefined
+      }
+    >
       {done ? <StatusMessage>{done}</StatusMessage> : null}
       {hasPassword === null ? (
         // 불러오는 동안은 누를 수 없는 버튼 모양을 그리지 않고 자리만 잡는 문구를 둔다.

@@ -2,6 +2,7 @@ import { StyleSheet, View } from "react-native";
 import { Text } from "@/components/AppText";
 import { AppShell } from "@/components/AppShell";
 import { Card, Rows, ValueRow } from "@/components/Card";
+import { EmojiLine, EmojiList, InfoTip } from "@/components/InfoTip";
 import { Notice, ProgressBar, RETIREMENT_WEB_PATH, ScreenTitle, WebLinkButton } from "@/components/Parts";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { useRetirementPlan } from "@/hooks/useRetirementPlan";
@@ -47,7 +48,7 @@ function scopeText(accounts: AccountSummary[]): string | null {
   if (accounts.length < 2) return null;
   const owners = [...new Set(accounts.map((a) => a.ownerType as AccountOwner))];
   const ownerText = owners.map((o) => OWNER_LABELS[o] ?? o).join("·");
-  return `${ownerText} 명의 계좌 ${accounts.length}개를 합산한 값입니다. 다른 탭에서 고른 계좌와 무관합니다.`;
+  return `${ownerText} 명의 계좌 ${accounts.length}개를 합산한 값입니다.`;
 }
 
 function PlanContent({
@@ -66,7 +67,15 @@ function PlanContent({
 
   return (
     <>
-      {scope ? <Notice>{scope}</Notice> : null}
+      {scope ? (
+        <EmojiLine
+          emoji="👪"
+          size="sm"
+          trailing={<InfoTip label="합산 범위 설명">다른 탭에서 고른 계좌와 상관없이 모든 계좌를 합친 값입니다.</InfoTip>}
+        >
+          {scope}
+        </EmojiLine>
+      ) : null}
       {summary ? <SummaryCards summary={summary} /> : null}
       {!summary ? (
         <Notice>
@@ -80,7 +89,7 @@ function PlanContent({
         {goal.targetMonthly === null ? (
           <>
             <Text style={type.numberLg}>목표 미설정</Text>
-            <Text style={[type.body, styles.muted]}>목표 월 생활비를 저장하면 여기에 표시됩니다. 목표는 웹의 연금 설계 화면에서 입력합니다.</Text>
+            <EmojiLine emoji="🌴">목표는 웹의 연금 설계에서 입력합니다.</EmojiLine>
             <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 목표 입력" />
           </>
         ) : (
@@ -92,7 +101,7 @@ function PlanContent({
       </Card>
 
       <Card title={`${plan.year}년 연금계좌 납입`} aside={formatKRWFull(totalPaid)}>
-        {plan.accounts.length === 0 ? <Text style={[type.body, styles.muted]}>계좌가 없습니다.</Text> : null}
+        {plan.accounts.length === 0 ? <EmojiLine emoji="🏦">계좌가 없습니다.</EmojiLine> : null}
         <Rows>
           {plan.accounts.map((account) => {
             const paid = paidByAccount.get(account.id);
@@ -105,7 +114,7 @@ function PlanContent({
       <Card title="연금 소득원">
         {plan.sources.length === 0 ? (
           <>
-            <Text style={[type.body, styles.muted]}>웹에서 국민연금·퇴직연금·연금보험 예상액을 입력하면 여기에 표시됩니다.</Text>
+            <EmojiLine emoji="💰">국민연금·퇴직연금·연금보험 예상액은 웹에서 입력합니다.</EmojiLine>
             <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 소득원 입력" />
           </>
         ) : null}
@@ -134,13 +143,13 @@ const LAYER_LABELS: [keyof PensionLayers, string][] = [
 function SummaryCards({ summary }: { summary: PensionSummary }) {
   const { taxCredit, retirement } = summary;
   const cashflow = retirement.cashflow;
-  const ruleNotes = ruleNoteTexts(summary.rules.unverifiedTopics);
+  const { localTax, unverified } = ruleNoteTexts(summary.rules.unverifiedTopics);
   return (
     <>
       <Card title={`${summary.year}년 세액공제 납입`}>
         {taxCredit === null ? (
           <>
-            <Text style={[type.body, styles.muted]}>{taxCreditUnavailableText(summary.taxCreditUnavailableReason)}</Text>
+            <TaxCreditUnavailable reason={summary.taxCreditUnavailableReason} />
             <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 연금 계좌 등록" />
           </>
         ) : (
@@ -151,17 +160,21 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
       <Card title="은퇴 시점 예상 월 현금흐름" aside={cashflow ? `${cashflow.atRetirement.age}세` : undefined}>
         {cashflow === null ? (
           <>
-            <Text style={[type.body, styles.muted]}>
-              {retirement.unavailableReason === "goal_incomplete"
-                ? "은퇴 목표가 모두 입력되지 않아 계산하지 않았습니다."
-                : "현금흐름 계산값을 받지 못했습니다."}
-            </Text>
-            {retirement.missingFields.length > 0 ? (
-              <Text style={[type.body, styles.muted]}>
-                입력이 필요한 항목: {retirement.missingFields.map((f) => MISSING_LABELS[f] ?? f).join(", ")}
-              </Text>
-            ) : null}
-            <Notice>이 항목은 웹의 연금 설계 화면에서 입력합니다. 모바일에서는 아직 입력할 수 없습니다.</Notice>
+            <EmojiList>
+              <EmojiLine emoji="🌴">
+                {retirement.unavailableReason === "goal_incomplete"
+                  ? "은퇴 목표가 모두 입력되지 않아 계산하지 않았습니다."
+                  : "현금흐름 계산값을 받지 못했습니다."}
+              </EmojiLine>
+              {retirement.missingFields.length > 0 ? (
+                <EmojiLine
+                  emoji="📝"
+                  trailing={<InfoTip label="입력 위치 설명">웹의 연금 설계 화면에서 입력합니다. 앱에서는 아직 입력할 수 없습니다.</InfoTip>}
+                >
+                  입력이 필요한 항목: {retirement.missingFields.map((f) => MISSING_LABELS[f] ?? f).join(", ")}
+                </EmojiLine>
+              ) : null}
+            </EmojiList>
             <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 은퇴 목표 입력" />
           </>
         ) : (
@@ -199,14 +212,15 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
         )}
       </Card>
 
-      <Card title="계산 가정과 확인 상태">
+      <Card
+        title="계산 가정과 확인 상태"
+        info={localTax ? <InfoTip label="세율 계산 설명">{localTax}</InfoTip> : undefined}
+      >
         <Notice>{summary.disclaimer}</Notice>
         {!summary.rules.exact ? (
           <Notice tone="caution">{`${summary.year}년 세법 기준이 아직 반영되지 않아 가까운 연도(${summary.rules.year}년) 기준으로 계산했습니다.`}</Notice>
         ) : null}
-        {ruleNotes.map((note) => (
-          <Notice key={note}>{note}</Notice>
-        ))}
+        {unverified ? <Notice>{unverified}</Notice> : null}
       </Card>
     </>
   );
@@ -216,26 +230,34 @@ function SummaryCards({ summary }: { summary: PensionSummary }) {
  * 계산 규칙 중 공식 출처와 아직 대조하지 못한 항목(서버 응답의 unverifiedTopics)을 사용자에게 하는 말로 바꾼다.
  * 응답 원문은 개발용 메모(법령 조항·"국세×1.1로 계산" 등)라 그대로 보이지 않고, 앱이 정한 문장만 보인다.
  */
-function ruleNoteTexts(topics: string[]): string[] {
-  if (topics.length === 0) return [];
-  const notes: string[] = [];
-  if (topics.some((topic) => topic.includes("지방소득세"))) {
-    notes.push("공제율과 연금소득세율은 지방소득세(소득세의 10%)를 포함해 계산했습니다.");
-  }
-  if (topics.some((topic) => !topic.includes("지방소득세"))) {
-    notes.push("일부 세율·한도는 법령 원문과 다시 대조하는 중이라 실제 값과 다를 수 있습니다.");
-  }
-  return notes;
+function ruleNoteTexts(topics: string[]): { localTax: string | null; unverified: string | null } {
+  return {
+    localTax: topics.some((topic) => topic.includes("지방소득세"))
+      ? "공제율과 연금소득세율은 지방소득세(소득세의 10%)를 포함해 계산했습니다."
+      : null,
+    unverified: topics.some((topic) => !topic.includes("지방소득세"))
+      ? "일부 세율·한도는 법령 원문과 다시 대조하는 중이라 실제 값과 다를 수 있습니다."
+      : null,
+  };
 }
 
-function taxCreditUnavailableText(reason: string | null): string {
-  if (reason === "no_pension_accounts") {
-    return "연금저축·IRP·DC·ISA 계좌가 없어 계산하지 않았습니다. 웹에서 연금 계좌를 등록하면 표시됩니다.";
-  }
+/** 세액공제를 계산하지 않은 이유 한 줄. 아래 '웹에서 연금 계좌 등록' 버튼이 다음 행동이라 문장에 되풀이하지 않는다. */
+function TaxCreditUnavailable({ reason }: { reason: string | null }) {
   if (reason === "only_excluded_owner_accounts") {
-    return "연금저축·IRP·DC·ISA 계좌가 모두 자녀·기타 명의라 계산하지 않았습니다. 자녀·기타 명의 계좌는 명의자의 소득 정보가 없어 세액공제 계산에서 뺍니다.";
+    return (
+      <EmojiLine
+        emoji="🧾"
+        trailing={<InfoTip label="자녀·기타 명의 제외 설명">자녀·기타 명의 계좌는 명의자의 소득 정보가 없어 세액공제 계산에서 뺍니다.</InfoTip>}
+      >
+        연금저축·IRP·DC·ISA 계좌가 모두 자녀·기타 명의라 계산하지 않았습니다.
+      </EmojiLine>
+    );
   }
-  return "세액공제 계산값을 받지 못했습니다.";
+  return (
+    <EmojiLine emoji="🧾">
+      {reason === "no_pension_accounts" ? "연금저축·IRP·DC·ISA 계좌가 없어 계산하지 않았습니다." : "세액공제 계산값을 받지 못했습니다."}
+    </EmojiLine>
+  );
 }
 
 type TaxCredit = NonNullable<PensionSummary["taxCredit"]>;
@@ -254,7 +276,12 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
   return (
     <>
       <View style={styles.headline}>
-        <Text style={type.label}>{family ? "가족 합계 " : ""}남은 공제 한도</Text>
+        <View style={styles.labelRow}>
+          <Text style={type.label}>{family ? "가족 합계 " : ""}남은 공제 한도</Text>
+          <InfoTip label="남은 공제 한도 설명" side="top">
+            올해 연금계좌 납입 기록으로 계산한 참고용 값입니다. 한도까지 더 넣을 수 있는 금액입니다.
+          </InfoTip>
+        </View>
         <Text style={type.numberLg}>{formatKRW(progress.remainingCreditRoom)}</Text>
       </View>
       <ProgressBar pct={progress.progressPct} label="공제 한도 대비 납입 진행률" />
@@ -292,15 +319,22 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
       ) : null}
 
       {onlySpouse ? (
-        <Notice>
-          {byOwner[0].salaryBracketAssumed
-            ? "배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 배우자 소득 구간이 입력되지 않아 낮은 공제율로 가정했습니다."
-            : "배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다. 웹에 저장된 배우자 소득 구간의 공제율을 썼습니다."}
+        <Notice
+          info={{
+            label: "배우자 기준 계산 설명",
+            text: byOwner[0].salaryBracketAssumed
+              ? "배우자 소득 구간이 입력되지 않아 낮은 공제율로 가정했습니다."
+              : "웹에 저장된 배우자 소득 구간의 공제율을 썼습니다.",
+          }}
+        >
+          배우자 명의 계좌만 있어 배우자 기준으로 계산했습니다.
         </Notice>
       ) : null}
       {excludedAccounts.length > 0 ? (
         <View style={styles.list}>
-          <Notice>{`자녀·기타 명의 계좌 ${excludedAccounts.length}개는 명의자의 소득 정보가 없어 세액공제 계산에서 뺐습니다.`}</Notice>
+          <Notice info={{ label: "계산에서 뺀 계좌 설명", text: "자녀·기타 명의 계좌는 명의자의 소득 정보가 없어 세액공제 계산에서 뺍니다." }}>
+            {`자녀·기타 명의 계좌 ${excludedAccounts.length}개는 세액공제 계산에서 뺐습니다.`}
+          </Notice>
           {excludedAccounts.map((account) => (
             <Notice key={account.id || account.name}>
               {`· ${account.name || "이름 없는 계좌"} (${OWNER_LABELS[account.ownerType] ?? account.ownerType} 명의 · ${ACCOUNT_TYPE_LABELS[account.accountType] ?? account.accountType}) 납입 ${formatKRWFull(account.paid)}`}
@@ -312,13 +346,23 @@ function TaxCreditContent({ taxCredit, ownerLimit }: { taxCredit: TaxCredit; own
         <Notice tone="caution">{`공제 한도를 넘은 ${formatKRWFull(progress.nonCreditablePaid)}은 올해 세액공제 대상이 아닙니다.`}</Notice>
       ) : null}
       {!taxCredit.contributionsRecorded ? (
-        <Notice>올해 납입 기록이 없습니다. 진행률 0%는 납입하지 않았다는 뜻이 아니라 기록이 없다는 뜻일 수 있습니다.</Notice>
+        <Notice info={{ label: "납입 기록 없음 설명", text: "진행률 0%는 납입하지 않았다는 뜻이 아니라 기록이 없다는 뜻일 수 있습니다." }}>
+          올해 납입 기록이 없습니다.
+        </Notice>
       ) : null}
       {taxCredit.salaryBracketAssumed ? (
-        <Notice>
+        <Notice
+          info={{
+            label: "소득 구간 가정 설명",
+            text:
+              byOwner.length > 0
+                ? `${hasSpouseOwner ? "본인·배우자 " : ""}소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다.`
+                : "웹에서 소득 구간을 저장하면 달라질 수 있습니다.",
+          }}
+        >
           {byOwner.length > 0
-            ? `소득 구간이 없는 명의자는 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다. ${hasSpouseOwner ? "본인·배우자 " : ""}소득 구간은 웹의 연금 설계 화면에서 입력할 수 있습니다.`
-            : "소득 구간이 저장되어 있지 않아 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다. 웹에서 소득 구간을 저장하면 달라질 수 있습니다."}
+            ? "소득 구간이 없는 명의자는 총급여 5,500만원 초과(공제율이 낮은 쪽)로 가정해 계산했습니다."
+            : "소득 구간이 저장되어 있지 않아 가장 높은 소득 구간(공제율이 낮은 쪽)을 가정해 계산했습니다."}
         </Notice>
       ) : null}
       {needsWebInput ? <WebLinkButton path={RETIREMENT_WEB_PATH} label="웹에서 소득 구간 입력" /> : null}
@@ -349,7 +393,7 @@ function SourceRow({ source }: { source: IncomeSource }) {
 }
 
 const styles = StyleSheet.create({
-  muted: { color: colors.inkMuted },
+  labelRow: { flexDirection: "row", alignItems: "center" },
   tabular: { fontVariant: ["tabular-nums"] },
   headline: { gap: spacing.xs },
   list: { gap: spacing.xs },

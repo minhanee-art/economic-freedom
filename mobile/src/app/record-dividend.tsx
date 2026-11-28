@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card, Rows } from "@/components/Card";
 import { DateField, TextField } from "@/components/Field";
+import { EmojiLine } from "@/components/InfoTip";
 import { FormError, Notice, StatusMessage } from "@/components/Parts";
 import { HoldingPicker, RecordAccountBanner } from "@/components/RecordParts";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
@@ -144,7 +145,7 @@ export default function RecordDividendScreen() {
 
   return (
     <AppShell refreshing={isLoading} onRefresh={refresh}>
-      <Text style={type.label}>이미 받은 배당을 기록합니다.</Text>
+      <EmojiLine emoji="💸" size="sm">이미 받은 배당을 기록합니다.</EmojiLine>
 
       <RecordAccountBanner account={account} />
       {loadError && !summary ? <FormError>{loadError}</FormError> : null}
@@ -165,6 +166,7 @@ export default function RecordDividendScreen() {
         <>
           <TextField
             label="수령 금액(원)"
+            info="세금을 뗀 뒤 계좌에 실제로 들어온 금액을 적습니다."
             inputMode="numeric"
             keyboardType="number-pad"
             placeholder="세후 입금액, 예: 12000"
@@ -197,7 +199,7 @@ export default function RecordDividendScreen() {
 
           <Card title="최근 배당 수령 기록">
             {recordsError ? <FormError>{recordsError}</FormError> : null}
-            {records.length === 0 && !recordsError ? <Text style={type.caption}>아직 기록이 없습니다.</Text> : null}
+            {records.length === 0 && !recordsError ? <EmojiLine emoji="💸" size="sm">아직 기록이 없습니다.</EmojiLine> : null}
             <Rows>
               {records.map((record) => (
                 <View key={record.id} style={styles.recordRow}>

@@ -9,6 +9,7 @@ import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card, Rows } from "@/components/Card";
 import { EmptyHoldings } from "@/components/EmptyHoldings";
+import { InfoTip } from "@/components/InfoTip";
 import { FormError, ScreenTitle, StatusMessage } from "@/components/Parts";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
@@ -73,14 +74,17 @@ export default function HoldingsScreen() {
 
       {summary ? null : <PortfolioStatus isLoading={isLoading} error={error} onRetry={refresh} />}
       {summary && holdings.length === 0 ? (
-        <EmptyHoldings description="이 계좌에 종목을 추가하면 종목별 평가금액·손익·비중이 여기에 표시됩니다." />
+        <EmptyHoldings description="종목을 추가하면 평가금액·비중이 보입니다." />
       ) : null}
 
       {holdings.length > 0 ? (
         <View style={styles.priceBar}>
-          <Text style={[type.caption, styles.priceNote]}>
-            현재가는 마지막으로 불러온 시세입니다. 시세를 한 번도 불러오지 않은 종목은 매수 기록 단가로 평가합니다.
-          </Text>
+          <View style={styles.priceNote}>
+            <Text style={type.caption}>현재가는 마지막 시세 기준</Text>
+            <InfoTip label="현재가 기준 설명">
+              현재가는 마지막으로 불러온 시세입니다. 시세를 한 번도 불러오지 않은 종목은 매수 기록 단가로 평가합니다.
+            </InfoTip>
+          </View>
           <Button label="시세 새로고침" variant="link" compact busy={priceBusy} busyLabel="불러오는 중" onPress={refreshPrices} />
         </View>
       ) : null}
@@ -129,7 +133,7 @@ function HoldingRow({ holding }: { holding: Holding }) {
 const styles = StyleSheet.create({
   actions: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   priceBar: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
-  priceNote: { flex: 1 },
+  priceNote: { flex: 1, flexDirection: "row", alignItems: "center" },
   action: { flexGrow: 1, flexBasis: 140 },
   row: { gap: spacing.xs, paddingVertical: spacing.md },
   line: { flexDirection: "row", flexWrap: "wrap", alignItems: "baseline", justifyContent: "space-between", columnGap: spacing.md },

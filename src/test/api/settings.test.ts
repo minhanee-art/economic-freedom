@@ -57,6 +57,16 @@ test("PATCH: 표시 이름은 앞뒤 공백을 제거해 저장한다", async ()
   assert.deepEqual(update.values, [null, "홍길동", "user-1"]);
 });
 
+test("PATCH: 표시 이름만 보내면 월 적립금은 기존 값을 유지한다(부분 갱신)", async () => {
+  // 설정 > 계정의 '표시 이름 저장'은 displayName 만 보낸다
+  const response = await settings.PATCH(jsonRequest("PATCH", { displayName: "홍길동" }));
+  assert.equal(response.status, 200);
+
+  const [update] = db.find("UPDATE profiles");
+  assert.match(update.query, /monthly_budget = COALESCE\(\?, monthly_budget\)/);
+  assert.equal(update.values[0], null, "monthlyBudget 자리에 null → COALESCE 로 기존 값 유지");
+});
+
 test("PATCH: 빈 표시 이름은 NULL로 초기화한다", async () => {
   await settings.PATCH(jsonRequest("PATCH", { displayName: "   " }));
 

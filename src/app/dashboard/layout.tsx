@@ -11,6 +11,7 @@ import {
   isNavItemActive,
   type DashboardNavGroup,
 } from "@/lib/dashboard-navigation";
+import { DISPLAY_NAME_EVENT } from "@/components/settings/settings-shared";
 
 type PortfolioAccount = {
   id: string;
@@ -49,6 +50,7 @@ export default function DashboardLayout({
   const [newAccountOwner, setNewAccountOwner] = useState<PortfolioAccount["owner_type"]>("self");
   const [accountError, setAccountError] = useState("");
 
+  const emailRef = useRef<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement>(null);
@@ -62,8 +64,16 @@ export default function DashboardLayout({
       .then((d) => {
         setIsAuthenticated(Boolean(d.authenticated));
         setDisplayName(d.displayName ?? d.email ?? null);
+        emailRef.current = d.email ?? null;
       })
       .catch(() => setIsAuthenticated(false));
+    // 설정 > 계정에서 표시 이름을 저장하면 새로고침 없이 헤더 이름도 바꾼다
+    const onNameSaved = (event: Event) => {
+      const name = (event as CustomEvent<string | null>).detail;
+      setDisplayName(name || emailRef.current);
+    };
+    window.addEventListener(DISPLAY_NAME_EVENT, onNameSaved);
+    return () => window.removeEventListener(DISPLAY_NAME_EVENT, onNameSaved);
   }, []);
 
   useEffect(() => {

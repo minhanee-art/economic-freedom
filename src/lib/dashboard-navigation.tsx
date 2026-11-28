@@ -11,7 +11,6 @@ export type DashboardNavItem = {
 
 export type DashboardNavGroup = {
   label: string;
-  description: string;
   items: DashboardNavItem[];
 };
 
@@ -84,7 +83,7 @@ export const dashboardNavItems: DashboardNavItem[] = [
     href: "/dashboard/settings",
     label: "설정",
     shortLabel: "설정",
-    description: "월 예산, 테마, 계정 설정",
+    description: "계정·월 적립금·알림·화면 설정",
     bottom: true,
     icon: (
       <svg aria-hidden="true" className={iconClassName} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}>
@@ -151,38 +150,32 @@ export const dashboardNavItems: DashboardNavItem[] = [
 export const dashboardNavGroups: DashboardNavGroup[] = [
   {
     label: "홈",
-    description: "올해 상황 요약",
     items: dashboardNavItems.filter((item) => item.href === "/dashboard"),
   },
   {
     label: "연금 설계",
-    description: "세액공제 진행률과 은퇴 현금흐름",
     items: dashboardNavItems.filter((item) => item.href === "/dashboard/retirement"),
   },
   {
     label: "자산",
-    description: "자산·손익과 배당",
     items: dashboardNavItems.filter((item) =>
       ["/dashboard/pnl", "/dashboard/dividend"].includes(item.href)
     ),
   },
   {
     label: "기록",
-    description: "이미 한 거래 기록과 적립 배분 계산",
     items: dashboardNavItems.filter((item) =>
       ["/dashboard/history", "/dashboard/buy"].includes(item.href)
     ),
   },
   {
     label: "시장 도구",
-    description: "시장 현황과 ETF 비교",
     items: dashboardNavItems.filter((item) =>
       ["/dashboard/market", "/dashboard/compare"].includes(item.href)
     ),
   },
   {
     label: "가족·설정",
-    description: "자녀 계좌와 환경 설정",
     items: dashboardNavItems.filter((item) =>
       ["/dashboard/children", "/dashboard/settings"].includes(item.href)
     ),

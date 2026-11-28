@@ -3,6 +3,7 @@
 //   <h2 className="…">기간별 수익률 <InfoTip label="기간별 수익률 설명">매수 기록 기준 원가로 계산한 참고용 값입니다.</InfoTip></h2>
 //   <p>…문장 안에도 <InfoTip label="세액공제 한도 설명" align="end">연금저축 600만원, IRP 합산 900만원.</InfoTip> 넣을 수 있다.</p>
 //   <EmojiList><EmojiLine emoji="🧾">세액공제 한도 채우기</EmojiLine><EmojiLine emoji="💸">배당 기록하기</EmojiLine></EmojiList>
+//   <EmojiLine as="p" emoji="📅" size="sm" tone="mute">등록한 배당 일정이 없습니다.</EmojiLine>  (글자·색은 size/tone 으로, className 은 margin 만)
 // InfoTip 의 children 은 span 안에 들어가므로 글·<strong>·<br /> 같은 인라인 요소만 쓴다(<p>·<ul> 금지). 1~3문장.
 // 동작: 누르면 열림/다시 누르면 닫힘(터치), 마우스 호버·키보드 포커스로도 열림, Esc·바깥 누르기로 닫힘.
 // 말풍선은 Popover API(top layer)로 띄워 부모의 overflow-hidden·sticky 헤더에 잘리지 않고, 열릴 때 화면 안으로 좌표를 맞춘다.
@@ -167,7 +168,7 @@ export function InfoTip({
           if (e.currentTarget.matches(":focus-visible")) setMode((m) => m ?? "focus");
         }}
         onBlur={() => setMode((m) => (m === "focus" ? null : m))}
-        className="-m-3.5 inline-flex size-11 shrink-0 items-center justify-center text-ink-mute transition-colors hover:text-brand focus-visible:text-brand focus-visible:outline-2 focus-visible:-outline-offset-8 focus-visible:outline-brand aria-expanded:text-brand"
+        className="-m-3.5 inline-flex size-11 min-h-11 min-w-11 shrink-0 items-center justify-center text-ink-mute transition-colors hover:text-brand focus-visible:text-brand focus-visible:outline-2 focus-visible:-outline-offset-8 focus-visible:outline-brand aria-expanded:text-brand"
       >
         <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="8" cy="8" r="6.75" />
@@ -200,21 +201,37 @@ export function InfoTip({
   );
 }
 
-/** 이모지 그림 + 글자 한 줄. 이모지는 aria-hidden, 뜻은 글자가 전한다. 기본은 `li`(EmojiList 안에서 쓴다). */
+const EMOJI_LINE_SIZE = { inherit: "", sm: "text-sm leading-relaxed", xs: "text-xs leading-relaxed" } as const;
+const EMOJI_LINE_TONE = {
+  inherit: "",
+  ink: "text-ink",
+  mute: "text-ink-mute",
+  success: "font-semibold text-success",
+} as const;
+
+/**
+ * 이모지 그림 + 글자 한 줄. 이모지는 aria-hidden, 뜻은 글자가 전한다. 기본은 `li`(EmojiList 안에서 쓴다).
+ * 글자 크기·색은 size·tone 으로 고른다(className 에는 margin 같은 배치만 — design lint 의 no-restyle).
+ * 기본값 inherit 은 부모(EmojiList 등)의 글자 크기·색을 그대로 쓴다.
+ */
 export function EmojiLine({
   emoji,
   children,
   as: Tag = "li",
+  size = "inherit",
+  tone = "inherit",
   className = "",
 }: {
   emoji: string;
   children: ReactNode;
   as?: "li" | "p" | "div" | "span";
+  size?: keyof typeof EMOJI_LINE_SIZE;
+  tone?: keyof typeof EMOJI_LINE_TONE;
   className?: string;
 }) {
   return (
-    <Tag className={`flex min-w-0 items-start gap-2 ${className}`}>
-      <span aria-hidden="true" className="w-5 shrink-0 text-center leading-snug">
+    <Tag className={`flex min-w-0 items-baseline gap-2 ${EMOJI_LINE_SIZE[size]} ${EMOJI_LINE_TONE[tone]} ${className}`}>
+      <span aria-hidden="true" className="w-5 shrink-0 text-center">
         {emoji}
       </span>
       <span className="min-w-0 flex-1">{children}</span>
@@ -222,7 +239,17 @@ export function EmojiLine({
   );
 }
 
-/** EmojiLine 묶음(ul). 줄 사이 8px. */
-export function EmojiList({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <ul className={`space-y-2 text-sm leading-relaxed text-ink ${className}`}>{children}</ul>;
+/** EmojiLine 묶음(ul). 줄 사이 8px, 기본 14px·ink. size="xs"·tone="mute" 로 작게·흐리게. */
+export function EmojiList({
+  children,
+  size = "sm",
+  tone = "ink",
+  className = "",
+}: {
+  children: ReactNode;
+  size?: "sm" | "xs";
+  tone?: "ink" | "mute";
+  className?: string;
+}) {
+  return <ul className={`space-y-2 ${EMOJI_LINE_SIZE[size]} ${EMOJI_LINE_TONE[tone]} ${className}`}>{children}</ul>;
 }

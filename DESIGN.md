@@ -309,11 +309,14 @@ components:
   - 등장은 opacity·transform 150ms, 움직임 줄이기에서는 끈다.
   - ⓘ 는 세로로 44px 보다 촘촘히 쌓지 않는다. 목록 항목마다 ⓘ 를 붙이지 말고, 보충 설명은 항목의 한 줄 설명에 합친다. 처음 읽는 화면(랜딩)은 ⓘ 를 되도록 쓰지 않는다.
   - 말풍선 문구는 1~3문장. 원문을 그대로 붓지 않는다. 오류 문구·삭제 확인 내용·"참고용" 표시처럼 꼭 보여야 하는 정보는 말풍선에 숨기지 않는다.
+  - **앱**: `mobile/src/components/InfoTip.tsx`. 아이콘은 expo-symbols(iOS `info.circle`, Android·웹 Material `info`), 보이는 16·누르는 영역 44×44(음수 margin), `accessibilityState.expanded`. 말풍선은 `Modal`(투명) 위에 버튼의 `measureInWindow` 좌표로 붙여 ScrollView·카드에 잘리지 않고 화면 안(가장자리 8)으로 당긴다. 화면 전체를 덮는 투명 바탕이 있어 다시 누르기·바깥 누르기가 닫기이고(그래서 한 번에 하나), 안드로이드 뒤로 가기·웹 Esc 는 `onRequestClose`. 열리면 네이티브는 `announceForAccessibility`, 웹은 `aria-live` 로 내용을 읽는다.
+  - 앱은 호버·포커스로 열지 않고 누르기만 쓴다. 모양은 반경 8(`radius.sm`)·`lineStrong` 테두리·글자 13. 넣는 자리는 `Card` 의 `info`, `TextField` 의 `info`(칸 아래 helper 대신), `Notice` 의 `info`(핵심 한 문장만 보이고 이유는 말풍선), `EmojiLine` 의 `trailing` — 뒤의 두 줄은 높이 44 이상이라 ⓘ 가 촘촘히 쌓이지 않는다.
 - **이모지 줄**: 여러 문장으로 풀어 쓴 안내·빈 상태·단계 설명은 "이모지 한 개 + 짧은 한 줄(20자 안팎)" 목록으로 바꿔 훑어보게 한다(`EmojiList` + `EmojiLine`, src/components/ui/info-tip.tsx).
   - 이모지는 설명을 대신하는 **그림**이다. 항상 `<span aria-hidden="true">`로 감싸고 바로 옆에 글자 라벨을 둔다(이모지 혼자 뜻을 전하지 않는다).
   - 내용에 맞는 것으로: 연금·저축 🏦💰, 세액공제 🧾, 배당 💸, 은퇴 🌴, 자녀·증여 🎁👶, 리밸런싱 ⚖️, 일정 📅, 알림 🔔, 주의 ⚠️.
   - 한 줄에 1개, 제목(h1/h2)과 누르는 제목(`<summary>`·접기 버튼)에는 넣지 않는다. 한 문장을 이모지 여러 줄로 쪼개지 않는다.
   - 뜻이 맞을 때만 쓴다. 같은 이모지를 뜻이 다른 항목에 다시 쓰지 않는다(예: 📅 는 날짜·일정에만).
+  - **앱**: 같은 파일의 `EmojiLine`(이모지 `Text` 는 `accessibilityElementsHidden`·`importantForAccessibility="no"`·`aria-hidden`)과 `EmojiList`(줄 사이 8). 글자는 `size="body"`(15)·`"sm"`(13), `tone="mute"`(기본)·`"ink"`. 빈 상태 `EmptyHoldings` 도 이모지 한 줄이다.
   - 가운데 정렬은 `align="center"`, 글자 크기·색은 `size`·`tone`(호출부 className 의 크기·색 클래스가 있으면 그것이 이긴다). 손익(▲▼, `gain`/`loss`)·위험 표시 자리에는 쓰지 않는다. 설명을 실제로 대체하는 곳에만 쓰고 장식으로 뿌리지 않는다.
 - **확인 대화상자**: 브라우저 `confirm()`·`alert()`·`prompt()`를 쓰지 않는다. 삭제 확인은 `useConfirmDialog`(src/components/dashboard/confirm-dialog.tsx) — 제목에 삭제 대상, 본문에 무엇이 함께 지워지는지, 첫 초점은 '취소', Esc·바깥 클릭으로 닫힘. 실패는 `InlineError`(role=alert, 원인 + 다시 시도).
 - **빈 상태**: 화면 제목(h1)은 화면 이름 그대로 두고, "아직 종목이 없습니다" 같은 빈 상태 문구는 그 아래 h2 와 본문으로 쓴다(`NoHoldingsState`의 `pageTitle`).

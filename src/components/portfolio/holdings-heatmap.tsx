@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useMemo, useState } from "react";
+import { useId, useLayoutEffect, useMemo, useState } from "react";
 import type { HoldingWithPnL } from "@/types";
 import { formatPercent } from "@/lib/utils";
 import {
@@ -83,6 +83,9 @@ function useElementSize<T extends HTMLElement>() {
 export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
   const [areaRef, size, measured] = useElementSize<HTMLDivElement>();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  // 아래 목록은 기본으로 접어 둔다(폰에서는 종목 수만큼 줄이 생겨 너무 길다). 접힌 상태가 기본이라 첫 화면에서 밀림이 없다
+  const [listOpen, setListOpen] = useState(false);
+  const listId = useId();
   const items = useMemo(() => toHeatmapItems(holdings), [holdings]);
   const { tiles, grouped } = useMemo(() => groupSmallHoldings(items), [items]);
   const rects = useMemo(() => layoutHeatmap(tiles, heatmapAspect(size.w, size.h)), [tiles, size.w, size.h]);
@@ -98,7 +101,7 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
     const hPx = (r.h / 100) * size.h - TILE_GAP;
     return { r, level: heatmapLabelLevel(wPx, hPx), wPx, hPx };
   });
-  // 아래 목록은 측정과 무관하게 모든 종목을 보여준다. 어느 칸에 이름이 들어가는지는 화면 크기를 재야 알 수 있는데,
+  // 아래 목록은 펼치면 측정과 무관하게 모든 종목을 보여준다. 어느 칸에 이름이 들어가는지는 화면 크기를 재야 알 수 있는데,
   // 목록이 그것에 따라 달라지면 측정 전(서버 렌더)과 후에 목록 줄 수가 바뀌어 아래 내용이 밀린다.
   const groupedIds = new Set(grouped.map((g) => g.id));
   const total = items.reduce((s, i) => s + i.value, 0);
@@ -163,10 +166,39 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
 
       <p aria-live="polite" className="mt-2 min-h-8 text-xs text-zinc-600 dark:text-zinc-300">
         {selected ? tileSummary(selected) : "칸을 누르면 종목 이름·비중·수익률이 여기에 나와요."}
+        {selected?.groupedCount ? (
+          <span className="block">
+            {listOpen
+              ? "묶인 종목은 아래 목록에서 '· 기타' 표시로 볼 수 있어요."
+              : "묶인 종목은 아래 '종목별 목록 펼치기'를 눌러 볼 수 있어요."}
+          </span>
+        ) : null}
       </p>
 
       {items.length > 0 && (
-        <ul aria-label="종목별 비중·수익률" className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+        <button
+          type="button"
+          aria-expanded={listOpen}
+          aria-controls={listOpen ? listId : undefined}
+          onClick={() => setListOpen((o) => !o)}
+          className="mt-1 flex min-h-11 w-full items-center justify-between gap-2 border border-hairline px-3 text-left text-xs font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:border-zinc-800"
+        >
+          <span>{listOpen ? "종목별 목록 접기" : `종목별 목록 펼치기 · ${items.length}종목`}</span>
+          <svg
+            aria-hidden="true"
+            className={`h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400 ${listOpen ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      )}
+
+      {items.length > 0 && listOpen && (
+        <ul id={listId} aria-label="종목별 비중·수익률" className="mt-3 grid grid-cols-1 gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
           {items.map((r) => (
             <li key={r.id} className="flex items-center justify-between gap-2">
               <span className="flex min-w-0 items-center gap-1.5">

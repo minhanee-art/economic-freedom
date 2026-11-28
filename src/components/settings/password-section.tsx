@@ -61,7 +61,7 @@ export function PasswordSection() {
   if (hasPassword === null) {
     return (
       <section aria-busy="true" className="min-h-84 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-        <h2 className="text-sm font-semibold">비밀번호</h2>
+        <h2 className="text-base font-bold tracking-tight">비밀번호</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">불러오는 중입니다.</p>
       </section>
     );
@@ -69,7 +69,7 @@ export function PasswordSection() {
 
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-      <h2 className="text-sm font-semibold">
+      <h2 className="text-base font-bold tracking-tight">
         {hasPassword ? "비밀번호 변경" : "비밀번호 설정"}
         {!hasPassword && (
           <InfoTip label="비밀번호 설정 설명" align="start">

@@ -209,7 +209,14 @@ export function RetirementGoalSection({
 
       {spouseOpen ? (
         <fieldset className="space-y-2 border border-zinc-100 p-3 dark:border-zinc-800">
-          <legend className="px-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">배우자 정보</legend>
+          <legend className="px-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            배우자 정보
+            {spouseLinkedData.length > 0 && (
+              <InfoTip label="배우자 정보 표시 이유" align="start">
+                {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 이 항목은 배우자 정보 제거로 지워지지 않습니다.
+              </InfoTip>
+            )}
+          </legend>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Field label="배우자 출생연도(선택)">
               <input inputMode="numeric" value={form.spouseBirthYear} onChange={(e) => set("spouseBirthYear", e.target.value)} className={inputClass} />
@@ -229,11 +236,6 @@ export function RetirementGoalSection({
               </select>
             </Field>
           </div>
-          {spouseLinkedData.length > 0 && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 이 항목은 배우자 정보 제거로 지워지지 않습니다.
-            </p>
-          )}
           {canRemoveSpouse && (
             <button type="button" onClick={removeSpouse} disabled={isRemovingSpouse || isSaving} className={secondaryButtonClass}>
               {isRemovingSpouse ? "지우는 중..." : "배우자 정보 제거"}
@@ -256,9 +258,8 @@ export function RetirementGoalSection({
       </div>
 
       {!cashflow || !at ? (
-        <EmojiList className="text-zinc-500 dark:text-zinc-400">
-          <EmojiLine emoji="🌴">목표 월 생활비·은퇴 나이·출생연도를 저장하면</EmojiLine>
-          <EmojiLine emoji="💰">나이별 예상 월 현금흐름이 여기에 나옵니다.</EmojiLine>
+        <EmojiList size="sm" tone="mute">
+          <EmojiLine emoji="🌴">목표 월 생활비·은퇴 나이·출생연도를 저장하면 예상 현금흐름을 계산합니다.</EmojiLine>
         </EmojiList>
       ) : (
         <div className="space-y-3">

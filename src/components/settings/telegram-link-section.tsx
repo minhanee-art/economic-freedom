@@ -118,7 +118,7 @@ export function TelegramLinkSection() {
   if (!status) {
     return (
       <section aria-busy="true" className="min-h-44 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-        <h2 className="text-sm font-semibold">텔레그램 연결</h2>
+        <h2 className="text-base font-bold tracking-tight">텔레그램 연결</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">불러오는 중입니다.</p>
       </section>
     );
@@ -127,7 +127,7 @@ export function TelegramLinkSection() {
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">텔레그램 연결</h2>
+        <h2 className="text-base font-bold tracking-tight">텔레그램 연결</h2>
         <span className="text-xs text-zinc-500 dark:text-zinc-400">{status.accountName}</span>
       </div>
 

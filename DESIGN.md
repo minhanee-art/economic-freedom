@@ -334,6 +334,10 @@ components:
 - **아이콘 버튼**: 보이는 크기와 상관없이 누르는 영역 44×44px, `aria-label`에 대상 이름(예: "2026-11-15 배당 기록 삭제").
 - **표**: `th scope`, 화면 낭독용 `caption`, 가로 스크롤 영역에는 이름과 안내.
 - **차트**: 래퍼에 요약 `aria-label`, 계열 이름은 한글, 목표·보조 계열은 `chart-target` 점선. 동작 줄이기를 켜면 애니메이션을 끈다. recharts 는 `next/dynamic` 으로 지연 로딩.
+- **설정 탭 구성**: 설정은 구역 탭 5개 — 계정(기본) / 투자 / 알림 / 화면 / 데이터 삭제(`src/components/settings/*-tab.tsx`, 탭 정의는 `settings-tabs.tsx`). 탭은 `?tab=account|invest|alerts|display|data` 와 맞춰 새로고침·딥링크·뒤로 가기가 되고, 다른 화면의 링크는 `settingsTabHref(tab, 앵커)` 로 만든다(예: `?tab=alerts#dividend-calendar`).
+  - 계정 탭 맨 위 '로그인한 계정'에 이메일을 입력칸이 아닌 **잉크색 글자**(복사 버튼)와 로그인 방식으로 보이고, 로그아웃도 여기에 둔다. 계정 삭제는 계정 탭 맨 아래 위험 구역.
+  - 서로 무관한 값은 한 저장 버튼에 묶지 않는다: 표시 이름(계정)과 월 적립금(투자)은 각자 저장하고, `PATCH /api/settings` 에는 바꾼 값만 보낸다.
+  - 탭: `role=tablist/tab/tabpanel`, 선택한 탭만 `tabIndex=0`, ←/→·Home/End 로 이동, 높이 44px, 선택 표시는 브랜드 밑줄+글자 1종. 좁은 화면에서 넘치면 탭 줄만 가로로 밀린다.
 
 ## Dark Mode
 

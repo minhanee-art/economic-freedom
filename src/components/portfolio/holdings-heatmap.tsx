@@ -117,7 +117,7 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
       <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
         종목 히트맵
         <InfoTip label="종목 히트맵 보는 법" align="start">
-          칸 면적은 평가금액 비중, 색은 수익률입니다(빨강 상승, 파랑 하락). 칸을 누르면 아래에 이름·비중·수익률이 나옵니다.
+          칸 면적은 평가금액 비중, 색은 수익률입니다(빨강 상승, 파랑 하락).
         </InfoTip>
       </h2>
 

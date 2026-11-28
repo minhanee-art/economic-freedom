@@ -16,7 +16,10 @@ type OpenMode = "click" | "hover" | "focus";
 const VIEWPORT_GAP = 8; // 화면 가장자리와 말풍선 사이 최소 여백(px)
 const BUBBLE_MAX = 288; // 18rem
 const OFFSET = 6; // 아이콘과 말풍선 사이(px)
-const HOVER_CLOSE_DELAY = 120; // 버튼 → 말풍선으로 마우스를 옮기는 동안 닫히지 않게
+const HOVER_CLOSE_DELAY = 200;
+
+// 한 번에 말풍선 하나만 연다 — 새로 열리면 앞서 열린 것을 닫는다.
+let closeActiveTip: (() => void) | null = null; // 버튼 → 말풍선으로 마우스를 옮기는 동안 닫히지 않게
 
 export function InfoTip({
   label,
@@ -86,8 +89,14 @@ export function InfoTip({
   // 열릴 때: top layer 에 올리고(지원 브라우저) 화면 안으로 좌표를 맞춘다. 칠하기 전에 끝내 깜빡임이 없다.
   useLayoutEffect(() => {
     if (!open) return;
+    const close = () => setMode(null);
+    if (closeActiveTip) closeActiveTip();
+    closeActiveTip = close;
+    const release = () => {
+      if (closeActiveTip === close) closeActiveTip = null;
+    };
     const bubble = bubbleRef.current;
-    if (!bubble) return;
+    if (!bubble) return release;
     if (typeof bubble.showPopover === "function" && !bubble.matches(":popover-open")) {
       try {
         bubble.showPopover();
@@ -96,12 +105,26 @@ export function InfoTip({
       }
     }
     place();
+    return release;
   }, [open, place]);
 
-  // 열린 동안: 스크롤·크기 변화에 따라 다시 맞추고, Esc·바깥 누르기로 닫는다.
+  // 열린 동안: 스크롤·크기 변화·위쪽 내용이 늦게 불러와져 버튼이 밀린 경우에도 다시 맞추고, Esc·바깥 누르기로 닫는다.
   useEffect(() => {
     if (!open) return;
     const onReposition = () => place();
+    // 버튼 위치가 바뀌었을 때만 다시 맞춘다(열린 말풍선 하나만 도는 가벼운 확인).
+    let frame = 0;
+    let last = "";
+    const follow = () => {
+      const r = buttonRef.current?.getBoundingClientRect();
+      const key = r ? `${Math.round(r.left)},${Math.round(r.top)}` : "";
+      if (key !== last) {
+        last = key;
+        place();
+      }
+      frame = requestAnimationFrame(follow);
+    };
+    frame = requestAnimationFrame(follow);
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       setMode(null);
@@ -120,6 +143,7 @@ export function InfoTip({
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointerDown);
     return () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onReposition, true);
       window.removeEventListener("resize", onReposition);
       document.removeEventListener("keydown", onKey);

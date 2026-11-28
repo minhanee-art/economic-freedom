@@ -62,7 +62,7 @@ export function AccountDeleteSection() {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-sm font-semibold text-danger">계정 삭제</h2>
+      <h2 className="text-base font-bold tracking-tight text-danger">계정 삭제</h2>
       <div className="border border-danger-line bg-white p-4 shadow-card dark:bg-zinc-900">
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           계정과 입력한 모든 데이터(보유 종목, 매수·배당 기록, 자녀 증여 기록 등)가 즉시 영구 삭제되며 복구할 수 없습니다.{" "}

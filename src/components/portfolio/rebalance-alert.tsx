@@ -11,6 +11,8 @@ import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
 import { DialogFrame } from "@/components/dashboard/confirm-dialog";
 import { StatusLine } from "@/components/dashboard/status-line";
+import { EmojiLine, EmojiList, InfoTip } from "@/components/ui/info-tip";
+import Link from "next/link";
 
 interface CategoryBalance {
   name: string;
@@ -182,11 +184,6 @@ function compareHoldingBySort(a: HoldingWithPnL, b: HoldingWithPnL, sort: Holdin
   return normalizeSortText(a.name).localeCompare(normalizeSortText(b.name), "ko-KR", {
     numeric: true,
   });
-}
-
-function getCategoryAdvice(name: string, diff: number): string {
-  if (diff > 0) return `${name} 비중이 설정한 목표 비중보다 높습니다 (계산 결과)`;
-  return `${name} 비중이 설정한 목표 비중보다 낮습니다 (계산 결과)`;
 }
 
 export function RebalanceAlert({
@@ -389,12 +386,13 @@ export function RebalanceAlert({
 
   if (categoryRows.length === 0) {
     return (
-      <section id="holdings" aria-label="종목 추가" className="scroll-mt-24 border border-hairline bg-surface px-5 py-4 shadow-card dark:border-zinc-800">
+      <section id="holdings" aria-label="종목 추가" className="scroll-mt-24 border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
         <div className="mb-4 border-b border-zinc-100 pb-4 dark:border-zinc-800">
-          <h2 className="text-base font-bold text-ink">첫 종목 추가</h2>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            아직 이 계좌에 종목이 없습니다. 종목을 추가하면 자산군별 비중과 목표 비중과의 차이가 바로 계산됩니다.
-          </p>
+          <h2 className="text-base font-bold tracking-tight text-ink">첫 종목 추가</h2>
+          <EmojiList className="mt-2">
+            <EmojiLine emoji="🔍">아직 이 계좌에 종목이 없습니다. 검색해서 추가하세요.</EmojiLine>
+            <EmojiLine emoji="⚖️">추가하면 자산군별 비중과 목표와의 차이를 바로 계산합니다.</EmojiLine>
+          </EmojiList>
         </div>
         {onAddHolding ? (
           <AddHoldingForm onAddHolding={onAddHolding} />
@@ -412,14 +410,17 @@ export function RebalanceAlert({
     : "모든 테마가 목표 비중 3%p 이내";
 
   return (
-    <section id="holdings" aria-labelledby="holdings-weights-title" className="scroll-mt-24 border border-hairline bg-surface px-5 py-4 space-y-4 shadow-card dark:border-zinc-800">
+    <section id="holdings" aria-labelledby="holdings-weights-title" className="scroll-mt-24 space-y-4 border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <h2 id="holdings-weights-title" className="text-base font-bold text-ink">{title}</h2>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            {isCollapsed
-              ? `종목 ${holdings.length}개 · ${headerSummary}`
-              : "개별 종목 목표 비중의 합계가 테마 목표 비중입니다. 테마 비중을 바꾸면 해당 테마 종목들이 같은 비율로 자동 조정됩니다."}
+          <h2 id="holdings-weights-title" className="text-base font-bold tracking-tight text-ink">
+            {title}
+            <InfoTip label="목표 비중 설명" align="start">
+              종목 목표 비중을 더한 값이 테마 목표 비중입니다. 테마 비중을 바꾸면 그 테마 종목들이 같은 비율로 함께 조정됩니다.
+            </InfoTip>
+          </h2>
+          <p className="mt-1 text-xs leading-relaxed text-ink-mute">
+            종목 {holdings.length}개 · {headerSummary}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -489,10 +490,7 @@ export function RebalanceAlert({
         >
             <div className="mb-3 flex items-start justify-between gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
               <div>
-                <h2 id="add-holding-dialog-title" className="text-sm font-bold text-zinc-900 dark:text-zinc-100">신규 종목 추가</h2>
-                <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                  종목은 검색으로 불러오고, 보유수량·평균단가·목표 비중만 입력합니다.
-                </p>
+                <h2 id="add-holding-dialog-title" className="text-base font-bold tracking-tight text-ink">신규 종목 추가</h2>
               </div>
               <button
                 type="button"
@@ -510,9 +508,9 @@ export function RebalanceAlert({
         <section aria-label="숨긴 종목" className="space-y-3 border-y border-hairline py-3 dark:border-zinc-800">
           <div className="flex flex-col gap-2 border-b border-zinc-100 pb-3 dark:border-zinc-800 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">숨긴 종목</p>
-              <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                체크로 숨긴 종목 {manualHiddenHoldings.length}개입니다. 체크를 해제하면 원래 목록에 다시 표시됩니다.
+              <p className="text-sm font-semibold text-ink">
+                숨긴 종목 <span className="tabular-nums">{manualHiddenHoldings.length}개</span>
+                <InfoTip label="숨긴 종목 설명" align="start">체크로 숨긴 종목입니다. 체크를 해제하면 원래 목록에 다시 표시됩니다.</InfoTip>
               </p>
             </div>
             {manualHiddenHoldings.length > 0 && (
@@ -642,8 +640,8 @@ export function RebalanceAlert({
 
       {groupMode === "all" && (
         <section aria-label="전체 종목" className="space-y-3">
-          <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            <span className="font-semibold text-ink">전체 종목</span> · 테마 묶음 없이 전체 보유종목 {holdingsOnlyRows.length}개를 선택한 보기·정렬 기준으로 확인합니다.
+          <p className="text-xs text-ink-mute">
+            <span className="font-semibold text-ink">전체 종목</span> · 테마 묶음 없이 전체 보유종목 {holdingsOnlyRows.length}개
           </p>
           {renderHoldingCollection(holdingsOnlyRows, "표시할 보유종목이 없습니다.", "all-holdings")}
         </section>
@@ -728,14 +726,10 @@ export function RebalanceAlert({
                   className="mt-3 space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
-                      {c.name} 테마 보유종목입니다. 목표 비중 수정과 매수·매도 기록을 여기서 할 수 있습니다.
-                    </p>
-                  </div>
+                  <p className="text-xs font-semibold text-ink-mute">{c.name} 테마 보유종목 · 목표 비중 수정, 매수·매도 기록</p>
                   {renderHoldingCollection(
                     categoryHoldings,
-                    "표시 중인 종목이 없습니다. 숨김 종목에서 목표 비중을 올리거나 매수 기록으로 보유수량을 만들면 표시됩니다.",
+                    "표시 중인 종목이 없습니다. 아래 숨김 종목에서 목표 비중을 올리거나 매수 기록을 하면 표시됩니다.",
                     c.name
                   )}
 
@@ -752,8 +746,11 @@ export function RebalanceAlert({
                       </button>
                       {isHiddenExpanded && (
                         <div className="mt-3 space-y-2">
-                          <p className="text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-                            보유수량 0주 또는 목표 비중 0%인 종목입니다. 목표 비중을 올리거나 매수하면 일반 목록에 표시되고, 보유수량 0주는 종목 목록에서 삭제할 수 있습니다.
+                          <p className="text-xs text-ink-mute">
+                            보유 0주 또는 목표 0%인 종목
+                            <InfoTip label="숨김 종목 설명" align="start">
+                              목표 비중을 올리거나 매수 기록을 하면 일반 목록에 표시됩니다. 보유 0주인 종목은 목록에서 삭제할 수 있습니다.
+                            </InfoTip>
                           </p>
                           {hiddenCategoryHoldings.map((h) => (
                             <HiddenHoldingManager
@@ -785,31 +782,47 @@ export function RebalanceAlert({
         <div className="border-t border-zinc-100 dark:border-zinc-800 pt-4 space-y-3">
           {hasAdvice ? (
             <div className="border border-caution/30 bg-caution-soft p-4">
-              <p className="text-sm font-bold text-caution">목표 비중 대비 차이 계산 결과</p>
-              <p className="mt-2 text-sm leading-6 text-ink">
-                {topOver && topUnder ? (
-                  <>
-                    <b>{topOver.name}</b>이 설정 {topOver.target.toFixed(1)}%보다 현재 {topOver.current.toFixed(1)}%로 <b>{topOver.diff.toFixed(1)}%p 초과</b>입니다. 설정한 목표 비중에 맞추려면 약 {formatKRW(totalValue * (topOver.diff / 100))}({topOver.diff.toFixed(1)}%p)의 차이가 있고, <b>{topUnder.name}</b>은 목표 비중보다 낮습니다(계산값).
-                  </>
-                ) : topOver ? (
-                  <>
-                    <b>{topOver.name}</b>이 설정 {topOver.target.toFixed(1)}%보다 현재 {topOver.current.toFixed(1)}%로 <b>{topOver.diff.toFixed(1)}%p 초과</b>입니다. 설정한 목표 비중에 맞추려면 초과분만큼의 차이가 있습니다(계산값).
-                  </>
-                ) : topUnder ? (
-                  <>
-                    <b>{topUnder.name}</b>이 설정 {topUnder.target.toFixed(1)}%보다 현재 {topUnder.current.toFixed(1)}%로 <b>{Math.abs(topUnder.diff).toFixed(1)}%p 부족</b>입니다. 설정한 목표 비중에 맞추려면 이만큼의 차이가 있습니다(계산값). 적립 배분 계산 화면에서 설정에 따른 배분액을 볼 수 있습니다.
-                  </>
-                ) : (
-                  <>종목별 비중 변동이 큽니다. 아래 종목별 목표 비중 대비 차이를 확인하세요.</>
-                )}
+              <p className="text-sm font-bold text-caution">
+                목표 비중 대비 차이 계산 결과
+                <InfoTip label="계산 결과 설명" align="start">
+                  설정한 목표 비중과 현재 보유 비중의 차이를 계산한 참고용 값입니다. 호박색 글자는 목표보다 많은 비중(초과), 총 이탈폭은 테마별 차이의 합입니다.
+                </InfoTip>
               </p>
-              <p className="mt-2 text-xs font-semibold text-caution">
-                총 이탈폭 {totalDrift.toFixed(1)}%p · 호박색 글자는 목표보다 많은 비중(초과)입니다.
+              <ul className="mt-2 space-y-1 text-sm leading-6 text-ink">
+                {topOver && (
+                  <li>
+                    <b>{topOver.name}</b>{" "}
+                    <span className="tabular-nums">설정 {topOver.target.toFixed(1)}% → 현재 {topOver.current.toFixed(1)}%</span> ·{" "}
+                    <b className="text-caution tabular-nums">{topOver.diff.toFixed(1)}%p 초과</b>
+                    <span className="tabular-nums text-ink-mute"> · 약 {formatKRW(totalValue * (topOver.diff / 100))}</span>
+                  </li>
+                )}
+                {topUnder && (
+                  <li>
+                    <b>{topUnder.name}</b>{" "}
+                    <span className="tabular-nums">설정 {topUnder.target.toFixed(1)}% → 현재 {topUnder.current.toFixed(1)}%</span> ·{" "}
+                    <b className="tabular-nums">{Math.abs(topUnder.diff).toFixed(1)}%p 부족</b>
+                    {!topOver && (
+                      <>
+                        {" · "}
+                        <Link href="/dashboard/buy" className="font-semibold text-brand underline-offset-2 hover:underline dark:text-indigo-300">
+                          적립 배분 계산
+                        </Link>
+                      </>
+                    )}
+                  </li>
+                )}
+                {!topOver && !topUnder && <li>종목별 비중 차이가 큽니다. 아래 종목별 차이를 확인하세요.</li>}
+              </ul>
+              <p className="mt-2 text-xs font-semibold tabular-nums text-caution">
+                총 이탈폭 {totalDrift.toFixed(1)}%p · 계산값
               </p>
             </div>
           ) : (
-            <div className="border border-hairline bg-canvas-soft p-4 text-sm font-semibold text-success">
-              현재 목표 비중과 보유 비중 차이가 기준 이내입니다. 설정한 목표 비중 대비 차이가 작습니다.
+            <div className="border border-hairline bg-canvas-soft p-4">
+              <EmojiLine as="p" emoji="⚖️" size="sm" tone="success">
+                설정한 목표 비중 대비 차이가 작습니다(테마 {CATEGORY_THRESHOLD}%p·종목 {HOLDING_THRESHOLD}%p 이내).
+              </EmojiLine>
             </div>
           )}
 
@@ -823,7 +836,7 @@ export function RebalanceAlert({
                 {c.name}
               </span>
               <span className="text-zinc-500 dark:text-zinc-400">
-                설정 {c.target.toFixed(1)}% → 현재 보유 {c.current.toFixed(1)}%: {Math.abs(c.diff).toFixed(1)}%p {c.diff > 0 ? "초과" : "부족"}. {getCategoryAdvice(c.name, c.diff)}
+                <span className="tabular-nums">설정 {c.target.toFixed(1)}% → 현재 보유 {c.current.toFixed(1)}%</span> · {formatTargetGap(c.diff)}
               </span>
             </div>
           ))}
@@ -844,7 +857,6 @@ export function RebalanceAlert({
                   >
                     {formatTargetGap(h.diff)}
                   </span>
-                  <span className="ml-1">(설정한 목표 비중 대비, 계산값)</span>
                 </div>
               ))}
             </div>
@@ -1390,9 +1402,11 @@ function AddHoldingForm({
   return (
     <div>
       <div className="mb-3">
-        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">종목 검색 후 추가</p>
-        <p className="mt-1 text-xs leading-5 text-zinc-500 dark:text-zinc-400">
-          종목코드·종목명·현재가는 검색 결과에서 가져옵니다. 수기 입력은 보유수량, 평균단가, 목표 비중만 사용합니다.
+        <p className="text-sm font-semibold text-ink">
+          종목 검색 후 추가
+          <InfoTip label="종목 추가 설명" align="start">
+            종목코드·종목명·현재가는 검색 결과에서 가져옵니다. 직접 넣는 값은 보유수량, 평균단가, 목표 비중뿐입니다.
+          </InfoTip>
         </p>
       </div>
 

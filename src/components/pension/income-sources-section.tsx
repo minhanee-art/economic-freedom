@@ -1,6 +1,7 @@
 "use client";
 
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { EmojiLine, EmojiList } from "@/components/ui/info-tip";
 import { useState } from "react";
 import type { IncomeSourceRow } from "@/lib/pension-data";
 import {
@@ -111,9 +112,11 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
   return (
     <SectionCard
       title="국민연금·퇴직연금·연금보험"
-      description={
-        <>
-          국민연금공단 &lsquo;내 연금 알아보기&rsquo;, 금융감독원 통합연금포털 조회값을 옮겨 적으세요.{" "}
+      description="국민연금공단 '내 연금 알아보기'와 금융감독원 통합연금포털의 조회값을 옮겨 적으세요."
+    >
+      <EmojiList className="text-xs text-zinc-500 dark:text-zinc-400">
+        <EmojiLine emoji="🔎">
+          조회처:{" "}
           <a href="https://www.nps.or.kr" target="_blank" rel="noreferrer" className="text-indigo-500 underline dark:text-indigo-300">
             국민연금공단
           </a>{" "}
@@ -121,12 +124,9 @@ export function IncomeSourcesSection({ sources, onChange, showSpouse }: Props) {
           <a href="https://100lifeplan.fss.or.kr" target="_blank" rel="noreferrer" className="text-indigo-500 underline dark:text-indigo-300">
             통합연금포털
           </a>
-          <span className="block mt-0.5">
-            앱에 등록한 DC·IRP·연금저축 계좌는 평가액으로 따로 계산하므로 여기에 중복해 적지 마세요.
-          </span>
-        </>
-      }
-    >
+        </EmojiLine>
+        <EmojiLine emoji="⚠️">앱에 등록한 DC·IRP·연금저축 계좌는 따로 계산하니 여기에 중복해 적지 마세요.</EmojiLine>
+      </EmojiList>
       {((showSpouse ? ["self", "spouse"] : ["self"]) as FamilyMember[]).map((member) => {
         const items = sources.filter((s) => s.member === member);
         return (

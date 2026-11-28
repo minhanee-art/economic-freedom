@@ -1,6 +1,7 @@
 "use client";
 
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
+import { EmojiLine, EmojiList, InfoTip } from "@/components/ui/info-tip";
 import { useMemo, useState } from "react";
 import type { IncomeSourceRow, RetirementGoalRow } from "@/lib/pension-data";
 import { ACCOUNT_OWNER_LABELS, computeRetirementCashflow, type CashflowRow } from "@/lib/pension-planning";
@@ -208,7 +209,14 @@ export function RetirementGoalSection({
 
       {spouseOpen ? (
         <fieldset className="space-y-2 border border-zinc-100 p-3 dark:border-zinc-800">
-          <legend className="px-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">배우자 정보</legend>
+          <legend className="px-1 text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+            배우자 정보
+            {spouseLinkedData.length > 0 && (
+              <InfoTip label="배우자 정보 표시 이유" align="start">
+                {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 이 항목은 배우자 정보 제거로 지워지지 않습니다.
+              </InfoTip>
+            )}
+          </legend>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Field label="배우자 출생연도(선택)">
               <input inputMode="numeric" value={form.spouseBirthYear} onChange={(e) => set("spouseBirthYear", e.target.value)} className={inputClass} />
@@ -228,11 +236,6 @@ export function RetirementGoalSection({
               </select>
             </Field>
           </div>
-          {spouseLinkedData.length > 0 && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              {spouseLinkedData.join("·")}가 있어 배우자 정보를 표시합니다. 이 항목은 배우자 정보 제거로 지워지지 않습니다.
-            </p>
-          )}
           {canRemoveSpouse && (
             <button type="button" onClick={removeSpouse} disabled={isRemovingSpouse || isSaving} className={secondaryButtonClass}>
               {isRemovingSpouse ? "지우는 중..." : "배우자 정보 제거"}
@@ -255,7 +258,9 @@ export function RetirementGoalSection({
       </div>
 
       {!cashflow || !at ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">목표 월 생활비·은퇴 나이·출생연도를 저장하면 예상 현금흐름을 계산합니다.</p>
+        <EmojiList size="sm" tone="mute">
+          <EmojiLine emoji="🌴">목표 월 생활비·은퇴 나이·출생연도를 저장하면 예상 현금흐름을 계산합니다.</EmojiLine>
+        </EmojiList>
       ) : (
         <div className="space-y-3">
           <div className="space-y-2">
@@ -279,20 +284,22 @@ export function RetirementGoalSection({
             />
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            올해 {cashflow.currentAge}세 · 은퇴까지 {cashflow.yearsToRetirement}년 · 연금계좌 평가액은 연 {goal.expectedReturnPct ?? 0}%로
-            굴려 명의자별로{" "}
-            {(cashflow.annuities.some((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
-              ? cashflow.annuities.filter((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
-              : cashflow.annuities
-            )
-              .map((a) =>
-                a.ownerType === "self"
-                  ? `본인 ${a.startAge}세부터`
-                  : `배우자 몫은 배우자 ${a.ownerStartAge}세(본인 ${a.startAge}세)부터`
+            <span aria-hidden="true">🌴 </span>올해 {cashflow.currentAge}세 · 은퇴까지 {cashflow.yearsToRetirement}년
+            <InfoTip label="연금 수령 계산 가정 설명" align="start">
+              연금계좌 평가액은 연 {goal.expectedReturnPct ?? 0}%로 굴려 명의자별로{" "}
+              {(cashflow.annuities.some((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
+                ? cashflow.annuities.filter((a) => a.currentBalances.retirement + a.currentBalances.private > 0)
+                : cashflow.annuities
               )
-              .join(", ")}{" "}
-            {cashflow.annuity.years}년간 나눠 받는다고 가정 (은퇴 시점 추정 DC{" "}
-            {formatKRW(cashflow.projectedBalances.retirement)}, 연금저축·IRP {formatKRW(cashflow.projectedBalances.private)})
+                .map((a) =>
+                  a.ownerType === "self"
+                    ? `본인 ${a.startAge}세부터`
+                    : `배우자 몫은 배우자 ${a.ownerStartAge}세(본인 ${a.startAge}세)부터`
+                )
+                .join(", ")}{" "}
+              {cashflow.annuity.years}년간 나눠 받는다고 가정합니다. 은퇴 시점 추정 DC {formatKRW(cashflow.projectedBalances.retirement)}, 연금저축·IRP{" "}
+              {formatKRW(cashflow.projectedBalances.private)}.
+            </InfoTip>
           </p>
           {cashflow.excludedAccounts.length > 0 && (
             <p className="text-xs text-zinc-500 dark:text-zinc-400">

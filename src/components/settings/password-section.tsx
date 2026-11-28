@@ -2,6 +2,7 @@
 
 // 설정 > 비밀번호 — 비밀번호가 있으면 변경, Google 전용 계정이면 새로 설정(모바일 앱 로그인용).
 import { useEffect, useState } from "react";
+import { InfoTip } from "@/components/ui/info-tip";
 
 type Status = { kind: "idle" | "saving" } | { kind: "done"; message: string } | { kind: "error"; message: string };
 
@@ -60,7 +61,7 @@ export function PasswordSection() {
   if (hasPassword === null) {
     return (
       <section aria-busy="true" className="min-h-84 border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-        <h2 className="text-sm font-semibold">비밀번호</h2>
+        <h2 className="text-base font-bold tracking-tight">비밀번호</h2>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">불러오는 중입니다.</p>
       </section>
     );
@@ -68,12 +69,14 @@ export function PasswordSection() {
 
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
-      <h2 className="text-sm font-semibold">{hasPassword ? "비밀번호 변경" : "비밀번호 설정"}</h2>
-      {!hasPassword && (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          Google로 가입한 계정입니다. 비밀번호를 설정하면 모바일 앱에서 이메일과 비밀번호로 로그인할 수 있습니다.
-        </p>
-      )}
+      <h2 className="text-base font-bold tracking-tight">
+        {hasPassword ? "비밀번호 변경" : "비밀번호 설정"}
+        {!hasPassword && (
+          <InfoTip label="비밀번호 설정 설명" align="start">
+            Google로 가입한 계정입니다. 비밀번호를 설정하면 모바일 앱에서 이메일과 비밀번호로 로그인할 수 있습니다.
+          </InfoTip>
+        )}
+      </h2>
       <form onSubmit={submit} className="space-y-3">
         {hasPassword && (
           <div>

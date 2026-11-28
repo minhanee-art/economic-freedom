@@ -6,8 +6,8 @@ import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { failureMessage } from "@/components/dashboard/inline-error";
 import type { ChildRow, ChildGiftRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
-import { getAge } from "@/lib/gift-tax";
 import { missingFields } from "@/lib/utils";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 
 interface Props {
   initialChildren: ChildRow[];
@@ -67,17 +67,17 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-ink">자녀 계좌 관리</h1>
-        {dialog}
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-          자녀별 증여·정부지원금 입금·보유 종목을 관리하고 증여세 공제한도를 추적하세요.
-        </p>
-      </div>
+      <h1 className="text-xl font-bold tracking-tight text-ink">
+        자녀 계좌 관리
+        <InfoTip label="자녀 계좌 관리 설명" align="start">
+          자녀별 증여·정부지원금 입금·보유 종목을 기록하고 증여세 공제한도 사용량을 확인합니다.
+        </InfoTip>
+      </h1>
+      {dialog}
 
       {/* 자녀 추가 */}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold">자녀 추가</h2>
+        <h2 className="text-base font-bold tracking-tight">자녀 추가</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="child-form-1" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이름</label>
@@ -111,7 +111,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
       {/* 자녀 목록 */}
       {children.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">등록된 자녀가 없습니다.</p>
+        <EmojiLine emoji="👶" as="p" size="sm" tone="mute" align="center" className="my-8">등록된 자녀가 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-3">
           {children.map((c) => (
@@ -119,7 +119,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
               <div className="flex items-center justify-between px-4 py-3">
                 <Link href={`/dashboard/children/${c.id}`} className="flex min-h-11 flex-1 flex-col justify-center">
                   <p className="text-sm font-semibold">{c.name}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">만 {getAge(c.birth_date)}세 · {c.birth_date}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{c.birth_date} 출생</p>
                 </Link>
                 <button
                   type="button"
@@ -133,7 +133,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
                 </button>
               </div>
               <div className="px-4 pb-4">
-                <GiftProgressCard birthDate={c.birth_date} gifts={giftsByChild(c.id)} />
+                <GiftProgressCard embedded birthDate={c.birth_date} gifts={giftsByChild(c.id)} />
               </div>
               <Link
                 href={`/dashboard/children/${c.id}`}

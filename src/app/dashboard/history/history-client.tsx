@@ -88,7 +88,7 @@ export function HistoryClient({ initialRecords, totalCount, userId, holdings }: 
   if (holdings.length === 0 && records.length === 0) {
     return (
       <div className="space-y-5">
-        <NoHoldingsState pageTitle="매수 기록" description="매수 기록은 추가한 종목에 남깁니다. 종목을 추가하면서 이미 산 수량과 단가를 넣거나, 증권사 거래내역 CSV를 가져오면 기록이 여기에 쌓입니다.">
+        <NoHoldingsState pageTitle="매수 기록" description="종목을 추가하면서 이미 산 수량·단가를 넣거나 증권사 거래내역 CSV를 가져오면 매수 기록이 여기에 쌓입니다.">
           <button type="button" onClick={() => setShowImport(true)} className={noHoldingsSecondaryClass}>
             증권사 거래내역 가져오기 (CSV)
           </button>

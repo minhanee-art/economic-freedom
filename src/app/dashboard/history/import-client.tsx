@@ -141,30 +141,38 @@ export function ImportClient({ holdings, onClose }: Props) {
           </button>
         </div>
 
-        {/* 안내 */}
-        <div className="bg-canvas-soft dark:bg-zinc-800 border border-hairline dark:border-zinc-700 px-4 py-3 text-sm space-y-2">
-          <p className="font-semibold text-ink dark:text-zinc-100">미래에셋증권 거래내역 다운로드 방법:</p>
-          <ol className="list-decimal list-inside text-ink-mute dark:text-zinc-400 space-y-1 text-xs">
-            <li>m.stock 앱 → 메뉴 → 자산/내역 → 거래내역</li>
-            <li>기간 설정 후 조회 → 다운로드(엑셀/CSV)</li>
-            <li>또는 HTS(카이로스) → [0650] 거래내역 → 엑셀 저장</li>
-          </ol>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
-            CSV 컬럼: 거래일자, 종목코드, 종목명, 매수/매도, 수량, 단가, 거래금액, 수수료, 세금
-          </p>
-        </div>
-
-        {/* 직접 CSV 형식 안내 */}
-        <div className="border border-dashed border-hairline dark:border-zinc-700 px-4 py-3 text-xs text-ink-mute dark:text-zinc-400 space-y-1">
-          <p className="font-semibold text-ink dark:text-zinc-400">
-            직접 CSV 만들기 (엑셀에서 저장):
-          </p>
-          <pre className="bg-canvas-soft dark:bg-zinc-800 border border-hairline dark:border-transparent p-2 overflow-x-auto tabular-nums">
+        {/* 안내 — 기본 접힘. 파일을 받는 방법과 CSV 형식은 필요할 때만 연다 */}
+        <details className="group border border-hairline dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800 text-sm">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-xs font-semibold text-ink dark:text-zinc-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+            <span>
+              거래내역 파일 받는 법 · CSV 형식
+            </span>
+            <svg aria-hidden="true" className="size-4 shrink-0 text-ink-mute transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="space-y-3 border-t border-hairline px-4 py-3 dark:border-zinc-700">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-ink dark:text-zinc-100">미래에셋증권 거래내역 다운로드</p>
+              <ol className="list-decimal list-inside text-ink-mute dark:text-zinc-400 space-y-1 text-xs">
+                <li>m.stock 앱 → 메뉴 → 자산/내역 → 거래내역</li>
+                <li>기간 설정 후 조회 → 다운로드(엑셀/CSV)</li>
+                <li>또는 HTS(카이로스) → [0650] 거래내역 → 엑셀 저장</li>
+              </ol>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 tabular-nums">
+                CSV 컬럼: 거래일자, 종목코드, 종목명, 매수/매도, 수량, 단가, 거래금액, 수수료, 세금
+              </p>
+            </div>
+            <div className="space-y-1 text-xs text-ink-mute dark:text-zinc-400">
+              <p className="font-semibold text-ink dark:text-zinc-100">직접 CSV 만들기 (엑셀에서 저장)</p>
+              <pre className="bg-surface border border-hairline dark:border-transparent p-2 overflow-x-auto tabular-nums">
 {`거래일자,종목코드,종목명,구분,수량,단가,거래금액,수수료,세금
 2025-03-15,305050,ACE 코스피,매수,3,55000,165000,0,0
 2025-03-15,354500,ACE 코스닥150,매수,5,17500,87500,0,0`}
-          </pre>
-        </div>
+              </pre>
+            </div>
+          </div>
+        </details>
 
         {/* 파일 선택 */}
         <div className="space-y-2">

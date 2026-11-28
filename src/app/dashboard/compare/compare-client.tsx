@@ -7,6 +7,7 @@ import type { Holding } from "@/types";
 import { SERIES_COLORS } from "@/lib/colors";
 import { cn, formatKRW, formatKRWFull } from "@/lib/utils";
 import { CATEGORIES } from "@/lib/constants";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 import {
   RadarChart,
   Radar,
@@ -468,9 +469,9 @@ export function CompareClient({ holdings }: Props) {
                 ))}
               </select>
             </label>
-            <p className="min-w-0 flex-1 basis-56 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-              거래량·거래대금이 적은 ETF 는 원하는 가격에 사고팔기 어려울 수 있습니다(유동성). 비교할 때 함께 보세요.
-            </p>
+            <EmojiLine as="p" emoji="💧" className="min-w-0 flex-1 basis-56 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+              거래량·거래대금이 적은 ETF 는 사고팔기 어려울 수 있습니다(유동성).
+            </EmojiLine>
           </div>
 
           <div tabIndex={0} role="region" aria-label="ETF 검색 결과" className="max-h-112 overflow-y-auto space-y-1">
@@ -624,10 +625,12 @@ export function CompareClient({ holdings }: Props) {
           <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-ink">ETF 구성 종목·편입비율 비교</h2>
-                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                  각 ETF의 상위 편입 종목과 비중입니다. 종목코드는 굵게 표시했습니다.
-                </p>
+                <h2 className="text-base font-bold tracking-tight text-ink">
+                  ETF 구성 종목·편입비율 비교
+                  <InfoTip label="구성 종목 비교 설명" align="start">
+                    각 ETF의 상위 편입 종목과 비중입니다. 종목코드는 굵게 표시했습니다.
+                  </InfoTip>
+                </h2>
               </div>
               {loadingDetail && <span className="text-xs text-zinc-500 dark:text-zinc-400">구성 종목 로딩 중...</span>}
             </div>
@@ -681,7 +684,7 @@ export function CompareClient({ holdings }: Props) {
           {/* 유사 ETF */}
           {selected.some((s) => s.detail?.similarETFs?.length) && (
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h2 className="text-sm font-semibold text-ink mb-3">유사 ETF</h2>
+              <h2 className="mb-3 text-base font-bold tracking-tight text-ink">유사 ETF</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {selected.map((s, i) => (
                   s.detail?.similarETFs?.length ? (
@@ -706,7 +709,7 @@ export function CompareClient({ holdings }: Props) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 레이더 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h2 className="text-sm font-semibold text-ink mb-3">종합 비교</h2>
+              <h2 className="mb-3 text-base font-bold tracking-tight text-ink">종합 비교</h2>
               <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart data={radarData}>
@@ -732,7 +735,7 @@ export function CompareClient({ holdings }: Props) {
 
             {/* 수익률 바 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h2 className="text-sm font-semibold text-ink mb-3">
+              <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
                 수익률 비교 ({PERIOD_OPTIONS.find((p) => p.value === period)?.label})
               </h2>
               <div className="h-75">
@@ -753,7 +756,7 @@ export function CompareClient({ holdings }: Props) {
 
             {/* 현재가 바 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h2 className="text-sm font-semibold text-ink mb-3">현재가 비교</h2>
+              <h2 className="mb-3 text-base font-bold tracking-tight text-ink">현재가 비교</h2>
               <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={barData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
@@ -770,7 +773,7 @@ export function CompareClient({ holdings }: Props) {
 
             {/* 거래량 바 */}
             <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-card">
-              <h2 className="text-sm font-semibold text-ink mb-3">거래량 비교</h2>
+              <h2 className="mb-3 text-base font-bold tracking-tight text-ink">거래량 비교</h2>
               <div className="h-65">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={volumeBarData} margin={{ top: 8, right: 12, bottom: 58, left: 4 }}>
@@ -793,9 +796,9 @@ export function CompareClient({ holdings }: Props) {
       )}
 
       {selected.length === 1 && (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-4">
-          1개 더 선택하면 비교가 시작됩니다.
-        </p>
+        <EmojiLine as="p" emoji="⚖️" className="mx-auto w-fit py-4 text-sm text-zinc-500 dark:text-zinc-400">
+          1개 더 선택하면 비교가 시작됩니다
+        </EmojiLine>
       )}
     </div>
   );

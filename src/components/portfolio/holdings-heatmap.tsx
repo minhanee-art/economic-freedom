@@ -17,11 +17,12 @@ import {
 
 const TONE_CLASS: Record<HeatmapTone, string> = {
   // 한국 관습: 상승 = 빨강 계열, 하락 = 파랑 계열. 칸 안 글자에는 부호(+/-)가 함께 붙는다.
-  "gain-strong":"bg-heat-gain-strong text-white",
-  gain: "bg-heat-gain text-white",
-  flat: "bg-heat-flat text-white dark:bg-zinc-700 dark:text-zinc-50",
-  loss: "bg-heat-loss text-white",
-  "loss-strong":"bg-heat-loss-strong text-white",
+  // 색·글자색은 테마 토큰(globals.css): 다크에서는 강한 칸일수록 밝고, 밝은 강한 칸에는 어두운 글자를 쓴다.
+  "gain-strong": "bg-heat-gain-strong text-heat-on-strong",
+  gain: "bg-heat-gain text-heat-on",
+  flat: "bg-heat-flat text-heat-on",
+  loss: "bg-heat-loss text-heat-on",
+  "loss-strong": "bg-heat-loss-strong text-heat-on-strong",
 };
 
 const LEGEND: { tone: HeatmapTone; label: string }[] = [

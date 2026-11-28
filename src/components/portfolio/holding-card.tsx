@@ -8,6 +8,7 @@ import { getCategoryColor } from "@/lib/colors";
 import { CATEGORIES } from "@/lib/constants";
 import { inferHoldingClassification } from "@/lib/holding-classification";
 import { StatusLine } from "@/components/dashboard/status-line";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface HoldingCardProps {
   holding: HoldingWithPnL;
@@ -462,7 +463,12 @@ export function HoldingCard({
 
           {showDetailsEditor && (
             <div className="mt-3 border border-caution/30 bg-caution-soft p-3">
-              <p className="mb-2 text-xs font-semibold text-caution">종목코드 / 종목명 / 수량 / 평균단가 정정</p>
+              <p className="mb-2 text-xs font-semibold text-caution">
+                종목코드 / 종목명 / 수량 / 평균단가 정정
+                <InfoTip label="정정 설명" align="start">
+                  거래내역 전체를 다시 계산하지 않고, 현재 표시값과 평균단가 기준 원가만 고칩니다.
+                </InfoTip>
+              </p>
               <div className="grid grid-cols-2 gap-2 lg:grid-cols-[120px_1fr_96px_120px_auto] lg:items-end">
                 <label className="block">
                   <span className="mb-1 block text-xs font-semibold text-caution">종목코드</span>
@@ -527,9 +533,6 @@ export function HoldingCard({
                   {isSavingDetails ? "저장 중" : "정정 저장"}
                 </button>
               </div>
-              <p className="mt-2 text-xs leading-5 text-caution">
-                거래내역 전체 재계산이 아니라 현재 표시값과 평균단가 기준 원가를 정정합니다. 보유수량이 있으면 평균단가는 0보다 커야 합니다.
-              </p>
               {detailsStatus && (
                 <StatusLine className="mt-2" ok={detailsStatus.includes("완료")} message={detailsStatus} />
               )}

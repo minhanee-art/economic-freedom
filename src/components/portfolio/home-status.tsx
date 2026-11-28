@@ -11,6 +11,7 @@ import {
   type PensionSummaryLite,
 } from "@/lib/dashboard-home";
 import { formatKRW } from "@/lib/utils";
+import { InfoTip } from "@/components/ui/info-tip";
 
 type LoadState =
   | { kind: "loading" }
@@ -69,7 +70,12 @@ function StatusLine({ summary }: { summary: PensionSummaryLite }) {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-10">
         <div data-testid="home-tax-credit">
-          <dt className="text-xs font-medium text-ink-mute">{tax.year}년 세액공제 남은 한도</dt>
+          <dt className="text-xs font-medium text-ink-mute">
+            {tax.year}년 세액공제 남은 한도
+            <InfoTip label="세액공제 남은 한도 설명" align="start">
+              올해 연금저축·IRP 납입 기록으로 계산한, 세액공제를 더 받을 수 있는 납입 금액입니다. 참고용 계산입니다.
+            </InfoTip>
+          </dt>
           {tax.kind === "ready" ? (
             <>
               <dd className={NUMBER_CLASS}>{formatKRW(tax.remaining)}</dd>
@@ -82,6 +88,9 @@ function StatusLine({ summary }: { summary: PensionSummaryLite }) {
         <div data-testid="home-cashflow">
           <dt className="text-xs font-medium text-ink-mute">
             {cashflow.kind === "ready" ? `${cashflow.age}세 예상 월 현금흐름` : "은퇴 시점 예상 월 현금흐름"}
+            <InfoTip label="예상 월 현금흐름 설명">
+              연금 설계에 넣은 은퇴 나이·목표·가정으로 계산한 은퇴 첫해의 월 현금흐름입니다. 참고용 계산입니다.
+            </InfoTip>
           </dt>
           {cashflow.kind === "ready" ? (
             <>

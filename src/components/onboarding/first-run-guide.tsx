@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 import {
   ONBOARDING_DONE_SEEN_COOKIE,
   ONBOARDING_HIDDEN_COOKIE,
@@ -13,6 +14,13 @@ import {
 } from "@/lib/onboarding-steps";
 
 const ONE_YEAR_SECONDS = 365 * 24 * 60 * 60;
+
+// 단계 설명을 한눈에 보이는 이모지 한 줄로 줄인다. 원래 설명(step.description)은 제목 옆 말풍선에 그대로 둔다.
+const STEP_LINE: Record<OnboardingStep["key"], { emoji: string; text: string }> = {
+  "pension-account": { emoji: "🏦", text: "연금저축·IRP·DC 계좌 지정" },
+  "first-purchase": { emoji: "💰", text: "가진 종목과 산 수량·단가 기록" },
+  "retirement-goal": { emoji: "🌴", text: "목표 월 생활비와 은퇴 나이" },
+};
 
 function setCookie(name: string) {
   document.cookie = `${name}=1; path=/; max-age=${ONE_YEAR_SECONDS}; samesite=lax`;
@@ -37,18 +45,20 @@ export function FirstRunGuide({ steps }: { steps: OnboardingStep[] }) {
   return (
     <section
       aria-labelledby="first-run-guide-title"
-      className="border border-hairline bg-surface p-4 shadow-card dark:border-zinc-800 sm:p-5"
+      className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 id="first-run-guide-title" className="text-base font-bold tracking-tight text-ink">
             처음 시작하기
           </h2>
-          <p className="mt-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            세 단계를 마치면 홈과 연금 설계에 내 기록으로 계산한 숫자가 채워집니다.{" "}
+          <p className="mt-1 text-sm text-ink-mute">
             <span className="font-semibold tabular-nums text-ink">
               {steps.length}단계 중 {doneCount}단계 완료
             </span>
+            <InfoTip label="처음 시작하기 설명" align="start">
+              세 단계를 마치면 홈과 연금 설계에 내 기록으로 계산한 숫자가 채워집니다.
+            </InfoTip>
           </p>
         </div>
         <button
@@ -85,8 +95,11 @@ export function FirstRunGuide({ steps }: { steps: OnboardingStep[] }) {
                 <p className={cn("text-sm font-bold", step.done ? "text-zinc-500 dark:text-zinc-400" : "text-ink")}>
                   {step.title}
                   {step.done && <span className="sr-only"> (완료)</span>}
+                  <InfoTip label={`${step.title} 설명`} align="start">{step.description}</InfoTip>
                 </p>
-                <p className="mt-0.5 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">{step.description}</p>
+                <EmojiLine as="p" emoji={STEP_LINE[step.key].emoji} size="xs" tone="mute" className="mt-1">
+                  {STEP_LINE[step.key].text}
+                </EmojiLine>
               </div>
             </div>
             {step.done ? (

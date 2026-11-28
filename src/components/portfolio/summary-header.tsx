@@ -2,6 +2,7 @@
 
 import { formatKRW, formatPercent, formatPnlKRW, pnlTextClass } from "@/lib/utils";
 import type { DailyChange, DividendYields } from "@/lib/dashboard-insights";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface SummaryHeaderProps {
   totalValue: number;
@@ -31,7 +32,7 @@ export function SummaryHeader({
   const pnlPct = hasCost ? (pnl / totalCost) * 100 : 0;
 
   return (
-    <div className="border border-hairline bg-surface px-5 py-5 shadow-card dark:border-zinc-800 sm:px-6 sm:py-6">
+    <div className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
       <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-medium text-ink-mute mb-1.5">
@@ -105,8 +106,8 @@ export function SummaryHeader({
 
 function DividendYieldRow({ yields }: { yields: DividendYields }) {
   const items = [
-    { label: "투자 배당률", hint: "최근 12개월 배당 ÷ 매입원가", value: yields.costYieldPct },
-    { label: "시가 배당률", hint: "최근 12개월 배당 ÷ 평가금액", value: yields.marketYieldPct },
+    { label: "투자 배당률", hint: "최근 12개월 배당 ÷ 매입원가. 산 가격 기준 배당률입니다.", value: yields.costYieldPct },
+    { label: "시가 배당률", hint: "최근 12개월 배당 ÷ 평가금액. 지금 시세 기준 배당률입니다.", value: yields.marketYieldPct },
   ].filter((i) => i.value !== null);
   if (items.length === 0) return null;
 
@@ -115,9 +116,11 @@ function DividendYieldRow({ yields }: { yields: DividendYields }) {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         {items.map((i) => (
           <div key={i.label}>
-            <p className="text-xs text-ink-mute mb-0.5">{i.label}</p>
+            <p className="text-xs text-ink-mute mb-0.5">
+              {i.label}
+              <InfoTip label={`${i.label} 계산식`} align="start">{i.hint}</InfoTip>
+            </p>
             <p className="text-sm font-semibold tabular-nums text-ink">{(i.value as number).toFixed(2)}%</p>
-            <p className="text-xs text-ink-mute">{i.hint}</p>
           </div>
         ))}
       </div>

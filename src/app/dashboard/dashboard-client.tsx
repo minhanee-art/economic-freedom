@@ -16,6 +16,7 @@ import { toLocalDateKey, upcomingDividendSchedule } from "@/lib/dashboard-home";
 import { HomeStatus } from "@/components/portfolio/home-status";
 import type { DividendCalendarRow } from "@/lib/queries";
 import { CATEGORIES } from "@/lib/constants";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 
 interface Props {
   initialHoldings: Holding[];
@@ -532,11 +533,14 @@ export function DashboardClient({
       {totalValue > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <section aria-labelledby="home-pie-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
-            <h2 id="home-pie-title" className="text-sm font-semibold text-ink mb-3">자산군별 비중</h2>
+            <h2 id="home-pie-title" className="mb-3 text-base font-bold tracking-tight text-ink">자산군별 비중</h2>
             <LazyCategoryPieChart data={pieData} />
           </section>
           <section aria-labelledby="home-bar-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
-            <h2 id="home-bar-title" className="text-sm font-semibold text-ink mb-3">현재 vs 목표 비중</h2>
+            <h2 id="home-bar-title" className="mb-3 text-base font-bold tracking-tight text-ink">
+              현재 vs 목표 비중
+              <InfoTip label="현재 vs 목표 비중 설명">자산군별 목표는 그 자산군 종목들의 목표 비중을 더한 값입니다.</InfoTip>
+            </h2>
             <LazyAllocationBarChart data={barData} />
           </section>
         </div>
@@ -561,6 +565,9 @@ export function DashboardClient({
   );
 }
 
+const RETURNS_TIP =
+  "하루 한 번 저장되는 계좌 평가액 기록으로 일별·주간·월간 수익률을 계산합니다. 그 사이 추가 매수·매도로 바뀐 원가는 보정합니다.";
+
 function ReturnSummaryCard({
   summary,
   onSend,
@@ -577,23 +584,24 @@ function ReturnSummaryCard({
   const noData = summary !== null && periods.every((key) => summary.periods[key]?.returnPct == null);
   if (noData) {
     return (
-      <section aria-labelledby="home-returns-title" className="border border-hairline bg-surface px-5 py-3 shadow-card dark:border-zinc-800">
-        <h2 id="home-returns-title" className="text-sm font-semibold text-ink">기간별 수익률</h2>
-        <p className="mt-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-          아직 비교할 기준 기록이 없습니다. 계좌 평가액이 하루 한 번 저장되며, 기록이 쌓이면 일별·주간·월간 수익률을 계산합니다.
-        </p>
+      <section aria-labelledby="home-returns-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
+        <h2 id="home-returns-title" className="text-base font-bold tracking-tight text-ink">
+          기간별 수익률
+          <InfoTip label="기간별 수익률 설명">{RETURNS_TIP}</InfoTip>
+        </h2>
+        <EmojiLine as="p" emoji="📅" size="sm" tone="mute" className="mt-2">
+          아직 비교할 기준 기록이 없습니다.
+        </EmojiLine>
       </section>
     );
   }
   return (
     <section aria-labelledby="home-returns-title" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
-      <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div>
-          <h2 id="home-returns-title" className="text-base font-bold tracking-tight text-ink">기간별 수익률</h2>
-          <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-            일별·주간·월간 수익률을 하루 한 번 저장되는 계좌 평가액 기록으로 계산합니다. 추가 매수/매도 원가 변동은 보정합니다.
-          </p>
-        </div>
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h2 id="home-returns-title" className="text-base font-bold tracking-tight text-ink">
+          기간별 수익률
+          <InfoTip label="기간별 수익률 설명" align="start">{RETURNS_TIP}</InfoTip>
+        </h2>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           {summary?.telegramChatIdMasked ? (
             <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
@@ -674,16 +682,24 @@ function ReturnPeriodBox({ period }: { period: PortfolioReturnPeriod | null }) {
 function UpcomingDividends({ items }: { items: DividendCalendarRow[] }) {
   return (
     <section aria-labelledby="home-dividend-schedule" className="border border-hairline bg-surface p-5 shadow-card dark:border-zinc-800">
-      <div className="mb-3 flex items-baseline justify-between gap-3">
-        <h2 id="home-dividend-schedule" className="text-base font-bold text-ink">다가오는 배당 일정</h2>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 id="home-dividend-schedule" className="text-base font-bold tracking-tight text-ink">
+          다가오는 배당 일정
+          <InfoTip label="배당 일정 설명" align="start">설정의 배당 일정에 등록한 지급 예정일 가운데 가까운 3건입니다.</InfoTip>
+        </h2>
         <Link href="/dashboard/dividend" className="inline-flex min-h-10 items-center text-sm font-semibold text-brand hover:underline dark:text-indigo-300">
           배당 기록
         </Link>
       </div>
       {items.length === 0 ? (
-        <p className="text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-          등록한 배당 일정이 없습니다. 설정의 배당 일정에서 지급 예정일을 등록하면 여기에 가까운 순으로 보입니다.
-        </p>
+        <EmojiLine as="p" emoji="💸" size="sm" tone="mute">
+          <span>
+            등록한 배당 일정이 없습니다.{" "}
+            <Link href="/dashboard/settings" className="font-semibold text-brand underline-offset-2 hover:underline dark:text-indigo-300">
+              설정에서 등록
+            </Link>
+          </span>
+        </EmojiLine>
       ) : (
         <ul className="divide-y divide-hairline dark:divide-zinc-800">
           {items.map((item) => (

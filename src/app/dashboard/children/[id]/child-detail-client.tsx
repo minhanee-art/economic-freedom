@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ChildRow, ChildGiftRow, ChildHoldingRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
 import { GiftTaxGuide } from "@/components/gift/gift-tax-guide";
+import { EmojiLine, EmojiList, InfoTip } from "@/components/ui/info-tip";
 import { presentValueOfInstallments } from "@/lib/gift-tax";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { failureMessage } from "@/components/dashboard/inline-error";
@@ -210,10 +211,12 @@ function GiftsTab({
     <div className="space-y-4">
       {dialog}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold">입금/증여 기록 추가</h2>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          정부·지자체에서 자녀 계좌로 직접 지급되는 돈은 “정부지원금”으로 기록하면 증여 한도 계산과 신고 관리에서 제외됩니다.
-        </p>
+        <h2 className="text-sm font-semibold">
+          입금/증여 기록 추가
+          <InfoTip label="입금 유형 설명" align="start">
+            정부·지자체에서 자녀 계좌로 직접 지급되는 돈은 “정부지원금”으로 기록하면 증여 한도 계산과 신고 관리에서 제외됩니다.
+          </InfoTip>
+        </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
           <button
             onClick={() => setGiftType("lump")}
@@ -293,11 +296,10 @@ function GiftsTab({
         </div>
 
         {giftType === "government_support" && (
-          <div className="bg-canvas-soft p-3 text-xs text-success">
-            국가·지자체 지원금, 아동수당, 부모급여처럼 지급 주체가 부모가 아니고 자녀 계좌로 직접 들어온 돈은
-            증여로 보지 않는 별도 입금으로 관리합니다. 단, 부모가 받은 돈을 다시 자녀에게 넘기는 구조라면
-            사실관계에 따라 증여 이슈가 생길 수 있으니 증빙을 함께 보관하세요.
-          </div>
+          <EmojiList className="bg-canvas-soft p-3 text-xs text-success">
+            <EmojiLine emoji="🏛️">국가·지자체 지원금, 아동수당, 부모급여는 증여가 아닌 별도 입금으로 관리합니다.</EmojiLine>
+            <EmojiLine emoji="⚠️">부모가 받은 돈을 다시 자녀에게 넘기는 구조면 증여 이슈가 생길 수 있으니 증빙을 보관하세요.</EmojiLine>
+          </EmojiList>
         )}
 
         {giftType === "installment" && (
@@ -383,7 +385,7 @@ function GiftsTab({
                 </div>
 
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  증여계약서와 유기정기금 평가명세서에 옮겨 적을 값입니다. 할인평가액은 참고용 추정치이니 신고 전 홈택스 자동계산 결과와 맞는지 확인하세요.
+                  <span aria-hidden="true">📝 </span>증여계약서·평가명세서에 옮겨 적을 값입니다. 할인평가액은 참고용 추정치이니 신고 전 홈택스 자동계산과 맞는지 확인하세요.
                 </p>
               </div>
             )}
@@ -401,7 +403,7 @@ function GiftsTab({
       </div>
 
       {gifts.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">아직 입금/증여 기록이 없습니다.</p>
+        <EmojiLine emoji="🎁" as="p" className="justify-center py-8 text-sm text-zinc-500 dark:text-zinc-400">아직 입금/증여 기록이 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-2">
           {gifts.map((g) => (
@@ -600,7 +602,7 @@ function HoldingsTab({
       </div>
 
       {holdings.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">등록된 보유 종목이 없습니다.</p>
+        <EmojiLine emoji="💰" as="p" className="justify-center py-8 text-sm text-zinc-500 dark:text-zinc-400">등록된 보유 종목이 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-2">
           {holdings.map((h) => {

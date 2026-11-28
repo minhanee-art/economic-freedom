@@ -4,6 +4,7 @@
 // chat_id를 직접 입력하지 않는다: 봇에게 코드를 보낸 채팅만 연결되므로, 본인이 쓰는 채팅임이 확인된다.
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import Link from "next/link";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useCallback, useEffect, useState } from "react";
 
 type LinkStatus = {
@@ -134,14 +135,18 @@ export function TelegramLinkSection() {
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
           연결됨 · chat_id {status.chatIdMasked}
           {status.verifiedAt ? ` · ${formatDateTime(status.verifiedAt)} 확인` : ""}
-          <br />
-          대시보드의 수익률 리포트는 이 채팅으로만 전송됩니다.
+          <InfoTip label="리포트 전송 대상 설명" align="start">대시보드의 수익률 리포트는 이 채팅으로만 전송됩니다.</InfoTip>
         </p>
       ) : (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {status.needsRelink
-            ? "예전에 직접 입력한 chat_id는 본인 채팅인지 확인되지 않아 리포트를 보내지 않습니다. 아래에서 다시 연결해 주세요."
-            : "연결된 채팅이 없습니다. 연결 코드를 발급해 봇에게 보내면 그 채팅이 이 계좌에 연결됩니다."}
+          {status.needsRelink ? (
+            "예전에 직접 입력한 chat_id는 본인 채팅인지 확인되지 않아 리포트를 보내지 않습니다. 아래에서 다시 연결해 주세요."
+          ) : (
+            <>
+              연결된 채팅이 없습니다.
+              <InfoTip label="연결 방법 요약" align="start">연결 코드를 발급해 봇에게 보내면 그 채팅이 이 계좌에 연결됩니다.</InfoTip>
+            </>
+          )}
         </p>
       )}
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LINK_CODE_TTL_MINUTES } from "@/lib/telegram-link";
 import { doc } from "@/components/guide/public-site";
+import { EmojiLine } from "@/components/ui/info-tip";
 
 // 텔레그램 연결 안내 본문. 화면 이름·버튼 이름·시간·제한은 실제 코드에서 확인한 값이다.
 // - 설정 화면: src/components/settings/telegram-link-section.tsx
@@ -12,11 +13,14 @@ const heading = doc.h2;
 const bodyText = doc.p;
 const inlineLink = doc.link;
 
-function Bullets({ items }: { items: string[] }) {
+/** 이모지 한 개 + 한 줄 목록 — 문서 본문 글자 크기(16px)에 맞춘다. */
+function Lines({ emoji, items }: { emoji: string; items: string[] }) {
   return (
-    <ul className={doc.ul}>
+    <ul className="mt-4 space-y-2 text-base leading-7 text-ink break-keep dark:text-zinc-300">
       {items.map((item) => (
-        <li key={item}>{item}</li>
+        <EmojiLine key={item} emoji={emoji}>
+          {item}
+        </EmojiLine>
       ))}
     </ul>
   );
@@ -72,9 +76,10 @@ const troubleshooting = [
 export function TelegramGuide({ botUsername }: { botUsername: string | null }) {
   return (
     <>
-      <p className={bodyText}>
-        웹 설정에서 받은 연결 코드를 텔레그램 봇에 보내면, 그 채팅이 선택한 계좌에 연결됩니다. 연결은 웹에서만 할 수 있고, 모바일 앱에는 이 기능이 없습니다.
-      </p>
+      <ul className="mt-6 space-y-2 text-base leading-7 text-ink break-keep dark:text-zinc-300">
+        <EmojiLine emoji="🤖">웹 설정에서 받은 연결 코드를 텔레그램 봇에 보내면, 그 채팅이 선택한 계좌에 연결됩니다.</EmojiLine>
+        <EmojiLine emoji="💻">연결은 웹에서만 할 수 있고, 모바일 앱에는 이 기능이 없습니다.</EmojiLine>
+      </ul>
 
       <section>
         <h2 className={heading}>연결 방법</h2>
@@ -109,21 +114,26 @@ export function TelegramGuide({ botUsername }: { botUsername: string | null }) {
 
       <section>
         <h2 className={heading}>연결 해제</h2>
-        <p className={bodyText}>
-          설정의 &lsquo;텔레그램 연결&rsquo; 카드에서 &lsquo;연결 해제&rsquo;를 누르고 확인하면 해당 계좌의 채팅 연결과 아직 쓰지 않은 코드가 지워집니다. 이미 텔레그램으로 전송된 메시지는 서비스에서 삭제할 수 없으니, 필요하면 텔레그램에서 직접 지워 주세요.
-        </p>
+        <ul className="mt-4 space-y-2 text-base leading-7 text-ink break-keep dark:text-zinc-300">
+          <EmojiLine emoji="🔌">
+            설정의 &lsquo;텔레그램 연결&rsquo; 카드에서 &lsquo;연결 해제&rsquo;를 누르고 확인하면 해당 계좌의 채팅 연결과 아직 쓰지 않은 코드가 지워집니다.
+          </EmojiLine>
+          <EmojiLine emoji="🗑️">
+            이미 전송된 메시지는 서비스에서 삭제할 수 없으니, 필요하면 텔레그램에서 직접 지워 주세요.
+          </EmojiLine>
+        </ul>
       </section>
 
       <section>
         <h2 className={heading}>연결하면 받는 것</h2>
-        <Bullets items={receives} />
+        <Lines emoji="✅" items={receives} />
         <h3 className={doc.h3}>받지 않는 것</h3>
-        <Bullets items={doesNotReceive} />
+        <Lines emoji="🚫" items={doesNotReceive} />
       </section>
 
       <section>
         <h2 className={heading}>저장되는 정보</h2>
-        <Bullets items={stored} />
+        <Lines emoji="🗂️" items={stored} />
         <p className={bodyText}>
           자세한 처리 기준은{" "}
           <Link href="/privacy" className={inlineLink}>
@@ -135,14 +145,19 @@ export function TelegramGuide({ botUsername }: { botUsername: string | null }) {
 
       <section>
         <h2 className={heading}>자주 막히는 경우</h2>
-        <dl className="mt-4 space-y-6">
+        <div className="mt-4 divide-y divide-hairline border-y border-hairline dark:divide-zinc-800 dark:border-zinc-800">
           {troubleshooting.map((item) => (
-            <div key={item.q}>
-              <dt className={doc.strong}>{item.q}</dt>
-              <dd className="mt-1 text-base leading-7 text-ink break-keep dark:text-zinc-300">{item.a}</dd>
-            </div>
+            <details key={item.q} className="group">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand">
+                <span className={doc.strong}>{item.q}</span>
+                <svg aria-hidden="true" className="size-4 shrink-0 text-zinc-500 transition-transform group-open:rotate-180 dark:text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <p className="pb-4 text-base leading-7 text-ink break-keep dark:text-zinc-300">{item.a}</p>
+            </details>
           ))}
-        </dl>
+        </div>
       </section>
     </>
   );

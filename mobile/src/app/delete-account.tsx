@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Linking } from "react-native";
+import { Linking, StyleSheet, View } from "react-native";
 import { Text } from "@/components/AppText";
 import { deleteAccount, getPasswordStatus } from "@/api/auth";
 import { ApiError, webUrl } from "@/api/client";
@@ -10,7 +10,7 @@ import { Card } from "@/components/Card";
 import { TextField } from "@/components/Field";
 import { FormError } from "@/components/Parts";
 import { clearSession, handleUnauthorized, loadSession } from "@/storage/session";
-import { colors, type } from "@/styles/theme";
+import { colors, radius, spacing, type } from "@/styles/theme";
 import { confirmDestructive } from "@/utils/confirm";
 
 export default function DeleteAccountScreen() {
@@ -92,7 +92,11 @@ export default function DeleteAccountScreen() {
 
   return (
     <AppShell>
-      <Text style={[type.body, { color: colors.danger }]}>계정을 삭제하면 저장된 모든 데이터가 영구적으로 사라지며 복구할 수 없습니다.</Text>
+      {/* 위험은 색 하나로만 알리지 않는다 — 테두리 상자 + 굵은 첫 문장 + 무엇이 지워지는지 */}
+      <View style={styles.warning}>
+        <Text style={styles.warningTitle}>계정을 삭제하면 저장된 모든 데이터가 영구적으로 사라지며 복구할 수 없습니다.</Text>
+        <Text style={styles.warningBody}>계좌·종목·매수와 배당 기록·연금 설정이 함께 지워집니다.</Text>
+      </View>
 
       <Card title={hasPassword === null ? "본인 확인" : hasPassword === false ? "이메일 확인" : "비밀번호 확인"}>
         {hasPassword === null ? (
@@ -147,3 +151,16 @@ export default function DeleteAccountScreen() {
     </AppShell>
   );
 }
+
+const styles = StyleSheet.create({
+  warning: {
+    gap: spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.dangerLine,
+    backgroundColor: colors.dangerSoft,
+    padding: spacing.lg,
+  },
+  warningTitle: { ...type.body, fontWeight: "600", color: colors.danger },
+  warningBody: { ...type.label, color: colors.danger },
+});

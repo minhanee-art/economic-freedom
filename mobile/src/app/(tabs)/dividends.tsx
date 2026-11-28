@@ -6,6 +6,7 @@ import { AccountSwitcher } from "@/components/AccountSwitcher";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
 import { Card, Rows } from "@/components/Card";
+import { EmojiLine, InfoTip } from "@/components/InfoTip";
 import { ScreenTitle } from "@/components/Parts";
 import { PortfolioStatus } from "@/components/PortfolioStatus";
 import { usePortfolioSummary } from "@/hooks/usePortfolioSummary";
@@ -40,12 +41,15 @@ function DividendContent({ summary }: { summary: PortfolioSummary }) {
         <Text style={[type.label, styles.tabular]}>12개월로 나누면 월 {formatKRW(monthlyAverage)}</Text>
       </Card>
 
-      <Card title="월별 흐름">
+      <Card
+        title="월별 흐름"
+        info={<InfoTip label="월별 흐름 설명">가로축은 월, 세로축은 금액(원)입니다. 막대를 누르면 그 달 금액을 봅니다.</InfoTip>}
+      >
         <MonthlyBars months={summary.dividends} />
       </Card>
 
       <Card title="예정 일정">
-        {calendar.length === 0 ? <Text style={[type.body, styles.muted]}>예정된 배당 일정이 없습니다.</Text> : null}
+        {calendar.length === 0 ? <EmojiLine emoji="📅">예정된 배당 일정이 없습니다.</EmojiLine> : null}
         <Rows>
           {calendar.slice(0, 5).map((item) => (
             <View key={item.id} style={styles.calendarRow}>
@@ -78,7 +82,7 @@ function MonthlyBars({ months }: { months: DividendMonth[] }) {
   const picked = months.find((m) => m.month === selected) ?? null;
 
   if (max <= 0) {
-    return <Text style={[type.body, styles.muted]}>월별 배당 기록이나 예정 금액이 아직 없습니다.</Text>;
+    return <EmojiLine emoji="💸">배당 기록·예정 금액이 아직 없습니다.</EmojiLine>;
   }
 
   const step = niceAxisStep(max, 3);
@@ -139,13 +143,11 @@ function MonthlyBars({ months }: { months: DividendMonth[] }) {
           </Text>
         ))}
       </View>
-      <Text style={type.caption}>가로축은 월, 세로축은 금액(원)입니다. 막대를 누르면 그 달 금액을 봅니다.</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  muted: { color: colors.inkMuted },
   tabular: { fontVariant: ["tabular-nums"] },
   chartBlock: { gap: spacing.sm },
   legend: { gap: 2 },

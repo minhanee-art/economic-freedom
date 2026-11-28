@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from "react-native";
 import { Text } from "@/components/AppText";
 import { Button } from "@/components/Button";
 import { EmptyHoldings } from "@/components/EmptyHoldings";
+import { InfoTip } from "@/components/InfoTip";
 import { colors, radius, spacing, touchTarget, type } from "@/styles/theme";
 import type { AccountSummary, Holding } from "@/types";
 import { splitHoldingsForPicker, visibleNotHeld } from "@/utils/holdings";
@@ -15,12 +16,14 @@ export function RecordAccountBanner({ account, label = "기록할 계좌" }: { a
   const owner = OWNER_LABELS[account.ownerType];
   return (
     <View style={styles.banner} accessibilityRole="summary">
-      <Text style={styles.bannerLabel}>{label}</Text>
+      <View style={styles.bannerHead}>
+        <Text style={styles.bannerLabel}>{label}</Text>
+        <InfoTip label="계좌 바꾸기 안내">계좌를 바꾸려면 이전 화면에서 계좌를 선택하세요.</InfoTip>
+      </View>
       <Text style={type.heading}>
         {account.name}
         {owner ? ` · ${owner}` : ""}
       </Text>
-      <Text style={type.caption}>계좌를 바꾸려면 이전 화면에서 계좌를 선택하세요.</Text>
     </View>
   );
 }
@@ -80,7 +83,7 @@ export function HoldingPicker({
           {error}
         </Text>
       ) : null}
-      {held.length === 0 ? <Text style={type.caption}>보유 수량이 있는 종목이 없어 등록된 종목을 모두 표시합니다.</Text> : null}
+      {held.length === 0 ? <Text style={type.caption}>보유 수량이 있는 종목이 없어 모두 표시합니다.</Text> : null}
       {notHeld.length > 0 && held.length > 0 ? (
         <Button
           variant="link"
@@ -131,6 +134,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     padding: spacing.lg,
   },
+  bannerHead: { flexDirection: "row", alignItems: "center" },
   bannerLabel: { ...type.label, color: colors.primary },
   field: { gap: spacing.sm },
   fieldLabel: { ...type.label, color: colors.ink },

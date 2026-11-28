@@ -249,7 +249,8 @@ let freshPickedName = "";
 async function pickerState() {
   // 계좌 배너는 요약 응답이 도착한 뒤에 그려진다 — 종목 목록도 같은 응답이므로 이를 조건으로 기다린다(요약을 받기 전에는 종목 목록을 그리지 않는다).
   await expectText("기록할 계좌");
-  await expectText("이전 화면에서 계좌를 선택하세요");
+  // 계좌 바꾸기 안내는 배너의 ⓘ 말풍선으로 옮겼다 — 버튼(접근성 이름)이 그려졌는지로 배너 렌더를 확인한다.
+  await visible(page.getByRole("button", { name: "계좌 바꾸기 안내", exact: true })).first().waitFor({ state: "visible", timeout: 30000 });
   return page.evaluate(() => {
     const shown = (el) => el.offsetParent !== null;
     const buttons = [...document.querySelectorAll('[role="button"], [role="radio"]')].filter(shown);
@@ -616,7 +617,7 @@ await step("연금 탭: 요약 표시와 입력 없음 안내", async () => {
   await expectText("연금저축·IRP·DC·ISA 계좌가 없어 계산하지 않았습니다");
   await expectText("은퇴 목표가 모두 입력되지 않아 계산하지 않았습니다");
   await expectText("입력이 필요한 항목");
-  await expectText("웹에서 국민연금·퇴직연금·연금보험 예상액을 입력하면");
+  await expectText("국민연금·퇴직연금·연금보험 예상액은 웹에서 입력합니다");
   await shot("retirement");
 });
 

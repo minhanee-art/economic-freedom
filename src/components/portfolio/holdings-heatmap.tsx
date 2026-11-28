@@ -184,7 +184,16 @@ export function HoldingsHeatmap({ holdings }: { holdings: HoldingWithPnL[] }) {
           className="mt-1 flex min-h-11 w-full items-center justify-between gap-2 border border-hairline px-3 text-left text-xs font-medium text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:border-zinc-800"
         >
           <span>{listOpen ? "종목별 목록 접기" : `종목별 목록 펼치기 · ${items.length}종목`}</span>
-          <span aria-hidden>{listOpen ? "▲" : "▼"}</span>
+          <svg
+            aria-hidden="true"
+            className={`h-4 w-4 shrink-0 text-zinc-500 dark:text-zinc-400 ${listOpen ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
       )}
 

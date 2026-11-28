@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { formatKRWFull, formatKRW, missingFields } from "@/lib/utils";
 import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 
 interface HoldingOption {
   id: string;
@@ -155,7 +156,7 @@ export function DividendClient({ holdings, initialDividends }: Props) {
 
       {/* 입력 폼 */}
       <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
-        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">배당금 추가</h2>
+        <h2 className="text-base font-bold tracking-tight text-ink">배당금 추가</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
@@ -228,20 +229,21 @@ export function DividendClient({ holdings, initialDividends }: Props) {
       {/* 월별 차트 */}
       {monthlyData.length > 0 && (
         <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card transition-shadow hover:shadow-float">
-          <h2 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">월별 배당금</h2>
+          <h2 className="mb-3 text-base font-bold tracking-tight text-ink">월별 배당금</h2>
           <LazyDividendBarChart data={monthlyData} />
         </div>
       )}
 
       {/* 배당 내역 리스트 */}
       <div>
-        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100 mb-3">
+        <h2 className="mb-3 text-base font-bold tracking-tight text-ink">
           배당 내역 ({dividends.length})
         </h2>
         {dividends.length === 0 ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 py-8 text-center">
-            아직 배당 기록이 없습니다.
-          </p>
+          <ul className="mx-auto w-fit space-y-2 py-8 text-sm text-zinc-500 dark:text-zinc-400">
+            <EmojiLine emoji="💸">아직 배당 기록이 없습니다</EmojiLine>
+            <EmojiLine emoji="📅">위에서 직접 추가하거나 분배금을 자동조회하세요</EmojiLine>
+          </ul>
         ) : (
           <div className="space-y-2">
             {dividends.map((d) => (
@@ -358,10 +360,12 @@ function DividendAutoFetch({ holdings, onDone }: AutoFetchProps) {
 
   return (
     <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-3 shadow-card transition-shadow hover:shadow-float">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-ink dark:text-zinc-100">분배금 자동조회</h2>
-        <span className="text-xs text-ink-mute">보유 종목 × 주당분배금</span>
-      </div>
+      <h2 className="text-base font-bold tracking-tight text-ink">
+        분배금 자동조회
+        <InfoTip label="분배금 자동조회 설명" align="start">
+          종목별 주당분배금 이력에 기록한 보유 수량을 곱해 배당으로 저장합니다. 같은 날짜는 갱신되며, 실제 입금액과 다를 수 있는 참고용 값입니다.
+        </InfoTip>
+      </h2>
 
       {holdings.length === 0 ? (
         <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">보유 종목이 없습니다.</p>

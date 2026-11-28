@@ -3,6 +3,7 @@
 
 import { InlineError, failureMessage } from "@/components/dashboard/inline-error";
 import { DialogFrame } from "@/components/dashboard/confirm-dialog";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { CSSProperties } from "react";
@@ -460,7 +461,7 @@ export function BuyClient({
 
       {/* 투자금액 + 수수료 설정 */}
       <div className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-4 shadow-card transition-shadow hover:shadow-float">
-        <h2 className="text-lg font-bold text-ink dark:text-zinc-100">이번 달 적립금</h2>
+        <h2 className="text-base font-bold tracking-tight text-ink dark:text-zinc-100">이번 달 적립금</h2>
         <div className="relative">
           <input
             type="text"
@@ -516,7 +517,7 @@ export function BuyClient({
           onClick={() => setShowThemeEditor((v) => !v)}
           className="flex w-full items-center justify-between"
         >
-          <h2 className="text-lg font-bold text-ink dark:text-zinc-100">테마별 비중 조정</h2>
+          <h2 className="text-base font-bold tracking-tight text-ink dark:text-zinc-100">테마별 비중 조정</h2>
           <span className="text-xs font-medium text-indigo-500 dark:text-indigo-300">{showThemeEditor ? "닫기" : "열기"}</span>
         </button>
 
@@ -573,9 +574,9 @@ export function BuyClient({
                 </div>
               );
             })}
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              테마 비중을 조정하면 그 테마 안의 종목별 비중이 기존 비율대로 나뉘어 저장됩니다. 종목별 세부 비중은 설정 페이지에서 조정하세요.
-            </p>
+            <EmojiLine as="p" emoji="🎯" className="text-xs text-zinc-500 dark:text-zinc-400">
+              테마 안 종목은 기존 비율대로 나뉘어 저장됩니다. 세부 비중은 설정 페이지에서 조정하세요.
+            </EmojiLine>
           </div>
         )}
       </div>
@@ -588,9 +589,14 @@ export function BuyClient({
             <div className="mb-4 border border-hairline bg-white p-4 shadow-card dark:border-zinc-800 dark:bg-zinc-900">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold text-ink dark:text-zinc-100">연간 배분 계획</p>
+                  <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+                    연간 배분 계획
+                    <InfoTip label="연간 배분 계획 설명" align="start">
+                      1주 단위로 계산해 종목별 연간 수량을 정수로 맞춥니다.
+                    </InfoTip>
+                  </h3>
                   <p className="mt-0.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-                    월 {formatKRWFull(budget)} × 12개월 = {formatKRWFull(annualPlan.annualBudget)} 기준 · 1주 단위로 계산해 종목별 연간 수량을 정수로 맞춤
+                    월 {formatKRWFull(budget)} × 12개월 = {formatKRWFull(annualPlan.annualBudget)} 기준
                   </p>
                 </div>
                 <button
@@ -686,7 +692,7 @@ export function BuyClient({
           )}
 
           <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-sm font-semibold text-ink dark:text-zinc-100">
+            <h3 className="text-base font-bold tracking-tight text-ink dark:text-zinc-100">
               적립 배분 계산 (<span className="tabular-nums">{buyItems.length}</span>종목)
             </h3>
             <div className="flex flex-wrap gap-1.5" aria-label="적립 배분 계산 정렬">
@@ -712,6 +718,9 @@ export function BuyClient({
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-semibold text-caution">
                   적립 종목 <span className="tabular-nums">{cycleItems.length}</span>개
+                  <InfoTip label="적립 종목 설명" align="start">
+                    월 적립금 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를 우선 편성하고, 나머지 달은 건너뜁니다.
+                  </InfoTip>
                 </p>
                 <p className="text-xs font-semibold tabular-nums text-caution">
                   이번 달 도래 <span>{dueCycleCount}</span>개
@@ -742,10 +751,6 @@ export function BuyClient({
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-xs leading-relaxed text-caution">
-                월 적립금 기준 1주 가격이 배분액보다 커서 매달은 살 수 없는 종목입니다. 주기가 도래한 달에만 1주를
-                우선 편성하고, 나머지 달은 건너뜁니다.
-              </p>
             </div>
           )}
           <div className="space-y-2">

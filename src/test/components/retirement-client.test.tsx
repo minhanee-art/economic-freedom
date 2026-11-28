@@ -64,7 +64,7 @@ test("세금 화면에 참고용 문구와 예상 공제액을 보여준다", ()
   assert.ok(screen.getAllByText(/참고용이며 실제 세액과 다를 수 있습니다/).length >= 1);
   // 400만원 × 16.5%
   assert.ok(screen.getByText("660,000원"));
-  assert.ok(screen.getByText(/내 연금 알아보기/));
+  assert.ok(screen.getByText(/조회처/));
   assert.ok(screen.getByText(/목표 월 생활비·은퇴 나이·출생연도를 저장하면/));
 });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { EmojiLine } from "@/components/ui/info-tip";
 import { ACCOUNT_TYPE_LABELS, isPensionAccountType } from "@/lib/account-types";
 import { ACCOUNT_OWNER_LABELS, computeFamilyTaxCredit, normalizeAccountOwner } from "@/lib/pension-planning";
 import type { PensionRuleSet, SalaryBracket } from "@/lib/pension-rules";
@@ -113,7 +114,9 @@ export function ContributionSection({
       </fieldset>
 
       {targetAccounts.length === 0 ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">연금저축·IRP·DC·ISA 유형 계좌가 없습니다. 아래 계좌 세제 유형에서 지정하세요.</p>
+        <EmojiLine emoji="🏦" as="p" className="text-sm text-zinc-500 dark:text-zinc-400">
+          연금저축·IRP·DC·ISA 계좌가 없습니다. 아래 &lsquo;계좌 세제 유형&rsquo;에서 지정하세요.
+        </EmojiLine>
       ) : (
         <ul className="space-y-2">
           {targetAccounts.map((account) => {

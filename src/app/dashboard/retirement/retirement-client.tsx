@@ -9,6 +9,7 @@ import { IncomeSourcesSection } from "@/components/pension/income-sources-sectio
 import { RetirementGoalSection } from "@/components/pension/retirement-goal-section";
 import { sendJson } from "@/components/pension/ui";
 import { getSpousePresence } from "@/lib/spouse-presence";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface Props {
   year: number;
@@ -44,12 +45,12 @@ export function RetirementClient({ year, initialAccounts, initialContributions, 
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-ink">연금 설계</h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+      <h1 className="text-xl font-bold tracking-tight text-ink">
+        연금 설계
+        <InfoTip label="연금 설계 화면 설명" align="start">
           은퇴 목표와 예상 연금으로 나이별 월 현금흐름을 계산하고, 올해 연금계좌 납입과 세액공제를 적습니다.
-        </p>
-      </div>
+        </InfoTip>
+      </h1>
 
       <RetirementGoalSection
         year={year}

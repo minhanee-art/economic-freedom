@@ -14,6 +14,7 @@ import { useMemo } from "react";
 import { PasswordSection } from "@/components/settings/password-section";
 import { AccountDeleteSection } from "@/components/settings/account-delete-section";
 import { TelegramLinkSection } from "@/components/settings/telegram-link-section";
+import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 
 type HoldingGroupBy = "none" | "category" | "sub_category";
 
@@ -324,7 +325,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <h1 className="text-xl font-bold tracking-tight text-ink">설정</h1>
       {error && <InlineError message={error.message} onRetry={error.retry} onDismiss={() => setError(null)} />}
       {/* 저장 상태 토스트 */}
@@ -339,7 +340,12 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
         <h2 className="text-sm font-semibold">프로필</h2>
 
         <div>
-          <label htmlFor="settings-email" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이메일 <span className="text-zinc-500 dark:text-zinc-400">({hasGoogle ? "Google 계정 이메일, 변경 불가" : "로그인 아이디, 변경 불가"})</span></label>
+          <div className="mb-1 flex items-center">
+            <label htmlFor="settings-email" className="text-xs text-zinc-500 dark:text-zinc-400">이메일</label>
+            <InfoTip label="이메일 설명" align="start">
+              {hasGoogle ? "Google 계정 이메일입니다." : "로그인 아이디로 쓰는 이메일입니다."} 여기서는 바꿀 수 없습니다.
+            </InfoTip>
+          </div>
           <input
             id="settings-email"
             type="text"
@@ -547,8 +553,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 감정분석 종목 watchlist */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">뉴스 요약 받을 종목 ({watchlist.length})</h2>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:30 KST 텔레그램 전송</span>
+          <h2 className="text-sm font-semibold">
+            뉴스 요약 받을 종목 ({watchlist.length})
+            <InfoTip label="뉴스 요약 종목 설명" align="start">매일 08:30(KST)에 이 종목들의 뉴스 요약을 텔레그램으로 보냅니다.</InfoTip>
+          </h2>
         </div>
 
         {/* 추가 폼 */}
@@ -594,7 +602,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 종목 리스트 */}
         {watchlist.length === 0 ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">뉴스 요약을 받을 종목을 추가해 주세요.</p>
+          <EmojiLine emoji="🔔" as="p" className="justify-center py-2 text-xs text-zinc-500 dark:text-zinc-400">뉴스 요약을 받을 종목을 추가해 주세요.</EmojiLine>
         ) : (
           <ul className="space-y-1.5">
             {watchlist.map((w) => (
@@ -623,8 +631,10 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
       {/* 배당 캘린더 */}
       <section className="border border-hairline dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-card space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">배당 일정 ({calendar.length})</h2>
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">매일 08:00 KST 텔레그램 전송</span>
+          <h2 className="text-sm font-semibold">
+            배당 일정 ({calendar.length})
+            <InfoTip label="배당 일정 설명" align="start">매일 08:00(KST)에 다가오는 일정을 텔레그램으로 보냅니다.</InfoTip>
+          </h2>
         </div>
 
         {/* 추가 폼 */}
@@ -679,7 +689,7 @@ export function SettingsClient({ profile, holdings: initialHoldings, watchlist: 
 
         {/* 일정 리스트 */}
         {calendar.length === 0 ? (
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center py-2">배당 일정을 추가해 주세요.</p>
+          <EmojiLine emoji="📅" as="p" className="justify-center py-2 text-xs text-zinc-500 dark:text-zinc-400">배당 일정을 추가해 주세요.</EmojiLine>
         ) : (
           <ul className="space-y-1.5">
             {calendar.map((c) => {

@@ -127,7 +127,7 @@ test("히트맵: 2% 미만 종목은 '기타 N종목' 한 칸으로 묶고, 묶�
     render(<HoldingsHeatmap holdings={uneven} />);
     // 1.5·1·0.6·0.4 → 4종목
     const other = screen.getByLabelText(/^기타 4종목 비중 3\.5%/);
-    assert.match(other.className, /bg-zinc-200/);
+    assert.match(other.className, /bg-heat-flat/);
     const list = screen.getByRole("list", { name: "종목별 비중·수익률" });
     for (const n of ["종목10", "종목11", "종목12", "종목13"]) assert.match(list.textContent ?? "", new RegExp(n));
     assert.match(list.textContent ?? "", /0\.4%/);

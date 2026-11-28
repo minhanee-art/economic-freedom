@@ -195,7 +195,7 @@ export function EmojiLine({
       >
         {emoji}
       </Text>
-      <Text style={[type.body, text, align === "center" ? styles.emojiTextCenter : styles.emojiText]}>{children}</Text>
+      <Text style={[type.body, text, align === "center" ? styles.emojiTextCenter : trailing ? styles.emojiTextWithTip : styles.emojiText]}>{children}</Text>
       {trailing}
     </View>
   );
@@ -251,5 +251,7 @@ const styles = StyleSheet.create({
   withTip: { alignItems: "center", minHeight: touchTarget },
   emoji: { width: 22, textAlign: "center" },
   emojiText: { flex: 1 },
+  // ⓘ 가 줄 끝(오른쪽 끝)이 아니라 글자 바로 뒤에 붙게
+  emojiTextWithTip: { flexShrink: 1 },
   emojiTextCenter: { flexShrink: 1, textAlign: "center" },
 });

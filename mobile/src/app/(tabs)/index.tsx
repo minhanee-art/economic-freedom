@@ -141,7 +141,7 @@ function PensionOverview({ pension, portfolio }: { pension: PensionSummary; port
         aside={cashflow ? `${cashflow.atRetirement.age}세` : undefined}
         info={
           cashflow ? (
-            <InfoTip label="은퇴 시점 예상 월 현금흐름 설명">공적·퇴직·개인연금과 배당을 합친 추정값입니다. 항목별 금액은 연금 탭에 있습니다.</InfoTip>
+            <InfoTip label="은퇴 시점 예상 월 현금흐름 설명" side="top">공적·퇴직·개인연금과 배당을 합친 추정값입니다. 항목별 금액은 연금 탭에 있습니다.</InfoTip>
           ) : undefined
         }
       >

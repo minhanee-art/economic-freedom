@@ -43,7 +43,7 @@ function DividendContent({ summary }: { summary: PortfolioSummary }) {
 
       <Card
         title="월별 흐름"
-        info={<InfoTip label="월별 흐름 설명">가로축은 월, 세로축은 금액(원)입니다. 막대를 누르면 그 달 금액을 봅니다.</InfoTip>}
+        info={<InfoTip label="월별 흐름 설명" side="top">가로축은 월, 세로축은 금액(원)입니다. 막대를 누르면 그 달 금액을 봅니다.</InfoTip>}
       >
         <MonthlyBars months={summary.dividends} />
       </Card>

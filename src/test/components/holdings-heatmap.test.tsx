@@ -35,6 +35,11 @@ function resetArea() {
 }
 after(resetArea);
 
+// 목록은 기본으로 접혀 있다. 펼침 버튼을 눌러 연다
+function openList() {
+  fireEvent.click(screen.getByRole("button", { name: /^종목별 목록 펼치기/ }));
+}
+
 function make(overrides: Partial<HoldingWithPnL>): HoldingWithPnL {
   return {
     id: "h1",
@@ -98,6 +103,7 @@ test("히트맵: 칸 색은 :root(라이트)와 .dark(다크)에서 따로 정�
 
 test("히트맵: 종목별 비중·수익률은 아래 목록에 이름·비중·수익률을 표시한다", () => {
   render(<HoldingsHeatmap holdings={holdings} />);
+  openList();
   const list = screen.getByRole("list", { name: "종목별 비중·수익률" });
   assert.match(list.textContent ?? "", /작은종목/);
   assert.match(list.textContent ?? "", /2\.0%/);
@@ -139,6 +145,7 @@ test("히트맵: 2% 미만 종목은 '기타 N종목' 한 칸으로 묶고, 묶�
   setArea(1030, 224);
   try {
     render(<HoldingsHeatmap holdings={uneven} />);
+    openList();
     // 1.5·1·0.6·0.4 → 4종목
     const other = screen.getByLabelText(/^기타 4종목 비중 3\.5%/);
     assert.match(other.className, /bg-heat-flat/);
@@ -166,7 +173,8 @@ test("히트맵: 넓은 칸은 이름+수익률 두 줄, 좁은 칸은 수익률
   setArea(318, 192);
   try {
     render(<HoldingsHeatmap holdings={uneven} />);
-    const tiles = screen.getAllByRole("button");
+    openList();
+    const tiles = screen.getAllByRole("button").filter((b) => b.hasAttribute("data-heat-tile"));
     const withName = tiles.filter((t) => /종목\d+/.test(t.textContent ?? "") && t.textContent !== "");
     const onlyPct = tiles.filter((t) => /^[+-]\d+\.\d+%$/.test(t.textContent ?? ""));
     const empty = tiles.filter((t) => (t.textContent ?? "") === "");
@@ -251,8 +259,9 @@ test("히트맵: 이름이 칸 안에 없는 종목(수익률만 나오는 칸 �
     setArea(w, h);
     try {
       render(<HoldingsHeatmap holdings={uneven} />);
+      openList();
       const list = screen.getByRole("list", { name: "종목별 비중·수익률" }).textContent ?? "";
-      for (const btn of screen.getAllByRole("button")) {
+      for (const btn of screen.getAllByRole("button").filter((b) => b.hasAttribute("data-heat-tile"))) {
         const label = btn.getAttribute("aria-label") ?? "";
         const name = label.split(" 비중")[0];
         if (name.startsWith("기타")) continue;
@@ -270,6 +279,7 @@ test("히트맵: 기타 칸은 한 줄 자리에 이름, 범례에 기타 항목
   setArea(1030, 224);
   try {
     render(<HoldingsHeatmap holdings={uneven} />);
+    openList();
     const other = screen.getByLabelText(/^기타 4종목/);
     assert.ok((other.textContent ?? "").includes("기타 4종목"));
     // 글자가 있는 기타 칸에는 빗금을 두지 않는다(글자가 깔끔하게 읽히도록)
@@ -297,7 +307,10 @@ test("히트맵: 칸은 대시보드의 44px 최소 크기 규칙에서 빠진�
   const css = readFileSync("src/app/globals.css", "utf8");
   assert.match(css, /#main-content :is\(button[^{]*\):not\(\.sr-only, \[data-heat-tile\]\)/);
   render(<HoldingsHeatmap holdings={holdings} />);
-  for (const b of screen.getAllByRole("button")) assert.ok(b.hasAttribute("data-heat-tile"));
+  // 칸이 아닌 버튼(목록 펼침)은 44px 규칙을 그대로 받는다
+  for (const b of screen.getAllByRole("button")) {
+    if (!b.hasAttribute("data-heat-tile")) assert.match(b.className, /min-h-11/);
+  }
 });
 
 test("히트맵: 고른 종목이 값이 줄어 기타로 묶이면 선택을 지운다", () => {
@@ -327,6 +340,70 @@ test("히트맵: 글자가 없는 기타 칸에는 빗금으로 보합 칸과 �
   }
 });
 
+test("히트맵: 목록은 기본으로 접혀 있고 종목 수가 보인다(측정 전후로 높이가 같다)", () => {
+  const heights: (string | undefined)[] = [];
+  for (const [w, h] of [[0, 0], [318, 192], [1030, 224]]) {
+    setArea(w, h);
+    try {
+      render(<HoldingsHeatmap holdings={uneven} />);
+      assert.equal(screen.queryByRole("list", { name: "종목별 비중·수익률" }), null);
+      const toggle = screen.getByRole("button", { name: "종목별 목록 펼치기 · 14종목" });
+      assert.equal(toggle.getAttribute("aria-expanded"), "false");
+      heights.push(toggle.className);
+    } finally {
+      resetArea();
+      cleanup();
+    }
+  }
+  assert.ok(heights.every((c) => c === heights[0]));
+});
+
+test("히트맵: 펼침 버튼으로 목록을 펼치고 다시 접는다(aria-expanded·aria-controls)", () => {
+  render(<HoldingsHeatmap holdings={uneven} />);
+  const toggle = screen.getByRole("button", { name: /^종목별 목록 펼치기/ });
+  fireEvent.click(toggle);
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+  assert.equal(toggle.textContent?.includes("종목별 목록 접기"), true);
+  const list = screen.getByRole("list", { name: "종목별 비중·수익률" });
+  assert.equal(toggle.getAttribute("aria-controls"), list.id);
+  assert.equal(list.querySelectorAll("li").length, 14);
+  fireEvent.click(toggle);
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(screen.queryByRole("list", { name: "종목별 비중·수익률" }), null);
+});
+
+test("히트맵: 범례는 접혀 있어도 보인다", () => {
+  setArea(1030, 224);
+  try {
+    render(<HoldingsHeatmap holdings={uneven} />);
+    assert.ok(screen.getByText("+10% 이상"));
+    assert.ok(screen.getByText(/기타\(2% 미만 묶음/));
+  } finally {
+    resetArea();
+  }
+});
+
+test("히트맵: 접힌 채 기타 칸을 누르면 목록을 펼치라는 안내가 나오고(자동으로 펼치지 않는다), 펼치면 안내가 바뀐다", () => {
+  setArea(1030, 224);
+  try {
+    render(<HoldingsHeatmap holdings={uneven} />);
+    fireEvent.click(screen.getByLabelText(/^기타 4종목/));
+    assert.ok(screen.getByText(/'종목별 목록 펼치기'를 눌러/));
+    assert.equal(screen.queryByRole("list", { name: "종목별 비중·수익률" }), null);
+    openList();
+    assert.ok(screen.getByText(/'· 기타' 표시로/));
+    assert.equal(screen.queryByText(/'종목별 목록 펼치기'를 눌러/), null);
+  } finally {
+    resetArea();
+  }
+});
+
+test("히트맵: 일반 칸을 눌렀을 때는 목록 안내가 나오지 않는다", () => {
+  render(<HoldingsHeatmap holdings={holdings} />);
+  fireEvent.click(screen.getByLabelText(/^KODEX 200 비중/));
+  assert.equal(screen.queryByText(/묶인 종목은/), null);
+});
+
 test("히트맵: 아래 목록은 화면 크기 측정과 무관하다(측정 전후로 아래 내용이 밀리지 않도록)", () => {
   const listText = () => screen.getByRole("list", { name: "종목별 비중·수익률" }).textContent;
   const texts: (string | null)[] = [];
@@ -334,6 +411,7 @@ test("히트맵: 아래 목록은 화면 크기 측정과 무관하다(측정 �
     setArea(w, h);
     try {
       render(<HoldingsHeatmap holdings={uneven} />);
+      openList();
       texts.push(listText());
       // 모든 종목이 목록에 있다
       const names = Array.from(screen.getByRole("list", { name: "종목별 비중·수익률" }).querySelectorAll("li")).map(

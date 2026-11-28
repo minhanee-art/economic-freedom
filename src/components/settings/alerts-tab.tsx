@@ -286,9 +286,12 @@ export function AlertsTab({ watchlist: initialWatchlist, dividendCalendar: initi
             {calendar.map((c) => (
               <li key={c.id} className="flex items-center gap-2 border border-hairline dark:border-zinc-800 bg-canvas-soft dark:bg-zinc-800/50 px-3 py-2">
                 <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400 w-20 shrink-0">{c.date}</span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400 w-16 shrink-0">{typeLabel[c.type] ?? c.type}</span>
-                <span className="min-w-0 flex-1 text-sm truncate" title={c.stock}>{c.stock}</span>
-                {c.note && <span className="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-25">{c.note}</span>}
+                <span className="text-xs text-zinc-500 dark:text-zinc-400 w-12 shrink-0">{typeLabel[c.type] ?? c.type}</span>
+                {/* 종목명 아래에 메모 — 폰 폭에서 한 줄에 다 넣으면 종목명이 한 글자로 줄어든다 */}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm" title={c.stock}>{c.stock}</span>
+                  {c.note && <span className="block truncate text-xs text-zinc-500 dark:text-zinc-400" title={c.note}>{c.note}</span>}
+                </span>
                 <button
                   type="button"
                   onClick={() => handleDeleteCalendar(c.id)}

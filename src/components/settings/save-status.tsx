@@ -31,7 +31,8 @@ export function SaveButton({ state, label, testId }: { state: SaveState; label: 
 
 export function SaveMessage({ state }: { state: SaveState }) {
   return (
-    <p aria-live="polite" className="min-h-5 text-xs">
+    // 알림 자리는 항상 두되(aria-live) 비어 있을 때는 자리를 차지하지 않는다
+    <p aria-live="polite" className={state.kind === "done" || state.kind === "error" ? "text-xs" : "sr-only"}>
       {state.kind === "done" && <span role="status" className="text-success">{state.message}</span>}
       {state.kind === "error" && <span role="alert" className="text-danger">{state.message}</span>}
     </p>

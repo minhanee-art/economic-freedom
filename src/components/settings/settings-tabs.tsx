@@ -72,7 +72,7 @@ export function SettingsTabList({ value, onChange }: { value: SettingsTabId; onC
               onClick={() => onChange(tab.id)}
               onKeyDown={(event) => move(event, index)}
               className={cn(
-                "-mb-px h-11 flex-1 whitespace-nowrap border-b-2 px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-none sm:px-4",
+                "-mb-px h-11 grow whitespace-nowrap border-b-2 px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand sm:flex-none sm:px-4",
                 selected
                   ? "border-brand text-brand dark:text-indigo-300"
                   : "border-transparent text-zinc-600 hover:text-ink dark:text-zinc-400"

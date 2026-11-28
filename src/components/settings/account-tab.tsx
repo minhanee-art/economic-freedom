@@ -98,7 +98,8 @@ export function AccountTab({ email, initialDisplayName, hasGoogle, hasPassword, 
           </dd>
           </div>
         </dl>
-        <p aria-live="polite" className="min-h-5 text-xs text-success">{copied}</p>
+        {/* 알림 자리는 항상 두되(aria-live) 비어 있을 때는 자리를 차지하지 않는다 */}
+        <p aria-live="polite" className={copied ? "text-xs text-success" : "sr-only"}>{copied}</p>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-3 dark:border-zinc-800">
           <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">이 기기에서 로그아웃합니다. 기록은 그대로 남습니다.</p>
           <button type="button" onClick={handleLogout} className={secondaryButtonClass}>

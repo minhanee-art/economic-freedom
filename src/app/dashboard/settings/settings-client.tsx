@@ -54,6 +54,17 @@ export function SettingsClient({ profile, holdings, watchlist, dividendCalendar,
     window.history.pushState(null, "", `${url.pathname}${url.search}`);
   }, []);
 
+  // 딥링크 앵커(예: ?tab=alerts#dividend-calendar): 화면이 loading.tsx 뒤에 스트리밍돼 브라우저 기본 해시 스크롤이 빗나가므로
+  // 그려진 뒤 직접 옮긴다. 늦게 그려지는 칸(텔레그램·비밀번호)이 자리를 민 뒤 한 번 더 맞춘다.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    const go = () => document.getElementById(id)?.scrollIntoView({ block: "start" });
+    go();
+    const timer = setTimeout(go, 600);
+    return () => clearTimeout(timer);
+  }, [tab]);
+
   const [saveStatus, setSaveStatus] = useState("");
   const [error, setError] = useState<SettingsError | null>(null);
   const { confirm, dialog } = useConfirmDialog();

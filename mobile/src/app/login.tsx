@@ -1,7 +1,6 @@
 import { Link, router } from "expo-router";
 import { useRef, useState } from "react";
 import { type TextInput } from "react-native";
-import { Text } from "@/components/AppText";
 import { loginWithEmail } from "@/api/auth";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/Button";
@@ -10,7 +9,6 @@ import { TextField } from "@/components/Field";
 import { EmojiLine, InfoTip } from "@/components/InfoTip";
 import { FormError, ScreenTitle } from "@/components/Parts";
 import { saveSession } from "@/storage/session";
-import { type } from "@/styles/theme";
 
 type Errors = { email?: string; password?: string };
 

@@ -211,7 +211,7 @@ function GiftsTab({
     <div className="space-y-4">
       {dialog}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold">
+        <h2 className="text-base font-bold tracking-tight">
           입금/증여 기록 추가
           <InfoTip label="입금 유형 설명" align="start">
             정부·지자체에서 자녀 계좌로 직접 지급되는 돈은 “정부지원금”으로 기록하면 증여 한도 계산과 신고 관리에서 제외됩니다.
@@ -297,8 +297,8 @@ function GiftsTab({
 
         {giftType === "government_support" && (
           <EmojiList className="bg-canvas-soft p-3 text-xs text-success">
-            <EmojiLine emoji="🏛️">국가·지자체 지원금, 아동수당, 부모급여는 증여가 아닌 별도 입금으로 관리합니다.</EmojiLine>
-            <EmojiLine emoji="⚠️">부모가 받은 돈을 다시 자녀에게 넘기는 구조면 증여 이슈가 생길 수 있으니 증빙을 보관하세요.</EmojiLine>
+            <EmojiLine emoji="🏛️">국가·지자체 지원금, 아동수당, 부모급여처럼 지급 주체가 부모가 아니고 자녀 계좌로 직접 들어온 돈은 증여가 아닌 별도 입금으로 관리합니다.</EmojiLine>
+            <EmojiLine emoji="⚠️">부모가 받은 돈을 다시 자녀에게 넘기는 구조라면 사실관계에 따라 증여 이슈가 생길 수 있으니 증빙을 함께 보관하세요.</EmojiLine>
           </EmojiList>
         )}
 
@@ -403,7 +403,7 @@ function GiftsTab({
       </div>
 
       {gifts.length === 0 ? (
-        <EmojiLine emoji="🎁" as="p" className="justify-center py-8 text-sm text-zinc-500 dark:text-zinc-400">아직 입금/증여 기록이 없습니다.</EmojiLine>
+        <EmojiLine emoji="🎁" as="p" size="sm" tone="mute" align="center" className="my-8">아직 입금/증여 기록이 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-2">
           {gifts.map((g) => (
@@ -550,7 +550,7 @@ function HoldingsTab({
     <div className="space-y-4">
       {dialog}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold">보유 종목 추가</h2>
+        <h2 className="text-base font-bold tracking-tight">보유 종목 추가</h2>
         <div className="grid grid-cols-2 gap-3">
           <input aria-label="종목코드"
             type="text"
@@ -602,7 +602,7 @@ function HoldingsTab({
       </div>
 
       {holdings.length === 0 ? (
-        <EmojiLine emoji="💰" as="p" className="justify-center py-8 text-sm text-zinc-500 dark:text-zinc-400">등록된 보유 종목이 없습니다.</EmojiLine>
+        <EmojiLine emoji="💰" as="p" size="sm" tone="mute" align="center" className="my-8">등록된 보유 종목이 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-2">
           {holdings.map((h) => {

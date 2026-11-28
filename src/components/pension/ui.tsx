@@ -26,7 +26,7 @@ export function SectionCard({
 }) {
   return (
     <section id={id} className="scroll-mt-24 border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-4">
-      <h2 className="text-sm font-semibold text-ink">
+      <h2 className="text-base font-bold tracking-tight text-ink">
         {title}
         {description && <InfoTip label={`${title} 설명`} align="start">{description}</InfoTip>}
       </h2>

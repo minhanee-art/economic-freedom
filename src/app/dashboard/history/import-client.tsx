@@ -145,7 +145,7 @@ export function ImportClient({ holdings, onClose }: Props) {
         <details className="group border border-hairline dark:border-zinc-700 bg-canvas-soft dark:bg-zinc-800 text-sm">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-4 text-xs font-semibold text-ink dark:text-zinc-100 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
             <span>
-              <span aria-hidden="true">📄 </span>거래내역 파일 받는 법 · CSV 형식
+              거래내역 파일 받는 법 · CSV 형식
             </span>
             <svg aria-hidden="true" className="size-4 shrink-0 text-ink-mute transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />

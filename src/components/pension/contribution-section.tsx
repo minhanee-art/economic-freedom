@@ -171,7 +171,9 @@ export function ContributionSection({
       </div>
 
       {family.byOwner.length > 1 && (
-        <ul className="space-y-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <details className="text-xs text-zinc-500 dark:text-zinc-400">
+          <summary className="flex min-h-11 cursor-pointer items-center font-medium text-ink focus-visible:outline-2 focus-visible:outline-brand">명의별 계산 보기</summary>
+          <ul className="space-y-1 pb-2">
           {family.byOwner.map((o) => (
             <li key={o.ownerType}>
               {ACCOUNT_OWNER_LABELS[o.ownerType]}: 공제 대상 {formatKRW(o.progress.creditableTotal)} /{" "}
@@ -182,7 +184,8 @@ export function ContributionSection({
                   : " (소득 구간 미입력 — 낮은 공제율로 가정)")}
             </li>
           ))}
-        </ul>
+          </ul>
+        </details>
       )}
       {family.byOwner.length === 1 && family.byOwner[0].ownerType === "spouse" && (
         <p className="text-xs text-zinc-500 dark:text-zinc-400">

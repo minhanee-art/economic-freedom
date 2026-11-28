@@ -6,7 +6,6 @@ import { useConfirmDialog } from "@/components/dashboard/confirm-dialog";
 import { failureMessage } from "@/components/dashboard/inline-error";
 import type { ChildRow, ChildGiftRow } from "@/lib/queries";
 import { GiftProgressCard } from "@/components/gift/gift-progress-card";
-import { getAge } from "@/lib/gift-tax";
 import { missingFields } from "@/lib/utils";
 import { EmojiLine, InfoTip } from "@/components/ui/info-tip";
 
@@ -78,7 +77,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
       {/* 자녀 추가 */}
       <div className="border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
-        <h2 className="text-sm font-semibold">자녀 추가</h2>
+        <h2 className="text-base font-bold tracking-tight">자녀 추가</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label htmlFor="child-form-1" className="block text-xs text-zinc-500 dark:text-zinc-400 mb-1">이름</label>
@@ -112,7 +111,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
 
       {/* 자녀 목록 */}
       {children.length === 0 ? (
-        <EmojiLine emoji="👶" as="p" className="justify-center py-8 text-sm text-zinc-500 dark:text-zinc-400">등록된 자녀가 없습니다.</EmojiLine>
+        <EmojiLine emoji="👶" as="p" size="sm" tone="mute" align="center" className="my-8">등록된 자녀가 없습니다.</EmojiLine>
       ) : (
         <div className="space-y-3">
           {children.map((c) => (
@@ -120,7 +119,7 @@ export function ChildrenClient({ initialChildren, gifts }: Props) {
               <div className="flex items-center justify-between px-4 py-3">
                 <Link href={`/dashboard/children/${c.id}`} className="flex min-h-11 flex-1 flex-col justify-center">
                   <p className="text-sm font-semibold">{c.name}</p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">만 {getAge(c.birth_date)}세 · {c.birth_date}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{c.birth_date} 출생</p>
                 </Link>
                 <button
                   type="button"
